@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PadelPals Match</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // Extract the match ID from the URL path
+    const pathParts = window.location.pathname.split('/');
+    const matchId = pathParts[pathParts.length - 1];
+    
+    // Try to open the app with the custom URL scheme
+    function openApp() {
+      window.location.href = `padelpals://match/${matchId}`;
+      
+      // If the app doesn't open within 2 seconds, redirect to App Store
+      setTimeout(function() {
+        window.location.href = 'https://apps.apple.com/app/padelpals/idYOUR_APP_ID';
+      }, 2000);
+    }
+  </script>
+</head>
+<body onload="openApp()">
+  <div style="text-align: center; margin-top: 50px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <h1>Opening PadelPals...</h1>
+    <p>If nothing happens, <a href="https://apps.apple.com/app/padelpals/idYOUR_APP_ID">download the app</a>.</p>
+  </div>
+</body>
+</html>
