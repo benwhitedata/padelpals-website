@@ -79,6 +79,12 @@
         <div class="spinner"></div>
         <h2>Completing sign in...</h2>
         <p>Please wait while we authenticate your account.</p>
+        <div id="debugContainer" style="margin-top: 20px; text-align: left; display: none;">
+            <h4>Debug Information:</h4>
+            <pre id="debugInfo" style="background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 300px; overflow: auto;"></pre>
+            <button id="continueToAuth" class="btn btn-primary mt-3" style="display: none;">Continue to Auth Page</button>
+            <button id="continueToDashboard" class="btn btn-primary mt-3" style="display: none;">Continue to Dashboard</button>
+        </div>
     </div>
 
     <script>
@@ -119,31 +125,64 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const formData = document.querySelector('form');
                 
+                // For debugging
+                const showDebug = (message) => {
+                    document.getElementById('debugContainer').style.display = 'block';
+                    const debugInfo = document.getElementById('debugInfo');
+                    debugInfo.textContent += message + '\n';
+                };
+                
+                // Add debug information after 2 seconds
+                setTimeout(() => {
+                    showDebug('Starting authentication debug...');
+                    showDebug(`URL: ${window.location.href}`);
+                    showDebug(`URL Params: ${JSON.stringify(Object.fromEntries(urlParams.entries()))}`);
+                    showDebug(`Form found: ${formData ? 'Yes' : 'No'}`);
+                    
+                    document.getElementById('continueToAuth').style.display = 'block';
+                    document.getElementById('continueToDashboard').style.display = 'block';
+                }, 2000);
+                
                 // Handle POST data from form_post response (Apple uses this)
                 if (formData) {
-                    console.log('Found form data, extracting code...');
+                    showDebug('Found form data, extracting code...');
                     const code = formData.querySelector('input[name="code"]')?.value;
                     const state = formData.querySelector('input[name="state"]')?.value;
                     
+                    showDebug(`Form code found: ${code ? code.substring(0, 10) + '...' : 'None'}`);
+                    showDebug(`Form state found: ${state ? 'Yes' : 'No'}`);
+                    
                     if (code) {
-                        console.log('Form code found:', code.substring(0, 10) + '...');
                         try {
                             // Exchange code for session
-                            console.log('Attempting to exchange code for session from form data...');
+                            showDebug('Attempting to exchange code for session from form data...');
                             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
                             
                             if (error) {
-                                console.error('Error exchanging form code for session:', error);
+                                showDebug(`Error exchanging form code for session: ${error.message}`);
                                 throw error;
                             }
                             
                             if (data?.session) {
-                                console.log('Successfully exchanged form code for session!');
-                                window.location.href = '/dashboard.html';
+                                showDebug('Successfully exchanged form code for session!');
+                                
+                                // Store session in localStorage to ensure it persists
+                                localStorage.setItem('supabase.auth.token', JSON.stringify({
+                                    access_token: data.session.access_token,
+                                    refresh_token: data.session.refresh_token
+                                }));
+                                
+                                showDebug('Session stored in localStorage');
+                                showDebug('Redirecting to dashboard in 3 seconds...');
+                                
+                                setTimeout(() => {
+                                    window.location.href = '/dashboard.html';
+                                }, 3000);
+                                
                                 return true;
                             }
                         } catch (error) {
-                            console.error('Failed to exchange form code for session:', error);
+                            showDebug(`Failed to exchange form code for session: ${error.message}`);
                             throw error;
                         }
                     }
@@ -186,6 +225,7 @@
                             // Get any potential authentication data from the URL
                             const params = new URLSearchParams(window.location.search);
                             console.log('URL search params:', Array.from(params.entries()));
+                            showDebug(`URL search params: ${JSON.stringify(Object.fromEntries(params.entries()))}`);
                             
                             // Manually attempt to log in with provider token
                             const { data: tokenData, error: tokenError } = await supabase.auth.getSession();
@@ -256,17 +296,33 @@
                     
                     if (error) {
                         console.error('Auth error:', error);
+                        showDebug(`Auth error: ${error.message}`);
                         throw error;
                     }
 
                     if (session) {
                         // Successful sign in
                         console.log('Authentication successful, user:', session.user.id);
-                        window.location.href = '/dashboard.html';
+                        showDebug(`Authentication successful, user: ${session.user.id}`);
+                        
+                        // Store session in localStorage to ensure it persists
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            access_token: session.access_token,
+                            refresh_token: session.refresh_token
+                        }));
+                        
+                        showDebug('Session stored in localStorage');
+                        showDebug('Redirecting to dashboard in 3 seconds...');
+                        
+                        setTimeout(() => {
+                            window.location.href = '/dashboard.html';
+                        }, 3000);
                     } else {
                         // No session found
                         console.log('No session found, redirecting to auth page');
-                        window.location.href = '/auth.html';
+                        showDebug('No session found, redirecting to auth page');
+                        
+                        document.getElementById('continueToAuth').style.display = 'block';
                     }
                 } catch (error) {
                     console.error('Error handling auth callback:', error.message);
@@ -288,6 +344,15 @@
                 <a href="/auth.html" class="back-link">Return to sign in</a>
             `;
         }
+        
+        // Setup buttons
+        document.getElementById('continueToAuth').addEventListener('click', function() {
+            window.location.href = '/auth.html';
+        });
+        
+        document.getElementById('continueToDashboard').addEventListener('click', function() {
+            window.location.href = '/dashboard.html';
+        });
     </script>
 </body>
 </html> 
