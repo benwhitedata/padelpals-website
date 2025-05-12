@@ -235,25 +235,34 @@
                     console.log('Attempting Apple sign in with Supabase URL:', supabaseUrl.substring(0, 20) + '...');
                     statusMessages.innerHTML = '<div class="status-message info-message">Initiating Apple sign-in process...</div>';
                     
+                    // Show the actual client ID that will be used in the authentication URL
+                    console.log('Will use client ID:', 'com.playpadelpals.padelpals362.signin');
+                    statusMessages.innerHTML = '<div class="status-message info-message">Initiating Apple sign-in process with client ID: com.playpadelpals.padelpals362.signin</div>';
+                    
                     // Prepare redirect URL - make sure it's absolute
                     const redirectUrl = new URL('/auth-callback.html', window.location.origin).href;
                     console.log('Using redirect URL:', redirectUrl);
+                    
+                    // Define parameters with explicit client ID
+                    const queryParams = {
+                        // Force the site_url to be the production URL, not localhost
+                        state: JSON.stringify({
+                            site_url: window.location.origin,
+                            // Include a timestamp to ensure the state is unique
+                            timestamp: new Date().getTime()
+                        }),
+                        // Use the client ID that worked in our direct test
+                        client_id: 'com.playpadelpals.padelpals362.signin'
+                    };
+                    
+                    console.log('Using query params:', queryParams);
                     
                     const { data, error } = await supabase.auth.signInWithOAuth({
                         provider: 'apple',
                         options: {
                             redirectTo: redirectUrl,
                             scopes: 'email name',
-                            queryParams: {
-                                // Force the site_url to be the production URL, not localhost
-                                state: JSON.stringify({
-                                    site_url: window.location.origin,
-                                    // Include a timestamp to ensure the state is unique
-                                    timestamp: new Date().getTime()
-                                }),
-                                // Use the client ID that worked in our direct test
-                                client_id: 'com.playpadelpals.padelpals362.signin'
-                            }
+                            queryParams: queryParams
                         }
                     });
     
