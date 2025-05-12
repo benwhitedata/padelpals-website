@@ -113,6 +113,35 @@
             console.log('Initializing Supabase with URL:', supabaseUrl.substring(0, 15) + '...');
             const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+            // Add this function to handle manual authentication
+            async function processManualAuth() {
+                // Check URL for a code parameter from Apple's redirect
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('code')) {
+                    const code = urlParams.get('code');
+                    console.log('Auth code found in URL:', code.substring(0, 10) + '...');
+                    
+                    try {
+                        // Exchange the code for a session
+                        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                        
+                        if (error) {
+                            console.error('Error exchanging code for session:', error);
+                            throw error;
+                        }
+                        
+                        if (data.session) {
+                            console.log('Successfully exchanged code for session!');
+                            window.location.href = '/dashboard.html';
+                            return true;
+                        }
+                    } catch (error) {
+                        console.error('Failed to exchange code for session:', error);
+                    }
+                }
+                return false;
+            }
+
             // Handle the OAuth callback
             async function handleAuthCallback() {
                 try {
@@ -141,7 +170,13 @@
                         }
                     }
                     
-                    // Exchange auth code for session
+                    // Try processing manual auth first
+                    const manualAuthSuccessful = await processManualAuth();
+                    if (manualAuthSuccessful) {
+                        return;
+                    }
+                    
+                    // Fall back to standard session check
                     console.log('Attempting to get session from Supabase');
                     const { data: { session }, error } = await supabase.auth.getSession();
                     
