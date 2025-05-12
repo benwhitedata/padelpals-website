@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Direct Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>Simple Direct Test</h1>
+    <p>Testing direct embedding of API key for immediate verification</p>
+    
+    <div id="config-status"></div>
+    <div id="test-result"></div>
+    
+    <script>
+        // Direct embedding of API configuration
+        const config = {
+            supabaseUrl: 'https://peaphqbxdmknxzsfdxuh.supabase.co',
+            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMTA5NzcsImV4cCI6MjA1NjU4Njk3N30.RYBFcTJC13TOajpWSCybcq-IExXNaEvfSPRkwG16Bt8'
+        };
+
+        // Display config information
+        document.getElementById('config-status').innerHTML = `
+            <h2>Configuration</h2>
+            <p><strong>URL:</strong> ${config.supabaseUrl}</p>
+            <p><strong>Key:</strong> ${config.supabaseKey ? 
+                `<span class="success">Available</span> (${config.supabaseKey.length} chars, starts with ${config.supabaseKey.substring(0, 10)}...)` : 
+                '<span class="error">Missing</span>'}</p>
+            <p><strong>Environment:</strong> ${location.hostname}</p>
+            <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+        `;
+
+        // Test API connection
+        async function testApi() {
+            const result = document.getElementById('test-result');
+            result.innerHTML = '<p>Testing API connection...</p>';
+            
+            try {
+                const response = await fetch(`${config.supabaseUrl}/rest/v1/?apikey=${config.supabaseKey}`, {
+                    method: 'GET',
+                    headers: { 'apikey': config.supabaseKey }
+                });
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <h2>API Test Result</h2>
+                        <p class="success">✅ Success! API connection working.</p>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(await response.json(), null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <h2>API Test Result</h2>
+                        <p class="error">❌ API connection failed.</p>
+                        <p>Status: ${response.status}</p>
+                        <pre>${await response.text()}</pre>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <h2>API Test Result</h2>
+                    <p class="error">❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Run the test automatically
+        testApi();
+    </script>
+</body>
+</html> 
