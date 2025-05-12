@@ -1,39 +1,29 @@
-name: Deploy to GitHub Pages
+name: Deploy to Netlify
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-        
-      - name: Replace Supabase credentials
-        run: |
-          # Replace placeholders with actual environment variables
-          find . -name "*.html" -type f -exec sed -i "s|REPLACE_WITH_PRODUCTION_URL|${{ secrets.SUPABASE_URL }}|g" {} \;
-          find . -name "*.html" -type f -exec sed -i "s|REPLACE_WITH_PRODUCTION_KEY|${{ secrets.SUPABASE_ANON_KEY }}|g" {} \;
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: '.'
-          
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v3 
+          node-version: '16'
+      
+      - name: Deploy to Netlify
+        uses: netlify/actions/cli@master
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        with:
+          args: deploy --dir=. --prod
+          secrets: '["SUPABASE_URL", "SUPABASE_KEY"]' 

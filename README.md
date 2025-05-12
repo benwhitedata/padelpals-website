@@ -1,89 +1,57 @@
 # Padel Pals Website
 
-This repository contains the Padel Pals website with Apple authentication integration using Supabase.
+This is the official website for the Padel Pals application.
 
-## Setup Instructions
+## Authentication Setup
 
-### 1. Supabase Configuration
+The authentication for this site uses Supabase and is configured to work with GitHub Pages through Netlify Functions. Follow these steps to set up the authentication:
 
-To run this website locally with authentication:
+### Setting Up with Netlify
 
-1. Create a Supabase account at [supabase.com](https://supabase.com)
-2. Set up a new project
-3. Enable Apple authentication in Authentication > Providers > Apple
-4. Add your Apple Developer credentials
-5. Create a `config.js` file in the root directory with your Supabase credentials:
+1. Create a Netlify account and connect your GitHub repository.
+
+2. In the Netlify dashboard, go to Site settings > Environment variables.
+
+3. Add the following environment variables:
+   - `SUPABASE_URL`: Your Supabase project URL 
+   - `SUPABASE_KEY`: Your Supabase public (anon) API key
+
+4. Deploy your site with Netlify to make the functions available.
+
+### Setting Up GitHub Actions for Netlify Deployment
+
+1. In your GitHub repository, go to Settings > Secrets and variables > Actions.
+
+2. Add the following repository secrets:
+   - `NETLIFY_AUTH_TOKEN`: Your Netlify authentication token (can be generated in Netlify user settings)
+   - `NETLIFY_SITE_ID`: Your Netlify site ID (found in site settings)
+   - `SUPABASE_URL`: Your Supabase project URL
+   - `SUPABASE_ANON_KEY`: Your Supabase public (anon) API key
+
+3. Push to the main branch, and GitHub Actions will automatically deploy your site to Netlify with the proper environment variables.
+
+### Local Development
+
+For local development, create a `config.js` file in the root directory with the following content:
 
 ```javascript
-// config.js
 const config = {
-    supabaseUrl: 'YOUR_SUPABASE_PROJECT_URL',
-    supabaseKey: 'YOUR_SUPABASE_ANON_KEY'
+  supabaseUrl: 'YOUR_SUPABASE_URL',
+  supabaseKey: 'YOUR_SUPABASE_ANON_KEY'
 };
 ```
 
-**Note:** `config.js` is not tracked in git for security reasons. Always keep your API keys private.
+The site will automatically detect this file and use it for local development.
 
-### 2. Local Development
+## Pages
 
-To run the website locally:
-
-```bash
-# Using Python
-python -m http.server
-
-# Or using Node.js with a package like serve
-npx serve
-```
-
-### 3. Deployment to GitHub Pages
-
-When deploying to GitHub Pages, you'll need to handle the sensitive credentials. 
-
-#### Using GitHub Secrets & Actions
-
-This repository is configured to use GitHub Actions for secure deployment. To set it up:
-
-1. Enable GitHub Pages for your repository:
-   - Go to your repository's Settings tab
-   - Scroll to the "Pages" section
-   - Under "Build and deployment", select "GitHub Actions" as the source
-
-2. Add your Supabase credentials as repository secrets:
-   - Go to your repository's Settings tab
-   - Select "Secrets and variables" → "Actions"
-   - Add the following secrets:
-     - `SUPABASE_URL` - Your Supabase project URL
-     - `SUPABASE_ANON_KEY` - Your Supabase anonymous/public key (NOT the service role key)
-
-3. Push to your main branch, and the GitHub Action will automatically:
-   - Replace the placeholder values in your HTML files with the actual secrets
-   - Deploy the website to GitHub Pages with the credentials securely injected
-
-The workflow file is located in `.github/workflows/deploy.yml`
-
-#### Manual Alternative (Not recommended)
-
-1. For local development, use the `config.js` file
-2. For production, create a build script that replaces placeholders with actual values
-3. Deploy the production build to GitHub Pages
-
-## Apple Authentication Setup
-
-To set up Apple authentication:
-
-1. Create an App ID in the Apple Developer portal
-2. Configure Sign in with Apple for your App ID
-3. Create a Services ID for your website
-4. Configure the Sign in with Apple settings for your Services ID:
-   - Add your website domain to the domains list
-   - Add the redirect URL (e.g., `https://your-domain.com/auth-callback.html`)
-5. Generate a private key for Sign in with Apple
-6. Configure Supabase with your Apple credentials:
-   - Team ID
-   - Services ID
-   - Key ID
-   - Private Key
+- **Home**: Landing page with app information
+- **Auth**: Sign in with Apple 
+- **Dashboard**: User dashboard after authentication
+- **Support**: Support information
+- **Privacy Policy**: Privacy policy information
+- **Box League**: Box league rules
+- **App Guide**: Guide for using the app
 
 ## Project Structure
 
