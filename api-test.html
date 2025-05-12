@@ -54,6 +54,13 @@
             color: red;
             font-weight: bold;
         }
+        .status-container {
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -82,28 +89,35 @@
     </div>
     
     <script>
-        // Get Supabase configuration
-        let supabaseUrl, supabaseKey;
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            const statusDiv = document.createElement('div');
-            statusDiv.style.padding = '10px';
-            statusDiv.style.marginBottom = '20px';
-            statusDiv.style.backgroundColor = '#f5f5f5';
-            statusDiv.style.borderRadius = '4px';
-            statusDiv.style.fontSize = '14px';
-            document.body.insertBefore(statusDiv, document.querySelector('h1').nextSibling);
-            
-            function addStatus(message) {
+        // Utility functions - defined first to avoid scope issues
+        function addStatus(message) {
+            console.log(message);
+            const statusDiv = document.getElementById('statusDiv');
+            if (statusDiv) {
                 statusDiv.innerHTML += message + '<br>';
-                console.log(message);
             }
+        }
+
+        // Global variables
+        let supabaseUrl, supabaseKey;
+
+        // Main initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create status area at the top
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'statusDiv';
+            statusDiv.className = 'status-container';
+            document.body.insertBefore(statusDiv, document.querySelector('h1').nextSibling);
             
             // Check if config exists (should be available both in local dev and production via GitHub Actions)
             if (typeof config !== 'undefined') {
                 addStatus('✅ Using configuration from config.js');
                 supabaseUrl = config.supabaseUrl;
                 supabaseKey = config.supabaseKey;
+                
+                addStatus(`Config URL: ${supabaseUrl}`);
+                addStatus(`Config Key (first 10 chars): ${supabaseKey.substring(0, 10)}...`);
+                addStatus(`Key contains 'peaphqbxdmknxzsfdxuh': ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}`);
                 
                 initializeTests();
             } 
