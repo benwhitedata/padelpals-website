@@ -17,6 +17,10 @@
         })();
     </script>
     <style>
+        :root {
+            --gold: #d4af37;
+            --dark-blue: #1a2238;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -26,9 +30,14 @@
             margin: 0;
             background-color: #f9f9f9;
         }
-        .loading {
+        .auth-container {
             text-align: center;
             color: #1a2238;
+            max-width: 400px;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         .spinner {
             border: 4px solid #f3f3f3;
@@ -43,12 +52,33 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .error-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #1a2238;
+            text-decoration: none;
+            padding: 10px 15px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+        }
+        .back-link:hover {
+            background-color: #e5e5e5;
+        }
     </style>
 </head>
 <body>
-    <div class="loading">
+    <div class="auth-container" id="authContainer">
         <div class="spinner"></div>
         <h2>Completing sign in...</h2>
+        <p>Please wait while we authenticate your account.</p>
     </div>
 
     <script>
@@ -63,59 +93,82 @@
                 supabaseKey = config.supabaseKey;
                 initializeSupabase();
             } 
-            // For production (GitHub Pages)
+            // For production (Netlify)
             else {
                 console.log('Using production configuration');
-                // Access environment variables set in GitHub Pages
+                // Access environment variables set in Netlify
                 fetch('/.netlify/functions/get-env')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok: ' + response.status);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('Got environment variables');
                         supabaseUrl = data.SUPABASE_URL;
                         supabaseKey = data.SUPABASE_KEY;
                         initializeSupabase();
                     })
                     .catch(error => {
                         console.error('Error fetching environment variables:', error);
+                        showError('Could not load authentication service. Please try again later.');
                     });
             }
         });
 
         function initializeSupabase() {
-            if (!supabaseUrl || supabaseUrl === 'REPLACE_WITH_PRODUCTION_URL') {
-                console.error('Supabase URL not configured properly');
-                return;
-            }
-            
-            if (!supabaseKey || supabaseKey === 'REPLACE_WITH_PRODUCTION_KEY') {
-                console.error('Supabase key not configured properly');
+            if (!supabaseUrl || !supabaseKey || supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseKey === 'YOUR_SUPABASE_ANON_KEY') {
+                console.error('Supabase credentials not configured properly');
+                showError('Authentication service is not properly configured. Please contact support.');
                 return;
             }
             
             // Initialize Supabase client
+            console.log('Initializing Supabase with URL:', supabaseUrl.substring(0, 15) + '...');
             const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
             // Handle the OAuth callback
             async function handleAuthCallback() {
                 try {
-                    const { data: { session }, error } = await supabase.auth.getSession()
+                    console.log('Handling auth callback');
                     
-                    if (error) throw error
+                    // Exchange auth code for session
+                    const { data: { session }, error } = await supabase.auth.getSession();
+                    
+                    if (error) {
+                        console.error('Auth error:', error);
+                        throw error;
+                    }
 
                     if (session) {
                         // Successful sign in
-                        window.location.href = '/dashboard.html'
+                        console.log('Authentication successful, redirecting to dashboard');
+                        window.location.href = '/dashboard.html';
                     } else {
                         // No session found
-                        window.location.href = '/auth.html'
+                        console.log('No session found, redirecting to auth page');
+                        window.location.href = '/auth.html';
                     }
                 } catch (error) {
-                    console.error('Error handling auth callback:', error.message)
-                    window.location.href = '/auth.html'
+                    console.error('Error handling auth callback:', error.message);
+                    showError('Authentication failed: ' + error.message);
                 }
             }
 
             // Run the callback handler
             handleAuthCallback();
+        }
+        
+        function showError(message) {
+            const container = document.getElementById('authContainer');
+            container.innerHTML = `
+                <h2>Authentication Error</h2>
+                <div class="error-container">
+                    <p>${message}</p>
+                </div>
+                <a href="/auth.html" class="back-link">Return to sign in</a>
+            `;
         }
     </script>
 </body>

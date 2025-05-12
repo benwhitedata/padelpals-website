@@ -7,6 +7,18 @@ exports.handler = async function(event, context) {
     'Content-Type': 'application/json'
   };
 
+  // Check if required environment variables are set
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+    console.error("Missing required environment variables");
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        error: "Server configuration error - missing environment variables"
+      })
+    };
+  }
+
   // Return Supabase credentials from environment variables
   return {
     statusCode: 200,

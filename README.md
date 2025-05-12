@@ -1,47 +1,51 @@
 # Padel Pals Website
 
-This is the official website for the Padel Pals application.
+This repository contains the website for Padel Pals, including authentication with Supabase.
 
 ## Authentication Setup
 
-The authentication for this site uses Supabase and is configured to work with GitHub Pages through Netlify Functions. Follow these steps to set up the authentication:
-
-### Setting Up with Netlify
-
-1. Create a Netlify account and connect your GitHub repository.
-
-2. In the Netlify dashboard, go to Site settings > Environment variables.
-
-3. Add the following environment variables:
-   - `SUPABASE_URL`: Your Supabase project URL 
-   - `SUPABASE_KEY`: Your Supabase public (anon) API key
-
-4. Deploy your site with Netlify to make the functions available.
-
-### Setting Up GitHub Actions for Netlify Deployment
-
-1. In your GitHub repository, go to Settings > Secrets and variables > Actions.
-
-2. Add the following repository secrets:
-   - `NETLIFY_AUTH_TOKEN`: Your Netlify authentication token (can be generated in Netlify user settings)
-   - `NETLIFY_SITE_ID`: Your Netlify site ID (found in site settings)
-   - `SUPABASE_URL`: Your Supabase project URL
-   - `SUPABASE_ANON_KEY`: Your Supabase public (anon) API key
-
-3. Push to the main branch, and GitHub Actions will automatically deploy your site to Netlify with the proper environment variables.
-
 ### Local Development
 
-For local development, create a `config.js` file in the root directory with the following content:
-
+1. Create a `config.js` file in the root directory with your Supabase credentials:
 ```javascript
 const config = {
-  supabaseUrl: 'YOUR_SUPABASE_URL',
-  supabaseKey: 'YOUR_SUPABASE_ANON_KEY'
+    supabaseUrl: 'YOUR_SUPABASE_URL',
+    supabaseKey: 'YOUR_SUPABASE_ANON_KEY'
 };
 ```
 
-The site will automatically detect this file and use it for local development.
+2. Run a local server to test the site.
+
+### Netlify Deployment
+
+1. Deploy this site to Netlify.
+
+2. Set up the following environment variables in the Netlify dashboard:
+   - `SUPABASE_URL`: Your Supabase project URL
+   - `SUPABASE_KEY`: Your Supabase public anon key
+
+3. Configure Supabase Authentication:
+   - Go to your Supabase project dashboard
+   - Navigate to Authentication > URL Configuration
+   - Set site URL to your Netlify domain (e.g., `https://your-site.netlify.app`)
+   - Add redirect URL: `https://your-site.netlify.app/auth-callback.html`
+
+4. Configure Apple Sign-In:
+   - Create an Apple Developer account if you don't have one
+   - Set up a new App ID with Sign in with Apple capability
+   - Create a Services ID for your website
+   - Configure domains and redirect URLs in your Apple Developer account
+   - Add the Apple provider in Supabase Authentication settings
+   - Add the required credentials (Client ID, Private Key, etc.)
+
+## Troubleshooting
+
+If authentication is not working:
+
+1. Check browser console for errors
+2. Verify Netlify environment variables are set correctly
+3. Confirm Supabase redirect URLs are configured properly
+4. Ensure Apple Sign-In is properly set up in your Supabase project
 
 ## Pages
 

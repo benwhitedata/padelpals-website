@@ -72,6 +72,33 @@
         .footer a:hover {
             text-decoration: underline;
         }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info-message {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
     </style>
 </head>
 <body>
@@ -102,8 +129,9 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
                 <path d="M17.05 20.28c-.98.95-2.05.88-3.08.41-1.09-.47-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.41C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.19 2.31-.89 3.51-.84 1.54.07 2.7.61 3.44 1.57-3.14 1.88-2.29 5.13.22 6.41-.65 1.29-1.44 2.58-2.25 4.03zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
             </svg>
-            Sign in with Apple
+            <span id="appleButtonText">Sign in with Apple</span>
         </button>
+        <div id="statusMessages"></div>
     </div>
 
     <footer class="footer">
@@ -145,16 +173,27 @@
             // For production (GitHub Pages)
             else {
                 console.log('Using production configuration');
-                // Access environment variables set in GitHub Pages
+                // Access environment variables set in Netlify
                 fetch('/.netlify/functions/get-env')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok: ' + response.status);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('Got environment variables');
                         supabaseUrl = data.SUPABASE_URL;
                         supabaseKey = data.SUPABASE_KEY;
                         initializeSupabase();
                     })
                     .catch(error => {
                         console.error('Error fetching environment variables:', error);
+                        document.querySelector('.auth-container').innerHTML += `
+                            <div class="alert alert-danger mt-3">
+                                Error loading authentication service. Please try again later.
+                            </div>
+                        `;
                     });
                 return; // Exit early as we'll initialize after fetch
             }
@@ -164,42 +203,74 @@
         });
 
         function initializeSupabase() {
-            if (!supabaseUrl || supabaseUrl === 'REPLACE_WITH_PRODUCTION_URL') {
-                console.error('Supabase URL not configured properly');
-                return;
-            }
-            
-            if (!supabaseKey || supabaseKey === 'REPLACE_WITH_PRODUCTION_KEY') {
-                console.error('Supabase key not configured properly');
+            if (!supabaseUrl || !supabaseKey || supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseKey === 'YOUR_SUPABASE_ANON_KEY') {
+                console.error('Supabase credentials not configured properly');
+                document.querySelector('.auth-container').innerHTML += `
+                    <div class="alert alert-warning mt-3">
+                        Authentication service not properly configured. Please check your setup.
+                    </div>
+                `;
                 return;
             }
             
             // Initialize Supabase client
+            console.log('Initializing Supabase with URL:', supabaseUrl.substring(0, 15) + '...');
             const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
     
             // Handle Apple Sign In
             document.getElementById('appleSignIn').addEventListener('click', async () => {
+                const button = document.getElementById('appleSignIn');
+                const buttonText = document.getElementById('appleButtonText');
+                const statusMessages = document.getElementById('statusMessages');
+                
                 try {
+                    // Show loading state
+                    button.disabled = true;
+                    buttonText.innerHTML = '<span class="loading-spinner"></span> Connecting...';
+                    
+                    console.log('Attempting Apple sign in...');
+                    statusMessages.innerHTML = '<div class="status-message info-message">Initiating Apple sign-in process...</div>';
+                    
                     const { data, error } = await supabase.auth.signInWithOAuth({
                         provider: 'apple',
                         options: {
                             redirectTo: window.location.origin + '/auth-callback.html'
                         }
-                    })
+                    });
     
-                    if (error) throw error
+                    if (error) {
+                        console.error('Sign in error:', error);
+                        throw error;
+                    }
+                    
+                    console.log('Sign in initiated:', data);
+                    // The page will redirect automatically, but we can show a message briefly
+                    statusMessages.innerHTML = '<div class="status-message info-message">Redirecting to Apple...</div>';
+                    
                 } catch (error) {
-                    console.error('Error signing in with Apple:', error.message)
+                    console.error('Error signing in with Apple:', error.message);
+                    // Reset button
+                    button.disabled = false;
+                    buttonText.textContent = 'Sign in with Apple';
+                    
+                    // Show error
+                    statusMessages.innerHTML = `
+                        <div class="status-message error-message">
+                            Error signing in: ${error.message}
+                        </div>
+                    `;
                 }
-            })
+            });
     
             // Check if user is already signed in
             supabase.auth.getSession().then(({ data: { session } }) => {
                 if (session) {
-                    // User is signed in, redirect to dashboard or home
-                    window.location.href = '/dashboard.html'
+                    // User is signed in, redirect to dashboard
+                    window.location.href = '/dashboard.html';
                 }
-            })
+            }).catch(error => {
+                console.error('Error checking session:', error.message);
+            });
         }
     </script>
 </body>
