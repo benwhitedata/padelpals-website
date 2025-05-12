@@ -1,10 +1,14 @@
-name: Deploy to Netlify
+# This workflow is disabled as we're using GitHub Pages instead
+# To re-enable, remove the '.disabled' from the filename and update as needed
+
+name: Deploy to Netlify (Disabled)
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  # Disabled workflow won't run automatically
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   deploy:
