@@ -205,7 +205,12 @@
                             const state = stateMatch && stateMatch[1] ? decodeURIComponent(stateMatch[1]) : null;
                             
                             showDebug(`Extracted code from body: ${code.substring(0, 10)}...`);
-                            showDebug(`Extracted state from body: ${state ? 'Yes' : 'No'}`);
+                            showDebug(`Extracted state from body: ${state ? state.substring(0, 10) + '...' : 'Not found'}`);
+                            
+                            if (!state) {
+                                showDebug('Warning: No state parameter found in the form response');
+                                showDebug('This might cause authentication issues');
+                            }
                             
                             try {
                                 // Exchange code for session
@@ -290,7 +295,17 @@
                     // Check URL parameters (standard flow)
                     if (urlParams.has('code')) {
                         const code = urlParams.get('code');
+                        const state = urlParams.get('state');
+                        
                         console.log('Auth code found in URL:', code.substring(0, 10) + '...');
+                        console.log('State parameter found:', state ? 'Yes' : 'No');
+                        
+                        if (!state) {
+                            showDebug('Warning: No state parameter found in the URL');
+                            showDebug('This might cause authentication issues');
+                        } else {
+                            showDebug(`State parameter found: ${state.substring(0, 10)}...`);
+                        }
                         
                         try {
                             // First, try to sign in with OAuth credentials
