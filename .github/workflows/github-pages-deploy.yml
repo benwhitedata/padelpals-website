@@ -128,27 +128,29 @@ jobs:
 
       - name: Create enhanced-config.js with fallback
         run: |
-          cat > enhanced-config.js << 'EOF'
+          # Create an environment variable with the secret
+          export SECRET_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          
+          # Create the configuration file with the secret directly
+          cat > enhanced-config.js << EOF
           // Enhanced configuration file with fallback
-          // Created by GitHub Actions
+          // Created by GitHub Actions at $(date)
           
           const config = {
               supabaseUrl: 'https://peaphqbxdmknxzsfdxuh.supabase.co',
-              supabaseKey: 'GITHUB_SECRET_PLACEHOLDER'
+              supabaseKey: '$SECRET_KEY'
           };
           
           // Provide fallback for local development if key is missing
-          if (!config.supabaseKey || config.supabaseKey === 'GITHUB_SECRET_PLACEHOLDER') {
+          if (!config.supabaseKey || config.supabaseKey === '') {
               console.warn('Using fallback API key - GitHub secret was not injected');
               config.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMTA5NzcsImV4cCI6MjA1NjU4Njk3N30.RYBFcTJC13TOajpWSCybcq-IExXNaEvfSPRkwG16Bt8';
           }
           EOF
           
-          # Replace the placeholder with the actual GitHub secret
-          sed -i "s/GITHUB_SECRET_PLACEHOLDER/${{ secrets.SUPABASE_ANON_KEY }}/g" enhanced-config.js
-          
           echo "Created enhanced-config.js with fallback mechanism"
           grep -v "supabaseKey" enhanced-config.js
+          echo "File size: $(wc -c < enhanced-config.js) bytes"
 
       - name: Debug - Show directory structure after
         run: |
