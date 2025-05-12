@@ -135,44 +135,55 @@
         // Get Supabase configuration
         let supabaseUrl, supabaseKey;
         
-        // Try to load from config.js if available (local development)
-        if (typeof config !== 'undefined') {
-            supabaseUrl = config.supabaseUrl;
-            supabaseKey = config.supabaseKey;
-        } 
-        // For production (GitHub Pages)
-        else {
-            // These will be set via GitHub Secrets
-            supabaseUrl = 'REPLACE_WITH_PRODUCTION_URL';
-            supabaseKey = 'REPLACE_WITH_PRODUCTION_KEY';
-        }
-        
-        // Initialize Supabase client
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-        // Handle Apple Sign In
-        document.getElementById('appleSignIn').addEventListener('click', async () => {
-            try {
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                    provider: 'apple',
-                    options: {
-                        redirectTo: window.location.origin + '/auth-callback.html'
-                    }
-                })
-
-                if (error) throw error
-            } catch (error) {
-                console.error('Error signing in with Apple:', error.message)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Try to load from config.js if available (local development)
+            if (typeof config !== 'undefined') {
+                console.log('Using local development configuration');
+                supabaseUrl = config.supabaseUrl;
+                supabaseKey = config.supabaseKey;
+            } 
+            // For production (GitHub Pages)
+            else {
+                console.log('Using production configuration');
+                supabaseUrl = 'REPLACE_WITH_PRODUCTION_URL';
+                supabaseKey = 'REPLACE_WITH_PRODUCTION_KEY';
             }
-        })
-
-        // Check if user is already signed in
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                // User is signed in, redirect to dashboard or home
-                window.location.href = '/dashboard.html'
+            
+            if (!supabaseUrl || supabaseUrl === 'REPLACE_WITH_PRODUCTION_URL') {
+                console.error('Supabase URL not configured properly');
             }
-        })
+            
+            if (!supabaseKey || supabaseKey === 'REPLACE_WITH_PRODUCTION_KEY') {
+                console.error('Supabase key not configured properly');
+            }
+            
+            // Initialize Supabase client
+            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    
+            // Handle Apple Sign In
+            document.getElementById('appleSignIn').addEventListener('click', async () => {
+                try {
+                    const { data, error } = await supabase.auth.signInWithOAuth({
+                        provider: 'apple',
+                        options: {
+                            redirectTo: window.location.origin + '/auth-callback.html'
+                        }
+                    })
+    
+                    if (error) throw error
+                } catch (error) {
+                    console.error('Error signing in with Apple:', error.message)
+                }
+            })
+    
+            // Check if user is already signed in
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    // User is signed in, redirect to dashboard or home
+                    window.location.href = '/dashboard.html'
+                }
+            })
+        });
     </script>
 </body>
 </html> 

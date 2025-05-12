@@ -40,42 +40,29 @@ npx serve
 
 When deploying to GitHub Pages, you'll need to handle the sensitive credentials. 
 
-#### Method 1: GitHub Secrets & Action (Recommended)
+#### Using GitHub Secrets & Actions
 
-1. In the GitHub repository settings, add your Supabase credentials as secrets:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
+This repository is configured to use GitHub Actions for secure deployment. To set it up:
 
-2. Create a GitHub Action workflow that replaces the placeholders in the HTML files with actual values during build:
+1. Enable GitHub Pages for your repository:
+   - Go to your repository's Settings tab
+   - Scroll to the "Pages" section
+   - Under "Build and deployment", select "GitHub Actions" as the source
 
-```yaml
-name: Deploy to GitHub Pages
+2. Add your Supabase credentials as repository secrets:
+   - Go to your repository's Settings tab
+   - Select "Secrets and variables" → "Actions"
+   - Add the following secrets:
+     - `SUPABASE_URL` - Your Supabase project URL
+     - `SUPABASE_ANON_KEY` - Your Supabase anonymous/public key (NOT the service role key)
 
-on:
-  push:
-    branches:
-      - main
+3. Push to your main branch, and the GitHub Action will automatically:
+   - Replace the placeholder values in your HTML files with the actual secrets
+   - Deploy the website to GitHub Pages with the credentials securely injected
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+The workflow file is located in `.github/workflows/deploy.yml`
 
-      - name: Replace Supabase credentials
-        run: |
-          find . -name "*.html" -type f -exec sed -i "s|REPLACE_WITH_PRODUCTION_URL|${{ secrets.SUPABASE_URL }}|g" {} \;
-          find . -name "*.html" -type f -exec sed -i "s|REPLACE_WITH_PRODUCTION_KEY|${{ secrets.SUPABASE_ANON_KEY }}|g" {} \;
-
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@4.1.4
-        with:
-          branch: gh-pages
-          folder: .
-```
-
-#### Method 2: Manual Deploy with Environment-Specific Builds
+#### Manual Alternative (Not recommended)
 
 1. For local development, use the `config.js` file
 2. For production, create a build script that replaces placeholders with actual values
@@ -104,12 +91,12 @@ To set up Apple authentication:
 - `auth.html` - Authentication page with Apple Sign-In
 - `auth-callback.html` - Handles the OAuth callback from Apple
 - `dashboard.html` - User dashboard (requires authentication)
-- `config.template.js` - Template for Supabase configuration
-- `config.js` - Actual configuration file (not in git)
+- `config.js` - Local configuration file (not in git)
+- `.github/workflows/deploy.yml` - GitHub Actions workflow for secure deployment
 - `.gitignore` - Excludes sensitive files from git
 
 ## Security Notes
 
 - Never commit your `config.js` file with actual credentials
-- For production deployments, use environment variables or secrets management
+- For production deployments, use GitHub secrets and Actions
 - Always use the public anon key from Supabase, never the service role key
