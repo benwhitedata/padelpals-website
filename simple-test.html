@@ -6,15 +6,31 @@
     <title>Simple GitHub Secrets Test</title>
     <script>
         // Dynamically try to load config.js
+        console.log('Script starting, attempting to load config.js');
         (function loadConfig() {
             const script = document.createElement('script');
-            script.src = 'config.js';
+            script.src = 'config.js?v=' + new Date().getTime(); // Cache busting
             script.onerror = function() {
-                console.log('Config file not found');
+                console.log('Config file not found - load error triggered');
                 document.getElementById('status').textContent = 'Config file not found - GitHub Actions deployment required';
                 document.getElementById('status').style.color = 'red';
+                document.getElementById('debugInfo').innerHTML = `
+                    <h3>Debug Information</h3>
+                    <p>Time: ${new Date().toString()}</p>
+                    <p>Hostname: ${window.location.hostname}</p>
+                    <p>Path: ${window.location.pathname}</p>
+                    <p>Full URL: ${window.location.href}</p>
+                    <p>Deployment Platform: ${window.location.hostname.includes('github.io') ? 'GitHub Pages' : 
+                                             window.location.hostname.includes('netlify') ? 'Netlify' : 
+                                             window.location.hostname.includes('padelpals.app') ? 'Custom Domain' : 'Unknown'}</p>
+                `;
+            };
+            script.onload = function() {
+                console.log('Config file loaded successfully');
+                document.getElementById('debugInfo').innerHTML += `<p class="success">Config script loaded at: ${new Date().toString()}</p>`;
             };
             document.head.appendChild(script);
+            console.log('Added config.js script to DOM');
         })();
     </script>
     <style>
@@ -29,6 +45,14 @@
             padding: 20px;
             border-radius: 5px;
             margin-top: 20px;
+        }
+        .debug-container {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: monospace;
         }
         .success {
             color: green;
@@ -55,7 +79,36 @@
         <div id="configInfo">Not loaded yet</div>
     </div>
     
+    <div class="debug-container">
+        <div id="debugInfo">
+            <h3>Debug Information</h3>
+            <p>Time: <span id="currentTime"></span></p>
+            <p>Attempting to load config.js...</p>
+        </div>
+    </div>
+    
     <script>
+        // Set current time
+        document.getElementById('currentTime').textContent = new Date().toString();
+        
+        // Add a manual test button
+        const debugDiv = document.getElementById('debugInfo');
+        const testButton = document.createElement('button');
+        testButton.textContent = 'Test File Existence';
+        testButton.onclick = async function() {
+            try {
+                const response = await fetch('config.js?v=' + new Date().getTime());
+                if (response.ok) {
+                    debugDiv.innerHTML += `<p class="success">File exists! Status: ${response.status}</p>`;
+                } else {
+                    debugDiv.innerHTML += `<p class="error">File not found. Status: ${response.status}</p>`;
+                }
+            } catch (error) {
+                debugDiv.innerHTML += `<p class="error">Error testing file: ${error.message}</p>`;
+            }
+        };
+        debugDiv.appendChild(testButton);
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Wait a bit to ensure config.js has time to load
             setTimeout(function() {
@@ -80,8 +133,10 @@
                         <p><strong>Current URL:</strong> ${window.location.href}</p>
                         <p>This test confirms your GitHub Secrets are working properly!</p>
                     `;
+                } else {
+                    document.getElementById('debugInfo').innerHTML += `<p class="error">Config variable not defined after timeout</p>`;
                 }
-            }, 500);
+            }, 1000);
         });
     </script>
 </body>
