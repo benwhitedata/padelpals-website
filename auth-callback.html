@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padel Pals - Authentication</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Dynamically try to load config.js
+        (function loadConfig() {
+            const script = document.createElement('script');
+            script.src = 'config.js';
+            script.onerror = function() {
+                console.log('Config file not found, using production values');
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        .loading {
+            text-align: center;
+            color: #1a2238;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1a2238;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <div class="spinner"></div>
+        <h2>Completing sign in...</h2>
+    </div>
+
+    <script>
+        // Get Supabase configuration
+        let supabaseUrl, supabaseKey;
+        
+        // Try to load from config.js if available (local development)
+        if (typeof config !== 'undefined') {
+            supabaseUrl = config.supabaseUrl;
+            supabaseKey = config.supabaseKey;
+        } 
+        // For production (GitHub Pages)
+        else {
+            // These will be set via GitHub Secrets
+            supabaseUrl = 'REPLACE_WITH_PRODUCTION_URL';
+            supabaseKey = 'REPLACE_WITH_PRODUCTION_KEY';
+        }
+        
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Handle the OAuth callback
+        async function handleAuthCallback() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession()
+                
+                if (error) throw error
+
+                if (session) {
+                    // Successful sign in
+                    window.location.href = '/dashboard.html'
+                } else {
+                    // No session found
+                    window.location.href = '/auth.html'
+                }
+            } catch (error) {
+                console.error('Error handling auth callback:', error.message)
+                window.location.href = '/auth.html'
+            }
+        }
+
+        // Run the callback handler
+        handleAuthCallback()
+    </script>
+</body>
+</html> 

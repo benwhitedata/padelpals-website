@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padel Pals - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="Icon.png" type="image/png">
+    <style>
+        :root {
+            --gold: #d4af37;
+            --dark-blue: #1a2238;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+        }
+        .navbar {
+            background-color: var(--dark-blue);
+        }
+        .navbar-brand, .nav-link {
+            color: white;
+        }
+        .nav-link:hover {
+            color: var(--gold);
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .stats-card h3 {
+            color: var(--dark-blue);
+            margin-bottom: 15px;
+        }
+        .footer {
+            background-color: var(--dark-blue);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1a2238;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <img src="images/Icon.png" alt="Padel Pals Logo" style="height: 40px; margin-right: 10px;">
+                Padel Pals
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="support.html">Support</a></li>
+                    <li class="nav-item"><a class="nav-link" href="privacy.html">Privacy Policy</a></li>
+                    <li class="nav-item"><a class="nav-link" href="boxleague.html">Box League</a></li>
+                    <li class="nav-item"><a class="nav-link" href="guide.html">App Guide</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" id="signOut">Sign Out</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <h2>Loading your data...</h2>
+        </div>
+        
+        <div id="dashboardContent" style="display: none;">
+            <h1 class="mb-4">Welcome, <span id="userName">User</span>!</h1>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <h3>Match Statistics</h3>
+                        <div id="matchStats">
+                            <!-- Match stats will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <h3>Recent Matches</h3>
+                        <div id="recentMatches">
+                            <!-- Recent matches will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <h3>Box League Status</h3>
+                        <div id="boxLeagueStatus">
+                            <!-- Box league status will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Padel Pals. All rights reserved.</p>
+            <p>
+                <a href="support.html">Support</a> |
+                <a href="privacy.html">Privacy Policy</a> |
+                <a href="boxleague.html">Box League Rules</a> |
+                <a href="guide.html">App Guide</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Dynamically try to load config.js
+        (function loadConfig() {
+            const script = document.createElement('script');
+            script.src = 'config.js';
+            script.onerror = function() {
+                console.log('Config file not found, using production values');
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    <script>
+        // Get Supabase configuration
+        let supabaseUrl, supabaseKey;
+        
+        // Try to load from config.js if available (local development)
+        if (typeof config !== 'undefined') {
+            supabaseUrl = config.supabaseUrl;
+            supabaseKey = config.supabaseKey;
+        } 
+        // For production (GitHub Pages)
+        else {
+            // These will be set via GitHub Secrets
+            supabaseUrl = 'REPLACE_WITH_PRODUCTION_URL';
+            supabaseKey = 'REPLACE_WITH_PRODUCTION_KEY';
+        }
+        
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Check authentication status
+        async function checkAuth() {
+            const { data: { session }, error } = await supabase.auth.getSession()
+            
+            if (error || !session) {
+                window.location.href = '/auth.html'
+                return
+            }
+
+            return session
+        }
+
+        // Load user data
+        async function loadUserData() {
+            try {
+                const session = await checkAuth()
+                if (!session) return
+
+                // Get user profile
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single()
+
+                if (profileError) throw profileError
+
+                // Update UI with user data
+                document.getElementById('userName').textContent = profile.full_name || 'User'
+                
+                // Load match statistics
+                const { data: matchStats, error: matchError } = await supabase
+                    .from('matches')
+                    .select('*')
+                    .eq('user_id', session.user.id)
+
+                if (matchError) throw matchError
+
+                // Update match statistics
+                const matchStatsHtml = `
+                    <p>Total Matches: ${matchStats.length}</p>
+                    <p>Wins: ${matchStats.filter(m => m.result === 'win').length}</p>
+                    <p>Losses: ${matchStats.filter(m => m.result === 'loss').length}</p>
+                `
+                document.getElementById('matchStats').innerHTML = matchStatsHtml
+
+                // Show dashboard content
+                document.getElementById('loading').style.display = 'none'
+                document.getElementById('dashboardContent').style.display = 'block'
+
+            } catch (error) {
+                console.error('Error loading user data:', error.message)
+                window.location.href = '/auth.html'
+            }
+        }
+
+        // Handle sign out
+        document.getElementById('signOut').addEventListener('click', async (e) => {
+            e.preventDefault()
+            const { error } = await supabase.auth.signOut()
+            if (error) {
+                console.error('Error signing out:', error.message)
+            } else {
+                window.location.href = '/auth.html'
+            }
+        })
+
+        // Load user data when page loads
+        loadUserData()
+    </script>
+</body>
+</html> 
