@@ -96,24 +96,10 @@
             // For production (Netlify)
             else {
                 console.log('Using production configuration');
-                // Access environment variables set in Netlify
-                fetch('/.netlify/functions/get-env')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok: ' + response.status);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Got environment variables');
-                        supabaseUrl = data.SUPABASE_URL;
-                        supabaseKey = data.SUPABASE_KEY;
-                        initializeSupabase();
-                    })
-                    .catch(error => {
-                        console.error('Error fetching environment variables:', error);
-                        showError('Could not load authentication service. Please try again later.');
-                    });
+                // Direct configuration for GitHub Pages
+                supabaseUrl = 'https://xagcahijlpxaozunvhdh.supabase.co';
+                supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhZ2NhaGlqbHB4YW96dW52aGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
+                initializeSupabase();
             }
         });
 
