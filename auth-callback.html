@@ -91,10 +91,19 @@
         // Get Supabase configuration
         let supabaseUrl, supabaseKey;
         
+        // Define global debug elements and functions
+        let debugDiv;
+        function addDebugInfo(message) {
+            if (debugDiv) {
+                debugDiv.innerHTML += message + '<br>';
+            }
+            console.log(message);
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Debug element to show what's happening
             const authContainer = document.getElementById('authContainer');
-            const debugDiv = document.createElement('div');
+            debugDiv = document.createElement('div');
             debugDiv.style.marginTop = '20px';
             debugDiv.style.padding = '10px';
             debugDiv.style.backgroundColor = '#f5f5f5';
@@ -106,12 +115,6 @@
             debugDiv.style.wordBreak = 'break-all';
             debugDiv.innerHTML = '<strong>Debugging Information</strong><br>';
             authContainer.appendChild(debugDiv);
-            
-            // Helper function to add debug info
-            function addDebugInfo(message) {
-                debugDiv.innerHTML += message + '<br>';
-                console.log(message);
-            }
             
             // Check if config exists (should be available both in local dev and production via GitHub Actions)
             if (typeof config !== 'undefined') {
