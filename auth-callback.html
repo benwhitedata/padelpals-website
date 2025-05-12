@@ -103,7 +103,7 @@
             else {
                 console.log('Config not found, using fallback configuration');
                 supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
-                supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhZ2NhaGlqbHB4YW96dW52aGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
+                supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
                 initializeSupabase();
             }
         });
@@ -115,10 +115,42 @@
                 return;
             }
             
+            // For debugging - show the API key (first few chars only)
+            console.log('Using Supabase URL:', supabaseUrl);
+            console.log('Using Supabase Key (first 10 chars):', supabaseKey.substring(0, 10) + '...');
+            
             // Initialize Supabase client
-            console.log('Initializing Supabase with URL:', supabaseUrl.substring(0, 15) + '...');
             const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+            // Function to show debug info without needing the full debug container setup
+            function showBasicDebug(message) {
+                console.log(message);
+                const container = document.getElementById('authContainer');
+                if (!container.querySelector('.debug-messages')) {
+                    const debugDiv = document.createElement('div');
+                    debugDiv.className = 'debug-messages';
+                    debugDiv.style.marginTop = '20px';
+                    debugDiv.style.textAlign = 'left';
+                    debugDiv.style.fontSize = '12px';
+                    container.appendChild(debugDiv);
+                }
+                
+                const debugDiv = container.querySelector('.debug-messages');
+                const p = document.createElement('p');
+                p.textContent = message;
+                debugDiv.appendChild(p);
+            }
+            
+            showBasicDebug(`Supabase URL: ${supabaseUrl}`);
+            showBasicDebug(`Supabase Key (first 10): ${supabaseKey.substring(0, 10)}...`);
+            
+            // Check if supabase.auth exists
+            if (!supabase.auth) {
+                showError('Supabase client initialization failed. Auth module not available.');
+                showBasicDebug('Supabase auth module not available. Check console for errors.');
+                return;
+            }
+            
             // Add this function to handle manual authentication
             async function processManualAuth() {
                 // Check URL for a code parameter from Apple's redirect
