@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase API Test (Inline Config)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Inline configuration - will be overridden by config.js if present -->
+    <script>
+        // Direct inline configuration
+        const config = {
+            supabaseUrl: 'https://peaphqbxdmknxzsfdxuh.supabase.co',
+            // This placeholder will be replaced by GitHub Actions in production
+            // but the inline version is used as a fallback
+            supabaseKey: '' // Your Supabase anon key goes here for testing
+        };
+    </script>
+    <!-- Try to load external config.js which would override the above if it exists -->
+    <script>
+        (function loadConfig() {
+            console.log('Attempting to load external config.js...');
+            const script = document.createElement('script');
+            script.src = 'config.js?v=' + new Date().getTime(); // Cache busting
+            script.onerror = function() {
+                console.log('External config.js not found, using inline config');
+                document.getElementById('configSource').textContent = 'Using inline config (config.js not found)';
+                document.getElementById('configSource').className = 'warning';
+            };
+            script.onload = function() {
+                console.log('External config.js loaded successfully, overriding inline config');
+                document.getElementById('configSource').textContent = 'Using external config.js';
+                document.getElementById('configSource').className = 'success';
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-container {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #1a2238;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        pre {
+            background: #e2e2e2;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
+        .status-container {
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .env-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e0f7fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Supabase API Health Check (Inline Config)</h1>
+    <p id="configSource">Determining config source...</p>
+    
+    <div class="env-info">
+        <h3>Environment Information</h3>
+        <div id="environmentInfo"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>1. API Key Test</h2>
+        <p>The API key we'll use for this test:</p>
+        <div id="keyDisplay"></div>
+        <button id="testKey">Test API Key</button>
+        <div id="keyResult"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>2. Basic Connectivity Test</h2>
+        <p>Test basic connectivity to Supabase API:</p>
+        <button id="testConnectivity">Test Connectivity</button>
+        <div id="connectivityResult"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>3. Guest Function Test</h2>
+        <p>Test calling a public function as a guest:</p>
+        <button id="testFunction">Test Public Function</button>
+        <div id="functionResult"></div>
+    </div>
+    
+    <script>
+        // Utility functions
+        function addStatus(message) {
+            console.log(message);
+            const statusDiv = document.getElementById('statusDiv');
+            if (statusDiv) {
+                statusDiv.innerHTML += message + '<br>';
+            }
+        }
+
+        // Global variables
+        let supabaseUrl = config.supabaseUrl;
+        let supabaseKey = config.supabaseKey;
+        let configSource = 'inline';
+
+        // Create status area
+        const statusDiv = document.createElement('div');
+        statusDiv.id = 'statusDiv';
+        statusDiv.className = 'status-container';
+        document.body.insertBefore(statusDiv, document.querySelector('.env-info'));
+
+        // Main initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!supabaseUrl) {
+                supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
+                addStatus(`Using default Supabase URL: ${supabaseUrl}`);
+            } else {
+                addStatus(`Using configured Supabase URL: ${supabaseUrl}`);
+            }
+            
+            if (!supabaseKey || supabaseKey === '') {
+                addStatus('⚠️ No Supabase key found - tests will fail');
+                addStatus('Make sure config.js is correctly created by GitHub Actions');
+                supabaseKey = 'MISSING_KEY';
+            } else {
+                addStatus(`✅ Supabase key found (${supabaseKey.length} chars)`);
+            }
+            
+            updateEnvironmentInfo();
+            initializeTests();
+        });
+
+        function updateEnvironmentInfo() {
+            const envInfo = document.getElementById('environmentInfo');
+            envInfo.innerHTML = `
+                <p><strong>Configuration Source:</strong> <span id="configSourceType">${configSource}</span></p>
+                <p><strong>Supabase URL:</strong> ${supabaseUrl}</p>
+                <p><strong>API Key Status:</strong> ${supabaseKey === 'MISSING_KEY' ? 
+                    '<span class="error">Missing</span>' : 
+                    '<span class="success">Available</span>'}</p>
+                <p><strong>Environment:</strong> ${
+                    window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' ? 
+                    'Local Development' : 'Production'
+                }</p>
+                <p><strong>Current URL:</strong> ${window.location.href}</p>
+                <p><strong>Key contains project ID:</strong> ${supabaseKey.includes('peaphqbxdmknxzsfdxuh') ? 'Yes' : 'No'}</p>
+            `;
+        }
+
+        function initializeTests() {
+            // Display key info securely
+            document.getElementById('keyDisplay').innerHTML = `
+                <pre>URL: ${supabaseUrl}
+Key Source: ${configSource}
+${supabaseKey === 'MISSING_KEY' ? 'API Key: <span class="error">MISSING</span>' : 
+`Key (first 10): ${supabaseKey.substring(0, 10)}...
+Key (last 10): ...${supabaseKey.substring(supabaseKey.length - 10)}
+Key Length: ${supabaseKey.length} characters
+Key Format: ${supabaseKey.startsWith('eyJ') ? 'Valid JWT format' : 'Unknown format'}`}
+</pre>
+            `;
+            
+            // Test API Key
+            document.getElementById('testKey').addEventListener('click', async function() {
+                const resultDiv = document.getElementById('keyResult');
+                resultDiv.innerHTML = '<p>Testing API key validity...</p>';
+                
+                if (supabaseKey === 'MISSING_KEY') {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ No API key available to test</p>
+                        <p>Please ensure GitHub Secrets are configured properly</p>
+                    `;
+                    return;
+                }
+                
+                try {
+                    // Test by making a direct API call
+                    const response = await fetch(`${supabaseUrl}/rest/v1/?apikey=${supabaseKey}`, {
+                        method: 'GET',
+                        headers: {
+                            'apikey': supabaseKey
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        resultDiv.innerHTML = '<p class="success">✅ API key is valid!</p>';
+                        resultDiv.innerHTML += `<pre>Response status: ${response.status}</pre>`;
+                    } else {
+                        resultDiv.innerHTML = `<p class="error">❌ API key is invalid!</p>`;
+                        resultDiv.innerHTML += `<pre>Response status: ${response.status}
+Response text: ${await response.text()}</pre>`;
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML = `<p class="error">❌ Error testing API key: ${error.message}</p>`;
+                }
+            });
+            
+            // Test Connectivity
+            document.getElementById('testConnectivity').addEventListener('click', async function() {
+                const resultDiv = document.getElementById('connectivityResult');
+                resultDiv.innerHTML = '<p>Testing Supabase connectivity...</p>';
+                
+                if (supabaseKey === 'MISSING_KEY') {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ No API key available to test connectivity</p>
+                        <p>Please ensure GitHub Secrets are configured properly</p>
+                    `;
+                    return;
+                }
+                
+                try {
+                    // Initialize Supabase client
+                    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    
+                    if (!supabase) {
+                        throw new Error('Failed to create Supabase client');
+                    }
+                    
+                    if (!supabase.auth) {
+                        throw new Error('Supabase client missing auth module');
+                    }
+                    
+                    // Try to get the session - this works even if not signed in
+                    const { data, error } = await supabase.auth.getSession();
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    resultDiv.innerHTML = '<p class="success">✅ Supabase client created successfully!</p>';
+                    resultDiv.innerHTML += `<pre>Session found: ${data.session ? 'Yes' : 'No'}</pre>`;
+                    
+                } catch (error) {
+                    resultDiv.innerHTML = `<p class="error">❌ Connectivity test failed: ${error.message}</p>`;
+                }
+            });
+            
+            // Test Public Function
+            document.getElementById('testFunction').addEventListener('click', async function() {
+                const resultDiv = document.getElementById('functionResult');
+                resultDiv.innerHTML = '<p>Testing public function call...</p>';
+                
+                if (supabaseKey === 'MISSING_KEY') {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ No API key available to test function</p>
+                        <p>Please ensure GitHub Secrets are configured properly</p>
+                    `;
+                    return;
+                }
+                
+                try {
+                    // Initialize Supabase client
+                    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    
+                    // Try to call a public function - we'll use health check if it exists
+                    let data, error, count;
+                    
+                    try {
+                        ({ data, error } = await supabase.rpc('get_server_timestamp'));
+                    } catch (fnError) {
+                        // If the function doesn't exist, try another approach
+                        resultDiv.innerHTML += `<p>Function not found, trying to query public table...</p>`;
+                        
+                        // Try to count users - this should be allowed for anon users
+                        ({ count, error } = await supabase
+                            .from('profiles')
+                            .select('*', { count: 'exact', head: true }));
+                            
+                        data = { count };
+                    }
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    resultDiv.innerHTML = '<p class="success">✅ Function call succeeded!</p>';
+                    resultDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    
+                } catch (error) {
+                    resultDiv.innerHTML = `<p class="error">❌ Function test failed: ${error.message}</p>`;
+                    
+                    if (error.message.includes('Invalid API key')) {
+                        resultDiv.innerHTML += `<p>The API key appears to be invalid. Make sure the GitHub Secret SUPABASE_ANON_KEY is correct.</p>`;
+                    } else if (error.message.includes('permission denied')) {
+                        resultDiv.innerHTML += `<p>Permission denied. The anon key doesn't have access to this resource.</p>`;
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
