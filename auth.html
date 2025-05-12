@@ -238,9 +238,15 @@
                         
                         // Create direct Apple auth URL with correct client ID and redirect
                         // Based on logs, we need to ensure the right session handling
-                        const directUrl = `https://appleid.apple.com/auth/authorize?client_id=com.playpadelpals.padelpals362.signin&redirect_uri=https%3A%2F%2Fpeaphqbxdmknxzsfdxuh.supabase.co%2Fauth%2Fv1%2Fcallback&response_mode=form_post&response_type=code&scope=email+name&state=${encodeURIComponent(authUrlObj.searchParams.get('state') || '')}`;
+                        const state = authUrlObj.searchParams.get('state') || '';
+                        if (!state) {
+                            console.error('No state parameter found in Supabase auth URL');
+                            throw new Error('Authentication failed: missing state parameter');
+                        }
                         
-                        console.log('Using direct URL:', directUrl);
+                        const directUrl = `https://appleid.apple.com/auth/authorize?client_id=com.playpadelpals.padelpals362.signin&redirect_uri=https%3A%2F%2Fpeaphqbxdmknxzsfdxuh.supabase.co%2Fauth%2Fv1%2Fcallback&response_mode=form_post&response_type=code&scope=email+name&state=${encodeURIComponent(state)}`;
+                        
+                        console.log('Using direct URL with state:', directUrl);
                         statusMessages.innerHTML = '<div class="status-message info-message">Redirecting to Apple with correct client ID...</div>';
                         
                         // Redirect to Apple's authentication page
