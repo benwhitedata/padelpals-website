@@ -242,7 +242,14 @@
                     const { data, error } = await supabase.auth.signInWithOAuth({
                         provider: 'apple',
                         options: {
-                            redirectTo: redirectUrl
+                            redirectTo: redirectUrl,
+                            scopes: 'email name',
+                            queryParams: {
+                                // Force the site_url to be the production URL, not localhost
+                                state: JSON.stringify({
+                                    site_url: window.location.origin
+                                })
+                            }
                         }
                     });
     
