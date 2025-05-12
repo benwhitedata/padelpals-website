@@ -1,0 +1,21 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[dev]
+  functions = "netlify/functions"
+  publish = "."
+  
+[build.environment]
+  NODE_VERSION = "16"
+
+# Redirect for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+  conditions = {Path = {match_not = [
+    "/.netlify/functions/*",
+    "/auth-callback.html"
+  ]}} 

@@ -1,0 +1,5 @@
+# Ignore configuration with sensitive data
+config.js
+
+# System files
+.DS_Store 
