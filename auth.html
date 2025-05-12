@@ -248,7 +248,9 @@
                                 // Force the site_url to be the production URL, not localhost
                                 state: JSON.stringify({
                                     site_url: window.location.origin
-                                })
+                                }),
+                                // Override client_id if needed
+                                client_id: 'com.playpadelpals.padelpals362.signin'
                             }
                         }
                     });
