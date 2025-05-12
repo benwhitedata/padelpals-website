@@ -27,6 +27,16 @@ jobs:
           echo "    supabaseKey: '${{ secrets.SUPABASE_ANON_KEY }}'" >> config.js
           echo "};" >> config.js
           cat config.js
+          
+      - name: Ensure .well-known directory exists
+        run: mkdir -p .well-known
+        
+      # If you have the apple-developer-domain-association.txt file in your repo
+      # Uncomment this step if you've added the file to your repository
+      # - name: Copy Apple domain association file
+      #   run: |
+      #     cp .github/apple-developer-domain-association.txt .well-known/apple-developer-domain-association.txt
+      #     ls -la .well-known/
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5

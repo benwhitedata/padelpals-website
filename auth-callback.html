@@ -116,9 +116,18 @@
             // Handle the OAuth callback
             async function handleAuthCallback() {
                 try {
-                    console.log('Handling auth callback');
+                    console.log('Handling auth callback with URL:', window.location.href);
+                    
+                    // Parse the URL to check for any error parameters
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('error')) {
+                        const errorDesc = urlParams.get('error_description') || 'Unknown error';
+                        console.error('Error in URL params:', errorDesc);
+                        throw new Error(errorDesc);
+                    }
                     
                     // Exchange auth code for session
+                    console.log('Attempting to get session from Supabase');
                     const { data: { session }, error } = await supabase.auth.getSession();
                     
                     if (error) {
@@ -128,7 +137,7 @@
 
                     if (session) {
                         // Successful sign in
-                        console.log('Authentication successful, redirecting to dashboard');
+                        console.log('Authentication successful, user:', session.user.id);
                         window.location.href = '/dashboard.html';
                     } else {
                         // No session found
