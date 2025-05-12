@@ -204,18 +204,9 @@
             // For production (GitHub Pages)
             else {
                 console.log('Using production configuration');
-                // Access environment variables set in GitHub Pages
-                fetch('/.netlify/functions/get-env')
-                    .then(response => response.json())
-                    .then(data => {
-                        supabaseUrl = data.SUPABASE_URL;
-                        supabaseKey = data.SUPABASE_KEY;
-                        initializeSupabase();
-                    })
-                    .catch(error => {
-                        console.error('Error fetching environment variables:', error);
-                    });
-                return; // Exit early as we'll initialize after fetch
+                supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
+                supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
+                initializeSupabase();
             }
         });
 
