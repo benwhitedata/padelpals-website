@@ -6,6 +6,9 @@
     <title>Padel Pals - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="Icon.png" type="image/png">
+    <!-- Load Supabase JS and config loader first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config-loader.js"></script>
     <style>
         :root {
             --gold: #d4af37;
@@ -73,6 +76,21 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info-message {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
     </style>
 </head>
 <body>
@@ -102,10 +120,11 @@
         <div id="loading" class="loading">
             <div class="spinner"></div>
             <h2>Loading your data...</h2>
+            <p id="loadingMessage" class="info-message" style="display: none;">Preparing your dashboard...</p>
             <div id="loadingDebug" style="margin-top: 20px; text-align: left; display: none;">
                 <h4>Debug Information:</h4>
                 <pre id="debugInfo" style="background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 300px; overflow: auto;"></pre>
-                <button id="showAuthForm" class="btn btn-primary mt-3" style="display: none;">Try Manual Authentication</button>
+                <button id="goToAuth" class="btn btn-primary mt-3" style="display: none;">Go to Sign In</button>
                 <div id="manualAuthForm" style="display: none; margin-top: 20px;">
                     <h4>Manual Authentication</h4>
                     <div class="mb-3">
@@ -177,242 +196,226 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Dynamically try to load config.js
-        (function loadConfig() {
-            const script = document.createElement('script');
-            script.src = 'config.js';
-            script.onerror = function() {
-                console.log('Config file not found, using production values');
-            };
-            document.head.appendChild(script);
-        })();
-    </script>
-    <script>
-        // Get Supabase configuration
-        let supabaseUrl, supabaseKey;
+        // Global variables
+        let supabase;
+        let debugInfoElement;
+        let redirectAttempted = false; // Flag to prevent infinite loops
+        let authRedirectTime = parseInt(localStorage.getItem('authRedirectTime') || '0');
+        const currentTime = Date.now();
         
+        // Add debug information
+        function addDebugInfo(message) {
+            console.log(message);
+            if (debugInfoElement) {
+                debugInfoElement.textContent += message + '\n';
+            }
+        }
+        
+        // Show a loading message
+        function showLoadingMessage(message, isError = false) {
+            const messageElement = document.getElementById('loadingMessage');
+            if (messageElement) {
+                messageElement.textContent = message;
+                messageElement.className = isError ? 'error-message' : 'info-message';
+                messageElement.style.display = 'block';
+            }
+        }
+        
+        // Initialize page elements
         document.addEventListener('DOMContentLoaded', function() {
-            // Try to load from config.js if available (local development)
-            if (typeof config !== 'undefined') {
-                console.log('Using local development configuration');
-                supabaseUrl = config.supabaseUrl;
-                supabaseKey = config.supabaseKey;
-                initializeSupabase();
-            } 
-            // For production (GitHub Pages)
-            else {
-                console.log('Using production configuration');
-                supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
-                supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
-                initializeSupabase();
+            debugInfoElement = document.getElementById('debugInfo');
+            
+            // Check for recent redirect to prevent loops
+            if (currentTime - authRedirectTime < 5000) { // 5 seconds
+                // We've been redirected too recently, stay on this page
+                document.getElementById('loadingDebug').style.display = 'block';
+                document.getElementById('goToAuth').style.display = 'block';
+                showLoadingMessage('Detected a potential redirect loop. Please click "Go to Sign In" to authenticate manually.', true);
+                addDebugInfo('Potential redirect loop detected. Staying on dashboard page.');
             }
+            
+            // Set up button listeners
+            document.getElementById('goToAuth').addEventListener('click', function() {
+                window.location.href = '/auth.html';
+            });
         });
-
-        function initializeSupabase() {
-            if (!supabaseUrl || supabaseUrl === 'REPLACE_WITH_PRODUCTION_URL') {
-                console.error('Supabase URL not configured properly');
-                return;
-            }
+        
+        // Listen for the configLoaded event from config-loader.js
+        document.addEventListener('configLoaded', function() {
+            addDebugInfo('Configuration loaded successfully');
+            addDebugInfo(`Supabase URL: ${window.config.supabaseUrl}`);
+            addDebugInfo(`API key available: ${window.config.supabaseKey ? 'Yes' : 'No'}`);
             
-            if (!supabaseKey || supabaseKey === 'REPLACE_WITH_PRODUCTION_KEY') {
-                console.error('Supabase key not configured properly');
-                return;
-            }
-            
-            // Initialize Supabase client
-            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-    
-            // Check authentication status
-            async function checkAuth() {
-                const { data: { session }, error } = await supabase.auth.getSession()
+            // Initialize Supabase with loaded configuration
+            initializeDashboard();
+        });
+        
+        // Main dashboard initialization function
+        function initializeDashboard() {
+            try {
+                // Create Supabase client
+                supabase = window.supabase.createClient(
+                    window.config.supabaseUrl,
+                    window.config.supabaseKey
+                );
                 
-                // Show debug info after 3 seconds if still loading
-                setTimeout(() => {
-                    if (document.getElementById('loading').style.display !== 'none') {
-                        const debugElement = document.getElementById('loadingDebug');
-                        const debugInfoElement = document.getElementById('debugInfo');
-                        debugElement.style.display = 'block';
-                        
-                        let debugInfo = 'Checking authentication status...\n';
-                        if (error) {
-                            debugInfo += `Authentication error: ${JSON.stringify(error, null, 2)}\n`;
-                        }
-                        
-                        if (!session) {
-                            debugInfo += 'No session found.\n';
-                            document.getElementById('showAuthForm').style.display = 'block';
-                        } else {
-                            debugInfo += `Session found: ${JSON.stringify(session, null, 2)}\n`;
-                        }
-                        
-                        debugInfoElement.textContent = debugInfo;
-                    }
-                }, 3000);
-                
-                if (error || !session) {
-                    console.error('Authentication error or no session:', error);
-                    return
+                if (!supabase || !supabase.auth) {
+                    throw new Error('Failed to initialize Supabase client');
                 }
-    
-                return session
+                
+                addDebugInfo('Supabase client initialized successfully');
+                
+                // Load user data
+                loadUserData();
+                
+                // Setup sign out button
+                document.getElementById('signOut').addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const { error } = await supabase.auth.signOut();
+                    if (error) {
+                        console.error('Error signing out:', error.message);
+                    } else {
+                        // Reset the redirect time tracker
+                        localStorage.removeItem('authRedirectTime');
+                        window.location.href = '/auth.html';
+                    }
+                });
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+                showLoadingMessage('Failed to initialize the dashboard: ' + error.message, true);
+                document.getElementById('loadingDebug').style.display = 'block';
             }
-    
-            // Load user data
-            async function loadUserData() {
+        }
+        
+        // Check authentication and load user data
+        async function loadUserData() {
+            try {
+                // Show loading message
+                showLoadingMessage('Checking your authentication...');
+                
+                // Get session
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                
+                if (sessionError) {
+                    throw sessionError;
+                }
+                
+                if (!session) {
+                    addDebugInfo('No active session found');
+                    showLoadingMessage('You are not signed in. Redirecting to authentication page...', true);
+                    
+                    // Wait to display the message
+                    setTimeout(() => {
+                        if (!redirectAttempted) {
+                            redirectAttempted = true;
+                            localStorage.setItem('authRedirectTime', Date.now().toString());
+                            window.location.href = '/auth.html';
+                        }
+                    }, 2000);
+                    return;
+                }
+                
+                addDebugInfo(`Session found for user: ${session.user.id}`);
+                showLoadingMessage('Authentication successful! Loading your data...');
+                
                 try {
-                    const session = await checkAuth()
-                    if (!session) return
-    
-                    // Get user profile
+                    // Try to get the user profile
                     const { data: profile, error: profileError } = await supabase
                         .from('profiles')
                         .select('*')
                         .eq('id', session.user.id)
-                        .single()
-    
-                    if (profileError) throw profileError
-    
-                    // Update UI with user data
-                    document.getElementById('userName').textContent = profile.full_name || 'User'
+                        .single();
                     
-                    // Load match statistics
-                    const { data: matchStats, error: matchError } = await supabase
-                        .from('matches')
-                        .select('*')
-                        .eq('user_id', session.user.id)
-    
-                    if (matchError) throw matchError
-    
-                    // Update match statistics
-                    const matchStatsHtml = `
-                        <p>Total Matches: ${matchStats.length}</p>
-                        <p>Wins: ${matchStats.filter(m => m.result === 'win').length}</p>
-                        <p>Losses: ${matchStats.filter(m => m.result === 'loss').length}</p>
-                    `
-                    document.getElementById('matchStats').innerHTML = matchStatsHtml
+                    if (profileError) {
+                        addDebugInfo(`Profile fetch error: ${profileError.message}`);
+                        // Even if profile fetch fails, show a basic dashboard
+                        document.getElementById('userName').textContent = session.user.email || 'User';
+                    } else {
+                        // Update UI with user data
+                        document.getElementById('userName').textContent = profile.full_name || session.user.email || 'User';
+                        addDebugInfo('Profile data loaded successfully');
+                    }
                     
-                    // Run a simple test query to verify connection
-                    await testSupabaseConnection(supabase, session);
-    
-                    // Show dashboard content
-                    document.getElementById('loading').style.display = 'none'
-                    document.getElementById('dashboardContent').style.display = 'block'
-    
-                } catch (error) {
-                    console.error('Error loading user data:', error.message)
-                    window.location.href = '/auth.html'
+                    // We got this far, so authentication works
+                    showBasicDashboard(session);
+                    
+                } catch (dataError) {
+                    addDebugInfo(`Data loading error: ${dataError.message}`);
+                    // If we fail to get profile but have a session, still show a basic dashboard
+                    showBasicDashboard(session);
                 }
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+                addDebugInfo(`Authentication error: ${error.message}`);
+                document.getElementById('loadingDebug').style.display = 'block';
+                document.getElementById('goToAuth').style.display = 'block';
+                showLoadingMessage('Failed to authenticate. Please try signing in again.', true);
             }
-    
-            // Handle sign out
-            document.getElementById('signOut').addEventListener('click', async (e) => {
-                e.preventDefault()
-                const { error } = await supabase.auth.signOut()
-                if (error) {
-                    console.error('Error signing out:', error.message)
-                } else {
-                    window.location.href = '/auth.html'
-                }
-            })
-    
-            // Load user data when page loads
-            loadUserData();
+        }
+        
+        // Show a basic dashboard even if profile data fails
+        function showBasicDashboard(session) {
+            // Set placeholder content
+            document.getElementById('matchStats').innerHTML = '<p>Your match data is not available yet.</p>';
+            document.getElementById('recentMatches').innerHTML = '<p>No recent matches found.</p>';
+            document.getElementById('boxLeagueStatus').innerHTML = '<p>Box league data is not available yet.</p>';
             
-            // Function to test Supabase connection
-            async function testSupabaseConnection(supabase, session) {
-                const testElement = document.getElementById('connectionTest');
+            // Run a simple test query to verify connection
+            testSupabaseConnection(session);
+            
+            // Show dashboard content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+        }
+        
+        // Function to test Supabase connection
+        async function testSupabaseConnection(session) {
+            const testElement = document.getElementById('connectionTest');
+            
+            try {
+                // Display authentication info
+                let testHtml = `
+                    <h4>Authentication Status</h4>
+                    <p><strong>Status:</strong> <span class="text-success">Authenticated</span></p>
+                    <p><strong>User ID:</strong> ${session.user.id}</p>
+                    <p><strong>Provider:</strong> ${session.user.app_metadata.provider || 'Unknown'}</p>
+                `;
+                
+                // Run a simple query to test database access
+                testHtml += `<h4>Database Connection Test</h4>`;
                 
                 try {
-                    // Display authentication info
-                    let testHtml = `
-                        <h4>Authentication Status</h4>
-                        <p><strong>Status:</strong> <span class="text-success">Authenticated</span></p>
-                        <p><strong>User ID:</strong> ${session.user.id}</p>
-                        <p><strong>Provider:</strong> ${session.user.app_metadata.provider}</p>
-                    `;
-                    
-                    // Run a simple query to test database access
-                    testHtml += `<h4>Database Connection Test</h4>`;
-                    
-                    // Query to Supabase timestamp
-                    const { data: timeData, error: timeError } = await supabase.rpc('get_server_timestamp');
-                    
-                    if (timeError) {
-                        throw timeError;
-                    }
-                    
-                    testHtml += `<p><strong>Server Timestamp:</strong> ${timeData || 'No timestamp returned'}</p>`;
-                    
-                    // Attempt to query a random table to verify permissions work
-                    testHtml += `<h4>Table Access Test</h4>`;
-                    
-                    try {
-                        // Try to get a simple count of total users 
-                        const { count, error: countError } = await supabase
-                            .from('profiles')
-                            .select('*', { count: 'exact', head: true });
-                            
-                        if (countError) {
-                            testHtml += `<p><strong>Table Access:</strong> <span class="text-danger">Failed</span> - ${countError.message}</p>`;
-                        } else {
-                            testHtml += `<p><strong>Table Access:</strong> <span class="text-success">Success</span> - Found ${count} users</p>`;
-                        }
-                    } catch (tableError) {
-                        testHtml += `<p><strong>Table Access:</strong> <span class="text-danger">Failed</span> - ${tableError.message}</p>`;
-                    }
-                    
-                    testHtml += `
-                        <div class="alert alert-success mt-3">
+                    // Try to query a random table to verify permissions work
+                    const { count, error: countError } = await supabase
+                        .from('profiles')
+                        .select('*', { count: 'exact', head: true });
+                        
+                    if (countError) {
+                        testHtml += `<p><strong>Database Access:</strong> <span class="text-danger">Failed</span> - ${countError.message}</p>`;
+                        testHtml += `<div class="alert alert-warning mt-3">
+                            <strong>Note:</strong> Your account may have limited database access. Some features may not be available.
+                        </div>`;
+                    } else {
+                        testHtml += `<p><strong>Database Access:</strong> <span class="text-success">Success</span> - Found ${count} profiles</p>`;
+                        testHtml += `<div class="alert alert-success mt-3">
                             <strong>Connection Test Complete:</strong> Your authentication is working correctly!
-                        </div>
-                    `;
-                    
-                    testElement.innerHTML = testHtml;
-                    
-                } catch (error) {
-                    console.error('Connection test error:', error);
-                    testElement.innerHTML = `
-                        <div class="alert alert-danger">
-                            <h4>Connection Test Failed</h4>
-                            <p>${error.message}</p>
-                        </div>
-                    `;
+                        </div>`;
+                    }
+                } catch (dbError) {
+                    testHtml += `<p><strong>Database Access:</strong> <span class="text-danger">Failed</span> - ${dbError.message}</p>`;
                 }
+                
+                testElement.innerHTML = testHtml;
+                
+            } catch (error) {
+                testElement.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h4>Connection Test Failed</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
             }
-
-            // Setup debug tools
-            document.getElementById('showAuthForm').addEventListener('click', function() {
-                document.getElementById('manualAuthForm').style.display = 'block';
-            });
-            
-            document.getElementById('manualSignIn').addEventListener('click', async function() {
-                const email = document.getElementById('emailInput').value;
-                const password = document.getElementById('passwordInput').value;
-                
-                if (!email || !password) {
-                    alert('Please enter both email and password');
-                    return;
-                }
-                
-                try {
-                    const { data, error } = await supabase.auth.signInWithPassword({
-                        email,
-                        password
-                    });
-                    
-                    if (error) {
-                        throw error;
-                    }
-                    
-                    if (data.session) {
-                        window.location.reload();
-                    }
-                } catch (error) {
-                    alert('Error signing in: ' + error.message);
-                }
-            });
         }
     </script>
 </body>
