@@ -247,9 +247,12 @@
                             queryParams: {
                                 // Force the site_url to be the production URL, not localhost
                                 state: JSON.stringify({
-                                    site_url: window.location.origin
-                                })
-                                // Let Supabase use the client_id that works for the app
+                                    site_url: window.location.origin,
+                                    // Include a timestamp to ensure the state is unique
+                                    timestamp: new Date().getTime()
+                                }),
+                                // Use the client ID that worked in our direct test
+                                client_id: 'com.playpadelpals.padelpals362.signin'
                             }
                         }
                     });

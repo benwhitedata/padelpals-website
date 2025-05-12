@@ -118,12 +118,27 @@
                 try {
                     console.log('Handling auth callback with URL:', window.location.href);
                     
-                    // Parse the URL to check for any error parameters
+                    // Check for error parameters in the URL
                     const urlParams = new URLSearchParams(window.location.search);
+                    
+                    // Handle OAuth errors from the query string
                     if (urlParams.has('error')) {
+                        const error = urlParams.get('error');
+                        const errorCode = urlParams.get('error_code');
                         const errorDesc = urlParams.get('error_description') || 'Unknown error';
-                        console.error('Error in URL params:', errorDesc);
-                        throw new Error(errorDesc);
+                        console.error('Error in URL params:', error, errorCode, errorDesc);
+                        throw new Error(`${error} (${errorCode}): ${errorDesc}`);
+                    }
+                    
+                    // Handle the hash fragment if present (some OAuth providers use it)
+                    if (window.location.hash) {
+                        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                        if (hashParams.has('error')) {
+                            const error = hashParams.get('error');
+                            const errorDesc = hashParams.get('error_description') || 'Unknown error';
+                            console.error('Error in hash fragment:', error, errorDesc);
+                            throw new Error(`${error}: ${errorDesc}`);
+                        }
                     }
                     
                     // Exchange auth code for session
