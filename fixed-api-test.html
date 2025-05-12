@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed API Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Direct hardcoded configuration - no external file needed
+        window.config = {
+            supabaseUrl: 'https://peaphqbxdmknxzsfdxuh.supabase.co',
+            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMTA5NzcsImV4cCI6MjA1NjU4Njk3N30.RYBFcTJC13TOajpWSCybcq-IExXNaEvfSPRkwG16Bt8'
+        };
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #1a2238;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        pre {
+            background: #e8e8e8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Fixed API Test</h1>
+    <p class="info">Using direct hardcoded configuration - no external files needed</p>
+    
+    <div class="test-section">
+        <h2>Configuration</h2>
+        <pre id="config-display"></pre>
+    </div>
+    
+    <div class="test-section">
+        <h2>API Key Test</h2>
+        <button id="test-key">Test API Key</button>
+        <div id="key-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Connectivity Test</h2>
+        <button id="test-connectivity">Test Connectivity</button>
+        <div id="connectivity-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Function Test</h2>
+        <button id="test-function">Test Function</button>
+        <div id="function-result"></div>
+    </div>
+    
+    <script>
+        // Display configuration (safely)
+        document.getElementById('config-display').textContent = `
+URL: ${config.supabaseUrl}
+Key available: ${config.supabaseKey ? 'Yes' : 'No'}
+Key length: ${config.supabaseKey ? config.supabaseKey.length : 0} characters
+Key format: ${config.supabaseKey && config.supabaseKey.startsWith('eyJ') ? 'Valid JWT format' : 'Unknown format'}
+Environment: ${location.hostname}
+Time: ${new Date().toISOString()}
+        `;
+        
+        // Test API Key
+        document.getElementById('test-key').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('key-result');
+            resultDiv.innerHTML = '<p>Testing API key...</p>';
+            
+            try {
+                const response = await fetch(`${config.supabaseUrl}/rest/v1/?apikey=${config.supabaseKey}`, {
+                    method: 'GET',
+                    headers: { 'apikey': config.supabaseKey }
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ API key is valid!</p>
+                        <p>Status: ${response.status}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ API key is invalid!</p>
+                        <p>Status: ${response.status}</p>
+                        <pre>${await response.text()}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        });
+        
+        // Test Connectivity
+        document.getElementById('test-connectivity').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('connectivity-result');
+            resultDiv.innerHTML = '<p>Testing connectivity...</p>';
+            
+            try {
+                const supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+                
+                if (!supabase) {
+                    throw new Error('Failed to create Supabase client');
+                }
+                
+                const { data, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    throw error;
+                }
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Connection successful!</p>
+                    <p>Session found: ${data.session ? 'Yes' : 'No'}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        });
+        
+        // Test Function Call
+        document.getElementById('test-function').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('function-result');
+            resultDiv.innerHTML = '<p>Testing function call...</p>';
+            
+            try {
+                const supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+                
+                let data, error, count;
+                
+                try {
+                    // Try server timestamp function
+                    ({ data, error } = await supabase.rpc('get_server_timestamp'));
+                } catch (fnError) {
+                    // If that fails, try a simple query
+                    resultDiv.innerHTML += '<p>Function not found, trying profiles query...</p>';
+                    
+                    ({ count, error } = await supabase
+                        .from('profiles')
+                        .select('*', { count: 'exact', head: true }));
+                        
+                    data = { count };
+                }
+                
+                if (error) {
+                    throw error;
+                }
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Function call succeeded!</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html> 
