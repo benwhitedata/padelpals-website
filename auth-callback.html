@@ -143,6 +143,57 @@
                     document.getElementById('continueToDashboard').style.display = 'block';
                 }, 2000);
                 
+                // Parse the form-encoded body from Apple's post
+                if (document.body.innerHTML.includes('code=') && document.body.innerHTML.includes('form-post')) {
+                    showDebug('Found form-post response in document body');
+                    
+                    // Extract the code from the document body
+                    const bodyText = document.body.innerHTML;
+                    const codeMatch = bodyText.match(/code=([^&"]+)/);
+                    const stateMatch = bodyText.match(/state=([^&"]+)/);
+                    
+                    if (codeMatch && codeMatch[1]) {
+                        const code = decodeURIComponent(codeMatch[1]);
+                        const state = stateMatch && stateMatch[1] ? decodeURIComponent(stateMatch[1]) : null;
+                        
+                        showDebug(`Extracted code from body: ${code.substring(0, 10)}...`);
+                        showDebug(`Extracted state from body: ${state ? 'Yes' : 'No'}`);
+                        
+                        try {
+                            // Exchange code for session
+                            showDebug('Attempting to exchange code for session from extracted data...');
+                            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                            
+                            if (error) {
+                                showDebug(`Error exchanging code for session: ${error.message}`);
+                                throw error;
+                            }
+                            
+                            if (data?.session) {
+                                showDebug('Successfully exchanged code for session!');
+                                
+                                // Explicitly set the session
+                                await supabase.auth.setSession({
+                                    access_token: data.session.access_token,
+                                    refresh_token: data.session.refresh_token
+                                });
+                                
+                                showDebug('Session set explicitly');
+                                showDebug('Redirecting to dashboard in 3 seconds...');
+                                
+                                setTimeout(() => {
+                                    window.location.href = '/dashboard.html';
+                                }, 3000);
+                                
+                                return true;
+                            }
+                        } catch (error) {
+                            showDebug(`Failed to exchange code for session: ${error.message}`);
+                            throw error;
+                        }
+                    }
+                }
+                
                 // Handle POST data from form_post response (Apple uses this)
                 if (formData) {
                     showDebug('Found form data, extracting code...');
@@ -166,13 +217,13 @@
                             if (data?.session) {
                                 showDebug('Successfully exchanged form code for session!');
                                 
-                                // Store session in localStorage to ensure it persists
-                                localStorage.setItem('supabase.auth.token', JSON.stringify({
+                                // Explicitly set the session
+                                await supabase.auth.setSession({
                                     access_token: data.session.access_token,
                                     refresh_token: data.session.refresh_token
-                                }));
+                                });
                                 
-                                showDebug('Session stored in localStorage');
+                                showDebug('Session set explicitly');
                                 showDebug('Redirecting to dashboard in 3 seconds...');
                                 
                                 setTimeout(() => {
@@ -218,29 +269,56 @@
                         
                         if (error) {
                             console.error('Error exchanging code for session:', error);
+                            showDebug(`Error exchanging code for session: ${error.message}`);
                             
                             // Try one more authentication method - let Supabase handle it
                             console.log('Trying one more authentication method...');
+                            showDebug('Trying one more authentication method...');
                             
-                            // Get any potential authentication data from the URL
-                            const params = new URLSearchParams(window.location.search);
-                            console.log('URL search params:', Array.from(params.entries()));
-                            showDebug(`URL search params: ${JSON.stringify(Object.fromEntries(params.entries()))}`);
-                            
-                            // Manually attempt to log in with provider token
-                            const { data: tokenData, error: tokenError } = await supabase.auth.getSession();
-                            
-                            if (tokenData?.session) {
-                                console.log('Got session from getSession!');
-                                window.location.href = '/dashboard.html';
-                                return true;
+                            // Try direct sign-in with Apple provider and the code
+                            try {
+                                showDebug('Attempting direct sign in with Apple provider...');
+                                const { data: signInData, error: signInError } = await supabase.auth.signInWithOAuth({
+                                    provider: 'apple',
+                                    options: {
+                                        skipBrowserRedirect: true,
+                                        queryParams: {
+                                            code: code
+                                        }
+                                    }
+                                });
+                                
+                                if (signInError) {
+                                    showDebug(`Error with direct sign in: ${signInError.message}`);
+                                    throw signInError;
+                                }
+                                
+                                if (signInData) {
+                                    showDebug('Sign in successful, got URL: ' + (signInData.url ? 'Yes' : 'No'));
+                                    
+                                    // Try getting the session one more time
+                                    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+                                    
+                                    if (sessionError) {
+                                        showDebug(`Session error: ${sessionError.message}`);
+                                    } else if (sessionData?.session) {
+                                        showDebug('Successfully got session!');
+                                        
+                                        setTimeout(() => {
+                                            window.location.href = '/dashboard.html';
+                                        }, 3000);
+                                        
+                                        return true;
+                                    }
+                                }
+                            } catch (signInError) {
+                                showDebug(`Direct sign in failed: ${signInError.message}`);
                             }
                             
-                            if (tokenError) {
-                                throw tokenError;
-                            } else {
-                                throw error;
-                            }
+                            // Let the user try manual navigation
+                            document.getElementById('continueToDashboard').style.display = 'block';
+                            
+                            throw error;
                         }
                         
                         if (data?.session) {
