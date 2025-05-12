@@ -156,63 +156,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Dynamically try to load config.js
-        (function loadConfig() {
-            const script = document.createElement('script');
-            script.src = 'config.js';
-            script.onerror = function() {
-                console.log('Config file not found, using production values');
-            };
-            document.head.appendChild(script);
-        })();
-    </script>
-    <script>
-        // Get Supabase configuration
-        let supabaseUrl, supabaseKey;
-        // Define addDebug globally
-        let debugArea;
+        // Utility functions defined first to avoid scope issues
         function addDebug(message) {
+            console.log(message);
+            const debugArea = document.getElementById('debugArea');
             if (debugArea) {
                 debugArea.innerHTML += message + '<br>';
             }
-            console.log(message);
         }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add debug area to the page
-            const statusMessages = document.getElementById('statusMessages');
-            statusMessages.innerHTML = '<div id="debugArea" style="font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 15px; text-align: left;"><strong>Debugging Info:</strong><br></div>';
-            debugArea = document.getElementById('debugArea');
-            
-            // Check if config exists (should be available both in local dev and production via GitHub Actions)
-            if (typeof config !== 'undefined') {
-                addDebug('Using configuration from config.js');
-                supabaseUrl = config.supabaseUrl;
-                supabaseKey = config.supabaseKey;
-                
-                addDebug(`Config URL: ${supabaseUrl}`);
-                addDebug(`Config Key (first 10 chars): ${supabaseKey.substring(0, 10)}...`);
-                addDebug(`Key contains 'peaphqbxdmknxzsfdxuh': ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}`);
-                
-                initializeSupabase();
-            } 
-            // Fallback to direct values only if config.js fails to load
-            else {
-                addDebug('Config not found, using fallback configuration');
-                
-                supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
-                addDebug(`Fallback URL: ${supabaseUrl}`);
-                
-                // Don't hardcode the key, use a placeholder that will be replaced by GitHub Actions
-                const rawKey = 'PLACEHOLDER_KEY';
-                supabaseKey = rawKey;
-                
-                addDebug(`Fallback Key not available - config.js is required`);
-                addDebug(`Please ensure the site is properly deployed with GitHub Actions`);
-                
-                initializeSupabase();
-            }
-        });
 
         function initializeSupabase() {
             if (!supabaseUrl || !supabaseKey || supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseKey === 'YOUR_SUPABASE_ANON_KEY') {
@@ -328,6 +279,55 @@
                 `;
             }
         }
+
+        // Global variables
+        let supabaseUrl, supabaseKey;
+
+        // Dynamically try to load config.js
+        (function loadConfig() {
+            const script = document.createElement('script');
+            script.src = 'config.js';
+            script.onerror = function() {
+                console.log('Config file not found, using production values');
+            };
+            document.head.appendChild(script);
+        })();
+
+        // Main initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add debug area to the page
+            const statusMessages = document.getElementById('statusMessages');
+            statusMessages.innerHTML = '<div id="debugArea" style="font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 15px; text-align: left;"><strong>Debugging Info:</strong><br></div>';
+            
+            // Check if config exists (should be available both in local dev and production via GitHub Actions)
+            if (typeof config !== 'undefined') {
+                addDebug('Using configuration from config.js');
+                supabaseUrl = config.supabaseUrl;
+                supabaseKey = config.supabaseKey;
+                
+                addDebug(`Config URL: ${supabaseUrl}`);
+                addDebug(`Config Key (first 10 chars): ${supabaseKey.substring(0, 10)}...`);
+                addDebug(`Key contains 'peaphqbxdmknxzsfdxuh': ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}`);
+                
+                initializeSupabase();
+            } 
+            // Fallback to direct values only if config.js fails to load
+            else {
+                addDebug('Config not found, using fallback configuration');
+                
+                supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
+                addDebug(`Fallback URL: ${supabaseUrl}`);
+                
+                // Don't hardcode the key, use a placeholder that will be replaced by GitHub Actions
+                const rawKey = 'PLACEHOLDER_KEY';
+                supabaseKey = rawKey;
+                
+                addDebug(`Fallback Key not available - config.js is required`);
+                addDebug(`Please ensure the site is properly deployed with GitHub Actions`);
+                
+                initializeSupabase();
+            }
+        });
     </script>
 </body>
 </html> 
