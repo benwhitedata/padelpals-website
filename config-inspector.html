@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Config.js Inspector Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-size: 13px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 2s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .collapsible {
+            background-color: #f1f1f1;
+            color: #333;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+            margin-top: 10px;
+        }
+        .active, .collapsible:hover {
+            background-color: #ddd;
+        }
+        .content {
+            padding: 0 18px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Config.js Inspector Tool</h1>
+    <p>This tool performs comprehensive diagnostics on your config.js setup and deployment.</p>
+    
+    <div class="container">
+        <h2>Environment Information</h2>
+        <div id="envInfo"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>1. Basic Config.js Check</h2>
+        <button id="checkConfig">Check Config.js</button>
+        <div id="configResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Network Request Check</h2>
+        <button id="checkNetwork">Test Network Request for Config.js</button>
+        <div id="networkResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Direct Script Inclusion</h2>
+        <button id="testDirectInclusion">Test Direct Script Inclusion</button>
+        <div id="inclusionResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Cache Test</h2>
+        <button id="testCache">Test with Cache Busting</button>
+        <div id="cacheResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Deployment Investigation</h2>
+        <button id="investigateDeployment">Investigate Deployment</button>
+        <div id="deploymentResult"></div>
+    </div>
+    
+    <div class="container">
+        <h2>Recommendations</h2>
+        <div id="recommendations">Run the tests above to get recommendations.</div>
+    </div>
+    
+    <button type="button" class="collapsible">Advanced Technical Details</button>
+    <div class="content">
+        <pre id="techDetails">No data available yet. Run tests first.</pre>
+    </div>
+    
+    <script>
+        // Environment Info
+        function updateEnvironmentInfo() {
+            const envInfo = document.getElementById('envInfo');
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const isGithubPages = window.location.hostname.includes('github.io');
+            const isCustomDomain = !isLocal && !isGithubPages;
+            
+            let envType = isLocal ? 'Local Development' : 
+                         isGithubPages ? 'GitHub Pages' : 
+                         'Custom Domain';
+            
+            envInfo.innerHTML = `
+                <table>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Environment</td>
+                        <td>${envType}</td>
+                    </tr>
+                    <tr>
+                        <td>Current URL</td>
+                        <td>${window.location.href}</td>
+                    </tr>
+                    <tr>
+                        <td>Hostname</td>
+                        <td>${window.location.hostname}</td>
+                    </tr>
+                    <tr>
+                        <td>Protocol</td>
+                        <td>${window.location.protocol}</td>
+                    </tr>
+                    <tr>
+                        <td>Page Loaded At</td>
+                        <td>${new Date().toISOString()}</td>
+                    </tr>
+                </table>
+            `;
+        }
+        
+        // Basic Config Check
+        document.getElementById('checkConfig').addEventListener('click', function() {
+            const resultDiv = document.getElementById('configResult');
+            resultDiv.innerHTML = '<p>Checking for config variable...</p><div class="loader"></div>';
+            
+            // Wait a bit to see if config is defined globally
+            setTimeout(function() {
+                if (typeof config !== 'undefined') {
+                    let configInfo = '';
+                    try {
+                        configInfo = `
+                            <p class="success">✅ Config variable exists!</p>
+                            <table>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Status</th>
+                                </tr>
+                                <tr>
+                                    <td>supabaseUrl</td>
+                                    <td>${config.supabaseUrl ? 
+                                        `<span class="success">Defined</span> (${config.supabaseUrl.substring(0, 15)}...)` : 
+                                        '<span class="error">Missing</span>'}</td>
+                                </tr>
+                                <tr>
+                                    <td>supabaseKey</td>
+                                    <td>${config.supabaseKey ? 
+                                        `<span class="success">Defined</span> (Length: ${config.supabaseKey.length}, First chars: ${config.supabaseKey.substring(0, 6)}...)` : 
+                                        '<span class="error">Missing</span>'}</td>
+                                </tr>
+                            </table>
+                        `;
+                    } catch (e) {
+                        configInfo = `<p class="warning">⚠️ Config exists but accessing properties caused error: ${e.message}</p>`;
+                    }
+                    resultDiv.innerHTML = configInfo;
+                    updateRecommendations(true);
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Config variable not found!</p>
+                        <p>The global "config" variable is not defined, which means:</p>
+                        <ul>
+                            <li>Config.js file may not exist</li>
+                            <li>Config.js file may not be loading properly</li>
+                            <li>There may be a JavaScript error in the config.js file</li>
+                        </ul>
+                    `;
+                    updateRecommendations(false);
+                }
+            }, 1000);
+        });
+        
+        // Network Request Check
+        document.getElementById('checkNetwork').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('networkResult');
+            resultDiv.innerHTML = '<p>Testing network request for config.js...</p><div class="loader"></div>';
+            
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`config.js?nocache=${timestamp}`);
+                
+                if (response.ok) {
+                    const configContent = await response.text();
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Network request successful!</p>
+                        <p>Status: ${response.status}</p>
+                        <p>Content type: ${response.headers.get('content-type')}</p>
+                        <p>File size: ${configContent.length} bytes</p>
+                        <p>Preview (first 100 chars):</p>
+                        <pre>${configContent.substring(0, 100)}${configContent.length > 100 ? '...' : ''}</pre>
+                    `;
+                    
+                    // Check if file contains placeholders
+                    if (configContent.includes("'${{") || configContent.includes("secrets.")) {
+                        resultDiv.innerHTML += `
+                            <p class="error">❌ The config.js file contains placeholder variables that weren't replaced!</p>
+                            <p>This indicates that GitHub Actions didn't properly inject your secrets.</p>
+                        `;
+                    }
+                    
+                    document.getElementById('techDetails').textContent = `Full config.js content:\n\n${configContent}`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Network request failed!</p>
+                        <p>Status: ${response.status} ${response.statusText}</p>
+                        <p>This means the config.js file doesn't exist on the server or can't be accessed.</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error making request: ${error.message}</p>
+                    <p>This could be due to network issues, CORS restrictions, or the file not existing.</p>
+                `;
+            }
+        });
+        
+        // Direct Script Inclusion
+        document.getElementById('testDirectInclusion').addEventListener('click', function() {
+            const resultDiv = document.getElementById('inclusionResult');
+            resultDiv.innerHTML = '<p>Testing direct script inclusion...</p><div class="loader"></div>';
+            
+            const script = document.createElement('script');
+            script.src = `config.js?t=${new Date().getTime()}`;
+            
+            script.onload = function() {
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Script loaded successfully!</p>
+                    <p>After loading, is config defined: <span class="${typeof config !== 'undefined' ? 'success' : 'error'}">${typeof config !== 'undefined' ? 'Yes' : 'No'}</span></p>
+                `;
+                
+                if (typeof config !== 'undefined') {
+                    try {
+                        resultDiv.innerHTML += `
+                            <p>Config object properties:</p>
+                            <pre>supabaseUrl: ${config.supabaseUrl ? 'defined' : 'undefined'}
+supabaseKey: ${config.supabaseKey ? `defined (length: ${config.supabaseKey.length})` : 'undefined'}</pre>
+                        `;
+                    } catch (e) {
+                        resultDiv.innerHTML += `<p class="warning">⚠️ Error accessing config properties: ${e.message}</p>`;
+                    }
+                }
+            };
+            
+            script.onerror = function() {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Script failed to load!</p>
+                    <p>This confirms that the config.js file is not accessible.</p>
+                `;
+            };
+            
+            document.head.appendChild(script);
+        });
+        
+        // Cache Test
+        document.getElementById('testCache').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('cacheResult');
+            resultDiv.innerHTML = '<p>Testing with cache busting...</p><div class="loader"></div>';
+            
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`config.js?bust=${timestamp}`);
+                
+                if (response.ok) {
+                    const configContent = await response.text();
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Cache-busted request successful!</p>
+                        <p>File exists and can be loaded with a fresh request.</p>
+                        <p>Content length: ${configContent.length} bytes</p>
+                    `;
+                    
+                    // Test loading with a script tag and cache busting
+                    resultDiv.innerHTML += `<p>Now testing with a script tag...</p>`;
+                    
+                    const script = document.createElement('script');
+                    script.src = `config.js?cachebust=${timestamp}`;
+                    
+                    script.onload = function() {
+                        resultDiv.innerHTML += `
+                            <p class="success">✅ Cache-busted script loaded!</p>
+                            <p>After loading, is config defined: <span class="${typeof config !== 'undefined' ? 'success' : 'error'}">${typeof config !== 'undefined' ? 'Yes' : 'No'}</span></p>
+                        `;
+                    };
+                    
+                    script.onerror = function() {
+                        resultDiv.innerHTML += `
+                            <p class="error">❌ Cache-busted script failed to load!</p>
+                            <p>This suggests a possible JavaScript error in the file.</p>
+                        `;
+                    };
+                    
+                    document.head.appendChild(script);
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Cache-busted request failed!</p>
+                        <p>Status: ${response.status}</p>
+                        <p>This confirms the file doesn't exist on the server.</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error making cache-busted request: ${error.message}</p>
+                `;
+            }
+        });
+        
+        // Deployment Investigation
+        document.getElementById('investigateDeployment').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('deploymentResult');
+            resultDiv.innerHTML = '<p>Investigating deployment...</p><div class="loader"></div>';
+            
+            const deploymentInfo = {};
+            
+            // Check for GitHub Pages info
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const isCustomDomain = !isGitHubPages && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            
+            deploymentInfo.platform = isGitHubPages ? 'GitHub Pages (Direct)' : 
+                                     isCustomDomain ? 'Custom Domain (likely GitHub Pages)' : 
+                                     'Local Development';
+            
+            // Check for verification files
+            try {
+                const promises = [
+                    fetch('config-created.txt').then(r => r.ok ? r.text() : 'Not found'),
+                    fetch('config-verification.txt').then(r => r.ok ? r.text() : 'Not found'),
+                    fetch('.nojekyll').then(r => r.ok ? 'Exists' : 'Not found').catch(() => 'Error checking')
+                ];
+                
+                const [createdTxt, verificationTxt, nojekyll] = await Promise.all(promises);
+                
+                deploymentInfo.configCreated = createdTxt !== 'Not found' ? createdTxt : 'File not found';
+                deploymentInfo.configVerification = verificationTxt !== 'Not found' ? verificationTxt : 'File not found';
+                deploymentInfo.nojekyll = nojekyll;
+                
+                // Construct the report
+                resultDiv.innerHTML = `
+                    <h3>Deployment Investigation Results</h3>
+                    <table>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Platform</td>
+                            <td>${deploymentInfo.platform}</td>
+                        </tr>
+                        <tr>
+                            <td>config-created.txt</td>
+                            <td>${deploymentInfo.configCreated === 'Not found' ? 
+                                '<span class="error">Not found</span>' : 
+                                '<span class="success">Found</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>config-verification.txt</td>
+                            <td>${deploymentInfo.configVerification === 'Not found' ? 
+                                '<span class="error">Not found</span>' : 
+                                '<span class="success">Found</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>.nojekyll</td>
+                            <td>${deploymentInfo.nojekyll === 'Exists' ? 
+                                '<span class="success">Exists</span>' : 
+                                '<span class="error">Not found</span>'}</td>
+                        </tr>
+                    </table>
+                `;
+                
+                if (deploymentInfo.configCreated !== 'Not found') {
+                    resultDiv.innerHTML += `
+                        <h4>config-created.txt Content</h4>
+                        <pre>${deploymentInfo.configCreated}</pre>
+                    `;
+                }
+                
+                if (deploymentInfo.configVerification !== 'Not found') {
+                    resultDiv.innerHTML += `
+                        <h4>config-verification.txt Content</h4>
+                        <pre>${deploymentInfo.configVerification}</pre>
+                    `;
+                }
+                
+                // Add conclusions
+                let conclusion = '<h3>Conclusion</h3>';
+                
+                if (deploymentInfo.configCreated === 'Not found' && deploymentInfo.configVerification === 'Not found') {
+                    conclusion += `
+                        <p class="error">❌ GitHub Actions workflow is not successfully creating verification files.</p>
+                        <p>This suggests the deployment process is either not running correctly or files aren't being deployed properly.</p>
+                    `;
+                } else if (deploymentInfo.configCreated !== 'Not found' && deploymentInfo.configVerification === 'Not found') {
+                    conclusion += `
+                        <p class="warning">⚠️ Partial verification files found. GitHub Actions created the config file but verification script may have failed.</p>
+                    `;
+                } else if (deploymentInfo.nojekyll !== 'Exists') {
+                    conclusion += `
+                        <p class="warning">⚠️ .nojekyll file not found. This might cause issues with GitHub Pages processing your files.</p>
+                    `;
+                }
+                
+                resultDiv.innerHTML += conclusion;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error during deployment investigation: ${error.message}</p>
+                `;
+            }
+        });
+        
+        // Update recommendations based on test results
+        function updateRecommendations(configExists) {
+            const recommendations = document.getElementById('recommendations');
+            
+            if (configExists) {
+                recommendations.innerHTML = `
+                    <p class="success">✅ Config.js is working properly!</p>
+                    <p>You can now use this approach in your main application code.</p>
+                `;
+            } else {
+                recommendations.innerHTML = `
+                    <h3>Troubleshooting Steps</h3>
+                    <ol>
+                        <li>Check GitHub Actions workflow logs to ensure it's completing successfully</li>
+                        <li>Verify that GitHub Secrets (SUPABASE_URL and SUPABASE_ANON_KEY) are properly set</li>
+                        <li>Make sure the deployment branch in GitHub Pages settings is correct (should be gh-pages)</li>
+                        <li>Ensure your custom domain DNS settings point to GitHub Pages (not Netlify)</li>
+                        <li>Try purging your browser cache or testing in an incognito window</li>
+                        <li>Make sure the config.js file is included in the GitHub Pages deployment</li>
+                    </ol>
+                    <p>For DNS issues, verify your DNS configuration:</p>
+                    <ul>
+                        <li>Your domain should have a CNAME record pointing to <strong>benwhitedata.github.io</strong></li>
+                        <li>If using Cloudflare or other DNS providers, ensure proxying isn't interfering with GitHub Pages</li>
+                    </ul>
+                `;
+            }
+        }
+        
+        // Set up collapsible sections
+        const coll = document.getElementsByClassName("collapsible");
+        for (let i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                const content = this.nextElementSibling;
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            });
+        }
+        
+        // Initialize environment info
+        updateEnvironmentInfo();
+    </script>
+</body>
+</html> 
