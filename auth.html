@@ -274,7 +274,7 @@
                             });
                         }
                         
-                        // Create direct Apple auth URL
+                        // Create direct Apple auth URL with correct redirectTo parameter
                         const directUrl = `https://appleid.apple.com/auth/authorize?client_id=com.playpadelpals.padelpals362.signin&redirect_uri=https%3A%2F%2Fpeaphqbxdmknxzsfdxuh.supabase.co%2Fauth%2Fv1%2Fcallback&response_mode=form_post&response_type=code&scope=email+name&state=${encodeURIComponent(state)}`;
                         
                         console.log('Using direct URL instead:', directUrl);

@@ -117,7 +117,39 @@
             async function processManualAuth() {
                 // Check URL for a code parameter from Apple's redirect
                 const urlParams = new URLSearchParams(window.location.search);
+                const formData = document.querySelector('form');
                 
+                // Handle POST data from form_post response (Apple uses this)
+                if (formData) {
+                    console.log('Found form data, extracting code...');
+                    const code = formData.querySelector('input[name="code"]')?.value;
+                    const state = formData.querySelector('input[name="state"]')?.value;
+                    
+                    if (code) {
+                        console.log('Form code found:', code.substring(0, 10) + '...');
+                        try {
+                            // Exchange code for session
+                            console.log('Attempting to exchange code for session from form data...');
+                            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                            
+                            if (error) {
+                                console.error('Error exchanging form code for session:', error);
+                                throw error;
+                            }
+                            
+                            if (data?.session) {
+                                console.log('Successfully exchanged form code for session!');
+                                window.location.href = '/dashboard.html';
+                                return true;
+                            }
+                        } catch (error) {
+                            console.error('Failed to exchange form code for session:', error);
+                            throw error;
+                        }
+                    }
+                }
+                
+                // Check URL parameters (standard flow)
                 if (urlParams.has('code')) {
                     const code = urlParams.get('code');
                     console.log('Auth code found in URL:', code.substring(0, 10) + '...');
