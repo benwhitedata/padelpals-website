@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple GitHub Secrets Test</title>
+    <script>
+        // Dynamically try to load config.js
+        (function loadConfig() {
+            const script = document.createElement('script');
+            script.src = 'config.js';
+            script.onerror = function() {
+                console.log('Config file not found');
+                document.getElementById('status').textContent = 'Config file not found - GitHub Actions deployment required';
+                document.getElementById('status').style.color = 'red';
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>GitHub Secrets Test</h1>
+    <p id="status">Loading configuration...</p>
+    
+    <div class="container">
+        <h2>Configuration Information</h2>
+        <div id="configInfo">Not loaded yet</div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait a bit to ensure config.js has time to load
+            setTimeout(function() {
+                if (typeof config !== 'undefined') {
+                    document.getElementById('status').textContent = 'Configuration loaded successfully!';
+                    document.getElementById('status').className = 'success';
+                    
+                    // Display config info (securely)
+                    const configInfo = document.getElementById('configInfo');
+                    configInfo.innerHTML = `
+                        <p><strong>Supabase URL:</strong> ${config.supabaseUrl || 'Not defined'}</p>
+                        <p><strong>Supabase Key:</strong> ${
+                            config.supabaseKey ? 
+                            `<span class="success">Available</span> (First 6 chars: ${config.supabaseKey.substring(0, 6)}..., Length: ${config.supabaseKey.length})` : 
+                            '<span class="error">Not defined</span>'
+                        }</p>
+                        <p><strong>Environment:</strong> ${
+                            window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1' ? 
+                            'Local Development' : 'Production/GitHub Pages'
+                        }</p>
+                        <p><strong>Current URL:</strong> ${window.location.href}</p>
+                        <p>This test confirms your GitHub Secrets are working properly!</p>
+                    `;
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html> 
