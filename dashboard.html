@@ -133,6 +133,19 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Authentication Test Section -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="stats-card">
+                        <h3>Authentication & Connection Test</h3>
+                        <div id="connectionTest">
+                            <div class="spinner" style="width: 20px; height: 20px;"></div>
+                            <p>Testing connection...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -250,6 +263,9 @@
                         <p>Losses: ${matchStats.filter(m => m.result === 'loss').length}</p>
                     `
                     document.getElementById('matchStats').innerHTML = matchStatsHtml
+                    
+                    // Run a simple test query to verify connection
+                    await testSupabaseConnection(supabase, session);
     
                     // Show dashboard content
                     document.getElementById('loading').style.display = 'none'
@@ -274,6 +290,68 @@
     
             // Load user data when page loads
             loadUserData();
+            
+            // Function to test Supabase connection
+            async function testSupabaseConnection(supabase, session) {
+                const testElement = document.getElementById('connectionTest');
+                
+                try {
+                    // Display authentication info
+                    let testHtml = `
+                        <h4>Authentication Status</h4>
+                        <p><strong>Status:</strong> <span class="text-success">Authenticated</span></p>
+                        <p><strong>User ID:</strong> ${session.user.id}</p>
+                        <p><strong>Provider:</strong> ${session.user.app_metadata.provider}</p>
+                    `;
+                    
+                    // Run a simple query to test database access
+                    testHtml += `<h4>Database Connection Test</h4>`;
+                    
+                    // Query to Supabase timestamp
+                    const { data: timeData, error: timeError } = await supabase.rpc('get_server_timestamp');
+                    
+                    if (timeError) {
+                        throw timeError;
+                    }
+                    
+                    testHtml += `<p><strong>Server Timestamp:</strong> ${timeData || 'No timestamp returned'}</p>`;
+                    
+                    // Attempt to query a random table to verify permissions work
+                    testHtml += `<h4>Table Access Test</h4>`;
+                    
+                    try {
+                        // Try to get a simple count of total users 
+                        const { count, error: countError } = await supabase
+                            .from('profiles')
+                            .select('*', { count: 'exact', head: true });
+                            
+                        if (countError) {
+                            testHtml += `<p><strong>Table Access:</strong> <span class="text-danger">Failed</span> - ${countError.message}</p>`;
+                        } else {
+                            testHtml += `<p><strong>Table Access:</strong> <span class="text-success">Success</span> - Found ${count} users</p>`;
+                        }
+                    } catch (tableError) {
+                        testHtml += `<p><strong>Table Access:</strong> <span class="text-danger">Failed</span> - ${tableError.message}</p>`;
+                    }
+                    
+                    testHtml += `
+                        <div class="alert alert-success mt-3">
+                            <strong>Connection Test Complete:</strong> Your authentication is working correctly!
+                        </div>
+                    `;
+                    
+                    testElement.innerHTML = testHtml;
+                    
+                } catch (error) {
+                    console.error('Connection test error:', error);
+                    testElement.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h4>Connection Test Failed</h4>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            }
         }
     </script>
 </body>
