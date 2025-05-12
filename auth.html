@@ -224,31 +224,37 @@
                     button.disabled = true;
                     buttonText.innerHTML = '<span class="loading-spinner"></span> Connecting...';
                     
-                    // Direct authentication with Apple (since we know which client ID works)
-                    const correctClientId = 'com.playpadelpals.padelpals362.signin';
-                    console.log('Using direct authentication with client ID:', correctClientId);
-                    statusMessages.innerHTML = '<div class="status-message info-message">Initiating direct Apple sign-in...</div>';
-                    
-                    // Create direct Apple auth URL
+                    // Prepare redirect URL - make sure it's absolute
                     const redirectUrl = new URL('/auth-callback.html', window.location.origin).href;
-                    const baseUrl = 'https://appleid.apple.com/auth/authorize';
-                    const params = new URLSearchParams({
-                        client_id: correctClientId,
-                        redirect_uri: 'https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback',
-                        response_type: 'code',
-                        response_mode: 'form_post',
-                        scope: 'email name',
-                        state: JSON.stringify({
-                            site_url: window.location.origin,
-                            timestamp: new Date().getTime()
-                        })
+                    console.log('Using redirect URL:', redirectUrl);
+                    
+                    // Now that we've configured the correct client IDs in Supabase,
+                    // we can try using Supabase's OAuth flow again
+                    console.log('Attempting to sign in with Supabase OAuth flow...');
+                    statusMessages.innerHTML = '<div class="status-message info-message">Initiating Apple sign-in through Supabase...</div>';
+                    
+                    const { data, error } = await supabase.auth.signInWithOAuth({
+                        provider: 'apple',
+                        options: {
+                            redirectTo: redirectUrl,
+                            scopes: 'email name'
+                        }
                     });
+
+                    if (error) {
+                        console.error('Sign in error:', error);
+                        throw error;
+                    }
                     
-                    const appleAuthUrl = `${baseUrl}?${params.toString()}`;
-                    console.log('Redirecting to:', appleAuthUrl);
+                    if (!data?.url) {
+                        throw new Error('No authentication URL returned from Supabase');
+                    }
                     
-                    // Redirect directly to Apple auth
-                    window.location.href = appleAuthUrl;
+                    console.log('Sign in initiated. Auth URL:', data.url);
+                    statusMessages.innerHTML = '<div class="status-message info-message">Redirecting to Apple...</div>';
+                    
+                    // Redirect to Apple's authentication page
+                    window.location.href = data.url;
                     
                 } catch (error) {
                     console.error('Error signing in with Apple:', error.message);

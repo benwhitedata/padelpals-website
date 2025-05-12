@@ -117,26 +117,68 @@
             async function processManualAuth() {
                 // Check URL for a code parameter from Apple's redirect
                 const urlParams = new URLSearchParams(window.location.search);
+                
                 if (urlParams.has('code')) {
                     const code = urlParams.get('code');
                     console.log('Auth code found in URL:', code.substring(0, 10) + '...');
                     
                     try {
-                        // Exchange the code for a session
+                        // First, try to sign in with OAuth credentials
+                        console.log('Attempting to sign in with OAuth credentials...');
+                        const { data: signInData, error: signInError } = await supabase.auth.signInWithIdToken({
+                            provider: 'apple',
+                            token: code,
+                            nonce: urlParams.get('state') || undefined
+                        });
+                        
+                        if (signInData?.session) {
+                            console.log('Successfully signed in with ID token!');
+                            window.location.href = '/dashboard.html';
+                            return true;
+                        }
+                        
+                        if (signInError) {
+                            console.warn('Could not sign in with ID token:', signInError);
+                        }
+                        
+                        // If that doesn't work, try exchanging code for session
+                        console.log('Attempting to exchange code for session...');
                         const { data, error } = await supabase.auth.exchangeCodeForSession(code);
                         
                         if (error) {
                             console.error('Error exchanging code for session:', error);
-                            throw error;
+                            
+                            // Try one more authentication method - let Supabase handle it
+                            console.log('Trying one more authentication method...');
+                            
+                            // Get any potential authentication data from the URL
+                            const params = new URLSearchParams(window.location.search);
+                            console.log('URL search params:', Array.from(params.entries()));
+                            
+                            // Manually attempt to log in with provider token
+                            const { data: tokenData, error: tokenError } = await supabase.auth.getSession();
+                            
+                            if (tokenData?.session) {
+                                console.log('Got session from getSession!');
+                                window.location.href = '/dashboard.html';
+                                return true;
+                            }
+                            
+                            if (tokenError) {
+                                throw tokenError;
+                            } else {
+                                throw error;
+                            }
                         }
                         
-                        if (data.session) {
+                        if (data?.session) {
                             console.log('Successfully exchanged code for session!');
                             window.location.href = '/dashboard.html';
                             return true;
                         }
                     } catch (error) {
                         console.error('Failed to exchange code for session:', error);
+                        throw error;
                     }
                 }
                 return false;
