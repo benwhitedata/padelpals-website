@@ -79,7 +79,7 @@
         <div class="spinner"></div>
         <h2>Completing sign in...</h2>
         <p>Please wait while we authenticate your account.</p>
-        <div id="debugContainer" style="margin-top: 20px; text-align: left; display: none;">
+        <div id="debugContainer" style="margin-top: 20px; text-align: left; display: block;">
             <h4>Debug Information:</h4>
             <pre id="debugInfo" style="background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 300px; overflow: auto;"></pre>
             <button id="continueToAuth" class="btn btn-primary mt-3" style="display: none;">Continue to Auth Page</button>
@@ -167,240 +167,11 @@
                     return;
                 }
                 
-                // Add this function to handle manual authentication
-                async function processManualAuth() {
-                    // Check URL for a code parameter from Apple's redirect
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const formData = document.querySelector('form');
-                    
-                    // For debugging
-                    const showDebug = (message) => {
-                        document.getElementById('debugContainer').style.display = 'block';
-                        const debugInfo = document.getElementById('debugInfo');
-                        debugInfo.textContent += message + '\n';
-                    };
-                    
-                    // Add debug information after 2 seconds
-                    setTimeout(() => {
-                        showDebug('Starting authentication debug...');
-                        showDebug(`URL: ${window.location.href}`);
-                        showDebug(`URL Params: ${JSON.stringify(Object.fromEntries(urlParams.entries()))}`);
-                        showDebug(`Form found: ${formData ? 'Yes' : 'No'}`);
-                        
-                        document.getElementById('continueToAuth').style.display = 'block';
-                        document.getElementById('continueToDashboard').style.display = 'block';
-                    }, 2000);
-                    
-                    // Parse the form-encoded body from Apple's post
-                    if (document.body.innerHTML.includes('code=') && document.body.innerHTML.includes('form-post')) {
-                        showDebug('Found form-post response in document body');
-                        
-                        // Extract the code from the document body
-                        const bodyText = document.body.innerHTML;
-                        const codeMatch = bodyText.match(/code=([^&"]+)/);
-                        const stateMatch = bodyText.match(/state=([^&"]+)/);
-                        
-                        if (codeMatch && codeMatch[1]) {
-                            const code = decodeURIComponent(codeMatch[1]);
-                            const state = stateMatch && stateMatch[1] ? decodeURIComponent(stateMatch[1]) : null;
-                            
-                            showDebug(`Extracted code from body: ${code.substring(0, 10)}...`);
-                            showDebug(`Extracted state from body: ${state ? state.substring(0, 10) + '...' : 'Not found'}`);
-                            
-                            if (!state) {
-                                showDebug('Warning: No state parameter found in the form response');
-                                showDebug('This might cause authentication issues');
-                            }
-                            
-                            try {
-                                // Exchange code for session
-                                showDebug('Attempting to exchange code for session from extracted data...');
-                                const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-                                
-                                if (error) {
-                                    showDebug(`Error exchanging code for session: ${error.message}`);
-                                    throw error;
-                                }
-                                
-                                if (data?.session) {
-                                    showDebug('Successfully exchanged code for session!');
-                                    
-                                    // Explicitly set the session
-                                    await supabase.auth.setSession({
-                                        access_token: data.session.access_token,
-                                        refresh_token: data.session.refresh_token
-                                    });
-                                    
-                                    showDebug('Session set explicitly');
-                                    showDebug('Redirecting to dashboard in 3 seconds...');
-                                    
-                                    setTimeout(() => {
-                                        window.location.href = '/dashboard.html';
-                                    }, 3000);
-                                    
-                                    return true;
-                                }
-                            } catch (error) {
-                                showDebug(`Failed to exchange code for session: ${error.message}`);
-                                throw error;
-                            }
-                        }
-                    }
-                    
-                    // Handle POST data from form_post response (Apple uses this)
-                    if (formData) {
-                        showDebug('Found form data, extracting code...');
-                        const code = formData.querySelector('input[name="code"]')?.value;
-                        const state = formData.querySelector('input[name="state"]')?.value;
-                        
-                        showDebug(`Form code found: ${code ? code.substring(0, 10) + '...' : 'None'}`);
-                        showDebug(`Form state found: ${state ? 'Yes' : 'No'}`);
-                        
-                        if (code) {
-                            try {
-                                // Exchange code for session
-                                showDebug('Attempting to exchange code for session from form data...');
-                                const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-                                
-                                if (error) {
-                                    showDebug(`Error exchanging form code for session: ${error.message}`);
-                                    throw error;
-                                }
-                                
-                                if (data?.session) {
-                                    showDebug('Successfully exchanged form code for session!');
-                                    
-                                    // Explicitly set the session
-                                    await supabase.auth.setSession({
-                                        access_token: data.session.access_token,
-                                        refresh_token: data.session.refresh_token
-                                    });
-                                    
-                                    showDebug('Session set explicitly');
-                                    showDebug('Redirecting to dashboard in 3 seconds...');
-                                    
-                                    setTimeout(() => {
-                                        window.location.href = '/dashboard.html';
-                                    }, 3000);
-                                    
-                                    return true;
-                                }
-                            } catch (error) {
-                                showDebug(`Failed to exchange form code for session: ${error.message}`);
-                                throw error;
-                            }
-                        }
-                    }
-                    
-                    // Check URL parameters (standard flow)
-                    if (urlParams.has('code')) {
-                        const code = urlParams.get('code');
-                        const state = urlParams.get('state');
-                        
-                        console.log('Auth code found in URL:', code.substring(0, 10) + '...');
-                        console.log('State parameter found:', state ? 'Yes' : 'No');
-                        
-                        if (!state) {
-                            showDebug('Warning: No state parameter found in the URL');
-                            showDebug('This might cause authentication issues');
-                        } else {
-                            showDebug(`State parameter found: ${state.substring(0, 10)}...`);
-                        }
-                        
-                        try {
-                            // First, try to sign in with OAuth credentials
-                            console.log('Attempting to sign in with OAuth credentials...');
-                            const { data: signInData, error: signInError } = await supabase.auth.signInWithIdToken({
-                                provider: 'apple',
-                                token: code,
-                                nonce: urlParams.get('state') || undefined
-                            });
-                            
-                            if (signInData?.session) {
-                                console.log('Successfully signed in with ID token!');
-                                window.location.href = '/dashboard.html';
-                                return true;
-                            }
-                            
-                            if (signInError) {
-                                console.warn('Could not sign in with ID token:', signInError);
-                            }
-                            
-                            // If that doesn't work, try exchanging code for session
-                            console.log('Attempting to exchange code for session...');
-                            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-                            
-                            if (error) {
-                                console.error('Error exchanging code for session:', error);
-                                showDebug(`Error exchanging code for session: ${error.message}`);
-                                
-                                // Try one more authentication method - let Supabase handle it
-                                console.log('Trying one more authentication method...');
-                                showDebug('Trying one more authentication method...');
-                                
-                                // Try direct sign-in with Apple provider and the code
-                                try {
-                                    showDebug('Attempting direct sign in with Apple provider...');
-                                    const { data: signInData, error: signInError } = await supabase.auth.signInWithOAuth({
-                                        provider: 'apple',
-                                        options: {
-                                            skipBrowserRedirect: true,
-                                            queryParams: {
-                                                code: code
-                                            }
-                                        }
-                                    });
-                                    
-                                    if (signInError) {
-                                        showDebug(`Error with direct sign in: ${signInError.message}`);
-                                        throw signInError;
-                                    }
-                                    
-                                    if (signInData) {
-                                        showDebug('Sign in successful, got URL: ' + (signInData.url ? 'Yes' : 'No'));
-                                        
-                                        // Try getting the session one more time
-                                        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-                                        
-                                        if (sessionError) {
-                                            showDebug(`Session error: ${sessionError.message}`);
-                                        } else if (sessionData?.session) {
-                                            showDebug('Successfully got session!');
-                                            
-                                            setTimeout(() => {
-                                                window.location.href = '/dashboard.html';
-                                            }, 3000);
-                                            
-                                            return true;
-                                        }
-                                    }
-                                } catch (signInError) {
-                                    showDebug(`Direct sign in failed: ${signInError.message}`);
-                                }
-                                
-                                // Let the user try manual navigation
-                                document.getElementById('continueToDashboard').style.display = 'block';
-                                
-                                throw error;
-                            }
-                            
-                            if (data?.session) {
-                                console.log('Successfully exchanged code for session!');
-                                window.location.href = '/dashboard.html';
-                                return true;
-                            }
-                        } catch (error) {
-                            console.error('Failed to exchange code for session:', error);
-                            throw error;
-                        }
-                    }
-                    return false;
-                }
-
                 // Handle the OAuth callback
                 async function handleAuthCallback() {
                     try {
                         console.log('Handling auth callback with URL:', window.location.href);
+                        addDebugInfo('Processing authentication callback...');
                         
                         // Check for error parameters in the URL
                         const urlParams = new URLSearchParams(window.location.search);
@@ -411,6 +182,7 @@
                             const errorCode = urlParams.get('error_code');
                             const errorDesc = urlParams.get('error_description') || 'Unknown error';
                             console.error('Error in URL params:', error, errorCode, errorDesc);
+                            addDebugInfo(`Error: ${error} (${errorCode}): ${errorDesc}`);
                             throw new Error(`${error} (${errorCode}): ${errorDesc}`);
                         }
                         
@@ -421,30 +193,108 @@
                                 const error = hashParams.get('error');
                                 const errorDesc = hashParams.get('error_description') || 'Unknown error';
                                 console.error('Error in hash fragment:', error, errorDesc);
+                                addDebugInfo(`Error in hash: ${error}: ${errorDesc}`);
                                 throw new Error(`${error}: ${errorDesc}`);
                             }
                         }
                         
-                        // Try processing manual auth first
-                        const manualAuthSuccessful = await processManualAuth();
-                        if (manualAuthSuccessful) {
-                            return;
+                        // First, check if we have a code in the URL (standard OAuth callback)
+                        if (urlParams.has('code')) {
+                            const code = urlParams.get('code');
+                            const state = urlParams.get('state');
+                            
+                            addDebugInfo(`Found code parameter in URL: ${code.substring(0, 10)}...`);
+                            addDebugInfo(`State parameter: ${state ? 'Present' : 'Missing'}`);
+                            
+                            try {
+                                addDebugInfo('Attempting to exchange code for session...');
+                                const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                                
+                                if (error) {
+                                    addDebugInfo(`Error exchanging code: ${error.message}`);
+                                    throw error;
+                                }
+                                
+                                if (data?.session) {
+                                    addDebugInfo('Successfully exchanged code for session!');
+                                    
+                                    // Explicitly set the session
+                                    await supabase.auth.setSession({
+                                        access_token: data.session.access_token,
+                                        refresh_token: data.session.refresh_token
+                                    });
+                                    
+                                    addDebugInfo('Session set explicitly');
+                                    addDebugInfo('Redirecting to dashboard in 3 seconds...');
+                                    
+                                    setTimeout(() => {
+                                        window.location.href = '/dashboard.html';
+                                    }, 3000);
+                                    
+                                    return;
+                                }
+                            } catch (error) {
+                                addDebugInfo(`Session exchange error: ${error.message}`);
+                                throw error;
+                            }
                         }
                         
-                        // Fall back to standard session check
-                        console.log('Attempting to get session from Supabase');
-                        const { data: { session }, error } = await supabase.auth.getSession();
+                        // Check for form-post response (Apple specific)
+                        const formData = document.querySelector('form');
+                        if (formData) {
+                            addDebugInfo('Found form data, extracting...');
+                            const code = formData.querySelector('input[name="code"]')?.value;
+                            const state = formData.querySelector('input[name="state"]')?.value;
+                            
+                            if (code) {
+                                addDebugInfo(`Form code: ${code.substring(0, 10)}...`);
+                                addDebugInfo(`Form state: ${state ? state.substring(0, 10) + '...' : 'Missing'}`);
+                                
+                                try {
+                                    addDebugInfo('Exchanging form code for session...');
+                                    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                                    
+                                    if (error) {
+                                        addDebugInfo(`Form exchange error: ${error.message}`);
+                                        throw error;
+                                    }
+                                    
+                                    if (data?.session) {
+                                        addDebugInfo('Successfully exchanged form code!');
+                                        
+                                        // Explicitly set the session
+                                        await supabase.auth.setSession({
+                                            access_token: data.session.access_token,
+                                            refresh_token: data.session.refresh_token
+                                        });
+                                        
+                                        addDebugInfo('Session set, redirecting to dashboard...');
+                                        setTimeout(() => {
+                                            window.location.href = '/dashboard.html';
+                                        }, 3000);
+                                        
+                                        return;
+                                    }
+                                } catch (error) {
+                                    addDebugInfo(`Form session error: ${error.message}`);
+                                    throw error;
+                                }
+                            }
+                        }
                         
-                        if (error) {
-                            console.error('Auth error:', error);
-                            showDebug(`Auth error: ${error.message}`);
-                            throw error;
+                        // Check if we already have a session
+                        addDebugInfo('Checking for existing session...');
+                        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                        
+                        if (sessionError) {
+                            addDebugInfo(`Session check error: ${sessionError.message}`);
+                            throw sessionError;
                         }
 
                         if (session) {
                             // Successful sign in
-                            console.log('Authentication successful, user:', session.user.id);
-                            showDebug(`Authentication successful, user: ${session.user.id}`);
+                            addDebugInfo('Existing session found!');
+                            addDebugInfo(`User: ${session.user.id}`);
                             
                             // Store session in localStorage to ensure it persists
                             localStorage.setItem('supabase.auth.token', JSON.stringify({
@@ -452,17 +302,15 @@
                                 refresh_token: session.refresh_token
                             }));
                             
-                            showDebug('Session stored in localStorage');
-                            showDebug('Redirecting to dashboard in 3 seconds...');
+                            addDebugInfo('Session stored in localStorage');
+                            addDebugInfo('Redirecting to dashboard...');
                             
                             setTimeout(() => {
                                 window.location.href = '/dashboard.html';
                             }, 3000);
                         } else {
                             // No session found
-                            console.log('No session found, redirecting to auth page');
-                            showDebug('No session found, redirecting to auth page');
-                            
+                            addDebugInfo('No session found, redirecting to auth page');
                             document.getElementById('continueToAuth').style.display = 'block';
                         }
                     } catch (error) {
