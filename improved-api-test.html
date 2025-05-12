@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Improved API Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Load the config loader first - it will attempt multiple sources -->
+    <script src="config-loader.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #1a2238;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        pre {
+            background: #e8e8e8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .loading { color: blue; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Improved API Test</h1>
+    <p id="init-status" class="loading">Loading configuration...</p>
+    
+    <div class="test-section">
+        <h2>Configuration Source</h2>
+        <div id="config-source">Waiting for configuration...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>API Key Test</h2>
+        <button id="test-key" disabled>Test API Key</button>
+        <div id="key-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Connectivity Test</h2>
+        <button id="test-connection" disabled>Test Connection</button>
+        <div id="connection-result"></div>
+    </div>
+    
+    <script>
+        // Wait for configuration to be loaded
+        document.addEventListener('configLoaded', () => {
+            const initStatus = document.getElementById('init-status');
+            const configSource = document.getElementById('config-source');
+            
+            // Enable buttons
+            document.getElementById('test-key').disabled = false;
+            document.getElementById('test-connection').disabled = false;
+            
+            // Update status
+            initStatus.textContent = 'Configuration loaded!';
+            initStatus.className = 'success';
+            
+            // Display configuration source info
+            configSource.innerHTML = `
+                <p><strong>Supabase URL:</strong> ${window.config.supabaseUrl}</p>
+                <p><strong>API Key:</strong> ${window.config.supabaseKey ? 
+                    `Available (${window.config.supabaseKey.length} characters)` : 
+                    'Missing'}</p>
+                <p><strong>Key Format:</strong> ${window.config.supabaseKey?.startsWith('eyJ') ? 
+                    'Valid JWT format' : 'Unknown format'}</p>
+                <p><strong>Environment:</strong> ${location.hostname === 'localhost' ? 
+                    'Local Development' : 'Production'}</p>
+            `;
+        });
+        
+        // Test API Key
+        document.getElementById('test-key').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('key-result');
+            resultDiv.innerHTML = '<p class="loading">Testing API key...</p>';
+            
+            try {
+                const response = await fetch(`${window.config.supabaseUrl}/rest/v1/?apikey=${window.config.supabaseKey}`, {
+                    method: 'GET',
+                    headers: { 'apikey': window.config.supabaseKey }
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ API key is valid!</p>
+                        <p>Status: ${response.status}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ API key is invalid!</p>
+                        <p>Status: ${response.status}</p>
+                        <pre>${await response.text()}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        });
+        
+        // Test Connection
+        document.getElementById('test-connection').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.innerHTML = '<p class="loading">Testing Supabase connection...</p>';
+            
+            try {
+                // Create Supabase client
+                const supabase = window.supabase.createClient(
+                    window.config.supabaseUrl,
+                    window.config.supabaseKey
+                );
+                
+                // Try a simple auth request
+                const { data, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    throw error;
+                }
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Connection successful!</p>
+                    <p>Session found: ${data.session ? 'Yes' : 'No'}</p>
+                `;
+                
+                // Try a simple query if we got this far
+                try {
+                    const { count, error: queryError } = await supabase
+                        .from('profiles')
+                        .select('*', { count: 'exact', head: true });
+                        
+                    if (queryError) {
+                        resultDiv.innerHTML += `
+                            <p class="error">Query error: ${queryError.message}</p>
+                        `;
+                    } else {
+                        resultDiv.innerHTML += `
+                            <p class="success">Query successful! Found ${count} profiles.</p>
+                        `;
+                    }
+                } catch (queryError) {
+                    resultDiv.innerHTML += `
+                        <p>Additional query test failed: ${queryError.message}</p>
+                    `;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Connection error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html> 

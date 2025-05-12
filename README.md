@@ -72,3 +72,71 @@ If authentication is not working:
 - Never commit your `config.js` file with actual credentials
 - For production deployments, use GitHub secrets and Actions
 - Always use the public anon key from Supabase, never the service role key
+
+## Supabase Configuration
+
+### Configuration Files
+
+The website uses the following configuration files to manage Supabase API access:
+
+1. **config.js** - Basic configuration file created by GitHub Actions during deployment
+2. **enhanced-config.js** - Enhanced configuration with built-in fallback mechanism
+3. **config-loader.js** - Utility script that attempts to load configuration from multiple sources
+4. **supabase-config.js** - Legacy utility for consistent configuration across pages
+
+### Implementation Options
+
+There are several ways to implement Supabase connectivity in your pages:
+
+#### Option 1: Use config-loader.js (Recommended)
+
+```html
+<!-- Include config loader -->
+<script src="config-loader.js"></script>
+
+<!-- Use configuration after it's loaded -->
+<script>
+  document.addEventListener('configLoaded', () => {
+    // Create Supabase client with loaded configuration
+    const supabase = window.supabase.createClient(
+      window.config.supabaseUrl,
+      window.config.supabaseKey
+    );
+    
+    // Use supabase client here...
+  });
+</script>
+```
+
+#### Option 2: Direct Embedding (For Testing)
+
+```html
+<script>
+  // Direct hardcoded configuration
+  window.config = {
+    supabaseUrl: 'https://peaphqbxdmknxzsfdxuh.supabase.co',
+    supabaseKey: 'your-api-key-here'
+  };
+</script>
+```
+
+### GitHub Secrets Setup
+
+The website is configured to use GitHub Secrets for secure API key handling:
+
+1. Two secrets are configured in the GitHub repository:
+   - `SUPABASE_URL` - The URL of your Supabase project
+   - `SUPABASE_ANON_KEY` - The anonymous API key for client-side access
+
+2. GitHub Actions injects these secrets into configuration files during deployment.
+
+3. Fallback mechanisms ensure the site works even if GitHub Secrets injection fails.
+
+### Test Pages
+
+Several test pages demonstrate different configuration approaches:
+
+- **improved-api-test.html** - Uses the new config-loader.js approach (recommended)
+- **fixed-api-test.html** - Uses direct embedding for reliable testing
+- **inline-api-test.html** - Legacy approach with inline fallback
+- **simple-direct-test.html** - Simplified direct embedding approach
