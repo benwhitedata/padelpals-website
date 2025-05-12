@@ -171,18 +171,42 @@
         let supabaseUrl, supabaseKey;
         
         document.addEventListener('DOMContentLoaded', function() {
+            // Add debug area to the page
+            const statusMessages = document.getElementById('statusMessages');
+            statusMessages.innerHTML = '<div id="debugArea" style="font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 15px; text-align: left;"><strong>Debugging Info:</strong><br></div>';
+            const debugArea = document.getElementById('debugArea');
+            
+            function addDebug(message) {
+                debugArea.innerHTML += message + '<br>';
+                console.log(message);
+            }
+            
             // Check if config exists (should be available both in local dev and production via GitHub Actions)
             if (typeof config !== 'undefined') {
-                console.log('Using configuration from config.js');
+                addDebug('Using configuration from config.js');
                 supabaseUrl = config.supabaseUrl;
                 supabaseKey = config.supabaseKey;
+                
+                addDebug(`Config URL: ${supabaseUrl}`);
+                addDebug(`Config Key (first 10 chars): ${supabaseKey.substring(0, 10)}...`);
+                addDebug(`Key contains 'peaphqbxdmknxzsfdxuh': ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}`);
+                
                 initializeSupabase();
             } 
             // Fallback to direct values only if config.js fails to load
             else {
-                console.log('Config not found, using fallback configuration');
+                addDebug('Config not found, using fallback configuration');
+                
                 supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
-                supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
+                addDebug(`Fallback URL: ${supabaseUrl}`);
+                
+                // Define key directly to avoid any string transformation issues
+                const rawKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
+                supabaseKey = rawKey;
+                
+                addDebug(`Fallback Key (first 10 chars): ${supabaseKey.substring(0, 10)}...`);
+                addDebug(`Key contains 'peaphqbxdmknxzsfdxuh': ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}`);
+                
                 initializeSupabase();
             }
         });
@@ -190,116 +214,116 @@
         function initializeSupabase() {
             if (!supabaseUrl || !supabaseKey || supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseKey === 'YOUR_SUPABASE_ANON_KEY') {
                 console.error('Supabase credentials not configured properly');
-                document.querySelector('.auth-container').innerHTML += `
-                    <div class="alert alert-warning mt-3">
-                        Authentication service not properly configured. Please check your setup.
+                document.getElementById('statusMessages').innerHTML = `
+                    <div class="status-message error-message">
+                        Authentication service is not properly configured. Please contact support.
                     </div>
                 `;
                 return;
             }
             
-            // Test Supabase connectivity
-            const testConnectivity = async () => {
-                try {
-                    // Simple health check by trying to get session
-                    await fetch(`${supabaseUrl}/auth/v1/`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': supabaseKey
-                        }
-                    });
-                    return true;
-                } catch (error) {
-                    console.error('Supabase connectivity test failed:', error);
-                    return false;
-                }
-            };
-            
-            // Initialize Supabase client
-            console.log('Initializing Supabase with URL:', supabaseUrl.substring(0, 15) + '...');
-            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-    
-            // Handle Apple Sign In
-            document.getElementById('appleSignIn').addEventListener('click', async () => {
-                const button = document.getElementById('appleSignIn');
-                const buttonText = document.getElementById('appleButtonText');
-                const statusMessages = document.getElementById('statusMessages');
+            try {
+                // Log some diagnostic information
+                addDebug('Creating Supabase client...');
                 
-                try {
-                    // Show loading state
-                    button.disabled = true;
-                    buttonText.innerHTML = '<span class="loading-spinner"></span> Connecting...';
+                // Initialize Supabase client
+                const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                
+                // Verify client was created properly
+                if (!supabase || !supabase.auth) {
+                    throw new Error('Supabase client initialization failed');
+                }
+                
+                addDebug('Supabase client created successfully');
+                
+                // Handle Apple Sign In
+                document.getElementById('appleSignIn').addEventListener('click', async () => {
+                    const button = document.getElementById('appleSignIn');
+                    const buttonText = document.getElementById('appleButtonText');
+                    const statusMessages = document.getElementById('statusMessages');
                     
-                    // Prepare redirect URL - make sure it's absolute
-                    const redirectUrl = new URL('/auth-callback.html', window.location.origin).href;
-                    console.log('Using redirect URL:', redirectUrl);
-                    
-                    // Now that we've configured the correct client IDs in Supabase,
-                    // we can try using Supabase's OAuth flow again
-                    console.log('Attempting to sign in with Supabase OAuth flow...');
-                    statusMessages.innerHTML = '<div class="status-message info-message">Initiating Apple sign-in through Supabase...</div>';
-                    
-                    const { data, error } = await supabase.auth.signInWithOAuth({
-                        provider: 'apple',
-                        options: {
-                            redirectTo: redirectUrl,
-                            scopes: 'email name',
-                            skipBrowserRedirect: true // Don't redirect yet, we'll handle it manually
-                        }
-                    });
+                    try {
+                        // Show loading state
+                        button.disabled = true;
+                        buttonText.innerHTML = '<span class="loading-spinner"></span> Connecting...';
+                        
+                        // Prepare redirect URL - make sure it's absolute
+                        const redirectUrl = new URL('/auth-callback.html', window.location.origin).href;
+                        console.log('Using redirect URL:', redirectUrl);
+                        
+                        // Now that we've configured the correct client IDs in Supabase,
+                        // we can try using Supabase's OAuth flow again
+                        console.log('Attempting to sign in with Supabase OAuth flow...');
+                        statusMessages.innerHTML = '<div class="status-message info-message">Initiating Apple sign-in through Supabase...</div>';
+                        
+                        const { data, error } = await supabase.auth.signInWithOAuth({
+                            provider: 'apple',
+                            options: {
+                                redirectTo: redirectUrl,
+                                scopes: 'email name',
+                                skipBrowserRedirect: true // Don't redirect yet, we'll handle it manually
+                            }
+                        });
 
-                    if (error) {
-                        console.error('Sign in error:', error);
-                        throw error;
+                        if (error) {
+                            console.error('Sign in error:', error);
+                            throw error;
+                        }
+                        
+                        if (!data?.url) {
+                            throw new Error('No authentication URL returned from Supabase');
+                        }
+                        
+                        // Verify that the URL contains the correct client ID
+                        const authUrl = data.url;
+                        console.log('Sign in initiated. Auth URL:', authUrl);
+                        
+                        // Extract the redirect_to parameter from the URL to ensure it's passed correctly
+                        const authUrlObj = new URL(authUrl);
+                        const redirectToParam = authUrlObj.searchParams.get('redirect_to');
+                        
+                        // Create direct Apple auth URL with correct client ID and redirect
+                        // Based on logs, we need to ensure the right session handling
+                        const directUrl = `https://appleid.apple.com/auth/authorize?client_id=com.playpadelpals.padelpals362.signin&redirect_uri=https%3A%2F%2Fpeaphqbxdmknxzsfdxuh.supabase.co%2Fauth%2Fv1%2Fcallback&response_mode=form_post&response_type=code&scope=email+name&state=${encodeURIComponent(authUrlObj.searchParams.get('state') || '')}`;
+                        
+                        console.log('Using direct URL:', directUrl);
+                        statusMessages.innerHTML = '<div class="status-message info-message">Redirecting to Apple with correct client ID...</div>';
+                        
+                        // Redirect to Apple's authentication page
+                        window.location.href = directUrl;
+                        
+                    } catch (error) {
+                        console.error('Error signing in with Apple:', error.message);
+                        // Reset button
+                        button.disabled = false;
+                        buttonText.textContent = 'Sign in with Apple';
+                        
+                        // Show error
+                        statusMessages.innerHTML = `
+                            <div class="status-message error-message">
+                                Error signing in: ${error.message}
+                            </div>
+                        `;
                     }
-                    
-                    if (!data?.url) {
-                        throw new Error('No authentication URL returned from Supabase');
+                });
+        
+                // Check if user is already signed in
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                    if (session) {
+                        // User is signed in, redirect to dashboard
+                        window.location.href = '/dashboard.html';
                     }
-                    
-                    // Verify that the URL contains the correct client ID
-                    const authUrl = data.url;
-                    console.log('Sign in initiated. Auth URL:', authUrl);
-                    
-                    // Extract the redirect_to parameter from the URL to ensure it's passed correctly
-                    const authUrlObj = new URL(authUrl);
-                    const redirectToParam = authUrlObj.searchParams.get('redirect_to');
-                    
-                    // Create direct Apple auth URL with correct client ID and redirect
-                    // Based on logs, we need to ensure the right session handling
-                    const directUrl = `https://appleid.apple.com/auth/authorize?client_id=com.playpadelpals.padelpals362.signin&redirect_uri=https%3A%2F%2Fpeaphqbxdmknxzsfdxuh.supabase.co%2Fauth%2Fv1%2Fcallback&response_mode=form_post&response_type=code&scope=email+name&state=${encodeURIComponent(authUrlObj.searchParams.get('state') || '')}`;
-                    
-                    console.log('Using direct URL:', directUrl);
-                    statusMessages.innerHTML = '<div class="status-message info-message">Redirecting to Apple with correct client ID...</div>';
-                    
-                    // Redirect to Apple's authentication page
-                    window.location.href = directUrl;
-                    
-                } catch (error) {
-                    console.error('Error signing in with Apple:', error.message);
-                    // Reset button
-                    button.disabled = false;
-                    buttonText.textContent = 'Sign in with Apple';
-                    
-                    // Show error
-                    statusMessages.innerHTML = `
-                        <div class="status-message error-message">
-                            Error signing in: ${error.message}
-                        </div>
-                    `;
-                }
-            });
-    
-            // Check if user is already signed in
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                if (session) {
-                    // User is signed in, redirect to dashboard
-                    window.location.href = '/dashboard.html';
-                }
-            }).catch(error => {
-                console.error('Error checking session:', error.message);
-            });
+                }).catch(error => {
+                    console.error('Error checking session:', error.message);
+                });
+            } catch (error) {
+                console.error('Error initializing Supabase:', error.message);
+                document.getElementById('statusMessages').innerHTML = `
+                    <div class="status-message error-message">
+                        Error initializing Supabase: ${error.message}
+                    </div>
+                `;
+            }
         }
     </script>
 </body>
