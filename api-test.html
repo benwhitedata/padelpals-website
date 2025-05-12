@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase API Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-container {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #1a2238;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        pre {
+            background: #e2e2e2;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Supabase API Health Check</h1>
+    
+    <div class="test-container">
+        <h2>1. API Key Test</h2>
+        <p>The API key we'll use for this test:</p>
+        <div id="keyDisplay"></div>
+        <button id="testKey">Test API Key</button>
+        <div id="keyResult"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>2. Basic Connectivity Test</h2>
+        <p>Test basic connectivity to Supabase API:</p>
+        <button id="testConnectivity">Test Connectivity</button>
+        <div id="connectivityResult"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>3. Guest Function Test</h2>
+        <p>Test calling a public function as a guest:</p>
+        <button id="testFunction">Test Public Function</button>
+        <div id="functionResult"></div>
+    </div>
+    
+    <script>
+        // Configure Supabase client
+        const supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYXBocWJ4ZG1rbnh6c2ZkeHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
+        
+        // Display key info securely
+        document.getElementById('keyDisplay').innerHTML = `
+            <pre>URL: ${supabaseUrl}
+Key (first 10): ${supabaseKey.substring(0, 10)}...
+Key (last 10): ...${supabaseKey.substring(supabaseKey.length - 10)}
+Contains project ID: ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}</pre>
+        `;
+        
+        // Test API Key
+        document.getElementById('testKey').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('keyResult');
+            resultDiv.innerHTML = '<p>Testing API key validity...</p>';
+            
+            try {
+                // Test by making a direct API call
+                const response = await fetch(`${supabaseUrl}/rest/v1/?apikey=${supabaseKey}`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': supabaseKey
+                    }
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<p class="success">✅ API key is valid!</p>';
+                    resultDiv.innerHTML += `<pre>Response status: ${response.status}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ API key is invalid!</p>`;
+                    resultDiv.innerHTML += `<pre>Response status: ${response.status}
+Response text: ${await response.text()}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error testing API key: ${error.message}</p>`;
+            }
+        });
+        
+        // Test Connectivity
+        document.getElementById('testConnectivity').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('connectivityResult');
+            resultDiv.innerHTML = '<p>Testing Supabase connectivity...</p>';
+            
+            try {
+                // Initialize Supabase client
+                const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                
+                if (!supabase) {
+                    throw new Error('Failed to create Supabase client');
+                }
+                
+                if (!supabase.auth) {
+                    throw new Error('Supabase client missing auth module');
+                }
+                
+                // Try to get the session - this works even if not signed in
+                const { data, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    throw error;
+                }
+                
+                resultDiv.innerHTML = '<p class="success">✅ Supabase client created successfully!</p>';
+                resultDiv.innerHTML += `<pre>Session found: ${data.session ? 'Yes' : 'No'}</pre>`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Connectivity test failed: ${error.message}</p>`;
+            }
+        });
+        
+        // Test Public Function
+        document.getElementById('testFunction').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('functionResult');
+            resultDiv.innerHTML = '<p>Testing public function call...</p>';
+            
+            try {
+                // Initialize Supabase client
+                const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                
+                // Try to call a public function - we'll use health check if it exists
+                let data, error;
+                
+                try {
+                    ({ data, error } = await supabase.rpc('get_server_timestamp'));
+                } catch (fnError) {
+                    // If the function doesn't exist, try another approach
+                    resultDiv.innerHTML += `<p>Function not found, trying to query public table...</p>`;
+                    
+                    // Try to count users - this should be allowed for anon users
+                    ({ count, error } = await supabase
+                        .from('profiles')
+                        .select('*', { count: 'exact', head: true }));
+                        
+                    data = { count };
+                }
+                
+                if (error) {
+                    throw error;
+                }
+                
+                resultDiv.innerHTML = '<p class="success">✅ Function call succeeded!</p>';
+                resultDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Function test failed: ${error.message}</p>`;
+                
+                if (error.message.includes('Invalid API key')) {
+                    resultDiv.innerHTML += `<p>The API key appears to be invalid. Make sure it's correct and not expired.</p>`;
+                } else if (error.message.includes('permission denied')) {
+                    resultDiv.innerHTML += `<p>Permission denied. The anon key doesn't have access to this resource.</p>`;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
