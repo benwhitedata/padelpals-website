@@ -174,7 +174,7 @@
             // Fallback to direct values only if config.js fails to load
             else {
                 console.log('Config not found, using fallback configuration');
-                supabaseUrl = 'https://xagcahijlpxaozunvhdh.supabase.co';
+                supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
                 supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhZ2NhaGlqbHB4YW96dW52aGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
                 initializeSupabase();
             }
@@ -191,6 +191,24 @@
                 return;
             }
             
+            // Test Supabase connectivity
+            const testConnectivity = async () => {
+                try {
+                    // Simple health check by trying to get session
+                    await fetch(`${supabaseUrl}/auth/v1/`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': supabaseKey
+                        }
+                    });
+                    return true;
+                } catch (error) {
+                    console.error('Supabase connectivity test failed:', error);
+                    return false;
+                }
+            };
+            
             // Initialize Supabase client
             console.log('Initializing Supabase with URL:', supabaseUrl.substring(0, 15) + '...');
             const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -205,6 +223,14 @@
                     // Show loading state
                     button.disabled = true;
                     buttonText.innerHTML = '<span class="loading-spinner"></span> Connecting...';
+                    
+                    // Check connectivity first
+                    statusMessages.innerHTML = '<div class="status-message info-message">Checking authentication service...</div>';
+                    const isConnected = await testConnectivity();
+                    
+                    if (!isConnected) {
+                        throw new Error('Could not connect to authentication service. Please try again later.');
+                    }
                     
                     console.log('Attempting Apple sign in with Supabase URL:', supabaseUrl.substring(0, 20) + '...');
                     statusMessages.innerHTML = '<div class="status-message info-message">Initiating Apple sign-in process...</div>';
@@ -226,8 +252,16 @@
                     }
                     
                     console.log('Sign in initiated. Auth URL:', data?.url || 'No URL returned');
-                    // The page will redirect automatically, but we can show a message briefly
-                    statusMessages.innerHTML = '<div class="status-message info-message">Redirecting to Apple...</div>';
+                    
+                    if (data?.url) {
+                        // The page will redirect automatically, but we can show a message briefly
+                        statusMessages.innerHTML = '<div class="status-message info-message">Redirecting to Apple...</div>';
+                        
+                        // Manually redirect for better reliability
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error('No authentication URL returned from Supabase');
+                    }
                     
                 } catch (error) {
                     console.error('Error signing in with Apple:', error.message);
