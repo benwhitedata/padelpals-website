@@ -54,6 +54,10 @@
             color: red;
             font-weight: bold;
         }
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
         .status-container {
             padding: 10px;
             margin-bottom: 20px;
@@ -61,10 +65,21 @@
             border-radius: 4px;
             font-size: 14px;
         }
+        .env-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e0f7fa;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
     <h1>Supabase API Health Check</h1>
+    
+    <div class="env-info">
+        <h3>Environment Information</h3>
+        <div id="environmentInfo"></div>
+    </div>
     
     <div class="test-container">
         <h2>1. API Key Test</h2>
@@ -100,6 +115,7 @@
 
         // Global variables
         let supabaseUrl, supabaseKey;
+        let configSource = 'unknown';
 
         // Main initialization
         document.addEventListener('DOMContentLoaded', function() {
@@ -107,50 +123,110 @@
             const statusDiv = document.createElement('div');
             statusDiv.id = 'statusDiv';
             statusDiv.className = 'status-container';
-            document.body.insertBefore(statusDiv, document.querySelector('h1').nextSibling);
+            document.body.insertBefore(statusDiv, document.querySelector('.env-info'));
             
-            // Check if config exists (should be available both in local dev and production via GitHub Actions)
+            // Check if config exists from GitHub Actions deployment
             if (typeof config !== 'undefined') {
+                configSource = 'config.js';
                 addStatus('✅ Using configuration from config.js');
-                supabaseUrl = config.supabaseUrl;
-                supabaseKey = config.supabaseKey;
                 
-                addStatus(`Config URL: ${supabaseUrl}`);
-                addStatus(`Config Key (first 10 chars): ${supabaseKey.substring(0, 10)}...`);
-                addStatus(`Key contains 'peaphqbxdmknxzsfdxuh': ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}`);
+                // Validate the configuration
+                if (config.supabaseUrl && config.supabaseUrl.includes('peaphqbxdmknxzsfdxuh')) {
+                    supabaseUrl = config.supabaseUrl;
+                    addStatus(`✅ Valid Supabase URL found: ${supabaseUrl}`);
+                } else {
+                    addStatus(`⚠️ Warning: Supabase URL in config.js may be invalid`);
+                    supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
+                }
                 
+                if (config.supabaseKey && config.supabaseKey.length > 50) {
+                    supabaseKey = config.supabaseKey;
+                    addStatus(`✅ Valid Supabase key found (${supabaseKey.length} chars)`);
+                } else {
+                    addStatus(`❌ Error: Supabase key in config.js appears invalid`);
+                    supabaseKey = 'MISSING_KEY';
+                }
+                
+                updateEnvironmentInfo();
                 initializeTests();
             } 
-            // Fallback to direct values only if config.js fails to load
+            // If no config, show appropriate error
             else {
-                addStatus('⚠️ Config not found, using fallback configuration');
+                configSource = 'none';
+                addStatus('❌ Config not found - GitHub Actions deployment required');
                 
                 supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
-                addStatus(`Fallback URL: ${supabaseUrl}`);
+                supabaseKey = 'MISSING_KEY';
                 
-                // Don't hardcode the key, use a placeholder
-                supabaseKey = 'PLACEHOLDER_KEY';
+                addStatus('ℹ️ This page requires deployment through GitHub Actions with proper secrets');
+                addStatus('ℹ️ See the guide below for setting up GitHub Secrets');
                 
-                addStatus('❌ Fallback Key not available - config.js is required');
-                addStatus('Please ensure the site is properly deployed with GitHub Actions');
-                
+                updateEnvironmentInfo();
                 initializeTests();
+                
+                // Show instructions for setting up GitHub secrets
+                const envInfo = document.getElementById('environmentInfo');
+                envInfo.innerHTML += `
+                <div style="margin-top: 15px; padding: 10px; background: #ffecb3; border-radius: 4px;">
+                    <h4>GitHub Secrets Setup Instructions</h4>
+                    <ol>
+                        <li>Go to your GitHub repository</li>
+                        <li>Click on Settings tab</li>
+                        <li>In the left sidebar, click on "Secrets and variables" > "Actions"</li>
+                        <li>Add the following secrets:
+                            <ul>
+                                <li><code>SUPABASE_URL</code>: <code>https://peaphqbxdmknxzsfdxuh.supabase.co</code></li>
+                                <li><code>SUPABASE_ANON_KEY</code>: Your Supabase anon key</li>
+                            </ul>
+                        </li>
+                        <li>Trigger a new deployment by pushing to main or using the "workflow_dispatch" option</li>
+                    </ol>
+                </div>`;
             }
         });
+
+        function updateEnvironmentInfo() {
+            const envInfo = document.getElementById('environmentInfo');
+            envInfo.innerHTML = `
+                <p><strong>Configuration Source:</strong> ${configSource}</p>
+                <p><strong>Supabase URL:</strong> ${supabaseUrl}</p>
+                <p><strong>API Key Status:</strong> ${supabaseKey === 'MISSING_KEY' ? 
+                    '<span class="error">Missing</span>' : 
+                    '<span class="success">Available</span>'}</p>
+                <p><strong>Environment:</strong> ${
+                    window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' ? 
+                    'Local Development' : 'Production/GitHub Pages'
+                }</p>
+                <p><strong>Current URL:</strong> ${window.location.href}</p>
+            `;
+        }
 
         function initializeTests() {
             // Display key info securely
             document.getElementById('keyDisplay').innerHTML = `
                 <pre>URL: ${supabaseUrl}
-Key (first 10): ${supabaseKey.substring(0, 10)}...
+Key Source: ${configSource}
+${supabaseKey === 'MISSING_KEY' ? 'API Key: <span class="error">MISSING</span>' : 
+`Key (first 10): ${supabaseKey.substring(0, 10)}...
 Key (last 10): ...${supabaseKey.substring(supabaseKey.length - 10)}
-Contains project ID: ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}</pre>
+Key Length: ${supabaseKey.length} characters
+Key Format: ${supabaseKey.startsWith('eyJ') ? 'Valid JWT format' : 'Unknown format'}`}
+</pre>
             `;
             
             // Test API Key
             document.getElementById('testKey').addEventListener('click', async function() {
                 const resultDiv = document.getElementById('keyResult');
                 resultDiv.innerHTML = '<p>Testing API key validity...</p>';
+                
+                if (supabaseKey === 'MISSING_KEY') {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ No API key available to test</p>
+                        <p>Please ensure GitHub Secrets are configured properly</p>
+                    `;
+                    return;
+                }
                 
                 try {
                     // Test by making a direct API call
@@ -164,10 +240,12 @@ Contains project ID: ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}</pre>
                     if (response.ok) {
                         resultDiv.innerHTML = '<p class="success">✅ API key is valid!</p>';
                         resultDiv.innerHTML += `<pre>Response status: ${response.status}</pre>`;
+                        resultDiv.innerHTML += '<p>This confirms the GitHub Secret is correctly configured.</p>';
                     } else {
                         resultDiv.innerHTML = `<p class="error">❌ API key is invalid!</p>`;
                         resultDiv.innerHTML += `<pre>Response status: ${response.status}
 Response text: ${await response.text()}</pre>`;
+                        resultDiv.innerHTML += '<p>Please check the GitHub Secret value for SUPABASE_ANON_KEY.</p>';
                     }
                 } catch (error) {
                     resultDiv.innerHTML = `<p class="error">❌ Error testing API key: ${error.message}</p>`;
@@ -178,6 +256,14 @@ Response text: ${await response.text()}</pre>`;
             document.getElementById('testConnectivity').addEventListener('click', async function() {
                 const resultDiv = document.getElementById('connectivityResult');
                 resultDiv.innerHTML = '<p>Testing Supabase connectivity...</p>';
+                
+                if (supabaseKey === 'MISSING_KEY') {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ No API key available to test connectivity</p>
+                        <p>Please ensure GitHub Secrets are configured properly</p>
+                    `;
+                    return;
+                }
                 
                 try {
                     // Initialize Supabase client
@@ -200,6 +286,7 @@ Response text: ${await response.text()}</pre>`;
                     
                     resultDiv.innerHTML = '<p class="success">✅ Supabase client created successfully!</p>';
                     resultDiv.innerHTML += `<pre>Session found: ${data.session ? 'Yes' : 'No'}</pre>`;
+                    resultDiv.innerHTML += '<p>This confirms GitHub Secret is working properly with the Supabase client.</p>';
                     
                 } catch (error) {
                     resultDiv.innerHTML = `<p class="error">❌ Connectivity test failed: ${error.message}</p>`;
@@ -211,12 +298,20 @@ Response text: ${await response.text()}</pre>`;
                 const resultDiv = document.getElementById('functionResult');
                 resultDiv.innerHTML = '<p>Testing public function call...</p>';
                 
+                if (supabaseKey === 'MISSING_KEY') {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ No API key available to test function</p>
+                        <p>Please ensure GitHub Secrets are configured properly</p>
+                    `;
+                    return;
+                }
+                
                 try {
                     // Initialize Supabase client
                     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
                     
                     // Try to call a public function - we'll use health check if it exists
-                    let data, error;
+                    let data, error, count;
                     
                     try {
                         ({ data, error } = await supabase.rpc('get_server_timestamp'));
@@ -238,12 +333,13 @@ Response text: ${await response.text()}</pre>`;
                     
                     resultDiv.innerHTML = '<p class="success">✅ Function call succeeded!</p>';
                     resultDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    resultDiv.innerHTML += '<p>This confirms GitHub Secret has appropriate permissions for API operations.</p>';
                     
                 } catch (error) {
                     resultDiv.innerHTML = `<p class="error">❌ Function test failed: ${error.message}</p>`;
                     
                     if (error.message.includes('Invalid API key')) {
-                        resultDiv.innerHTML += `<p>The API key appears to be invalid. Make sure it's correct and not expired.</p>`;
+                        resultDiv.innerHTML += `<p>The API key appears to be invalid. Make sure the GitHub Secret SUPABASE_ANON_KEY is correct.</p>`;
                     } else if (error.message.includes('permission denied')) {
                         resultDiv.innerHTML += `<p>Permission denied. The anon key doesn't have access to this resource.</p>`;
                     }
