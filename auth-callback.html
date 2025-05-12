@@ -86,17 +86,16 @@
         let supabaseUrl, supabaseKey;
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Try to load from config.js if available (local development)
+            // Check if config exists (should be available both in local dev and production via GitHub Actions)
             if (typeof config !== 'undefined') {
-                console.log('Using local development configuration');
+                console.log('Using configuration from config.js');
                 supabaseUrl = config.supabaseUrl;
                 supabaseKey = config.supabaseKey;
                 initializeSupabase();
             } 
-            // For production (Netlify)
+            // Fallback to direct values only if config.js fails to load
             else {
-                console.log('Using production configuration');
-                // Direct configuration for GitHub Pages
+                console.log('Config not found, using fallback configuration');
                 supabaseUrl = 'https://xagcahijlpxaozunvhdh.supabase.co';
                 supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhZ2NhaGlqbHB4YW96dW52aGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg4MjM0NzAsImV4cCI6MjAwNDM5OTQ3MH0.xqGE8JO7AOyIBT-SICErdCF7Rp1SSwYZF2t9OJwlpUk';
                 initializeSupabase();
