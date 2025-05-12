@@ -201,9 +201,9 @@
                         button.disabled = true;
                         buttonText.innerHTML = '<span class="loading-spinner"></span> Connecting...';
                         
-                        // Prepare redirect URL - make sure it's absolute
-                        const redirectUrl = new URL('/auth-callback.html', window.location.origin).href;
-                        console.log('Using redirect URL:', redirectUrl);
+                        // Use the full production URL for the redirect instead of a relative path
+                        const redirectUrl = 'https://www.padelpals.app/auth-callback.html';
+                        console.log('Using production redirect URL:', redirectUrl);
                         
                         // Now that we've configured the correct client IDs in Supabase,
                         // we can try using Supabase's OAuth flow again
