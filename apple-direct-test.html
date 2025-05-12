@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Direct Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            overflow: auto;
+            border-radius: 4px;
+        }
+        .test-container {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background: #1a2238;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button-row {
+            margin: 15px 0;
+        }
+        .result {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Apple Direct Authentication Test</h1>
+    
+    <div class="test-container">
+        <h2>Test Apple Authentication Directly</h2>
+        <p>This tool will construct authentication URLs to test which client ID works with Apple.</p>
+        
+        <div class="form-group">
+            <label for="client-id">Client ID:</label>
+            <input type="text" id="client-id" value="com.playpadelpals.padelpals362">
+        </div>
+        
+        <div class="form-group">
+            <label for="redirect-url">Redirect URL:</label>
+            <input type="text" id="redirect-url" value="https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback">
+        </div>
+        
+        <div class="button-row">
+            <button id="test-app-id">Test App ID</button>
+            <button id="test-with-signin">Test With .signin</button>
+        </div>
+        
+        <div class="result" id="result-container">
+            <p>Select a test to run...</p>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Alternative Client IDs</h2>
+        <p>Try these alternative client IDs if the above tests don't work:</p>
+        <ul id="client-id-list">
+            <li><a href="#" class="client-id-link">com.playpadelpals.padelpals362</a></li>
+            <li><a href="#" class="client-id-link">com.playpadelpals.padelpals362.signin</a></li>
+            <li><a href="#" class="client-id-link">com.padelpals.app</a></li>
+            <li><a href="#" class="client-id-link">padelpals.app</a></li>
+            <li><a href="#" class="client-id-link">app.padelpals</a></li>
+        </ul>
+    </div>
+    
+    <script>
+        // Function to create a direct Apple auth URL
+        function createAppleAuthUrl(clientId, redirectUrl) {
+            const baseUrl = 'https://appleid.apple.com/auth/authorize';
+            const params = new URLSearchParams({
+                client_id: clientId,
+                redirect_uri: redirectUrl,
+                response_type: 'code',
+                response_mode: 'form_post',
+                scope: 'email name'
+            });
+            
+            return `${baseUrl}?${params.toString()}`;
+        }
+        
+        // Test with default client ID
+        document.getElementById('test-app-id').addEventListener('click', () => {
+            const clientId = document.getElementById('client-id').value;
+            const redirectUrl = document.getElementById('redirect-url').value;
+            
+            const authUrl = createAppleAuthUrl(clientId, redirectUrl);
+            
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.innerHTML = `
+                <p>Test URL created with client ID: <strong>${clientId}</strong></p>
+                <p>You can click the link below to test this client ID directly with Apple:</p>
+                <p><a href="${authUrl}" target="_blank">${authUrl}</a></p>
+            `;
+        });
+        
+        // Test with .signin suffix
+        document.getElementById('test-with-signin').addEventListener('click', () => {
+            let clientId = document.getElementById('client-id').value;
+            const redirectUrl = document.getElementById('redirect-url').value;
+            
+            // Add .signin if it doesn't already have it
+            if (!clientId.endsWith('.signin')) {
+                clientId += '.signin';
+            }
+            
+            const authUrl = createAppleAuthUrl(clientId, redirectUrl);
+            
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.innerHTML = `
+                <p>Test URL created with client ID: <strong>${clientId}</strong></p>
+                <p>You can click the link below to test this client ID directly with Apple:</p>
+                <p><a href="${authUrl}" target="_blank">${authUrl}</a></p>
+            `;
+        });
+        
+        // Client ID list links
+        document.querySelectorAll('.client-id-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('client-id').value = e.target.textContent;
+                document.getElementById('test-app-id').click();
+            });
+        });
+    </script>
+</body>
+</html> 
