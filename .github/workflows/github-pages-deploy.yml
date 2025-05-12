@@ -24,6 +24,35 @@ jobs:
           echo "    supabaseUrl: '${{ secrets.SUPABASE_URL }}'," >> config.js
           echo "    supabaseKey: '${{ secrets.SUPABASE_ANON_KEY }}'" >> config.js
           echo "};" >> config.js
+          cat config.js | grep -v supabaseKey
+          
+      - name: Verify config.js creation
+        run: |
+          echo "Verifying config.js file..."
+          ls -la
+          if [ -f "config.js" ]; then
+            echo "✅ config.js file exists"
+            filesize=$(stat -c%s "config.js")
+            echo "File size: $filesize bytes"
+            
+            # Create a verification file that will be included in the deployment
+            echo "Config file created at: $(date)" > config-created.txt
+            echo "File size: $filesize bytes" >> config-created.txt
+          else
+            echo "❌ config.js does not exist!"
+            exit 1
+          fi
+          
+      - name: Setup Node.js if needed
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          
+      - name: Run JavaScript verification
+        run: |
+          echo "Running JavaScript verification..."
+          node verify-config.js
+          cat config-verification.txt
           
       - name: Ensure .well-known directory exists
         run: mkdir -p .well-known
@@ -34,6 +63,14 @@ jobs:
       #   run: |
       #     cp .github/apple-developer-domain-association.txt .well-known/apple-developer-domain-association.txt
       #     ls -la .well-known/
+
+      - name: Ensure .nojekyll file exists
+        run: |
+          if [ ! -f ".nojekyll" ]; then
+            echo "Creating .nojekyll file"
+            touch .nojekyll
+          fi
+          ls -la
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
