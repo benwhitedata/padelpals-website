@@ -5,17 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Padel Pals - Authentication</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // Dynamically try to load config.js
-        (function loadConfig() {
-            const script = document.createElement('script');
-            script.src = 'config.js';
-            script.onerror = function() {
-                console.log('Config file not found, using production values');
-            };
-            document.head.appendChild(script);
-        })();
-    </script>
+    <!-- Load the config loader for reliable configuration -->
+    <script src="config-loader.js"></script>
     <style>
         :root {
             --gold: #d4af37;
@@ -72,6 +63,27 @@
         .back-link:hover {
             background-color: #e5e5e5;
         }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .info-message {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .warning-message {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -79,273 +91,239 @@
         <div class="spinner"></div>
         <h2>Completing sign in...</h2>
         <p>Please wait while we authenticate your account.</p>
+        <div id="statusMessage" class="info-message" style="display: none;"></div>
         <div id="debugContainer" style="margin-top: 20px; text-align: left; display: block;">
             <h4>Debug Information:</h4>
             <pre id="debugInfo" style="background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 300px; overflow: auto;"></pre>
-            <button id="continueToAuth" class="btn btn-primary mt-3" style="display: none;">Continue to Auth Page</button>
-            <button id="continueToDashboard" class="btn btn-primary mt-3" style="display: none;">Continue to Dashboard</button>
+            <div id="actionButtons" style="margin-top: 15px;">
+                <button id="continueToAuth" style="display: none; padding: 8px 16px; background-color: #1a2238; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Continue to Auth Page</button>
+                <button id="continueToDashboard" style="display: none; padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Continue to Dashboard</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Get Supabase configuration
-        let supabaseUrl, supabaseKey;
+        // Define global variables and functions
+        let debugInfoElement;
+        let statusMessageElement;
+        let spinnerElement;
         
-        // Define global debug elements and functions
-        let debugDiv;
+        // Debug utility function
         function addDebugInfo(message) {
-            if (debugDiv) {
-                debugDiv.innerHTML += message + '<br>';
-            }
             console.log(message);
+            if (debugInfoElement) {
+                debugInfoElement.innerHTML += message + '<br>';
+            }
         }
         
-        document.addEventListener('DOMContentLoaded', function() {
-            // Debug element to show what's happening
-            const authContainer = document.getElementById('authContainer');
-            debugDiv = document.createElement('div');
-            debugDiv.style.marginTop = '20px';
-            debugDiv.style.padding = '10px';
-            debugDiv.style.backgroundColor = '#f5f5f5';
-            debugDiv.style.border = '1px solid #ddd';
-            debugDiv.style.borderRadius = '4px';
-            debugDiv.style.fontSize = '12px';
-            debugDiv.style.fontFamily = 'monospace';
-            debugDiv.style.whiteSpace = 'pre-wrap';
-            debugDiv.style.wordBreak = 'break-all';
-            debugDiv.innerHTML = '<strong>Debugging Information</strong><br>';
-            authContainer.appendChild(debugDiv);
+        // Status message utility
+        function showStatusMessage(message, type = 'info') {
+            if (statusMessageElement) {
+                statusMessageElement.innerHTML = message;
+                statusMessageElement.className = type + '-message message';
+                statusMessageElement.style.display = 'block';
+            }
+        }
+        
+        // Function to show error and hide spinner
+        function showError(message) {
+            if (spinnerElement) {
+                spinnerElement.style.display = 'none';
+            }
+            showStatusMessage(message, 'error');
             
-            // Check if config exists (should be available both in local dev and production via GitHub Actions)
-            if (typeof config !== 'undefined') {
-                addDebugInfo('Using configuration from config.js');
-                supabaseUrl = config.supabaseUrl;
-                supabaseKey = config.supabaseKey;
-                
-                addDebugInfo(`Config URL: ${supabaseUrl}`);
-                addDebugInfo(`Config Key (first 10 chars): ${supabaseKey.substring(0, 10)}...`);
-                addDebugInfo(`Key contains 'peaphqbxdmknxzsfdxuh': ${supabaseKey.includes('peaphqbxdmknxzsfdxuh')}`);
-                
-                initializeSupabase();
-            } 
-            // Fallback to direct values only if config.js fails to load
-            else {
-                addDebugInfo('Config not found, using fallback configuration');
-                
-                supabaseUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co';
-                addDebugInfo(`Fallback URL: ${supabaseUrl}`);
-                
-                // Don't hardcode the key, use a placeholder
-                const rawKey = 'PLACEHOLDER_KEY';
-                supabaseKey = rawKey;
-                
-                addDebugInfo(`Fallback Key not available - config.js is required`);
-                addDebugInfo(`Please ensure the site is properly deployed with GitHub Actions`);
-                
-                initializeSupabase();
+            // Show button to continue to auth page
+            const continueBtn = document.getElementById('continueToAuth');
+            if (continueBtn) {
+                continueBtn.style.display = 'inline-block';
+                continueBtn.addEventListener('click', function() {
+                    window.location.href = '/auth.html';
+                });
+            }
+        }
+        
+        // Initialize page elements
+        document.addEventListener('DOMContentLoaded', function() {
+            debugInfoElement = document.getElementById('debugInfo');
+            statusMessageElement = document.getElementById('statusMessage');
+            spinnerElement = document.querySelector('.spinner');
+            
+            addDebugInfo('Waiting for configuration to load...');
+            
+            // The auth callback button should redirect to auth.html
+            const continueBtn = document.getElementById('continueToAuth');
+            if (continueBtn) {
+                continueBtn.addEventListener('click', function() {
+                    window.location.href = '/auth.html';
+                });
+            }
+            
+            // The dashboard button should redirect to dashboard.html
+            const dashboardBtn = document.getElementById('continueToDashboard');
+            if (dashboardBtn) {
+                dashboardBtn.addEventListener('click', function() {
+                    window.location.href = '/dashboard.html';
+                });
             }
         });
-
-        function initializeSupabase() {
-            if (!supabaseUrl || !supabaseKey || supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseKey === 'YOUR_SUPABASE_ANON_KEY') {
-                console.error('Supabase credentials not configured properly');
-                showError('Authentication service is not properly configured. Please contact support.');
-                return;
-            }
+        
+        // Listen for the configLoaded event from config-loader.js
+        document.addEventListener('configLoaded', function() {
+            addDebugInfo('Configuration loaded successfully');
+            addDebugInfo(`Supabase URL: ${window.config.supabaseUrl}`);
+            addDebugInfo(`API key available: ${window.config.supabaseKey ? 'Yes' : 'No'}`);
             
+            // Process authentication with the loaded config
+            handleAuthCallback();
+        });
+        
+        // Function to handle the authentication callback
+        async function handleAuthCallback() {
             try {
-                // For debugging - show the API key (first few chars only)
-                console.log('Using Supabase URL:', supabaseUrl);
-                console.log('Using Supabase Key (first 10 chars):', supabaseKey.substring(0, 10) + '...');
+                if (!window.config || !window.config.supabaseKey) {
+                    throw new Error('Supabase credentials not configured properly');
+                }
                 
                 // Initialize Supabase client
-                const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                const supabase = window.supabase.createClient(
+                    window.config.supabaseUrl, 
+                    window.config.supabaseKey
+                );
                 
                 // Check if supabase.auth exists
                 if (!supabase || !supabase.auth) {
-                    showError('Supabase client initialization failed. Auth module not available.');
-                    return;
+                    throw new Error('Supabase client initialization failed. Auth module not available.');
                 }
                 
-                // Handle the OAuth callback
-                async function handleAuthCallback() {
+                addDebugInfo('Processing authentication callback...');
+                
+                // Check for error parameters in the URL
+                const urlParams = new URLSearchParams(window.location.search);
+                
+                // Handle OAuth errors from the query string
+                if (urlParams.has('error')) {
+                    const error = urlParams.get('error');
+                    const errorCode = urlParams.get('error_code');
+                    const errorDesc = urlParams.get('error_description') || 'Unknown error';
+                    addDebugInfo(`Error: ${error} (${errorCode}): ${errorDesc}`);
+                    throw new Error(`${error} (${errorCode}): ${errorDesc}`);
+                }
+                
+                // Handle the hash fragment if present (some OAuth providers use it)
+                if (window.location.hash) {
+                    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                    if (hashParams.has('error')) {
+                        const error = hashParams.get('error');
+                        const errorDesc = hashParams.get('error_description') || 'Unknown error';
+                        addDebugInfo(`Error in hash: ${error}: ${errorDesc}`);
+                        throw new Error(`${error}: ${errorDesc}`);
+                    }
+                }
+                
+                // First, check if we have a code in the URL (standard OAuth callback)
+                if (urlParams.has('code')) {
+                    const code = urlParams.get('code');
+                    const state = urlParams.get('state');
+                    
+                    addDebugInfo(`Found code parameter in URL: ${code.substring(0, 10)}...`);
+                    addDebugInfo(`State parameter: ${state ? 'Present' : 'Missing'}`);
+                    
                     try {
-                        console.log('Handling auth callback with URL:', window.location.href);
-                        addDebugInfo('Processing authentication callback...');
+                        addDebugInfo('Attempting to exchange code for session...');
+                        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
                         
-                        // Check for error parameters in the URL
-                        const urlParams = new URLSearchParams(window.location.search);
-                        
-                        // Handle OAuth errors from the query string
-                        if (urlParams.has('error')) {
-                            const error = urlParams.get('error');
-                            const errorCode = urlParams.get('error_code');
-                            const errorDesc = urlParams.get('error_description') || 'Unknown error';
-                            console.error('Error in URL params:', error, errorCode, errorDesc);
-                            addDebugInfo(`Error: ${error} (${errorCode}): ${errorDesc}`);
-                            throw new Error(`${error} (${errorCode}): ${errorDesc}`);
+                        if (error) {
+                            addDebugInfo(`Error exchanging code: ${error.message}`);
+                            throw error;
                         }
                         
-                        // Handle the hash fragment if present (some OAuth providers use it)
-                        if (window.location.hash) {
-                            const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                            if (hashParams.has('error')) {
-                                const error = hashParams.get('error');
-                                const errorDesc = hashParams.get('error_description') || 'Unknown error';
-                                console.error('Error in hash fragment:', error, errorDesc);
-                                addDebugInfo(`Error in hash: ${error}: ${errorDesc}`);
-                                throw new Error(`${error}: ${errorDesc}`);
+                        if (data?.session) {
+                            addDebugInfo('Successfully exchanged code for session!');
+                            
+                            // Explicitly set the session
+                            await supabase.auth.setSession({
+                                access_token: data.session.access_token,
+                                refresh_token: data.session.refresh_token
+                            });
+                            
+                            addDebugInfo('Session set explicitly');
+                            showStatusMessage('Authentication successful! Redirecting to dashboard...', 'success');
+                            
+                            // Show dashboard button
+                            const dashboardBtn = document.getElementById('continueToDashboard');
+                            if (dashboardBtn) {
+                                dashboardBtn.style.display = 'inline-block';
                             }
-                        }
-                        
-                        // First, check if we have a code in the URL (standard OAuth callback)
-                        if (urlParams.has('code')) {
-                            const code = urlParams.get('code');
-                            const state = urlParams.get('state');
                             
-                            addDebugInfo(`Found code parameter in URL: ${code.substring(0, 10)}...`);
-                            addDebugInfo(`State parameter: ${state ? 'Present' : 'Missing'}`);
-                            
-                            try {
-                                addDebugInfo('Attempting to exchange code for session...');
-                                const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-                                
-                                if (error) {
-                                    addDebugInfo(`Error exchanging code: ${error.message}`);
-                                    throw error;
-                                }
-                                
-                                if (data?.session) {
-                                    addDebugInfo('Successfully exchanged code for session!');
-                                    
-                                    // Explicitly set the session
-                                    await supabase.auth.setSession({
-                                        access_token: data.session.access_token,
-                                        refresh_token: data.session.refresh_token
-                                    });
-                                    
-                                    addDebugInfo('Session set explicitly');
-                                    addDebugInfo('Redirecting to dashboard in 3 seconds...');
-                                    
-                                    setTimeout(() => {
-                                        window.location.href = '/dashboard.html';
-                                    }, 3000);
-                                    
-                                    return;
-                                }
-                            } catch (error) {
-                                addDebugInfo(`Session exchange error: ${error.message}`);
-                                throw error;
+                            // Hide spinner
+                            if (spinnerElement) {
+                                spinnerElement.style.display = 'none';
                             }
-                        }
-                        
-                        // Check for form-post response (Apple specific)
-                        const formData = document.querySelector('form');
-                        if (formData) {
-                            addDebugInfo('Found form data, extracting...');
-                            const code = formData.querySelector('input[name="code"]')?.value;
-                            const state = formData.querySelector('input[name="state"]')?.value;
                             
-                            if (code) {
-                                addDebugInfo(`Form code: ${code.substring(0, 10)}...`);
-                                addDebugInfo(`Form state: ${state ? state.substring(0, 10) + '...' : 'Missing'}`);
-                                
-                                try {
-                                    addDebugInfo('Exchanging form code for session...');
-                                    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-                                    
-                                    if (error) {
-                                        addDebugInfo(`Form exchange error: ${error.message}`);
-                                        throw error;
-                                    }
-                                    
-                                    if (data?.session) {
-                                        addDebugInfo('Successfully exchanged form code!');
-                                        
-                                        // Explicitly set the session
-                                        await supabase.auth.setSession({
-                                            access_token: data.session.access_token,
-                                            refresh_token: data.session.refresh_token
-                                        });
-                                        
-                                        addDebugInfo('Session set, redirecting to dashboard...');
-                                        setTimeout(() => {
-                                            window.location.href = '/dashboard.html';
-                                        }, 3000);
-                                        
-                                        return;
-                                    }
-                                } catch (error) {
-                                    addDebugInfo(`Form session error: ${error.message}`);
-                                    throw error;
-                                }
-                            }
-                        }
-                        
-                        // Check if we already have a session
-                        addDebugInfo('Checking for existing session...');
-                        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                        
-                        if (sessionError) {
-                            addDebugInfo(`Session check error: ${sessionError.message}`);
-                            throw sessionError;
-                        }
-
-                        if (session) {
-                            // Successful sign in
-                            addDebugInfo('Existing session found!');
-                            addDebugInfo(`User: ${session.user.id}`);
-                            
-                            // Store session in localStorage to ensure it persists
-                            localStorage.setItem('supabase.auth.token', JSON.stringify({
-                                access_token: session.access_token,
-                                refresh_token: session.refresh_token
-                            }));
-                            
-                            addDebugInfo('Session stored in localStorage');
-                            addDebugInfo('Redirecting to dashboard...');
-                            
+                            // Redirect after a short delay
                             setTimeout(() => {
                                 window.location.href = '/dashboard.html';
                             }, 3000);
-                        } else {
-                            // No session found
-                            addDebugInfo('No session found, redirecting to auth page');
-                            document.getElementById('continueToAuth').style.display = 'block';
+                            
+                            return;
                         }
                     } catch (error) {
-                        console.error('Error handling auth callback:', error.message);
-                        showError('Authentication failed: ' + error.message);
+                        addDebugInfo(`Session exchange error: ${error.message}`);
+                        throw error;
+                    }
+                } else {
+                    // Check for existing session
+                    addDebugInfo('Checking for existing session...');
+                    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                    
+                    if (sessionError) {
+                        addDebugInfo(`Session error: ${sessionError.message}`);
+                        throw sessionError;
+                    }
+                    
+                    if (session) {
+                        addDebugInfo('Existing session found, redirecting to dashboard');
+                        showStatusMessage('You are already signed in! Redirecting to dashboard...', 'success');
+                        
+                        // Show dashboard button
+                        const dashboardBtn = document.getElementById('continueToDashboard');
+                        if (dashboardBtn) {
+                            dashboardBtn.style.display = 'inline-block';
+                        }
+                        
+                        // Hide spinner
+                        if (spinnerElement) {
+                            spinnerElement.style.display = 'none';
+                        }
+                        
+                        // Redirect after a short delay
+                        setTimeout(() => {
+                            window.location.href = '/dashboard.html';
+                        }, 2000);
+                        
+                        return;
+                    } else {
+                        addDebugInfo('No session found, redirecting to auth page');
+                        throw new Error('No authentication code or session found. Please try signing in again.');
                     }
                 }
-
-                // Run the callback handler
-                handleAuthCallback();
             } catch (error) {
-                console.error('Error initializing Supabase:', error.message);
-                showError('Authentication service encountered an error. Please contact support.');
+                console.error('Authentication error:', error);
+                addDebugInfo(`Authentication error: ${error.message}`);
+                showError(`Authentication failed: ${error.message}`);
+                
+                // Show the continue to auth button
+                const continueBtn = document.getElementById('continueToAuth');
+                if (continueBtn) {
+                    continueBtn.style.display = 'inline-block';
+                }
+                
+                // Hide spinner
+                if (spinnerElement) {
+                    spinnerElement.style.display = 'none';
+                }
             }
         }
-        
-        function showError(message) {
-            const container = document.getElementById('authContainer');
-            container.innerHTML = `
-                <h2>Authentication Error</h2>
-                <div class="error-container">
-                    <p>${message}</p>
-                </div>
-                <a href="/auth.html" class="back-link">Return to sign in</a>
-            `;
-        }
-        
-        // Setup buttons
-        document.getElementById('continueToAuth').addEventListener('click', function() {
-            window.location.href = '/auth.html';
-        });
-        
-        document.getElementById('continueToDashboard').addEventListener('click', function() {
-            window.location.href = '/dashboard.html';
-        });
     </script>
 </body>
 </html> 
