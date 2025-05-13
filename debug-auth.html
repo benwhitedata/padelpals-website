@@ -99,6 +99,101 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Direct Supabase initialization (not dependent on auth-script)
+        document.addEventListener('configLoaded', function() {
+            try {
+                if (window.supabase && typeof window.supabase.createClient === 'function' && window.config) {
+                    window.directSupabase = window.supabase.createClient(
+                        window.config.supabaseUrl,
+                        window.config.supabaseKey
+                    );
+                    
+                    log('Created direct Supabase client');
+                    
+                    // Check if auth is working
+                    window.directSupabase.auth.getSession().then(({ data, error }) => {
+                        if (error) {
+                            log(`Error with direct client: ${error.message}`, true);
+                        } else if (data.session) {
+                            log(`Direct client has valid session for user: ${data.session.user.id}`);
+                            
+                            // Update UI to show signed-in state
+                            updateUI(data.session);
+                        } else {
+                            log('Direct client has no active session');
+                        }
+                    });
+                } else {
+                    log('Unable to create direct Supabase client - missing requirements', true);
+                }
+            } catch (e) {
+                log(`Error creating direct Supabase client: ${e.message}`, true);
+            }
+        });
+        
+        // Update UI to reflect signed-in state
+        function updateUI(session) {
+            if (!session) return;
+            
+            // Update nav links
+            const navSignInLink = document.querySelector('#navSignIn');
+            const navDashboardLink = document.querySelector('#navDashboard');
+            
+            if (navSignInLink) {
+                navSignInLink.textContent = 'Sign Out';
+                navSignInLink.href = '#';
+                navSignInLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    log('Manual sign out clicked');
+                    
+                    if (window.directSupabase) {
+                        window.directSupabase.auth.signOut().then(({ error }) => {
+                            if (error) {
+                                log(`Error signing out: ${error.message}`, true);
+                            } else {
+                                log('Signed out successfully');
+                                localStorage.clear();
+                                window.location.reload();
+                            }
+                        });
+                    }
+                });
+            }
+            
+            if (navDashboardLink) {
+                navDashboardLink.style.display = '';
+            }
+            
+            // Update footer links too
+            const footerSignInLink = document.querySelector('#footerSignIn');
+            const footerDashboardLink = document.querySelector('#footerDashboard');
+            
+            if (footerSignInLink) {
+                footerSignInLink.textContent = 'Sign Out';
+                footerSignInLink.href = '#';
+                footerSignInLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    log('Footer sign out clicked');
+                    
+                    if (window.directSupabase) {
+                        window.directSupabase.auth.signOut().then(({ error }) => {
+                            if (error) {
+                                log(`Error signing out: ${error.message}`, true);
+                            } else {
+                                log('Signed out successfully');
+                                localStorage.clear();
+                                window.location.reload();
+                            }
+                        });
+                    }
+                });
+            }
+            
+            if (footerDashboardLink) {
+                footerDashboardLink.style.display = '';
+            }
+        }
+        
         // Function to log to output container
         function log(message, isError = false) {
             const outputContainer = document.getElementById('outputContainer');
@@ -123,6 +218,27 @@
             document.getElementById('checkSession').addEventListener('click', async function() {
                 log('Checking authentication session...');
                 
+                // First try direct Supabase client
+                if (window.directSupabase) {
+                    log('Using direct Supabase client');
+                    try {
+                        const { data, error } = await window.directSupabase.auth.getSession();
+                        if (error) {
+                            log(`Error with direct client: ${error.message}`, true);
+                        } else if (data.session) {
+                            log(`Direct client found session for user: ${data.session.user.id}`);
+                            log(`Email: ${data.session.user.email || 'Not available'}`);
+                            log(`Session expires: ${new Date(data.session.expires_at * 1000).toLocaleString()}`);
+                            return;
+                        } else {
+                            log('Direct client found no active session');
+                        }
+                    } catch (e) {
+                        log(`Error with direct client: ${e.message}`, true);
+                    }
+                }
+                
+                // Then try the debug function from auth-script
                 if (typeof window.checkAuth === 'function') {
                     const session = await window.checkAuth();
                     
@@ -221,7 +337,19 @@
                 try {
                     let signOutSuccess = false;
                     
-                    // Try window.supabase first
+                    // Try direct Supabase client first
+                    if (window.directSupabase) {
+                        log('Using direct Supabase client for sign out');
+                        const { error } = await window.directSupabase.auth.signOut();
+                        if (error) {
+                            log(`Error signing out with direct client: ${error.message}`, true);
+                        } else {
+                            log('Successfully signed out with direct client');
+                            signOutSuccess = true;
+                        }
+                    }
+                    
+                    // Try window.supabase next
                     if (window.supabase) {
                         log('Using window.supabase for sign out');
                         const { error } = await window.supabase.auth.signOut();
