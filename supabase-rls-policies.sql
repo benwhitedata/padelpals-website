@@ -69,6 +69,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Create a helper function to check if a league is public
+CREATE OR REPLACE FUNCTION is_league_public(league_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- Check if the league is marked as public
+  -- Modify this based on how you track public leagues
+  RETURN EXISTS (
+    SELECT 1 FROM box_leagues
+    WHERE id = league_id AND (is_public = true OR visibility = 'public')
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Create a helper function to check if a user is related to a team
 CREATE OR REPLACE FUNCTION is_user_related_to_team(team_id UUID)
 RETURNS BOOLEAN AS $$
@@ -138,11 +151,11 @@ CREATE POLICY admin_leagues_policy
   ON box_leagues
   USING (check_if_admin());
 
--- 2. Regular users can read all leagues 
+-- 2. Regular users can read leagues they're related to or that are public
 CREATE POLICY read_leagues_policy
   ON box_leagues
   FOR SELECT
-  USING (true);
+  USING (is_user_related_to_league(id) OR is_league_public(id) OR creator_id = auth.uid());
 
 -- 3. Regular users can create leagues
 CREATE POLICY create_leagues_policy
@@ -172,11 +185,11 @@ CREATE POLICY admin_boxes_policy
   ON box_league_boxes
   USING (check_if_admin());
 
--- 2. Regular users can read boxes in leagues they're related to
+-- 2. Regular users can read boxes in leagues they're related to or that are public
 CREATE POLICY read_boxes_policy
   ON box_league_boxes
   FOR SELECT
-  USING (is_user_related_to_league(league_id));
+  USING (is_user_related_to_league(league_id) OR is_league_public(league_id));
 
 -- 3. Regular users can create boxes in leagues they created
 CREATE POLICY create_boxes_policy
@@ -218,11 +231,18 @@ CREATE POLICY admin_teams_policy
   ON box_league_teams
   USING (check_if_admin());
 
--- 2. Regular users can read teams in boxes they're related to
+-- 2. Regular users can read teams in boxes they're related to or in public leagues
 CREATE POLICY read_teams_policy
   ON box_league_teams
   FOR SELECT
-  USING (is_user_related_to_box(box_id));
+  USING (
+    is_user_related_to_box(box_id) OR 
+    EXISTS (
+      SELECT 1 
+      FROM box_league_boxes b
+      WHERE b.id = box_id AND is_league_public(b.league_id)
+    )
+  );
 
 -- 3. Regular users can create teams in boxes they manage (leagues they created)
 CREATE POLICY create_teams_policy
@@ -272,11 +292,18 @@ CREATE POLICY admin_matches_policy
   ON box_league_matches
   USING (check_if_admin());
 
--- 2. Regular users can read matches in boxes they're related to
+-- 2. Regular users can read matches in boxes they're related to or in public leagues
 CREATE POLICY read_matches_policy
   ON box_league_matches
   FOR SELECT
-  USING (is_user_related_to_box(box_id));
+  USING (
+    is_user_related_to_box(box_id) OR 
+    EXISTS (
+      SELECT 1 
+      FROM box_league_boxes b
+      WHERE b.id = box_id AND is_league_public(b.league_id)
+    )
+  );
 
 -- 3. Regular users can create matches in boxes they manage (leagues they created)
 CREATE POLICY create_matches_policy
@@ -347,5 +374,6 @@ CREATE POLICY delete_profiles_policy
 COMMENT ON FUNCTION check_if_admin() IS 'Checks if the current user has admin privileges';
 COMMENT ON FUNCTION is_user_related_to_league(UUID) IS 'Checks if the current user is related to a given league';
 COMMENT ON FUNCTION is_user_related_to_box(UUID) IS 'Checks if the current user is related to a given box';
+COMMENT ON FUNCTION is_league_public(UUID) IS 'Checks if a league is marked as public';
 COMMENT ON FUNCTION is_user_related_to_team(UUID) IS 'Checks if the current user is related to a given team';
 COMMENT ON FUNCTION is_user_related_to_match(UUID) IS 'Checks if the current user is related to a given match'; 
