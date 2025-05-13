@@ -554,11 +554,14 @@
                     
                     if (profileError) {
                         addDebugInfo(`Profile fetch error: ${profileError.message}`);
-                        // Even if profile fetch fails, show a basic dashboard
-                        document.getElementById('userName').textContent = session.user.email || 'User';
+                        // Even if profile fetch fails, show a basic dashboard with a friendly name
+                        const userEmail = session.user.email || 'User';
+                        const displayName = formatUserName(userEmail);
+                        document.getElementById('userName').textContent = displayName;
                     } else {
-                        // Update UI with user data
-                        document.getElementById('userName').textContent = profile.full_name || session.user.email || 'User';
+                        // Update UI with user data - prioritize full_name, then display_name, then friendly email format
+                        const displayName = profile.full_name || profile.display_name || formatUserName(session.user.email) || 'User';
+                        document.getElementById('userName').textContent = displayName;
                         addDebugInfo('Profile data loaded successfully');
                     }
                     
@@ -580,6 +583,38 @@
                 document.getElementById('goToAuth').style.display = 'block';
                 showLoadingMessage('Failed to authenticate. Please try signing in again.', true);
             }
+        }
+        
+        // Helper function: Format email to a more user-friendly display name
+        function formatUserName(email) {
+            if (!email || typeof email !== 'string') return 'User';
+            
+            // Extract the part before @ if it's an email
+            if (email.includes('@')) {
+                const username = email.split('@')[0];
+                
+                // Handle common username patterns
+                if (username.includes('.')) {
+                    // Convert firstname.lastname to Firstname Lastname
+                    return username.split('.')
+                        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                        .join(' ');
+                } else if (username.match(/[A-Z]/)) {
+                    // Handle camelCase or PascalCase (e.g., johnDoe -> John Doe)
+                    return username
+                        .replace(/([A-Z])/g, ' $1')
+                        .trim()
+                        .split(' ')
+                        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                        .join(' ');
+                } else {
+                    // Just capitalize the first letter
+                    return username.charAt(0).toUpperCase() + username.slice(1);
+                }
+            }
+            
+            // Return original if not an email
+            return email;
         }
         
         // Load Box League Data
