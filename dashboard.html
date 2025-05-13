@@ -662,9 +662,22 @@
                         const displayName = formatUserName(userEmail);
                         document.getElementById('userName').textContent = displayName;
                     } else {
-                        // Update UI with user data - prioritize full_name, then display_name, then friendly email format
-                        const displayName = profile.full_name || profile.display_name || formatUserName(session.user.email) || 'User';
+                        // Log available profile fields for debugging
+                        addDebugInfo(`Profile data: display_name=${profile.display_name}, full_name=${profile.full_name}`);
+                        
+                        // Update UI with user data - prioritize display_name, then full_name, then friendly email format
+                        const displayName = profile.display_name || profile.full_name || formatUserName(session.user.email) || 'User';
                         document.getElementById('userName').textContent = displayName;
+                        
+                        // Log which field was used
+                        if (profile.display_name) {
+                            console.log('Using display_name for user:', profile.display_name);
+                        } else if (profile.full_name) {
+                            console.log('Using full_name for user:', profile.full_name);
+                        } else {
+                            console.log('Using formatted email for user:', formatUserName(session.user.email));
+                        }
+                        
                         addDebugInfo('Profile data loaded successfully');
                         
                         // Check if user is admin
