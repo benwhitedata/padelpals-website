@@ -1,5 +1,5 @@
 // Enhanced configuration file with fallback
-// Created by GitHub Actions at Tue May 13 10:33:50 UTC 2025
+// Created by GitHub Actions at Tue May 13 10:41:54 UTC 2025
 
 const config = {
     supabaseUrl: 'https://peaphqbxdmknxzsfdxuh.supabase.co',

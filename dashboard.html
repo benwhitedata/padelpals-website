@@ -494,7 +494,7 @@
             </div>
             
             <!-- Authentication Test Section -->
-            <div class="row mt-4">
+            <div class="row mt-4" style="display: none;">
                 <div class="col-12">
                     <div class="stats-card">
                         <h3>Authentication & Connection Test</h3>
@@ -1997,7 +1997,8 @@
             document.getElementById('recentMatches').innerHTML = '<p>No recent matches found.</p>';
             document.getElementById('boxLeagueStatus').innerHTML = '<p>Box league data is not available yet.</p>';
             
-            // Run a simple test query to verify connection
+            // Still run the connection test silently in the background 
+            // to verify connectivity without showing the UI
             testSupabaseConnection(session);
             
             // Show dashboard content
@@ -2007,20 +2008,13 @@
         
         // Function to test Supabase connection
         async function testSupabaseConnection(session) {
-            const testElement = document.getElementById('connectionTest');
-            
             try {
-                // Display authentication info
-                let testHtml = `
-                    <h4>Authentication Status</h4>
-                    <p><strong>Status:</strong> <span class="text-success">Authenticated</span></p>
-                    <p><strong>User ID:</strong> ${session.user.id}</p>
-                    <p><strong>Provider:</strong> ${session.user.app_metadata.provider || 'Unknown'}</p>
-                `;
+                // Log authentication info to console instead of displaying in UI
+                console.log('Authentication Status: Authenticated');
+                console.log('User ID:', session.user.id);
+                console.log('Provider:', session.user.app_metadata.provider || 'Unknown');
                 
-                // Run a simple query to test database access
-                testHtml += `<h4>Database Connection Test</h4>`;
-                
+                // Still run the database test silently
                 try {
                     // Try to query a random table to verify permissions work
                     const { count, error: countError } = await supabase
@@ -2028,29 +2022,16 @@
                         .select('*', { count: 'exact', head: true });
                         
                     if (countError) {
-                        testHtml += `<p><strong>Database Access:</strong> <span class="text-danger">Failed</span> - ${countError.message}</p>`;
-                        testHtml += `<div class="alert alert-warning mt-3">
-                            <strong>Note:</strong> Your account may have limited database access. Some features may not be available.
-                        </div>`;
+                        console.log('Database Access: Failed -', countError.message);
+                        console.warn('Note: Your account may have limited database access. Some features may not be available.');
                     } else {
-                        testHtml += `<p><strong>Database Access:</strong> <span class="text-success">Success</span> - Found ${count} profiles</p>`;
-                        testHtml += `<div class="alert alert-success mt-3">
-                            <strong>Connection Test Complete:</strong> Your authentication is working correctly!
-                        </div>`;
+                        console.log('Database Access: Success - Found', count, 'profiles');
                     }
                 } catch (dbError) {
-                    testHtml += `<p><strong>Database Access:</strong> <span class="text-danger">Failed</span> - ${dbError.message}</p>`;
+                    console.error('Database Access Failed:', dbError.message);
                 }
-                
-                testElement.innerHTML = testHtml;
-                
             } catch (error) {
-                testElement.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h4>Connection Test Failed</h4>
-                        <p>${error.message}</p>
-                    </div>
-                `;
+                console.error('Connection Test Failed:', error.message);
             }
         }
     </script>
