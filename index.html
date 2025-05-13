@@ -99,6 +99,7 @@
                     <li class="nav-item"><a class="nav-link" href="privacy.html">Privacy Policy</a></li>
                     <li class="nav-item"><a class="nav-link" href="boxleague.html">Box League</a></li>
                     <li class="nav-item"><a class="nav-link" href="guide.html">App Guide</a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html" id="navDashboard" style="display: none;">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="auth.html" id="navSignIn">Sign In</a></li>
                 </ul>
             </div>
@@ -143,6 +144,7 @@
                 <a href="privacy.html">Privacy Policy</a> |
                 <a href="boxleague.html">Box League Rules</a> |
                 <a href="guide.html">App Guide</a> |
+                <a href="dashboard.html" id="footerDashboard" style="display: none;">Dashboard</a> |
                 <a href="auth.html" id="footerSignIn">Sign In</a>
             </p>
         </div>
@@ -186,6 +188,8 @@
                 // Get all the sign in links (nav and footer)
                 const navSignInLink = document.querySelector('#navSignIn');
                 const footerSignInLink = document.querySelector('#footerSignIn');
+                const navDashboardLink = document.querySelector('#navDashboard');
+                const footerDashboardLink = document.querySelector('#footerDashboard');
                 
                 if (session) {
                     // User is signed in, change links to "Sign Out"
@@ -201,6 +205,15 @@
                         footerSignInLink.href = '#'; // Prevent navigation
                     }
                     
+                    // Show Dashboard links
+                    if (navDashboardLink) {
+                        navDashboardLink.style.display = '';
+                    }
+                    
+                    if (footerDashboardLink) {
+                        footerDashboardLink.style.display = '';
+                    }
+                    
                     console.log('User is signed in:', session.user.id);
                 } else {
                     // User is not signed in, ensure links are "Sign In"
@@ -212,6 +225,15 @@
                     if (footerSignInLink) {
                         footerSignInLink.textContent = 'Sign In';
                         footerSignInLink.href = 'auth.html';
+                    }
+                    
+                    // Hide Dashboard links
+                    if (navDashboardLink) {
+                        navDashboardLink.style.display = 'none';
+                    }
+                    
+                    if (footerDashboardLink) {
+                        footerDashboardLink.style.display = 'none';
                     }
                     
                     console.log('User is not signed in');
