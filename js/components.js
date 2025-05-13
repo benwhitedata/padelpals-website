@@ -33,9 +33,9 @@ async function loadScriptComponent(componentPath) {
 // Load all components when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', async function() {
     // Load navbar and footer
-    await loadComponent('navbar-container', '/components/navbar.html');
-    await loadComponent('footer-container', '/components/footer.html');
+    await loadComponent('navbar-container', 'components/navbar.html');
+    await loadComponent('footer-container', 'components/footer.html');
     
     // Load auth script component last (after navbar and footer are loaded)
-    await loadScriptComponent('/components/auth-script.html');
+    await loadScriptComponent('components/auth-script.html');
 }); 
