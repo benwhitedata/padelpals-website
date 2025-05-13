@@ -658,6 +658,13 @@
                         const displayName = profile.full_name || profile.display_name || formatUserName(session.user.email) || 'User';
                         document.getElementById('userName').textContent = displayName;
                         addDebugInfo('Profile data loaded successfully');
+                        
+                        // Check if user is admin
+                        const isAdmin = profile.is_admin === true;
+                        addDebugInfo(`User is admin: ${isAdmin}`);
+                        
+                        // Store admin status for later use
+                        window.userIsAdmin = isAdmin;
                     }
                     
                     // Load box league data
@@ -715,7 +722,13 @@
         // Load Box League Data
         async function loadBoxLeagueData(userId) {
             try {
-                // First get box leagues user is part of
+                // Check if user is admin (set in loadUserData)
+                const isAdmin = window.userIsAdmin === true;
+                addDebugInfo(`Loading box league data for ${isAdmin ? 'admin' : 'regular'} user`);
+                
+                // Get leagues
+                // If RLS is properly set up, this will automatically filter to leagues the user has access to
+                // Admins would see all leagues, regular users would see leagues they created or participate in
                 const { data: leagues, error: leaguesError } = await supabase
                     .from('box_leagues')
                     .select('*')
@@ -731,7 +744,11 @@
                     // Show message in league table container
                     document.getElementById('leagueTableContainer').innerHTML = `
                         <div class="alert alert-info">
-                            You are not currently part of any box leagues.
+                            <h4>No Box Leagues Available</h4>
+                            <p>${isAdmin ? 
+                                'There are no box leagues in the system yet.' : 
+                                'You are not currently part of any box leagues.'}
+                            </p>
                         </div>
                     `;
                     
@@ -743,6 +760,8 @@
                     return;
                 }
                 
+                addDebugInfo(`Found ${leagues.length} box leagues available to user`);
+                
                 // Create status filter
                 createStatusFilter(leagues);
                 
@@ -753,7 +772,12 @@
                 console.error('Error loading box league data:', error);
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
-                        Error loading box league data: ${error.message}
+                        <h4>Error Loading Box League Data</h4>
+                        <p>${error.message}</p>
+                        <p>This may be due to permission restrictions or a database error.</p>
+                        ${window.userIsAdmin ? 
+                            '<p>Even though you are an admin, there may be an issue with the RLS policies.</p>' :
+                            '<p>You may not have permission to view this data.</p>'}
                     </div>
                 `;
             }
