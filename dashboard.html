@@ -1087,9 +1087,10 @@
                 // Create table rows
                 sortedTeams.forEach((team, index) => {
                     try {
+                        const playerNames = getPlayerNames(team.name);
                         tableHTML += `
                             <tr>
-                                <td class="team-name">${index + 1}. ${team.name || 'Unknown Team'}</td>
+                                <td class="team-name">${index + 1}. ${playerNames}</td>
                                 <td><strong>${calculatePoints(team.id, matches)}</strong></td>
                         `;
                         
@@ -1168,6 +1169,9 @@
                     const team2 = teams.find(t => t.id === match.team2_id);
                     
                     if (team1 && team2) {
+                        const team1Names = getPlayerNames(team1.name);
+                        const team2Names = getPlayerNames(team2.name);
+                        
                         upcomingHTML += `
                             <div class="match-card" data-match-id="${match.id}">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -1175,9 +1179,9 @@
                                     <span class="match-status status-scheduled">Scheduled</span>
                                 </div>
                                 <div class="team-names">
-                                    <div class="team">${team1.name}</div>
+                                    <div class="team">${team1Names}</div>
                                     <div class="vs">vs</div>
-                                    <div class="team">${team2.name}</div>
+                                    <div class="team">${team2Names}</div>
                                 </div>
                             </div>
                         `;
@@ -1216,6 +1220,8 @@
                     const team2 = teams.find(t => t.id === match.team2_id);
                     
                     if (team1 && team2) {
+                        const team1Names = getPlayerNames(team1.name);
+                        const team2Names = getPlayerNames(team2.name);
                         const team1Score = match.team1_score;
                         const team2Score = match.team2_score;
                         const team1SetScores = match.team1_set_scores || [];
@@ -1230,9 +1236,9 @@
                                         '<span class="match-status status-completed">Completed</span>'}
                                 </div>
                                 <div class="team-names">
-                                    <div class="team">${team1.name}</div>
+                                    <div class="team">${team1Names}</div>
                                     <div class="score">${team1Score} - ${team2Score}</div>
-                                    <div class="team">${team2.name}</div>
+                                    <div class="team">${team2Names}</div>
                                 </div>
                                 ${formatSetScores(team1SetScores, team2SetScores)}
                             </div>
@@ -1275,10 +1281,13 @@
             
             if (!team1 || !team2) return;
             
-            console.log(`Match card clicked: ${team1.name} vs ${team2.name}`);
+            const team1Names = getPlayerNames(team1.name);
+            const team2Names = getPlayerNames(team2.name);
+            
+            console.log(`Match card clicked: ${team1Names} vs ${team2Names}`);
             
             // TODO: Open match details modal or form
-            alert(`Match detail view coming soon for ${team1.name} vs ${team2.name}`);
+            alert(`Match detail view coming soon for ${team1Names} vs ${team2Names}`);
         }
         
         // Helper function: Get match result for display in the grid
@@ -1417,12 +1426,15 @@
             if (!name) return 'NA';
             
             try {
+                // Pattern: "First1 Last1 & First2 Last2" or similar variations
                 const components = name.split(' & ');
                 if (components.length >= 2) {
-                    const firstInitial = components[0].trim()[0] || '';
-                    const secondInitial = components[1].trim()[0] || '';
-                    return `${firstInitial}${secondInitial}`.toUpperCase();
+                    // Extract first names from each part
+                    const firstPerson = components[0].trim().split(' ')[0] || '';
+                    const secondPerson = components[1].trim().split(' ')[0] || '';
+                    return `${firstPerson.slice(0, 3)}/${secondPerson.slice(0, 3)}`;
                 } else {
+                    // Handle single name or other formats
                     const words = name.trim().split(' ');
                     if (words.length >= 2) {
                         return (words[0][0] + words[1][0]).toUpperCase();
@@ -1435,6 +1447,26 @@
             } catch (error) {
                 console.error('Error getting initials from name:', name, error);
                 return 'NA'; // Return a generic placeholder for invalid inputs
+            }
+        }
+        
+        // Helper function: Extract player names from team name
+        function getPlayerNames(name) {
+            if (!name) return 'Unknown Team';
+            
+            try {
+                const components = name.split(' & ');
+                if (components.length >= 2) {
+                    // Extract first names from each part
+                    const firstPerson = components[0].trim().split(' ')[0] || '';
+                    const secondPerson = components[1].trim().split(' ')[0] || '';
+                    return `${firstPerson} & ${secondPerson}`;
+                } else {
+                    return name; // Return original if not in expected format
+                }
+            } catch (error) {
+                console.error('Error extracting player names:', name, error);
+                return name;
             }
         }
         
