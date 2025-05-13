@@ -350,7 +350,7 @@
             <div class="spinner"></div>
             <h2>Loading your data...</h2>
             <p id="loadingMessage" class="info-message" style="display: none;">Preparing your dashboard...</p>
-            <div id="loadingDebug" style="margin-top: 20px; text-align: left; display: none;">
+            <div id="loadingDebug" style="display: none;">
                 <h4>Debug Information:</h4>
                 <pre id="debugInfo" style="background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 300px; overflow: auto;"></pre>
                 <button id="goToAuth" class="btn btn-primary mt-3" style="display: none;">Go to Sign In</button>
@@ -504,19 +504,17 @@
         
         // Add debug information
         function addDebugInfo(message) {
-            console.log(message);
-            if (debugInfoElement) {
-                debugInfoElement.textContent += message + '\n';
-            }
+            console.log(message);  // Always log to console for developers
+            // Don't add to visible debug area
         }
         
         // Show a loading message
         function showLoadingMessage(message, isError = false) {
-            const messageElement = document.getElementById('loadingMessage');
-            if (messageElement) {
-                messageElement.textContent = message;
-                messageElement.className = isError ? 'error-message' : 'info-message';
-                messageElement.style.display = 'block';
+            const loadingMessage = document.getElementById('loadingMessage');
+            if (loadingMessage) {
+                loadingMessage.textContent = message;
+                loadingMessage.className = isError ? 'error-message' : 'info-message';
+                loadingMessage.style.display = message ? 'block' : 'none';
             }
         }
         
@@ -715,6 +713,7 @@
             try {
                 // Check if user is admin (set in loadUserData)
                 const isAdmin = window.userIsAdmin === true;
+                // Log to console but don't show in UI
                 addDebugInfo(`Loading box league data for ${isAdmin ? 'admin' : 'regular'} user`);
                 
                 // Get leagues
@@ -730,6 +729,7 @@
                 }
                 
                 if (!leagues || leagues.length === 0) {
+                    // Log to console but don't show in UI
                     addDebugInfo('No box leagues found');
                     
                     // Show message in league table container
@@ -770,6 +770,7 @@
                         .limit(5);
                         
                     if (!userTeamsError && (!userTeams || userTeams.length === 0)) {
+                        // Log to console but don't show in UI
                         addDebugInfo('User ID not found in any teams');
                         
                         // Add a warning to the league table container
@@ -784,6 +785,7 @@
                     }
                 }
                 
+                // Log to console but don't show in UI
                 addDebugInfo(`Found ${leagues.length} box leagues available to user`);
                 
                 // Create status filter
@@ -797,16 +799,19 @@
                 
             } catch (error) {
                 console.error('Error loading box league data:', error);
+                // Log to console but don't show in UI
+                addDebugInfo(`Box league data error: ${error.message}`);
+                
+                // Show a friendly error message
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
-                        <h4>Error Loading Box League Data</h4>
-                        <p>${error.message}</p>
-                        <p>This may be due to permission restrictions or a database error.</p>
-                        ${window.userIsAdmin ? 
-                            '<p>Even though you are an admin, there may be an issue with the RLS policies.</p>' :
-                            '<p>You may not have permission to view this data.</p>'}
+                        <h4>Unable to Load League Data</h4>
+                        <p>There was a problem loading your box league data. Please try again later.</p>
                     </div>
                 `;
+                
+                document.getElementById('upcomingMatches').innerHTML = '<p>Unable to load matches.</p>';
+                document.getElementById('matchResults').innerHTML = '<p>Unable to load results.</p>';
             }
         }
         
@@ -2005,6 +2010,120 @@
                 }
             } catch (error) {
                 console.error('Connection Test Failed:', error.message);
+            }
+        }
+        
+        // Check if the user is authenticated
+        async function checkAuthentication() {
+            let redirectAttempted = false;
+            
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error('Error checking session:', error);
+                    // Log to console but don't show in UI
+                    addDebugInfo(`Session error: ${error.message}`);
+                    
+                    // Wait to display the redirect message
+                    setTimeout(() => {
+                        if (!redirectAttempted) {
+                            redirectAttempted = true;
+                            localStorage.setItem('authRedirectTime', Date.now().toString());
+                            window.location.href = '/auth.html';
+                        }
+                    }, 2000);
+                    return;
+                }
+                
+                if (!session) {
+                    // Log to console but don't show in UI
+                    addDebugInfo('No active session found');
+                    
+                    // Wait to redirect
+                    setTimeout(() => {
+                        if (!redirectAttempted) {
+                            redirectAttempted = true;
+                            localStorage.setItem('authRedirectTime', Date.now().toString());
+                            window.location.href = '/auth.html';
+                        }
+                    }, 2000);
+                    return;
+                }
+                
+                // Log to console but don't show in UI
+                addDebugInfo(`Session found for user: ${session.user.id}`);
+                
+                try {
+                    // Try to get the user profile
+                    const { data: profile, error: profileError } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+                    
+                    if (profileError) {
+                        // Log to console but don't show in UI
+                        addDebugInfo(`Profile fetch error: ${profileError.message}`);
+                        
+                        // Even if profile fetch fails, show a basic dashboard with a friendly name
+                        const userEmail = session.user.email || 'User';
+                        const displayName = formatUserName(userEmail);
+                        document.getElementById('userName').textContent = displayName;
+                    } else {
+                        // Log available profile fields for debugging
+                        addDebugInfo(`Profile data: display_name=${profile.display_name}, full_name=${profile.full_name}`);
+                        
+                        // Update UI with user data - prioritize display_name, then full_name, then friendly email format
+                        const displayName = profile.display_name || profile.full_name || formatUserName(session.user.email) || 'User';
+                        document.getElementById('userName').textContent = displayName;
+                        
+                        // Log which field was used
+                        if (profile.display_name) {
+                            console.log('Using display_name for user:', profile.display_name);
+                        } else if (profile.full_name) {
+                            console.log('Using full_name for user:', profile.full_name);
+                        } else {
+                            console.log('Using formatted email for user:', formatUserName(session.user.email));
+                        }
+                        
+                        // Log to console but don't show in UI
+                        addDebugInfo('Profile data loaded successfully');
+                        
+                        // Check if user is admin
+                        const isAdmin = profile.is_admin === true;
+                        addDebugInfo(`User is admin: ${isAdmin}`);
+                        
+                        // Store admin status for later use
+                        window.userIsAdmin = isAdmin;
+                    }
+                    
+                    // Load box league data
+                    await loadBoxLeagueData(session.user.id);
+                    
+                    // We got this far, so authentication works
+                    showBasicDashboard(session);
+                    
+                } catch (dataError) {
+                    // Log to console but don't show in UI
+                    addDebugInfo(`Data loading error: ${dataError.message}`);
+                    
+                    // If we fail to get profile but have a session, still show a basic dashboard
+                    showBasicDashboard(session);
+                }
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+                // Log to console but don't show in UI
+                addDebugInfo(`Authentication error: ${error.message}`);
+                
+                // Wait to redirect
+                setTimeout(() => {
+                    if (!redirectAttempted) {
+                        redirectAttempted = true;
+                        localStorage.setItem('authRedirectTime', Date.now().toString());
+                        window.location.href = '/auth.html';
+                    }
+                }, 2000);
             }
         }
     </script>
