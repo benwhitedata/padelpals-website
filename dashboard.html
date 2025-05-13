@@ -2875,41 +2875,48 @@
                 return;
             }
             
-            // Separate data by event type to style differently
-            const matchData = data.filter(item => item.eventType === 'match');
-            const coachData = data.filter(item => item.eventType === 'coach');
+            // Get the gold color from CSS variables
+            const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || '#d4af37';
+            const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--dark-blue').trim() || '#1a2238';
             
-            // Prepare datasets
-            const datasets = [];
+            // Sort data by date to ensure proper line connection
+            data.sort((a, b) => a.date - b.date);
             
-            if (matchData.length > 0) {
-                datasets.push({
-                    label: 'Match Ratings',
-                    data: matchData.map(item => ({
+            // Create a single dataset for the line with all points
+            const datasets = [
+                {
+                    label: 'Rating Trend',
+                    data: data.map(item => ({
                         x: item.date,
-                        y: item.rating
+                        y: item.rating,
+                        eventType: item.eventType
                     })),
-                    borderColor: getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || '#d4af37',
-                    backgroundColor: 'rgba(212, 175, 55, 0.7)',
-                    pointRadius: 5,
-                    tension: 0.3
-                });
-            }
-            
-            if (coachData.length > 0) {
-                datasets.push({
-                    label: 'Coach Ratings',
-                    data: coachData.map(item => ({
-                        x: item.date,
-                        y: item.rating
-                    })),
-                    borderColor: 'red',
-                    backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                    pointRadius: 7,
-                    pointStyle: 'rectRot', // Diamond shape approximation
-                    tension: 0.3
-                });
-            }
+                    borderColor: secondaryColor,
+                    backgroundColor: 'rgba(26, 34, 56, 0.1)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: (context) => {
+                        // Get data point from dataset
+                        const dataPoint = context.dataset.data[context.dataIndex];
+                        return dataPoint.eventType === 'coach' ? 8 : 5;
+                    },
+                    pointStyle: (context) => {
+                        // Get data point from dataset
+                        const dataPoint = context.dataset.data[context.dataIndex];
+                        return dataPoint.eventType === 'coach' ? 'rectRot' : 'circle'; // Diamond shape for coach ratings
+                    },
+                    pointBackgroundColor: (context) => {
+                        // Get data point from dataset
+                        const dataPoint = context.dataset.data[context.dataIndex];
+                        return dataPoint.eventType === 'coach' ? 'red' : goldColor;
+                    },
+                    pointBorderColor: (context) => {
+                        // Get data point from dataset
+                        const dataPoint = context.dataset.data[context.dataIndex];
+                        return dataPoint.eventType === 'coach' ? 'red' : goldColor;
+                    }
+                }
+            ];
             
             // Calculate y-axis range
             const ratings = data.map(item => item.rating);
@@ -2968,7 +2975,9 @@
                                     return date.toLocaleDateString();
                                 },
                                 label: function(context) {
-                                    return `Rating: ${context.parsed.y.toFixed(1)}`;
+                                    const dataPoint = context.dataset.data[context.dataIndex];
+                                    const ratingType = dataPoint.eventType === 'coach' ? 'Coach Rating' : 'Match Rating';
+                                    return `${ratingType}: ${context.parsed.y.toFixed(1)}`;
                                 }
                             }
                         }
