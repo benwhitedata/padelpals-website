@@ -2681,12 +2681,15 @@
         // Load rating trend data
         async function loadRatingTrendData(userId, useCache = false) {
             try {
+                console.log("Starting to load rating trend data for user:", userId);
+                
                 // Show loading state on chart
                 const chartCanvas = document.getElementById('ratingChart');
                 const chartContainer = chartCanvas.parentElement;
                 
                 // Check if we should use cached data
                 if (useCache && ratingTrendData) {
+                    console.log("Using cached rating data");
                     updateRatingChart(ratingTrendData);
                     return;
                 }
@@ -2694,28 +2697,49 @@
                 // Show loading indicator
                 chartContainer.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100"><div class="spinner-border text-primary" role="status"></div></div>';
                 
-                // Create the request to fetch rating history - similar to the Swift implementation
+                // Get current session and access token - similar to Swift code
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    throw new Error('No active session found');
+                }
+                
+                const accessToken = session.access_token;
+                console.log("Got access token:", accessToken ? "Valid token" : "No token");
+                
+                // Create the request to fetch rating history - exactly like Swift implementation
                 const endpoint = `${window.config.supabaseUrl}/rest/v1/ratings?id=eq.${userId}&select=rating_0_10,date,event_type&order=date.asc`;
+                console.log("Fetching ratings from endpoint:", endpoint);
                 
                 const headers = {
                     'Content-Type': 'application/json',
                     'apikey': window.config.supabaseKey,
-                    'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+                    'Authorization': `Bearer ${accessToken}`
                 };
+                
+                console.log("Using headers:", JSON.stringify({
+                    'Content-Type': headers['Content-Type'],
+                    'apikey': headers.apikey ? "Present" : "Missing",
+                    'Authorization': headers.Authorization ? "Present" : "Missing"
+                }));
                 
                 const response = await fetch(endpoint, {
                     method: 'GET',
                     headers: headers
                 });
                 
+                console.log("Rating data response status:", response.status);
+                
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch rating data: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error("Error response:", errorText);
+                    throw new Error(`Failed to fetch rating data: ${response.status} - ${errorText}`);
                 }
                 
                 const data = await response.json();
-                console.log('Rating history data:', data);
+                console.log('Rating history data retrieved:', data.length, 'records');
+                console.log('First few records:', data.slice(0, 3));
                 
-                // Process the data similar to the Swift implementation
+                // Process the data exactly like the Swift implementation
                 ratingTrendData = data.map(item => {
                     return {
                         date: new Date(item.date),
@@ -2724,8 +2748,23 @@
                     };
                 });
                 
+                console.log('Processed rating data:', ratingTrendData.length, 'records');
+                
                 // Restore chart container and update chart
                 chartContainer.innerHTML = '<canvas id="ratingChart"></canvas>';
+                
+                if (ratingTrendData.length === 0) {
+                    console.log('No rating data available for this user');
+                    chartContainer.innerHTML = 
+                        '<div class="d-flex flex-column justify-content-center align-items-center h-100">' +
+                        '<i class="fas fa-chart-line mb-3" style="font-size: 48px; color: #ccc;"></i>' +
+                        '<p class="text-center text-muted">No rating data available yet. Play matches to see your rating trend!</p>' +
+                        '</div>';
+                    
+                    // Reset stats
+                    updateRatingStats([]);
+                    return;
+                }
                 
                 updateRatingChart(ratingTrendData);
                 
@@ -2733,6 +2772,9 @@
                 console.error('Error loading rating trend data:', error);
                 document.getElementById('ratingChart').parentElement.innerHTML = 
                     `<div class="alert alert-danger">Error loading rating data: ${error.message}</div>`;
+                
+                // Reset stats
+                updateRatingStats([]);
             }
         }
 
@@ -2940,6 +2982,15 @@
             try {
                 console.log(`Updating display name to: ${newName} for user: ${userId}`);
                 
+                // Get current session - same way as RatingTrendView.swift
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    throw new Error('No active session found');
+                }
+                
+                const accessToken = session.access_token;
+                console.log("Got access token:", accessToken ? "Valid token" : "No token");
+                
                 // Create the update URL - matching Swift app implementation
                 const url = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}`;
                 
@@ -2947,7 +2998,7 @@
                 const headers = {
                     'Content-Type': 'application/json',
                     'apikey': window.config.supabaseKey,
-                    'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+                    'Authorization': `Bearer ${accessToken}`
                 };
                 
                 // Create the update body with display_name
@@ -3026,6 +3077,15 @@
                 
                 console.log("Forcing profile refresh for user ID:", userId);
                 
+                // Get current session - same way as RatingTrendView.swift
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    throw new Error('No active session found');
+                }
+                
+                const accessToken = session.access_token;
+                console.log("Got access token:", accessToken ? "Valid token" : "No token");
+                
                 // Clear any local cache first - matching Swift app behavior
                 localStorage.removeItem('profileCache_' + userId);
                 
@@ -3033,11 +3093,12 @@
                 const headers = {
                     'Content-Type': 'application/json',
                     'apikey': window.config.supabaseKey,
-                    'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+                    'Authorization': `Bearer ${accessToken}`
                 };
                 
                 // Create the combined profile endpoint that includes clubs and ratings
                 const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach(*)`;
+                console.log("Refreshing profile from endpoint:", profileEndpoint);
                 
                 const response = await fetch(profileEndpoint, {
                     method: 'GET',
@@ -3046,11 +3107,12 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`Profile refresh failed with status: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`Profile refresh failed: ${response.status} - ${errorText}`);
                 }
                 
                 const profileData = await response.json();
-                console.log("Refreshed profile data:", profileData);
+                console.log("Refreshed profile data:", profileData.length > 0 ? "Successfully retrieved" : "No data found");
                 
                 if (profileData && profileData.length > 0) {
                     const profile = profileData[0];
@@ -3095,6 +3157,7 @@
                 
                 // Also refresh match ratings
                 const ratingsEndpoint = `${window.config.supabaseUrl}/rest/v1/ratings?id=eq.${userId}&select=rating_0_10,confidence_pct,date&order=date.desc&limit=1`;
+                console.log("Refreshing match ratings from:", ratingsEndpoint);
                 
                 const ratingsResponse = await fetch(ratingsEndpoint, {
                     method: 'GET',
@@ -3104,6 +3167,7 @@
                 
                 if (ratingsResponse.ok) {
                     const matchRatings = await ratingsResponse.json();
+                    console.log("Match ratings response:", matchRatings.length > 0 ? "Data found" : "No data found");
                     
                     if (matchRatings && matchRatings.length > 0) {
                         const latestMatchRating = matchRatings[0];
@@ -3117,6 +3181,15 @@
                                 (latestMatchRating.confidence_pct * 100).toFixed(1) + '%';
                         }
                     }
+                } else {
+                    console.warn("Failed to refresh match ratings:", await ratingsResponse.text());
+                }
+                
+                // Also refresh the rating trend chart if it's visible
+                const chartContainer = document.getElementById('ratingTrendContainer');
+                if (chartContainer.style.display !== 'none') {
+                    console.log("Refreshing rating trend chart");
+                    loadRatingTrendData(userId, false); // false = force refresh from server
                 }
                 
                 alert('Profile data refreshed successfully.');
