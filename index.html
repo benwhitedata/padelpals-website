@@ -70,6 +70,40 @@
         .navbar-toggler-icon {
             background-color: unset;
         }
+        
+        /* Auth processing overlay */
+        #auth-processing {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .auth-processing-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+        }
+        .auth-spinner {
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid #1a2238;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -84,10 +118,118 @@
     
     <!-- Components loader -->
     <script src="js/components.js"></script>
+    
+    <!-- Auth token handler -->
+    <script>
+        // Check if we have an authentication token in the URL hash
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for config to load
+            document.addEventListener('configLoaded', function() {
+                // Check for hash fragment
+                if (window.location.hash && window.location.hash.includes('access_token')) {
+                    processAuthentication();
+                }
+            });
+        });
+        
+        async function processAuthentication() {
+            try {
+                // Show the processing overlay
+                const overlay = document.getElementById('auth-processing');
+                overlay.style.display = 'flex';
+                const statusMessage = document.getElementById('auth-status');
+                
+                statusMessage.textContent = "Initializing authentication...";
+                
+                // Initialize Supabase client
+                const supabase = window.supabase.createClient(
+                    window.config.supabaseUrl, 
+                    window.config.supabaseKey
+                );
+                
+                statusMessage.textContent = "Processing authentication response...";
+                
+                // Get the hash fragment from the URL
+                const hashFragment = window.location.hash.substring(1);
+                
+                if (!hashFragment) {
+                    throw new Error("No authentication data found in URL");
+                }
+                
+                console.log("Processing hash fragment:", hashFragment);
+                
+                // Parse the hash parameters
+                const params = new URLSearchParams(hashFragment);
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+                
+                if (!accessToken) {
+                    throw new Error("No access token found in response");
+                }
+                
+                // Set the session in Supabase
+                statusMessage.textContent = "Setting session...";
+                
+                const { error } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // Get the current session to confirm it worked
+                const { data } = await supabase.auth.getSession();
+                
+                if (!data.session) {
+                    throw new Error("Failed to establish session");
+                }
+                
+                console.log("Authentication successful!");
+                statusMessage.textContent = "Authentication successful! Redirecting to dashboard...";
+                
+                // Clean the URL by removing the hash fragment
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
+                // Redirect to dashboard
+                window.location.href = "/dashboard.html";
+                
+            } catch (error) {
+                console.error("Authentication error:", error);
+                const statusMessage = document.getElementById('auth-status');
+                statusMessage.textContent = `Authentication error: ${error.message}. Please try again.`;
+                statusMessage.style.color = "red";
+                
+                const spinner = document.querySelector('.auth-spinner');
+                if (spinner) spinner.style.display = 'none';
+                
+                const retryButton = document.createElement('button');
+                retryButton.className = 'btn btn-primary mt-3';
+                retryButton.textContent = 'Try Again';
+                retryButton.onclick = () => window.location.href = "/auth.html";
+                
+                const content = document.querySelector('.auth-processing-content');
+                content.appendChild(retryButton);
+            }
+        }
+    </script>
 </head>
 <body>
     <!-- Navigation container - will be filled by JavaScript -->
     <div id="navbar-container"></div>
+    
+    <!-- Auth processing overlay -->
+    <div id="auth-processing">
+        <div class="auth-processing-content">
+            <h3>Processing Your Login</h3>
+            <div class="auth-spinner"></div>
+            <p id="auth-status">Please wait while we complete your authentication...</p>
+        </div>
+    </div>
+    
     <section class="hero-section">
         <div class="container">
             <h1>Welcome to Padel Pals</h1>
