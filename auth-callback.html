@@ -249,25 +249,15 @@
                             addDebugInfo('Session set explicitly');
                             showStatusMessage('Authentication successful! Redirecting to dashboard...', 'success');
                             
-                            // Get the redirect URL from either hash fragment or query parameters
-                            let redirectUrl = '/dashboard.html';
-                            
-                            // First check query parameters
-                            if (urlParams.has('redirect_to')) {
-                                redirectUrl = urlParams.get('redirect_to');
+                            // If we have a hash fragment, redirect to dashboard with it
+                            if (window.location.hash) {
+                                addDebugInfo('Found hash fragment, redirecting to dashboard with hash');
+                                window.location.href = '/dashboard.html' + window.location.hash;
+                            } else {
+                                // Otherwise, redirect to dashboard normally
+                                addDebugInfo('No hash fragment, redirecting to dashboard');
+                                window.location.href = '/dashboard.html';
                             }
-                            // Then check hash fragment
-                            else if (window.location.hash) {
-                                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                                if (hashParams.has('redirect_to')) {
-                                    redirectUrl = hashParams.get('redirect_to');
-                                }
-                            }
-                            
-                            addDebugInfo(`Redirecting to: ${redirectUrl}`);
-                            
-                            // Redirect to the dashboard
-                            window.location.href = redirectUrl;
                             
                             return;
                         }
