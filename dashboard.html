@@ -6,6 +6,8 @@
     <title>Padel Pals - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="Icon.png" type="image/png">
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Load Supabase JS and config loader first -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config-loader.js"></script>
@@ -244,23 +246,53 @@
             margin-bottom: 15px;
         }
         .status-filter-btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
+            border: 1px solid #495057;
+            background-color: #343a40;
+            color: #f8f9fa;
             cursor: pointer;
             transition: all 0.2s ease;
             font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        /* Status-specific styling */
+        .status-filter-btn[data-status="active"] {
+            background-color: #1e3a8a;
+            border-color: #1e4d8a;
+            color: #ffffff;
+        }
+        .status-filter-btn[data-status="upcoming"] {
+            background-color: #0e7490;
+            border-color: #0e6890;
+            color: #ffffff;
+        }
+        .status-filter-btn[data-status="completed"] {
+            background-color: #4b5563;
+            border-color: #6b7280;
+            color: #ffffff;
+        }
+        .status-filter-btn[data-status="cancelled"] {
+            background-color: #991b1b;
+            border-color: #7f1d1d;
+            color: #ffffff;
+        }
+        .status-filter-btn[data-status="all"] {
+            background-color: #525252;
+            border-color: #6b7280;
+            color: #ffffff;
         }
         .status-filter-btn.active {
             background-color: var(--dark-blue);
             border-color: var(--dark-blue);
             color: var(--gold);
-            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transform: translateY(-1px);
         }
         .status-filter-btn:hover:not(.active) {
-            background-color: rgba(255, 255, 255, 0.2);
+            filter: brightness(1.2);
+            transform: translateY(-1px);
         }
     </style>
     <!-- Google Analytics -->
@@ -707,14 +739,23 @@
                 }
             });
             
+            // Get icons for each status
+            const statusIcons = {
+                active: '<i class="fas fa-play-circle me-1"></i>',
+                upcoming: '<i class="fas fa-calendar-alt me-1"></i>',
+                completed: '<i class="fas fa-flag-checkered me-1"></i>',
+                cancelled: '<i class="fas fa-ban me-1"></i>',
+                all: '<i class="fas fa-th-list me-1"></i>'
+            };
+            
             // Create filter buttons
             const filterHTML = `
-                <label class="form-label">Filter by Status:</label>
+                <label class="form-label d-block mb-2">Filter by Status:</label>
                 <div class="status-filters">
-                    <button class="status-filter-btn active" data-status="active">Active</button>
-                    <button class="status-filter-btn" data-status="upcoming">Upcoming</button>
-                    <button class="status-filter-btn" data-status="completed">Completed</button>
-                    <button class="status-filter-btn" data-status="all">All</button>
+                    <button class="status-filter-btn active" data-status="active">${statusIcons.active || ''}Active</button>
+                    <button class="status-filter-btn" data-status="upcoming">${statusIcons.upcoming || ''}Upcoming</button>
+                    <button class="status-filter-btn" data-status="completed">${statusIcons.completed || ''}Completed</button>
+                    <button class="status-filter-btn" data-status="all">${statusIcons.all || ''}All</button>
                 </div>
             `;
             
