@@ -452,6 +452,10 @@
     </script>
     <!-- End Google Analytics -->
     
+    <!-- Chart.js for Rating Trend -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    
     <!-- Components loader -->
     <script src="js/components.js"></script>
 </head>
@@ -560,6 +564,75 @@
                                 <button type="button" id="viewRatingTrendBtn" class="btn btn-outline-primary">
                                     <i class="fas fa-chart-line me-2"></i>View Rating Trend
                                 </button>
+                                
+                                <!-- Rating Trend Chart (initially hidden) -->
+                                <div id="ratingTrendContainer" class="mt-4" style="display: none;">
+                                    <!-- Time range selector -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Time Range</label>
+                                        <select id="timeRangeSelector" class="form-select">
+                                            <option value="week">Week</option>
+                                            <option value="month">Month</option>
+                                            <option value="threeMonths">3 Months</option>
+                                            <option value="sixMonths">6 Months</option>
+                                            <option value="year">Year</option>
+                                            <option value="all" selected>All</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Chart container -->
+                                    <div class="chart-container" style="position: relative; height: 300px;">
+                                        <canvas id="ratingChart"></canvas>
+                                    </div>
+                                    
+                                    <!-- Chart legend -->
+                                    <div class="d-flex justify-content-center mt-2">
+                                        <div class="d-flex align-items-center me-3">
+                                            <div class="rounded-circle me-1" style="width: 10px; height: 10px; background-color: var(--gold);"></div>
+                                            <small>Match Ratings</small>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle me-1" style="width: 10px; height: 10px; background-color: red;"></div>
+                                            <small>Coach Ratings</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Rating stats -->
+                                    <div class="row mt-3" id="ratingStats">
+                                        <div class="col-6 col-sm-3 mb-2">
+                                            <div class="card bg-light">
+                                                <div class="card-body p-2 text-center">
+                                                    <h6 class="mb-1">Highest</h6>
+                                                    <span id="highestRating" class="h4">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-sm-3 mb-2">
+                                            <div class="card bg-light">
+                                                <div class="card-body p-2 text-center">
+                                                    <h6 class="mb-1">Lowest</h6>
+                                                    <span id="lowestRating" class="h4">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-sm-3 mb-2">
+                                            <div class="card bg-light">
+                                                <div class="card-body p-2 text-center">
+                                                    <h6 class="mb-1">Average</h6>
+                                                    <span id="averageRating" class="h4">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-sm-3 mb-2">
+                                            <div class="card bg-light">
+                                                <div class="card-body p-2 text-center">
+                                                    <h6 class="mb-1">Matches</h6>
+                                                    <span id="matchesCount" class="h4">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Club Information -->
@@ -2571,8 +2644,24 @@
             
             // View rating trend button
             document.getElementById('viewRatingTrendBtn').addEventListener('click', function() {
-                alert('Rating trend visualization coming soon!');
-                // TODO: Implement rating trend visualization
+                const chartContainer = document.getElementById('ratingTrendContainer');
+                if (chartContainer.style.display === 'none') {
+                    // Show the chart and load data
+                    chartContainer.style.display = 'block';
+                    this.innerHTML = '<i class="fas fa-chevron-up me-2"></i>Hide Rating Trend';
+                    loadRatingTrendData(session.user.id);
+                } else {
+                    // Hide the chart
+                    chartContainer.style.display = 'none';
+                    this.innerHTML = '<i class="fas fa-chart-line me-2"></i>View Rating Trend';
+                }
+            });
+            
+            // Time range selector
+            document.getElementById('timeRangeSelector').addEventListener('change', function() {
+                // Re-filter data based on selected time range
+                const userId = session.user.id;
+                loadRatingTrendData(userId, true); // true = use cached data if available
             });
             
             // Delete account button
@@ -2580,6 +2669,267 @@
                 if (confirm('WARNING: This will permanently delete your account and all associated data. This action cannot be undone. Are you sure?')) {
                     if (confirm('FINAL WARNING: All your data will be permanently lost. Continue with account deletion?')) {
                         deleteUserAccount(session.user.id);
+                    }
+                }
+            });
+        }
+
+        // Chart and rating trend data variables
+        let ratingChart = null;
+        let ratingTrendData = null;
+
+        // Load rating trend data
+        async function loadRatingTrendData(userId, useCache = false) {
+            try {
+                // Show loading state on chart
+                const chartCanvas = document.getElementById('ratingChart');
+                const chartContainer = chartCanvas.parentElement;
+                
+                // Check if we should use cached data
+                if (useCache && ratingTrendData) {
+                    updateRatingChart(ratingTrendData);
+                    return;
+                }
+                
+                // Show loading indicator
+                chartContainer.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100"><div class="spinner-border text-primary" role="status"></div></div>';
+                
+                // Create the request to fetch rating history - similar to the Swift implementation
+                const endpoint = `${window.config.supabaseUrl}/rest/v1/ratings?id=eq.${userId}&select=rating_0_10,date,event_type&order=date.asc`;
+                
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': window.config.supabaseKey,
+                    'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+                };
+                
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch rating data: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Rating history data:', data);
+                
+                // Process the data similar to the Swift implementation
+                ratingTrendData = data.map(item => {
+                    return {
+                        date: new Date(item.date),
+                        rating: item.rating_0_10,
+                        eventType: item.event_type || 'match'
+                    };
+                });
+                
+                // Restore chart container and update chart
+                chartContainer.innerHTML = '<canvas id="ratingChart"></canvas>';
+                
+                updateRatingChart(ratingTrendData);
+                
+            } catch (error) {
+                console.error('Error loading rating trend data:', error);
+                document.getElementById('ratingChart').parentElement.innerHTML = 
+                    `<div class="alert alert-danger">Error loading rating data: ${error.message}</div>`;
+            }
+        }
+
+        // Update rating chart with data
+        function updateRatingChart(data) {
+            // Filter data based on selected time range
+            const filteredData = filterDataByTimeRange(data);
+            
+            // Calculate statistics
+            updateRatingStats(filteredData);
+            
+            // Create or update the chart
+            createRatingChart(filteredData);
+        }
+
+        // Filter data by selected time range
+        function filterDataByTimeRange(data) {
+            if (!data || data.length === 0) {
+                return [];
+            }
+            
+            const timeRange = document.getElementById('timeRangeSelector').value;
+            const now = new Date();
+            let cutoffDate = new Date(0); // distant past as default
+            
+            switch (timeRange) {
+                case 'week':
+                    cutoffDate = new Date(now);
+                    cutoffDate.setDate(cutoffDate.getDate() - 7);
+                    break;
+                case 'month':
+                    cutoffDate = new Date(now);
+                    cutoffDate.setMonth(cutoffDate.getMonth() - 1);
+                    break;
+                case 'threeMonths':
+                    cutoffDate = new Date(now);
+                    cutoffDate.setMonth(cutoffDate.getMonth() - 3);
+                    break;
+                case 'sixMonths':
+                    cutoffDate = new Date(now);
+                    cutoffDate.setMonth(cutoffDate.getMonth() - 6);
+                    break;
+                case 'year':
+                    cutoffDate = new Date(now);
+                    cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
+                    break;
+                case 'all':
+                    // Use distant past (default)
+                    break;
+            }
+            
+            return data.filter(item => item.date >= cutoffDate);
+        }
+
+        // Calculate and update rating statistics
+        function updateRatingStats(data) {
+            if (!data || data.length === 0) {
+                // No data, set defaults
+                document.getElementById('highestRating').textContent = '—';
+                document.getElementById('lowestRating').textContent = '—';
+                document.getElementById('averageRating').textContent = '—';
+                document.getElementById('matchesCount').textContent = '0';
+                return;
+            }
+            
+            // Calculate highest, lowest, and average
+            const ratings = data.map(item => item.rating);
+            const highest = Math.max(...ratings);
+            const lowest = Math.min(...ratings);
+            const average = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+            
+            // Count matches (not coach ratings)
+            const matchesCount = data.filter(item => item.eventType === 'match').length;
+            
+            // Update the UI
+            document.getElementById('highestRating').textContent = highest.toFixed(1);
+            document.getElementById('lowestRating').textContent = lowest.toFixed(1);
+            document.getElementById('averageRating').textContent = average.toFixed(1);
+            document.getElementById('matchesCount').textContent = matchesCount.toString();
+        }
+
+        // Create or update the rating trend chart
+        function createRatingChart(data) {
+            const chartElement = document.getElementById('ratingChart');
+            
+            if (!data || data.length === 0) {
+                // No data, show message on chart
+                if (ratingChart) {
+                    ratingChart.destroy();
+                    ratingChart = null;
+                }
+                
+                chartElement.parentElement.innerHTML = 
+                    '<div class="d-flex flex-column justify-content-center align-items-center h-100">' +
+                    '<i class="fas fa-chart-line mb-3" style="font-size: 48px; color: #ccc;"></i>' +
+                    '<p class="text-center text-muted">No rating data available. Play matches to see your rating trend!</p>' +
+                    '</div>';
+                return;
+            }
+            
+            // Separate data by event type to style differently
+            const matchData = data.filter(item => item.eventType === 'match');
+            const coachData = data.filter(item => item.eventType === 'coach');
+            
+            // Prepare datasets
+            const datasets = [];
+            
+            if (matchData.length > 0) {
+                datasets.push({
+                    label: 'Match Ratings',
+                    data: matchData.map(item => ({
+                        x: item.date,
+                        y: item.rating
+                    })),
+                    borderColor: getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || '#d4af37',
+                    backgroundColor: 'rgba(212, 175, 55, 0.7)',
+                    pointRadius: 5,
+                    tension: 0.3
+                });
+            }
+            
+            if (coachData.length > 0) {
+                datasets.push({
+                    label: 'Coach Ratings',
+                    data: coachData.map(item => ({
+                        x: item.date,
+                        y: item.rating
+                    })),
+                    borderColor: 'red',
+                    backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                    pointRadius: 7,
+                    pointStyle: 'rectRot', // Diamond shape approximation
+                    tension: 0.3
+                });
+            }
+            
+            // Calculate y-axis range
+            const ratings = data.map(item => item.rating);
+            const min = Math.max(0, Math.min(...ratings) - 0.5);
+            const max = Math.min(10, Math.max(...ratings) + 0.5);
+            
+            // Destroy existing chart if it exists
+            if (ratingChart) {
+                ratingChart.destroy();
+            }
+            
+            // Create new chart
+            ratingChart = new Chart(chartElement, {
+                type: 'line',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: data.length > 20 ? 'month' : 'day',
+                                displayFormats: {
+                                    day: 'MMM d',
+                                    month: 'MMM yyyy'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            min: min,
+                            max: max,
+                            title: {
+                                display: true,
+                                text: 'Rating'
+                            },
+                            ticks: {
+                                stepSize: 0.5
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // We have our custom legend
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const date = new Date(context[0].parsed.x);
+                                    return date.toLocaleDateString();
+                                },
+                                label: function(context) {
+                                    return `Rating: ${context.parsed.y.toFixed(1)}`;
+                                }
+                            }
+                        }
                     }
                 }
             });
