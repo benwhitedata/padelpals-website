@@ -1081,7 +1081,15 @@
                     document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
                     return;
                 }
-
+                
+                // Sort boxes alphabetically by name
+                boxes.sort((a, b) => {
+                    const aName = a.name || '';
+                    const bName = b.name || '';
+                    
+                    // Natural sort algorithm (handles numeric parts properly)
+                    return aName.localeCompare(bName, undefined, {numeric: true, sensitivity: 'base'});
+                });
                 
                 // Create box selector
                 createBoxSelector(boxes);
