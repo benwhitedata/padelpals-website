@@ -139,7 +139,9 @@
                     // Try accessing Supabase directly
                     log('Attempting to check session directly...');
                     try {
+                        // First try window.supabase
                         if (window.supabase) {
+                            log('Using window.supabase client');
                             const { data, error } = await window.supabase.auth.getSession();
                             if (error) {
                                 log(`Error checking session: ${error.message}`, true);
@@ -151,11 +153,64 @@
                                     log('No session found directly through Supabase client.');
                                 }
                             }
-                        } else {
-                            log('Supabase client not available globally.', true);
+                        } 
+                        // Then try window.supabaseClient (the one created in auth-script)
+                        else if (window.supabaseClient) {
+                            log('Using window.supabaseClient instance');
+                            const { data, error } = await window.supabaseClient.auth.getSession();
+                            if (error) {
+                                log(`Error checking session: ${error.message}`, true);
+                            } else {
+                                log(`Session data: ${JSON.stringify(data)}`);
+                                if (data.session) {
+                                    log('Session found through supabaseClient.');
+                                } else {
+                                    log('No session found through supabaseClient.');
+                                }
+                            }
+                        }
+                        // Otherwise, try creating a new instance
+                        else {
+                            log('No Supabase client found globally, creating a new instance');
+                            
+                            // Create Supabase client using the config
+                            const supabase = window.supabase.createClient(
+                                window.config.supabaseUrl,
+                                window.config.supabaseKey
+                            );
+                            
+                            const { data, error } = await supabase.auth.getSession();
+                            if (error) {
+                                log(`Error checking session: ${error.message}`, true);
+                            } else {
+                                log(`Session data: ${JSON.stringify(data)}`);
+                                if (data.session) {
+                                    log('Session found with newly created client.');
+                                } else {
+                                    log('No session found with newly created client.');
+                                }
+                            }
                         }
                     } catch (e) {
                         log(`Error accessing Supabase: ${e.message}`, true);
+                        
+                        // Also check if supabase is defined at all
+                        log(`window.supabase defined: ${typeof window.supabase !== 'undefined'}`);
+                        log(`window.supabaseClient defined: ${typeof window.supabaseClient !== 'undefined'}`);
+                        
+                        // Check if localStorage has a token
+                        const authKey = Object.keys(localStorage).find(key => key.includes('auth-token'));
+                        if (authKey) {
+                            log(`Auth token found in localStorage key: ${authKey}`);
+                            try {
+                                const tokenData = JSON.parse(localStorage.getItem(authKey));
+                                log(`Token expires: ${new Date(tokenData.expires_at * 1000).toLocaleString()}`);
+                            } catch (err) {
+                                log(`Error parsing token data: ${err.message}`, true);
+                            }
+                        } else {
+                            log('No auth token found in localStorage.');
+                        }
                     }
                 }
             });
@@ -164,29 +219,55 @@
                 log('Signing out and clearing session...');
                 
                 try {
+                    let signOutSuccess = false;
+                    
+                    // Try window.supabase first
                     if (window.supabase) {
+                        log('Using window.supabase for sign out');
                         const { error } = await window.supabase.auth.signOut();
                         if (error) {
-                            log(`Error signing out: ${error.message}`, true);
+                            log(`Error signing out with window.supabase: ${error.message}`, true);
                         } else {
-                            log('Successfully signed out');
-                            
-                            // Also clear localStorage
-                            localStorage.clear();
-                            log('Local storage cleared');
-                            
-                            // Update UI
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1000);
+                            log('Successfully signed out with window.supabase');
+                            signOutSuccess = true;
                         }
-                    } else {
-                        log('Supabase client not available. Clearing localStorage only.', true);
-                        localStorage.clear();
-                        log('Local storage cleared');
                     }
+                    
+                    // Also try window.supabaseClient
+                    if (window.supabaseClient) {
+                        log('Using window.supabaseClient for sign out');
+                        const { error } = await window.supabaseClient.auth.signOut();
+                        if (error) {
+                            log(`Error signing out with window.supabaseClient: ${error.message}`, true);
+                        } else {
+                            log('Successfully signed out with window.supabaseClient');
+                            signOutSuccess = true;
+                        }
+                    }
+                    
+                    // If neither client worked or exists
+                    if (!window.supabase && !window.supabaseClient) {
+                        log('No Supabase client available. Manually clearing localStorage only.', true);
+                    }
+                    
+                    // Always clear localStorage
+                    localStorage.clear();
+                    log('Local storage cleared');
+                    
+                    // Update UI
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 } catch (e) {
                     log(`Error during sign-out: ${e.message}`, true);
+                    
+                    // Try clearing localStorage anyway
+                    try {
+                        localStorage.clear();
+                        log('Local storage cleared despite error');
+                    } catch (storageError) {
+                        log(`Error clearing localStorage: ${storageError.message}`, true);
+                    }
                 }
             });
             
