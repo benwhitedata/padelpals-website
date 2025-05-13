@@ -15,6 +15,31 @@
             
             if (supabase && supabase.auth) {
                 checkAuthStatus();
+                
+                // Add global function for debugging
+                window.checkAuth = async function() {
+                    console.log("--- AUTH DEBUG ---");
+                    console.log("Checking auth status manually...");
+                    
+                    try {
+                        const { data, error } = await supabase.auth.getSession();
+                        console.log("Session data:", data);
+                        if (error) {
+                            console.error("Session error:", error);
+                        }
+                        
+                        if (data.session) {
+                            console.log("User is signed in with ID:", data.session.user.id);
+                            console.log("Session expires at:", new Date(data.session.expires_at * 1000).toLocaleString());
+                        } else {
+                            console.log("No active session found");
+                        }
+                        
+                        return data.session;
+                    } catch (e) {
+                        console.error("Error checking auth:", e);
+                    }
+                };
             }
         } catch (error) {
             console.error('Failed to initialize Supabase client:', error);
@@ -24,6 +49,7 @@
     // Check authentication status and update menu links
     async function checkAuthStatus() {
         try {
+            console.log("Running checkAuthStatus...");
             const { data: { session }, error } = await supabase.auth.getSession();
             
             if (error) {
@@ -37,7 +63,16 @@
             const navDashboardLink = document.querySelector('#navDashboard');
             const footerDashboardLink = document.querySelector('#footerDashboard');
             
+            console.log("Navigation elements found:", {
+                navSignInLink: !!navSignInLink,
+                footerSignInLink: !!footerSignInLink,
+                navDashboardLink: !!navDashboardLink,
+                footerDashboardLink: !!footerDashboardLink
+            });
+            
             if (session) {
+                console.log("Auth session found, updating UI for signed-in user");
+                
                 // User is signed in, change links to "Sign Out"
                 if (navSignInLink) {
                     navSignInLink.textContent = 'Sign Out';
@@ -62,6 +97,8 @@
                 
                 console.log('User is signed in:', session.user.id);
             } else {
+                console.log("No auth session found, updating UI for signed-out user");
+                
                 // User is not signed in, ensure links are "Sign In"
                 if (navSignInLink) {
                     navSignInLink.textContent = 'Sign In';
