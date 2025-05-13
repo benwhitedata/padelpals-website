@@ -2464,12 +2464,17 @@
                         // Update name if available
                         if (profile.display_name) {
                             document.getElementById('playerName').value = profile.display_name;
+                            document.getElementById('userName').textContent = profile.display_name;
                         } else if (profile.full_name) {
                             document.getElementById('playerName').value = profile.full_name;
+                            document.getElementById('userName').textContent = profile.full_name;
                         } else if (session.user && session.user.email) {
-                            document.getElementById('playerName').value = formatUserName(session.user.email);
+                            const formatted = formatUserName(session.user.email);
+                            document.getElementById('playerName').value = formatted;
+                            document.getElementById('userName').textContent = formatted;
                         } else {
                             document.getElementById('playerName').value = 'User';
+                            document.getElementById('userName').textContent = 'User';
                         }
                         
                         // Get club information
@@ -3014,6 +3019,9 @@
                 // Update local storage to match Swift app behavior
                 localStorage.setItem('currentUserFullName', newName);
                 
+                // Update welcome message live
+                document.getElementById('userName').textContent = newName;
+                
                 alert('Your name has been updated successfully.');
             } catch (error) {
                 console.error('Error saving user name:', error);
@@ -3113,6 +3121,17 @@
                     // Update name if available
                     if (profile.display_name) {
                         document.getElementById('playerName').value = profile.display_name;
+                        document.getElementById('userName').textContent = profile.display_name;
+                    } else if (profile.full_name) {
+                        document.getElementById('playerName').value = profile.full_name;
+                        document.getElementById('userName').textContent = profile.full_name;
+                    } else if (session.user && session.user.email) {
+                        const formatted = formatUserName(session.user.email);
+                        document.getElementById('playerName').value = formatted;
+                        document.getElementById('userName').textContent = formatted;
+                    } else {
+                        document.getElementById('playerName').value = 'User';
+                        document.getElementById('userName').textContent = 'User';
                     }
                     
                     // Get ratings data
