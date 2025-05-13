@@ -18,7 +18,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
             line-height: 1.6;
-            background-color: #f9f9f9;
         }
         .navbar {
             background-color: var(--dark-blue);
@@ -28,6 +27,9 @@
         }
         .nav-link:hover {
             color: var(--gold);
+        }
+        .nav-link.active {
+            color: var(--gold) !important;
         }
         .dashboard-container {
             max-width: 1200px;
@@ -91,7 +93,151 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+        .navbar-toggler-icon {
+            background-color: unset;
+        }
+        
+        /* Box League Styles */
+        .box-league-container {
+            margin-bottom: 40px;
+        }
+        .league-table {
+            width: 100%;
+            overflow-x: auto;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .league-table table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .league-table th, .league-table td {
+            padding: 8px 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .league-table th {
+            background-color: rgba(26, 34, 56, 0.7);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        .league-table th:first-child {
+            text-align: left;
+            min-width: 150px;
+        }
+        .league-table td:first-child {
+            text-align: left;
+        }
+        .league-table .team-name {
+            font-weight: 500;
+        }
+        .match-result {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .match-win {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        .match-loss {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: #dc3545;
+        }
+        .match-unplayed {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+        }
+        .match-scheduled {
+            background-color: rgba(0, 123, 255, 0.15);
+            color: #007bff;
+        }
+        .match-walkover-win {
+            background-color: rgba(0, 123, 255, 0.2);
+            color: #007bff;
+        }
+        .match-walkover-loss {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        .matches-container {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+        .match-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .match-card .match-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .match-card .team-names {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .match-card .team {
+            max-width: 45%;
+            text-align: center;
+        }
+        .match-card .score {
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+        .match-status {
+            display: inline-block;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+        .status-scheduled {
+            background-color: rgba(0, 123, 255, 0.2);
+            color: #007bff;
+        }
+        .status-completed {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        .status-walkover {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        .placeholder-text {
+            color: #6c757d;
+            font-style: italic;
+        }
+        #boxSelector select {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
     </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-L426ZMNKFK');
+    </script>
+    <!-- End Google Analytics -->
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -141,28 +287,92 @@
         <div id="dashboardContent" style="display: none;">
             <h1 class="mb-4">Welcome, <span id="userName">User</span>!</h1>
             
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="stats-card">
-                        <h3>Match Statistics</h3>
-                        <div id="matchStats">
-                            <!-- Match stats will be loaded here -->
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="boxleague-tab" data-bs-toggle="tab" data-bs-target="#boxleague" type="button" role="tab" aria-controls="boxleague" aria-selected="true">Box League</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab" aria-controls="stats" aria-selected="false">Stats</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Settings</button>
+                </li>
+            </ul>
+            
+            <!-- Tab Content -->
+            <div class="tab-content" id="dashboardTabContent">
+                <!-- Box League Tab -->
+                <div class="tab-pane fade show active" id="boxleague" role="tabpanel" aria-labelledby="boxleague-tab">
+                    <div class="box-league-container">
+                        <div id="boxSelector" class="mb-4">
+                            <!-- Box selector will be populated here -->
+                        </div>
+                        
+                        <div id="leagueTableContainer" class="mb-4">
+                            <!-- League table will be populated here -->
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="stats-card">
+                                    <h3>Upcoming Matches</h3>
+                                    <div id="upcomingMatches" class="matches-container">
+                                        <!-- Upcoming matches will be loaded here -->
+                                        <p class="placeholder-text">Loading upcoming matches...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="stats-card">
+                                    <h3>Match Results</h3>
+                                    <div id="matchResults" class="matches-container">
+                                        <!-- Match results will be loaded here -->
+                                        <p class="placeholder-text">Loading match results...</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="stats-card">
-                        <h3>Recent Matches</h3>
-                        <div id="recentMatches">
-                            <!-- Recent matches will be loaded here -->
+                
+                <!-- Stats Tab -->
+                <div class="tab-pane fade" id="stats" role="tabpanel" aria-labelledby="stats-tab">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <h3>Match Statistics</h3>
+                                <div id="matchStats">
+                                    <!-- Match stats will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <h3>Recent Matches</h3>
+                                <div id="recentMatches">
+                                    <!-- Recent matches will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <h3>Box League Status</h3>
+                                <div id="boxLeagueStatus">
+                                    <!-- Box league status will be loaded here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                
+                <!-- Settings Tab -->
+                <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                     <div class="stats-card">
-                        <h3>Box League Status</h3>
-                        <div id="boxLeagueStatus">
-                            <!-- Box league status will be loaded here -->
+                        <h3>Account Settings</h3>
+                        <div id="accountSettings">
+                            <!-- Account settings will be loaded here -->
+                            <p>Account settings coming soon.</p>
                         </div>
                     </div>
                 </div>
@@ -337,6 +547,9 @@
                         addDebugInfo('Profile data loaded successfully');
                     }
                     
+                    // Load box league data
+                    await loadBoxLeagueData(session.user.id);
+                    
                     // We got this far, so authentication works
                     showBasicDashboard(session);
                     
@@ -352,6 +565,517 @@
                 document.getElementById('goToAuth').style.display = 'block';
                 showLoadingMessage('Failed to authenticate. Please try signing in again.', true);
             }
+        }
+        
+        // Load Box League Data
+        async function loadBoxLeagueData(userId) {
+            try {
+                // First get box leagues user is part of
+                const { data: leagues, error: leaguesError } = await supabase
+                    .from('box_leagues')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (leaguesError) {
+                    throw leaguesError;
+                }
+                
+                if (!leagues || leagues.length === 0) {
+                    addDebugInfo('No box leagues found');
+                    
+                    // Show message in league table container
+                    document.getElementById('leagueTableContainer').innerHTML = `
+                        <div class="alert alert-info">
+                            You are not currently part of any box leagues.
+                        </div>
+                    `;
+                    
+                    document.getElementById('boxSelector').style.display = 'none';
+                    document.getElementById('upcomingMatches').innerHTML = '<p>No upcoming matches.</p>';
+                    document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
+                    return;
+                }
+                
+                // For now, select the first league
+                const selectedLeague = leagues[0];
+                
+                // Get boxes for the selected league
+                const { data: boxes, error: boxesError } = await supabase
+                    .from('box_league_boxes')
+                    .select('*')
+                    .eq('league_id', selectedLeague.id);
+                
+                if (boxesError) {
+                    throw boxesError;
+                }
+                
+                if (!boxes || boxes.length === 0) {
+                    addDebugInfo('No boxes found for league');
+                    document.getElementById('leagueTableContainer').innerHTML = `
+                        <div class="alert alert-info">
+                            No boxes found for this league.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Create box selector
+                createBoxSelector(boxes);
+                
+                // For the first box, get teams and matches
+                await loadBoxDetails(boxes[0].id);
+                
+            } catch (error) {
+                console.error('Error loading box league data:', error);
+                document.getElementById('leagueTableContainer').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error loading box league data: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Create box selector dropdown
+        function createBoxSelector(boxes) {
+            const boxSelector = document.getElementById('boxSelector');
+            
+            const selectHTML = `
+                <label for="boxSelect" class="form-label">Select Box:</label>
+                <select id="boxSelect" class="form-select">
+                    ${boxes.map(box => `<option value="${box.id}">${box.name}</option>`).join('')}
+                </select>
+            `;
+            
+            boxSelector.innerHTML = selectHTML;
+            
+            // Add event listener for change
+            document.getElementById('boxSelect').addEventListener('change', function() {
+                loadBoxDetails(this.value);
+            });
+        }
+        
+        // Load details for a specific box
+        async function loadBoxDetails(boxId) {
+            try {
+                // Get teams for the box
+                const { data: teams, error: teamsError } = await supabase
+                    .from('box_league_teams')
+                    .select('*')
+                    .eq('box_id', boxId);
+                
+                if (teamsError) {
+                    throw teamsError;
+                }
+                
+                // Get matches for the box
+                const { data: matches, error: matchesError } = await supabase
+                    .from('box_league_matches')
+                    .select('*')
+                    .eq('box_id', boxId);
+                
+                if (matchesError) {
+                    throw matchesError;
+                }
+                
+                // Create league table
+                createLeagueTable(teams, matches);
+                
+                // Create upcoming matches
+                createUpcomingMatches(teams, matches);
+                
+                // Create match results
+                createMatchResults(teams, matches);
+                
+            } catch (error) {
+                console.error('Error loading box details:', error);
+                document.getElementById('leagueTableContainer').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error loading box details: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Create league table
+        function createLeagueTable(teams, matches) {
+            if (!teams || teams.length === 0) {
+                document.getElementById('leagueTableContainer').innerHTML = '<p>No teams found for this box.</p>';
+                return;
+            }
+            
+            // Sort teams by calculated points
+            const sortedTeams = teams.sort((a, b) => {
+                const pointsA = calculatePoints(a.id, matches);
+                const pointsB = calculatePoints(b.id, matches);
+                return pointsB - pointsA;
+            });
+            
+            // Create table with headers
+            let tableHTML = `
+                <div class="league-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Team</th>
+                                <th>Pts</th>
+                                ${sortedTeams.map(team => `<th>${getInitials(team.name)}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            // Create table rows
+            sortedTeams.forEach((team, index) => {
+                tableHTML += `
+                    <tr>
+                        <td class="team-name">${index + 1}. ${team.name}</td>
+                        <td><strong>${calculatePoints(team.id, matches)}</strong></td>
+                `;
+                
+                // Create cells for each opponent
+                sortedTeams.forEach(opponent => {
+                    if (team.id === opponent.id) {
+                        tableHTML += '<td>—</td>';
+                    } else {
+                        const matchResult = getMatchResult(team.id, opponent.id, matches);
+                        tableHTML += `<td>
+                            <div class="match-result ${matchResult.class}" 
+                                 data-team1="${team.id}" 
+                                 data-team2="${opponent.id}"
+                                 data-match-id="${matchResult.matchId || ''}">
+                                ${matchResult.text}
+                            </div>
+                        </td>`;
+                    }
+                });
+                
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('leagueTableContainer').innerHTML = tableHTML;
+            
+            // Add event listeners to match-result divs
+            document.querySelectorAll('.match-result').forEach(el => {
+                el.addEventListener('click', handleMatchClick);
+            });
+        }
+        
+        // Create upcoming matches list
+        function createUpcomingMatches(teams, matches) {
+            // Filter for upcoming/scheduled matches
+            const upcomingMatches = matches.filter(match => 
+                !match.is_completed && match.scheduled_date
+            );
+            
+            let upcomingHTML = '';
+            
+            if (upcomingMatches.length === 0) {
+                upcomingHTML = '<p class="placeholder-text">No upcoming matches scheduled.</p>';
+            } else {
+                // Sort by date
+                upcomingMatches.sort((a, b) => 
+                    new Date(a.scheduled_date) - new Date(b.scheduled_date)
+                );
+                
+                upcomingMatches.forEach(match => {
+                    const team1 = teams.find(t => t.id === match.team1_id);
+                    const team2 = teams.find(t => t.id === match.team2_id);
+                    
+                    if (team1 && team2) {
+                        upcomingHTML += `
+                            <div class="match-card" data-match-id="${match.id}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="match-date">${formatDate(match.scheduled_date)}</div>
+                                    <span class="match-status status-scheduled">Scheduled</span>
+                                </div>
+                                <div class="team-names">
+                                    <div class="team">${team1.name}</div>
+                                    <div class="vs">vs</div>
+                                    <div class="team">${team2.name}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            document.getElementById('upcomingMatches').innerHTML = upcomingHTML;
+            
+            // Add event listeners
+            document.querySelectorAll('#upcomingMatches .match-card').forEach(el => {
+                el.addEventListener('click', () => {
+                    const matchId = el.getAttribute('data-match-id');
+                    handleMatchCardClick(matchId, matches, teams);
+                });
+            });
+        }
+        
+        // Create match results list
+        function createMatchResults(teams, matches) {
+            // Filter for completed matches
+            const completedMatches = matches.filter(match => match.is_completed);
+            
+            let resultsHTML = '';
+            
+            if (completedMatches.length === 0) {
+                resultsHTML = '<p class="placeholder-text">No completed matches yet.</p>';
+            } else {
+                // Sort by date, most recent first
+                completedMatches.sort((a, b) => 
+                    new Date(b.completed_date || b.scheduled_date) - new Date(a.completed_date || a.scheduled_date)
+                );
+                
+                completedMatches.forEach(match => {
+                    const team1 = teams.find(t => t.id === match.team1_id);
+                    const team2 = teams.find(t => t.id === match.team2_id);
+                    
+                    if (team1 && team2) {
+                        const team1Score = match.team1_score;
+                        const team2Score = match.team2_score;
+                        const team1SetScores = match.team1_set_scores || [];
+                        const team2SetScores = match.team2_set_scores || [];
+                        
+                        resultsHTML += `
+                            <div class="match-card" data-match-id="${match.id}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="match-date">${formatDate(match.completed_date || match.scheduled_date)}</div>
+                                    ${match.is_walkover ? 
+                                        '<span class="match-status status-walkover">Walkover</span>' : 
+                                        '<span class="match-status status-completed">Completed</span>'}
+                                </div>
+                                <div class="team-names">
+                                    <div class="team">${team1.name}</div>
+                                    <div class="score">${team1Score} - ${team2Score}</div>
+                                    <div class="team">${team2.name}</div>
+                                </div>
+                                ${formatSetScores(team1SetScores, team2SetScores)}
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            document.getElementById('matchResults').innerHTML = resultsHTML;
+            
+            // Add event listeners
+            document.querySelectorAll('#matchResults .match-card').forEach(el => {
+                el.addEventListener('click', () => {
+                    const matchId = el.getAttribute('data-match-id');
+                    handleMatchCardClick(matchId, matches, teams);
+                });
+            });
+        }
+        
+        // Handle match click in league table
+        function handleMatchClick(event) {
+            const team1Id = this.getAttribute('data-team1');
+            const team2Id = this.getAttribute('data-team2');
+            const matchId = this.getAttribute('data-match-id');
+            
+            console.log(`Match clicked: ${team1Id} vs ${team2Id}, match ID: ${matchId}`);
+            
+            // TODO: Open match details modal or form
+            alert(`Match detail view coming soon for ${team1Id} vs ${team2Id}`);
+        }
+        
+        // Handle match card click
+        function handleMatchCardClick(matchId, matches, teams) {
+            const match = matches.find(m => m.id === matchId);
+            
+            if (!match) return;
+            
+            const team1 = teams.find(t => t.id === match.team1_id);
+            const team2 = teams.find(t => t.id === match.team2_id);
+            
+            if (!team1 || !team2) return;
+            
+            console.log(`Match card clicked: ${team1.name} vs ${team2.name}`);
+            
+            // TODO: Open match details modal or form
+            alert(`Match detail view coming soon for ${team1.name} vs ${team2.name}`);
+        }
+        
+        // Helper function: Get match result for display in the grid
+        function getMatchResult(team1Id, team2Id, matches) {
+            // Find match between these teams
+            const match = matches.find(m => 
+                (m.team1_id === team1Id && m.team2_id === team2Id) || 
+                (m.team1_id === team2Id && m.team2_id === team1Id)
+            );
+            
+            if (!match) {
+                // No match exists
+                return { text: '+', class: 'match-unplayed', matchId: null };
+            }
+            
+            if (!match.is_completed) {
+                // Match exists but not completed
+                if (match.scheduled_date) {
+                    return { text: '⏰', class: 'match-scheduled', matchId: match.id };
+                } else {
+                    return { text: '+', class: 'match-unplayed', matchId: match.id };
+                }
+            }
+            
+            // Match is completed
+            // Check if it's a walkover
+            if (match.is_walkover) {
+                // Determine if this team won the walkover
+                const isWinner = (match.team1_id === team1Id && match.team1_score > match.team2_score) ||
+                                (match.team2_id === team1Id && match.team2_score > match.team1_score);
+                
+                if (isWinner) {
+                    return { text: 'WO', class: 'match-walkover-win', matchId: match.id };
+                } else {
+                    return { text: 'WO', class: 'match-walkover-loss', matchId: match.id };
+                }
+            }
+            
+            // Regular completed match
+            const isWinner = (match.team1_id === team1Id && match.team1_score > match.team2_score) ||
+                            (match.team2_id === team1Id && match.team2_score > match.team1_score);
+            
+            if (isWinner) {
+                return { text: 'W', class: 'match-win', matchId: match.id };
+            } else {
+                return { text: 'L', class: 'match-loss', matchId: match.id };
+            }
+        }
+        
+        // Helper function: Calculate points for a team
+        function calculatePoints(teamId, matches) {
+            let points = 0;
+            
+            // Filter for matches involving this team and that are completed
+            const teamMatches = matches.filter(match => 
+                (match.team1_id === teamId || match.team2_id === teamId) && match.is_completed
+            );
+            
+            for (const match of teamMatches) {
+                const isTeam1 = match.team1_id === teamId;
+                
+                // Special handling for walkover matches
+                if (match.is_walkover) {
+                    // For walkover, winning team gets 4 points, losing team gets 0
+                    if ((isTeam1 && match.team1_score > match.team2_score) || 
+                        (!isTeam1 && match.team2_score > match.team1_score)) {
+                        points += 4;
+                    }
+                    continue;
+                }
+                
+                // Get set scores if available
+                const team1Sets = match.team1_set_scores || [];
+                const team2Sets = match.team2_set_scores || [];
+                
+                if (team1Sets.length === 0 || team2Sets.length === 0) {
+                    // Fall back to match score if set scores are missing
+                    if (isTeam1) {
+                        if (match.team1_score > match.team2_score) {
+                            points += 4; // Default points for win
+                        } else {
+                            points += 1; // Default points for loss
+                        }
+                    } else {
+                        if (match.team2_score > match.team1_score) {
+                            points += 4; // Default points for win
+                        } else {
+                            points += 1; // Default points for loss
+                        }
+                    }
+                    continue;
+                }
+                
+                // Count sets won by each team
+                let team1SetsWon = 0;
+                let team2SetsWon = 0;
+                
+                for (let i = 0; i < Math.min(team1Sets.length, team2Sets.length); i++) {
+                    if (team1Sets[i] > team2Sets[i]) {
+                        team1SetsWon++;
+                    } else if (team2Sets[i] > team1Sets[i]) {
+                        team2SetsWon++;
+                    }
+                }
+                
+                // Apply scoring system
+                if (isTeam1) {
+                    if (team1SetsWon === 2 && team2SetsWon === 0) {
+                        points += 5; // 2-0 win
+                    } else if (team1SetsWon === 2 && team2SetsWon === 1) {
+                        points += 4; // 2-1 win
+                    } else if (team1SetsWon === 1 && team2SetsWon === 2) {
+                        points += 2; // 1-2 loss
+                    } else if (team1SetsWon === 0 && team2SetsWon === 2) {
+                        points += 1; // 0-2 loss
+                    }
+                } else {
+                    if (team2SetsWon === 2 && team1SetsWon === 0) {
+                        points += 5; // 2-0 win
+                    } else if (team2SetsWon === 2 && team1SetsWon === 1) {
+                        points += 4; // 2-1 win
+                    } else if (team2SetsWon === 1 && team1SetsWon === 2) {
+                        points += 2; // 1-2 loss
+                    } else if (team2SetsWon === 0 && team1SetsWon === 2) {
+                        points += 1; // 0-2 loss
+                    }
+                }
+            }
+            
+            return points;
+        }
+        
+        // Helper function: Get initials from team name
+        function getInitials(name) {
+            const components = name.split(' & ');
+            if (components.length >= 2) {
+                const firstInitial = components[0].trim()[0] || '';
+                const secondInitial = components[1].trim()[0] || '';
+                return `${firstInitial}${secondInitial}`.toUpperCase();
+            } else {
+                const words = name.trim().split(' ');
+                if (words.length >= 2) {
+                    return (words[0][0] + words[1][0]).toUpperCase();
+                } else if (name.length >= 2) {
+                    return name.substring(0, 2).toUpperCase();
+                } else {
+                    return name.toUpperCase();
+                }
+            }
+        }
+        
+        // Helper function: Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'Date not set';
+            
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        }
+        
+        // Helper function: Format set scores
+        function formatSetScores(team1Sets, team2Sets) {
+            if (!team1Sets || !team2Sets || team1Sets.length === 0 || team2Sets.length === 0) {
+                return '';
+            }
+            
+            const setScores = [];
+            for (let i = 0; i < Math.min(team1Sets.length, team2Sets.length); i++) {
+                setScores.push(`${team1Sets[i]}-${team2Sets[i]}`);
+            }
+            
+            return `<div class="set-scores text-center mt-1 text-secondary">Sets: ${setScores.join(', ')}</div>`;
         }
         
         // Show a basic dashboard even if profile data fails
