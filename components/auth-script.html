@@ -8,12 +8,22 @@
         
         // Initialize Supabase with loaded configuration
         try {
+            // Check if supabase is already defined globally
+            if (!window.supabase) {
+                console.warn('Supabase not found in window object, may not have been loaded properly');
+            }
+            
+            // Create a new client instance
             supabase = window.supabase.createClient(
                 window.config.supabaseUrl,
                 window.config.supabaseKey
             );
             
+            // Also set it globally to ensure it's available
+            window.supabaseClient = supabase;
+            
             if (supabase && supabase.auth) {
+                console.log('Supabase client initialized successfully');
                 checkAuthStatus();
                 
                 // Add global function for debugging
@@ -40,6 +50,8 @@
                         console.error("Error checking auth:", e);
                     }
                 };
+            } else {
+                console.error('Supabase auth not available after initialization');
             }
         } catch (error) {
             console.error('Failed to initialize Supabase client:', error);
