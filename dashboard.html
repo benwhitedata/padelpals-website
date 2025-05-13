@@ -20,6 +20,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
             line-height: 1.6;
+            background-color: #ffffff;
         }
         .navbar {
             background-color: var(--dark-blue);
@@ -223,22 +224,40 @@
             font-style: italic;
         }
         #boxSelector select {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: #343a40;
+            color: #f8f9fa;
+            border: 1px solid #495057;
             padding: 8px 12px;
             border-radius: 5px;
+            width: 100%;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         #leagueSelector select {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: #343a40;
+            color: #f8f9fa;
+            border: 1px solid #495057;
             padding: 8px 12px;
             border-radius: 5px;
+            width: 100%;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23f8f9fa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+        }
+        .form-select:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25);
         }
         .form-label {
-            color: var(--dark-blue);
-            font-weight: 500;
+            color: #333333;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
         }
         .status-filters {
             display: flex;
@@ -293,6 +312,20 @@
         .status-filter-btn:hover:not(.active) {
             filter: brightness(1.2);
             transform: translateY(-1px);
+        }
+        .form-select option {
+            background-color: #343a40;
+            color: #f8f9fa;
+            padding: 8px;
+        }
+        /* Custom selection area styling */
+        .selector-area {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
     </style>
     <!-- Google Analytics -->
@@ -372,16 +405,18 @@
                 <!-- Box League Tab -->
                 <div class="tab-pane fade show active" id="boxleague" role="tabpanel" aria-labelledby="boxleague-tab">
                     <div class="box-league-container">
-                        <div id="statusFilter" class="mb-4">
-                            <!-- Status filter will be populated here -->
-                        </div>
+                        <div class="selector-area">
+                            <div id="statusFilter" class="mb-4">
+                                <!-- Status filter will be populated here -->
+                            </div>
 
-                        <div id="leagueSelector" class="mb-4">
-                            <!-- League selector will be populated here -->
-                        </div>
-                        
-                        <div id="boxSelector" class="mb-4">
-                            <!-- Box selector will be populated here -->
+                            <div id="leagueSelector" class="mb-4">
+                                <!-- League selector will be populated here -->
+                            </div>
+                            
+                            <div id="boxSelector" class="mb-4">
+                                <!-- Box selector will be populated here -->
+                            </div>
                         </div>
                         
                         <div id="leagueTableContainer" class="mb-4">
@@ -820,14 +855,15 @@
             
             const selectHTML = `
                 <label for="leagueSelect" class="form-label">Select League:</label>
-                <select id="leagueSelect" class="form-select">
+                <select id="leagueSelect" class="form-select" aria-label="Select a league">
                     ${leagues.map(league => {
                         const statusBadge = league.status ? 
                             `<span class="badge bg-${getStatusColor(league.status)}">${capitalizeFirstLetter(league.status)}</span>` : 
                             '';
-                        return `<option value="${league.id}">${league.name} ${statusBadge}</option>`;
+                        return `<option value="${league.id}">${league.name || 'Unnamed League'} ${statusBadge}</option>`;
                     }).join('')}
                 </select>
+                <small class="form-text text-muted mt-1">Select a league to view its boxes and matches</small>
             `;
             
             leagueSelector.innerHTML = selectHTML;
@@ -858,6 +894,19 @@
         // Load boxes for a specific league
         async function loadBoxesForLeague(leagueId) {
             try {
+                console.log('Loading boxes for league ID:', leagueId);
+                
+                // Show loading indicator in box selector
+                document.getElementById('boxSelector').innerHTML = `
+                    <label for="boxSelect" class="form-label">Select Box:</label>
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span>Loading boxes...</span>
+                    </div>
+                `;
+                
                 // Get boxes for the selected league
                 const { data: boxes, error: boxesError } = await supabase
                     .from('box_league_boxes')
@@ -870,10 +919,15 @@
                 
                 if (!boxes || boxes.length === 0) {
                     addDebugInfo('No boxes found for league');
-                    document.getElementById('boxSelector').style.display = 'none';
-                    document.getElementById('leagueTableContainer').innerHTML = `
+                    document.getElementById('boxSelector').innerHTML = `
                         <div class="alert alert-info">
                             No boxes found for this league.
+                        </div>
+                    `;
+                    document.getElementById('leagueTableContainer').innerHTML = `
+                        <div class="alert alert-info">
+                            <h4>No Box Data</h4>
+                            <p>This league doesn't have any boxes configured yet.</p>
                         </div>
                     `;
                     document.getElementById('upcomingMatches').innerHTML = '<p>No upcoming matches.</p>';
@@ -889,6 +943,12 @@
                 
             } catch (error) {
                 console.error('Error loading boxes for league:', error);
+                document.getElementById('boxSelector').innerHTML = `
+                    <div class="alert alert-danger">
+                        <h4>Error Loading Boxes</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
                         Error loading boxes: ${error.message}
@@ -903,9 +963,10 @@
             
             const selectHTML = `
                 <label for="boxSelect" class="form-label">Select Box:</label>
-                <select id="boxSelect" class="form-select">
-                    ${boxes.map(box => `<option value="${box.id}">${box.name}</option>`).join('')}
+                <select id="boxSelect" class="form-select" aria-label="Select a box">
+                    ${boxes.map(box => `<option value="${box.id}">${box.name || 'Unnamed Box'}</option>`).join('')}
                 </select>
+                <small class="form-text text-muted mt-1">Select a box to view teams and matches</small>
             `;
             
             boxSelector.innerHTML = selectHTML;
