@@ -417,6 +417,12 @@
                             <div id="boxSelector" class="mb-4">
                                 <!-- Box selector will be populated here -->
                             </div>
+                            
+                            <div class="text-end">
+                                <button id="printLeagueBtn" class="btn btn-primary">
+                                    <i class="fas fa-print me-1"></i> Print League Tables
+                                </button>
+                            </div>
                         </div>
                         
                         <div id="leagueTableContainer" class="mb-4">
@@ -749,6 +755,15 @@
                                 'There are no box leagues in the system yet.' : 
                                 'You are not currently part of any box leagues.'}
                             </p>
+                            ${!isAdmin ? `
+                            <hr>
+                            <p>This could be because:</p>
+                            <ul>
+                                <li>You haven't been added to any leagues yet</li>
+                                <li>Your user account (${userId}) might not be correctly linked to your player profile</li>
+                                <li>The leagues you're part of are not set as visible to you</li>
+                            </ul>
+                            <p>Please contact your league administrator for assistance.</p>` : ''}
                         </div>
                     `;
                     
@@ -760,6 +775,30 @@
                     return;
                 }
                 
+                // Try to verify if we really have access or if this is an RLS issue
+                if (!isAdmin) {
+                    // Check user's teams directly to verify data model connections
+                    const { data: userTeams, error: userTeamsError } = await supabase
+                        .from('box_league_teams')
+                        .select('*')
+                        .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
+                        .limit(5);
+                        
+                    if (!userTeamsError && (!userTeams || userTeams.length === 0)) {
+                        addDebugInfo('User ID not found in any teams');
+                        
+                        // Add a warning to the league table container
+                        document.getElementById('leagueTableContainer').insertAdjacentHTML('afterbegin', `
+                            <div class="alert alert-warning mb-4">
+                                <h4><i class="fas fa-exclamation-triangle me-2"></i> Possible Account Issue</h4>
+                                <p>You can see leagues but aren't directly linked to any teams.</p>
+                                <p>Your user ID (${userId}) doesn't match any player IDs in the system.</p>
+                                <p>Contact your league administrator to verify your account is correctly set up.</p>
+                            </div>
+                        `);
+                    }
+                }
+                
                 addDebugInfo(`Found ${leagues.length} box leagues available to user`);
                 
                 // Create status filter
@@ -767,6 +806,9 @@
                 
                 // Default to showing active leagues
                 filterLeaguesByStatus('active', leagues);
+                
+                // Set up print button
+                setupPrintButton();
                 
             } catch (error) {
                 console.error('Error loading box league data:', error);
@@ -1574,6 +1616,222 @@
             }
             
             return `<div class="set-scores text-center mt-1 text-secondary">Sets: ${setScores.join(', ')}</div>`;
+        }
+        
+        // Handle print league tables button
+        function setupPrintButton() {
+            const printButton = document.getElementById('printLeagueBtn');
+            if (printButton) {
+                printButton.addEventListener('click', async function() {
+                    try {
+                        // Get selected league ID
+                        const leagueSelect = document.getElementById('leagueSelect');
+                        if (!leagueSelect) {
+                            alert('Please select a league first');
+                            return;
+                        }
+                        
+                        const leagueId = leagueSelect.value;
+                        const leagueName = leagueSelect.options[leagueSelect.selectedIndex].text;
+                        
+                        // Show loading spinner
+                        printButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Preparing...';
+                        printButton.disabled = true;
+                        
+                        // Get all boxes for this league
+                        const { data: boxes, error: boxesError } = await supabase
+                            .from('box_league_boxes')
+                            .select('*')
+                            .eq('league_id', leagueId);
+                        
+                        if (boxesError) throw boxesError;
+                        if (!boxes || boxes.length === 0) {
+                            alert('No boxes found for this league');
+                            return;
+                        }
+                        
+                        // Sort boxes alphanumerically by name
+                        boxes.sort((a, b) => {
+                            // Extract numbers from box names (if they exist)
+                            const aName = a.name || '';
+                            const bName = b.name || '';
+                            
+                            // Natural sort algorithm
+                            return aName.localeCompare(bName, undefined, {numeric: true, sensitivity: 'base'});
+                        });
+                        
+                        // Create print window content
+                        let printContent = `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>${leagueName} - Box League Tables</title>
+                                <style>
+                                    body { font-family: Arial, sans-serif; margin: 20px; }
+                                    h1 { text-align: center; margin-bottom: 20px; }
+                                    .box-container { margin-bottom: 30px; page-break-inside: avoid; }
+                                    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                                    th:first-child, td:first-child { text-align: left; }
+                                    th { background-color: #f2f2f2; }
+                                    .team-name { font-weight: normal; }
+                                    .points { font-weight: bold; }
+                                    .match-result { 
+                                        width: 25px; 
+                                        height: 25px; 
+                                        border-radius: 50%; 
+                                        margin: 0 auto;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    }
+                                    .match-win { background-color: rgba(40, 167, 69, 0.2); }
+                                    .match-loss { background-color: rgba(220, 53, 69, 0.15); }
+                                    .match-unplayed { background-color: rgba(108, 117, 125, 0.1); }
+                                    .match-scheduled { background-color: rgba(0, 123, 255, 0.15); }
+                                    .match-walkover-win { background-color: rgba(0, 123, 255, 0.2); }
+                                    .match-walkover-loss { background-color: rgba(255, 193, 7, 0.2); }
+                                    @media print {
+                                        @page { size: landscape; }
+                                        h1 { margin-top: 0; }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <h1>${leagueName} - Box League Tables</h1>
+                        `;
+                        
+                        // Process each box
+                        const processedBoxes = [];
+                        
+                        for (const box of boxes) {
+                            // Get teams for this box
+                            const { data: teams, error: teamsError } = await supabase
+                                .from('box_league_teams')
+                                .select('*')
+                                .eq('box_id', box.id);
+                                
+                            if (teamsError) {
+                                console.error('Error fetching teams:', teamsError);
+                                continue;
+                            }
+                            
+                            if (!teams || teams.length === 0) continue;
+                            
+                            // Get matches for this box
+                            const { data: matches, error: matchesError } = await supabase
+                                .from('box_league_matches')
+                                .select('*')
+                                .eq('box_id', box.id);
+                                
+                            if (matchesError) {
+                                console.error('Error fetching matches:', matchesError);
+                                continue;
+                            }
+                            
+                            // Sort teams by calculated points
+                            const sortedTeams = teams.sort((a, b) => {
+                                const pointsA = calculatePoints(a.id, matches);
+                                const pointsB = calculatePoints(b.id, matches);
+                                return pointsB - pointsA;
+                            });
+                            
+                            // Create table HTML
+                            let tableHTML = `
+                                <div class="box-container">
+                                    <h2>${box.name || 'Unnamed Box'}</h2>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th>Pts</th>
+                                                ${sortedTeams.map(team => {
+                                                    try {
+                                                        return `<th>${getInitials(team)}</th>`;
+                                                    } catch (e) {
+                                                        return '<th>??</th>';
+                                                    }
+                                                }).join('')}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                            `;
+                            
+                            // Create table rows
+                            sortedTeams.forEach((team, index) => {
+                                try {
+                                    const playerNamesDisplay = getPlayerNames(team);
+                                    tableHTML += `
+                                        <tr>
+                                            <td class="team-name">${index + 1}. ${playerNamesDisplay}</td>
+                                            <td class="points">${calculatePoints(team.id, matches)}</td>
+                                    `;
+                                    
+                                    // Create cells for each opponent
+                                    sortedTeams.forEach(opponent => {
+                                        try {
+                                            if (team.id === opponent.id) {
+                                                tableHTML += '<td>—</td>';
+                                            } else {
+                                                const matchResult = getMatchResult(team.id, opponent.id, matches);
+                                                tableHTML += `<td>
+                                                    <div class="match-result ${matchResult.class}">
+                                                        ${matchResult.text}
+                                                    </div>
+                                                </td>`;
+                                            }
+                                        } catch (e) {
+                                            tableHTML += '<td>ERR</td>';
+                                        }
+                                    });
+                                    
+                                    tableHTML += '</tr>';
+                                } catch (e) {
+                                    tableHTML += `<tr><td colspan="${2 + sortedTeams.length}">Error loading team data</td></tr>`;
+                                }
+                            });
+                            
+                            tableHTML += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                            
+                            processedBoxes.push(tableHTML);
+                        }
+                        
+                        // Add all tables to the print content
+                        printContent += processedBoxes.join('');
+                        
+                        // Close HTML
+                        printContent += `
+                                <div style="text-align: center; margin-top: 30px; color: #666; font-size: 12px;">
+                                    Printed from Padel Pals Box League | ${new Date().toLocaleDateString()}
+                                </div>
+                            </body>
+                            </html>
+                        `;
+                        
+                        // Open print window
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(printContent);
+                        printWindow.document.close();
+                        
+                        // Wait for resources to load then print
+                        printWindow.onload = function() {
+                            printWindow.print();
+                        };
+                        
+                    } catch (error) {
+                        console.error('Error preparing print view:', error);
+                        alert('There was an error preparing the print view: ' + error.message);
+                    } finally {
+                        // Reset button
+                        printButton.innerHTML = '<i class="fas fa-print me-1"></i> Print League Tables';
+                        printButton.disabled = false;
+                    }
+                });
+            }
         }
         
         // Show a basic dashboard even if profile data fails
