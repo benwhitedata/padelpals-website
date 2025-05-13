@@ -210,7 +210,7 @@
                         appleButtonText.innerHTML = '<span class="loading-spinner"></span> Connecting...';
                         
                         // Use the full production URL for the redirect
-                        const redirectUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback?redirect_to=https://www.padelpals.app/dashboard.html';
+                        const redirectUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback';
                         addDebugMessage('Using redirect URL: ' + redirectUrl);
                         
                         showStatusMessage('Initiating Apple sign-in...');
@@ -220,6 +220,9 @@
                             provider: 'apple',
                             options: {
                                 redirectTo: redirectUrl,
+                                queryParams: {
+                                    redirect_to: 'https://www.padelpals.app/dashboard.html'
+                                },
                                 scopes: 'email name'
                             }
                         });
@@ -257,7 +260,7 @@
                         googleButtonText.innerHTML = '<span class="loading-spinner"></span> Connecting...';
                         
                         // Use the full production URL for the redirect
-                        const redirectUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback?redirect_to=https://www.padelpals.app/dashboard.html';
+                        const redirectUrl = 'https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback';
                         addDebugMessage('Using redirect URL: ' + redirectUrl);
                         
                         showStatusMessage('Initiating Google sign-in...');
@@ -267,6 +270,9 @@
                             provider: 'google',
                             options: {
                                 redirectTo: redirectUrl,
+                                queryParams: {
+                                    redirect_to: 'https://www.padelpals.app/dashboard.html'
+                                },
                                 scopes: 'email profile'
                             }
                         });

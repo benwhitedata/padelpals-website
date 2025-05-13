@@ -249,21 +249,12 @@
                             addDebugInfo('Session set explicitly');
                             showStatusMessage('Authentication successful! Redirecting to dashboard...', 'success');
                             
-                            // Show dashboard button
-                            const dashboardBtn = document.getElementById('continueToDashboard');
-                            if (dashboardBtn) {
-                                dashboardBtn.style.display = 'inline-block';
-                            }
+                            // Get the redirect URL from the query parameters or default to dashboard
+                            const redirectUrl = urlParams.get('redirect_to') || '/dashboard.html';
+                            addDebugInfo(`Redirecting to: ${redirectUrl}`);
                             
-                            // Hide spinner
-                            if (spinnerElement) {
-                                spinnerElement.style.display = 'none';
-                            }
-                            
-                            // Redirect after a short delay
-                            setTimeout(() => {
-                                window.location.href = '/dashboard.html';
-                            }, 3000);
+                            // Redirect to the dashboard
+                            window.location.href = redirectUrl;
                             
                             return;
                         }
