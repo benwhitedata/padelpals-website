@@ -238,6 +238,30 @@
             color: var(--dark-blue);
             font-weight: 500;
         }
+        .status-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .status-filter-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        .status-filter-btn.active {
+            background-color: var(--dark-blue);
+            border-color: var(--dark-blue);
+            color: var(--gold);
+            font-weight: 500;
+        }
+        .status-filter-btn:hover:not(.active) {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -316,6 +340,10 @@
                 <!-- Box League Tab -->
                 <div class="tab-pane fade show active" id="boxleague" role="tabpanel" aria-labelledby="boxleague-tab">
                     <div class="box-league-container">
+                        <div id="statusFilter" class="mb-4">
+                            <!-- Status filter will be populated here -->
+                        </div>
+
                         <div id="leagueSelector" class="mb-4">
                             <!-- League selector will be populated here -->
                         </div>
@@ -640,6 +668,7 @@
                         </div>
                     `;
                     
+                    document.getElementById('statusFilter').style.display = 'none';
                     document.getElementById('leagueSelector').style.display = 'none';
                     document.getElementById('boxSelector').style.display = 'none';
                     document.getElementById('upcomingMatches').innerHTML = '<p>No upcoming matches.</p>';
@@ -647,14 +676,11 @@
                     return;
                 }
                 
-                // Create league selector
-                createLeagueSelector(leagues);
+                // Create status filter
+                createStatusFilter(leagues);
                 
-                // For now, select the first league
-                const selectedLeague = leagues[0];
-                
-                // Load boxes for the first league
-                await loadBoxesForLeague(selectedLeague.id);
+                // Default to showing active leagues
+                filterLeaguesByStatus('active', leagues);
                 
             } catch (error) {
                 console.error('Error loading box league data:', error);
@@ -666,6 +692,87 @@
             }
         }
         
+        // Create status filter buttons
+        function createStatusFilter(leagues) {
+            const statusFilter = document.getElementById('statusFilter');
+            
+            // Extract all unique statuses from leagues
+            const statuses = [...new Set(leagues.map(league => league.status || 'unknown'))];
+            
+            // Ensure we have our standard statuses, even if no leagues currently have them
+            const standardStatuses = ['active', 'upcoming', 'completed', 'cancelled'];
+            standardStatuses.forEach(status => {
+                if (!statuses.includes(status)) {
+                    statuses.push(status);
+                }
+            });
+            
+            // Create filter buttons
+            const filterHTML = `
+                <label class="form-label">Filter by Status:</label>
+                <div class="status-filters">
+                    <button class="status-filter-btn active" data-status="active">Active</button>
+                    <button class="status-filter-btn" data-status="upcoming">Upcoming</button>
+                    <button class="status-filter-btn" data-status="completed">Completed</button>
+                    <button class="status-filter-btn" data-status="all">All</button>
+                </div>
+            `;
+            
+            statusFilter.innerHTML = filterHTML;
+            
+            // Add event listeners to filter buttons
+            document.querySelectorAll('.status-filter-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.status-filter-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Apply filter
+                    const status = this.getAttribute('data-status');
+                    filterLeaguesByStatus(status, leagues);
+                });
+            });
+        }
+        
+        // Filter leagues by status and update the league selector
+        function filterLeaguesByStatus(status, allLeagues) {
+            let filteredLeagues;
+            
+            if (status === 'all') {
+                filteredLeagues = allLeagues;
+            } else {
+                filteredLeagues = allLeagues.filter(league => 
+                    league.status === status || 
+                    // Handle case where status might be null or undefined
+                    (status === 'active' && (!league.status || league.status === ''))
+                );
+            }
+            
+            // If no leagues match the filter, show a message
+            if (filteredLeagues.length === 0) {
+                document.getElementById('leagueSelector').innerHTML = `
+                    <div class="alert alert-info">
+                        No leagues found with status: ${status}
+                    </div>
+                `;
+                document.getElementById('boxSelector').style.display = 'none';
+                document.getElementById('leagueTableContainer').innerHTML = '';
+                document.getElementById('upcomingMatches').innerHTML = '<p>No upcoming matches.</p>';
+                document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
+                return;
+            }
+            
+            // Create league selector with filtered leagues
+            createLeagueSelector(filteredLeagues);
+            
+            // Load boxes for the first filtered league
+            loadBoxesForLeague(filteredLeagues[0].id);
+        }
+        
         // Create league selector dropdown
         function createLeagueSelector(leagues) {
             const leagueSelector = document.getElementById('leagueSelector');
@@ -673,7 +780,12 @@
             const selectHTML = `
                 <label for="leagueSelect" class="form-label">Select League:</label>
                 <select id="leagueSelect" class="form-select">
-                    ${leagues.map(league => `<option value="${league.id}">${league.name}</option>`).join('')}
+                    ${leagues.map(league => {
+                        const statusBadge = league.status ? 
+                            `<span class="badge bg-${getStatusColor(league.status)}">${capitalizeFirstLetter(league.status)}</span>` : 
+                            '';
+                        return `<option value="${league.id}">${league.name} ${statusBadge}</option>`;
+                    }).join('')}
                 </select>
             `;
             
@@ -683,6 +795,23 @@
             document.getElementById('leagueSelect').addEventListener('change', function() {
                 loadBoxesForLeague(this.value);
             });
+        }
+        
+        // Helper function to get color for status badge
+        function getStatusColor(status) {
+            switch (status.toLowerCase()) {
+                case 'active': return 'success';
+                case 'upcoming': return 'primary';
+                case 'completed': return 'secondary';
+                case 'cancelled': return 'danger';
+                default: return 'info';
+            }
+        }
+        
+        // Helper function to capitalize first letter
+        function capitalizeFirstLetter(string) {
+            if (!string) return '';
+            return string.charAt(0).toUpperCase() + string.slice(1);
         }
         
         // Load boxes for a specific league
