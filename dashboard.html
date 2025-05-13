@@ -666,17 +666,6 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- Account Actions -->
-                            <div class="stats-card">
-                                <h3>Account Actions</h3>
-                                <button type="button" id="deleteAccountBtn" class="btn btn-danger">
-                                    <i class="fas fa-user-times me-2"></i>Delete Account
-                                </button>
-                                <small class="form-text text-muted d-block mt-2">
-                                    Deleting your account will permanently remove all your data including your Sign In, match history, player profile, and any other data associated with your account. This action cannot be undone.
-                                </small>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -2477,6 +2466,10 @@
                             document.getElementById('playerName').value = profile.display_name;
                         } else if (profile.full_name) {
                             document.getElementById('playerName').value = profile.full_name;
+                        } else if (session.user && session.user.email) {
+                            document.getElementById('playerName').value = formatUserName(session.user.email);
+                        } else {
+                            document.getElementById('playerName').value = 'User';
                         }
                         
                         // Get club information
@@ -2487,22 +2480,26 @@
                             document.getElementById('clubDetails').style.display = 'block';
                             
                             // Update club information
-                            document.getElementById('clubName').textContent = club.name;
-                            document.getElementById('clubAddress').textContent = club.address || '';
-                            document.getElementById('clubPostcode').textContent = club.postcode || '';
+                            document.getElementById('clubName').textContent = club.club_name || club.name || '—';
+                            document.getElementById('clubAddress').textContent = club.club_address || club.address || '';
+                            document.getElementById('clubPostcode').textContent = club.club_postcode || club.postcode || '';
                             
-                            if (club.website) {
+                            if (club.club_website || club.website) {
                                 const websiteLink = document.getElementById('clubWebsite');
-                                websiteLink.href = club.website;
-                                websiteLink.textContent = club.website;
+                                websiteLink.href = club.club_website || club.website;
+                                websiteLink.textContent = club.club_website || club.website;
                             }
                             
                             // Update club colors
-                            if (club.primaryColor) {
+                            if (club.primary_color) {
+                                document.getElementById('clubPrimaryColor').style.backgroundColor = club.primary_color;
+                            } else if (club.primaryColor) {
                                 document.getElementById('clubPrimaryColor').style.backgroundColor = club.primaryColor;
                             }
                             
-                            if (club.secondaryColor) {
+                            if (club.secondary_color) {
+                                document.getElementById('clubSecondaryColor').style.backgroundColor = club.secondary_color;
+                            } else if (club.secondaryColor) {
                                 document.getElementById('clubSecondaryColor').style.backgroundColor = club.secondaryColor;
                             }
                         } else {
@@ -2662,15 +2659,6 @@
                 // Re-filter data based on selected time range
                 const userId = session.user.id;
                 loadRatingTrendData(userId, true); // true = use cached data if available
-            });
-            
-            // Delete account button
-            document.getElementById('deleteAccountBtn').addEventListener('click', function() {
-                if (confirm('WARNING: This will permanently delete your account and all associated data. This action cannot be undone. Are you sure?')) {
-                    if (confirm('FINAL WARNING: All your data will be permanently lost. Continue with account deletion?')) {
-                        deleteUserAccount(session.user.id);
-                    }
-                }
             });
         }
 
@@ -2891,27 +2879,23 @@
                         y: item.rating,
                         eventType: item.eventType
                     })),
-                    borderColor: secondaryColor,
-                    backgroundColor: 'rgba(26, 34, 56, 0.1)',
+                    borderColor: goldColor, // changed from secondaryColor to goldColor
+                    backgroundColor: 'rgba(212, 175, 55, 0.1)', // subtle gold fill
                     fill: false,
                     tension: 0.3,
                     pointRadius: (context) => {
-                        // Get data point from dataset
                         const dataPoint = context.dataset.data[context.dataIndex];
                         return dataPoint.eventType === 'coach' ? 8 : 5;
                     },
                     pointStyle: (context) => {
-                        // Get data point from dataset
                         const dataPoint = context.dataset.data[context.dataIndex];
-                        return dataPoint.eventType === 'coach' ? 'rectRot' : 'circle'; // Diamond shape for coach ratings
+                        return dataPoint.eventType === 'coach' ? 'rectRot' : 'circle';
                     },
                     pointBackgroundColor: (context) => {
-                        // Get data point from dataset
                         const dataPoint = context.dataset.data[context.dataIndex];
                         return dataPoint.eventType === 'coach' ? 'red' : goldColor;
                     },
                     pointBorderColor: (context) => {
-                        // Get data point from dataset
                         const dataPoint = context.dataset.data[context.dataIndex];
                         return dataPoint.eventType === 'coach' ? 'red' : goldColor;
                     }
