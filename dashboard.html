@@ -227,6 +227,17 @@
             padding: 8px 12px;
             border-radius: 5px;
         }
+        #leagueSelector select {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
+        .form-label {
+            color: var(--dark-blue);
+            font-weight: 500;
+        }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -305,6 +316,10 @@
                 <!-- Box League Tab -->
                 <div class="tab-pane fade show active" id="boxleague" role="tabpanel" aria-labelledby="boxleague-tab">
                     <div class="box-league-container">
+                        <div id="leagueSelector" class="mb-4">
+                            <!-- League selector will be populated here -->
+                        </div>
+                        
                         <div id="boxSelector" class="mb-4">
                             <!-- Box selector will be populated here -->
                         </div>
@@ -590,20 +605,59 @@
                         </div>
                     `;
                     
+                    document.getElementById('leagueSelector').style.display = 'none';
                     document.getElementById('boxSelector').style.display = 'none';
                     document.getElementById('upcomingMatches').innerHTML = '<p>No upcoming matches.</p>';
                     document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
                     return;
                 }
                 
+                // Create league selector
+                createLeagueSelector(leagues);
+                
                 // For now, select the first league
                 const selectedLeague = leagues[0];
                 
+                // Load boxes for the first league
+                await loadBoxesForLeague(selectedLeague.id);
+                
+            } catch (error) {
+                console.error('Error loading box league data:', error);
+                document.getElementById('leagueTableContainer').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error loading box league data: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Create league selector dropdown
+        function createLeagueSelector(leagues) {
+            const leagueSelector = document.getElementById('leagueSelector');
+            
+            const selectHTML = `
+                <label for="leagueSelect" class="form-label">Select League:</label>
+                <select id="leagueSelect" class="form-select">
+                    ${leagues.map(league => `<option value="${league.id}">${league.name}</option>`).join('')}
+                </select>
+            `;
+            
+            leagueSelector.innerHTML = selectHTML;
+            
+            // Add event listener for change
+            document.getElementById('leagueSelect').addEventListener('change', function() {
+                loadBoxesForLeague(this.value);
+            });
+        }
+        
+        // Load boxes for a specific league
+        async function loadBoxesForLeague(leagueId) {
+            try {
                 // Get boxes for the selected league
                 const { data: boxes, error: boxesError } = await supabase
                     .from('box_league_boxes')
                     .select('*')
-                    .eq('league_id', selectedLeague.id);
+                    .eq('league_id', leagueId);
                 
                 if (boxesError) {
                     throw boxesError;
@@ -611,11 +665,14 @@
                 
                 if (!boxes || boxes.length === 0) {
                     addDebugInfo('No boxes found for league');
+                    document.getElementById('boxSelector').style.display = 'none';
                     document.getElementById('leagueTableContainer').innerHTML = `
                         <div class="alert alert-info">
                             No boxes found for this league.
                         </div>
                     `;
+                    document.getElementById('upcomingMatches').innerHTML = '<p>No upcoming matches.</p>';
+                    document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
                     return;
                 }
                 
@@ -626,10 +683,10 @@
                 await loadBoxDetails(boxes[0].id);
                 
             } catch (error) {
-                console.error('Error loading box league data:', error);
+                console.error('Error loading boxes for league:', error);
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
-                        Error loading box league data: ${error.message}
+                        Error loading boxes: ${error.message}
                     </div>
                 `;
             }
