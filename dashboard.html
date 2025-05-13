@@ -2364,21 +2364,41 @@
             try {
                 // Load player profile data
                 const userId = session.user.id;
+                console.log("Initializing profile tab for user:", userId);
                 
-                // Set user name from session
+                // Set user name from session initially
                 document.getElementById('playerName').value = formatUserName(session.user.email);
                 
-                // Fetch profile data
+                // Fetch profile data the same way Swift app does
                 try {
-                    const { data: profile, error: profileError } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', userId)
-                        .single();
+                    // Create the combined profile endpoint that includes clubs and ratings
+                    const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach(*)`;
                     
-                    if (profileError) throw profileError;
+                    console.log("Fetching profile from endpoint:", profileEndpoint);
                     
-                    if (profile) {
+                    // Set up headers for the request
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'apikey': window.config.supabaseKey,
+                        'Authorization': `Bearer ${session.access_token}`
+                    };
+                    
+                    // Make the request
+                    const response = await fetch(profileEndpoint, {
+                        method: 'GET',
+                        headers: headers
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Profile fetch failed with status: ${response.status}`);
+                    }
+                    
+                    const profileData = await response.json();
+                    console.log("Profile data:", profileData);
+                    
+                    if (profileData && profileData.length > 0) {
+                        const profile = profileData[0];
+                        
                         // Update name if available
                         if (profile.display_name) {
                             document.getElementById('playerName').value = profile.display_name;
@@ -2386,129 +2406,119 @@
                             document.getElementById('playerName').value = profile.full_name;
                         }
                         
-                        // Get ratings data
-                        try {
-                            const { data: ratings, error: ratingsError } = await supabase
-                                .from('ratings_coach')
-                                .select('*')
-                                .eq('player_id', userId)
-                                .order('date', { ascending: false });
-                                
-                            if (ratingsError) throw ratingsError;
+                        // Get club information
+                        const club = profile.clubs;
+                        if (club) {
+                            // Hide no club message, show club details
+                            document.getElementById('noClubSelected').style.display = 'none';
+                            document.getElementById('clubDetails').style.display = 'block';
                             
-                            if (ratings && ratings.length > 0) {
-                                const latestRating = ratings[0];
-                                
-                                // Update player rating
-                                if (latestRating.rating) {
-                                    document.getElementById('playerRating').textContent = latestRating.rating.toFixed(1);
-                                }
-                                
-                                // Update category
-                                if (latestRating.category) {
-                                    document.getElementById('playerCategory').textContent = latestRating.category;
-                                    
-                                    // Set category definition
-                                    const categoryDefinitions = {
-                                        "Newcomer": "First time playing, learning basic rules and how to hit the ball.",
-                                        "Beginner": "Can rally a little, but struggles with control, positioning, and timing.",
-                                        "Improver": "More consistent shots, starting to understand walls and basic tactics.",
-                                        "Lower Intermediate": "Can sustain rallies, control pace better, and use walls more effectively.",
-                                        "Intermediate": "Good shot control, understands positioning, and can start dictating play.",
-                                        "Upper Intermediate": "Confident play, good use of lobs, angles, and teamwork.",
-                                        "Advanced": "Strong tactical awareness, consistent under pressure, and adapts well to opponents.",
-                                        "Competitive": "High-level player, effective in attack and defense, plays structured points.",
-                                        "Elite": "Tournament-level, excels in all aspects of the game with precision and strategy."
-                                    };
-                                    
-                                    if (categoryDefinitions[latestRating.category]) {
-                                        document.getElementById('categoryDefinition').textContent = categoryDefinitions[latestRating.category];
-                                    }
-                                }
-                                
-                                // Update assessment date
-                                if (latestRating.date) {
-                                    const assessmentDate = new Date(latestRating.date);
-                                    document.getElementById('assessmentDate').textContent = assessmentDate.toLocaleDateString();
-                                }
-                                
-                                // Update coach name
-                                if (latestRating.coach_name || latestRating.assessor) {
-                                    document.getElementById('assessedBy').textContent = latestRating.coach_name || latestRating.assessor;
-                                }
+                            // Update club information
+                            document.getElementById('clubName').textContent = club.name;
+                            document.getElementById('clubAddress').textContent = club.address || '';
+                            document.getElementById('clubPostcode').textContent = club.postcode || '';
+                            
+                            if (club.website) {
+                                const websiteLink = document.getElementById('clubWebsite');
+                                websiteLink.href = club.website;
+                                websiteLink.textContent = club.website;
                             }
                             
-                            // Get match ratings
-                            const { data: matchRatings, error: matchRatingsError } = await supabase
-                                .from('ratings')
-                                .select('rating_0_10,confidence_pct,date')
-                                .eq('id', userId)
-                                .order('date', { ascending: false })
-                                .limit(1);
-                                
-                            if (!matchRatingsError && matchRatings && matchRatings.length > 0) {
-                                const latestMatchRating = matchRatings[0];
-                                
-                                if (latestMatchRating.rating_0_10) {
-                                    document.getElementById('matchRating').textContent = latestMatchRating.rating_0_10.toFixed(1);
-                                }
-                                
-                                if (latestMatchRating.confidence_pct) {
-                                    document.getElementById('ratingConfidence').textContent = 
-                                        (latestMatchRating.confidence_pct * 100).toFixed(1) + '%';
-                                }
+                            // Update club colors
+                            if (club.primaryColor) {
+                                document.getElementById('clubPrimaryColor').style.backgroundColor = club.primaryColor;
                             }
-                        } catch (error) {
-                            console.error('Error loading ratings:', error);
-                        }
-                        
-                        // Get user's club
-                        if (profile.club_id) {
-                            try {
-                                const { data: club, error: clubError } = await supabase
-                                    .from('clubs')
-                                    .select('*')
-                                    .eq('id', profile.club_id)
-                                    .single();
-                                    
-                                if (clubError) throw clubError;
-                                
-                                if (club) {
-                                    // Hide no club message, show club details
-                                    document.getElementById('noClubSelected').style.display = 'none';
-                                    document.getElementById('clubDetails').style.display = 'block';
-                                    
-                                    // Update club information
-                                    document.getElementById('clubName').textContent = club.name;
-                                    document.getElementById('clubAddress').textContent = club.address;
-                                    document.getElementById('clubPostcode').textContent = club.postcode;
-                                    
-                                    if (club.website) {
-                                        const websiteLink = document.getElementById('clubWebsite');
-                                        websiteLink.href = club.website;
-                                        websiteLink.textContent = club.website;
-                                    }
-                                    
-                                    // Update club colors
-                                    if (club.primaryColor) {
-                                        document.getElementById('clubPrimaryColor').style.backgroundColor = club.primaryColor;
-                                    }
-                                    
-                                    if (club.secondaryColor) {
-                                        document.getElementById('clubSecondaryColor').style.backgroundColor = club.secondaryColor;
-                                    }
-                                }
-                            } catch (error) {
-                                console.error('Error loading club:', error);
+                            
+                            if (club.secondaryColor) {
+                                document.getElementById('clubSecondaryColor').style.backgroundColor = club.secondaryColor;
                             }
                         } else {
                             // No club selected
                             document.getElementById('noClubSelected').style.display = 'block';
                             document.getElementById('clubDetails').style.display = 'none';
                         }
+                        
+                        // Get ratings data
+                        const ratings = profile.ratings_coach;
+                        if (ratings && ratings.length > 0) {
+                            // Sort ratings by date in descending order
+                            const sortedRatings = ratings.sort((a, b) => {
+                                return new Date(b.date) - new Date(a.date);
+                            });
+                            
+                            const latestRating = sortedRatings[0];
+                            
+                            // Update player rating
+                            if (latestRating.rating) {
+                                document.getElementById('playerRating').textContent = latestRating.rating.toFixed(1);
+                            }
+                            
+                            // Update category
+                            if (latestRating.category) {
+                                document.getElementById('playerCategory').textContent = latestRating.category;
+                                
+                                // Set category definition
+                                const categoryDefinitions = {
+                                    "Newcomer": "First time playing, learning basic rules and how to hit the ball.",
+                                    "Beginner": "Can rally a little, but struggles with control, positioning, and timing.",
+                                    "Improver": "More consistent shots, starting to understand walls and basic tactics.",
+                                    "Lower Intermediate": "Can sustain rallies, control pace better, and use walls more effectively.",
+                                    "Intermediate": "Good shot control, understands positioning, and can start dictating play.",
+                                    "Upper Intermediate": "Confident play, good use of lobs, angles, and teamwork.",
+                                    "Advanced": "Strong tactical awareness, consistent under pressure, and adapts well to opponents.",
+                                    "Competitive": "High-level player, effective in attack and defense, plays structured points.",
+                                    "Elite": "Tournament-level, excels in all aspects of the game with precision and strategy."
+                                };
+                                
+                                if (categoryDefinitions[latestRating.category]) {
+                                    document.getElementById('categoryDefinition').textContent = categoryDefinitions[latestRating.category];
+                                }
+                            }
+                            
+                            // Update assessment date
+                            if (latestRating.date) {
+                                const assessmentDate = new Date(latestRating.date);
+                                document.getElementById('assessmentDate').textContent = assessmentDate.toLocaleDateString();
+                            }
+                            
+                            // Update coach name
+                            if (latestRating.coach_name || latestRating.assessor) {
+                                document.getElementById('assessedBy').textContent = latestRating.coach_name || latestRating.assessor;
+                            }
+                        }
+                    }
+                    
+                    // Now get match ratings separately using the correct endpoint (matches Swift app)
+                    const ratingsEndpoint = `${window.config.supabaseUrl}/rest/v1/ratings?id=eq.${userId}&select=rating_0_10,confidence_pct,date&order=date.desc&limit=1`;
+                    
+                    console.log("Fetching match ratings from:", ratingsEndpoint);
+                    
+                    const ratingsResponse = await fetch(ratingsEndpoint, {
+                        method: 'GET',
+                        headers: headers
+                    });
+                    
+                    if (ratingsResponse.ok) {
+                        const matchRatings = await ratingsResponse.json();
+                        console.log("Match ratings data:", matchRatings);
+                        
+                        if (matchRatings && matchRatings.length > 0) {
+                            const latestMatchRating = matchRatings[0];
+                            
+                            if (latestMatchRating.rating_0_10) {
+                                document.getElementById('matchRating').textContent = latestMatchRating.rating_0_10.toFixed(1);
+                            }
+                            
+                            if (latestMatchRating.confidence_pct) {
+                                document.getElementById('ratingConfidence').textContent = 
+                                    (latestMatchRating.confidence_pct * 100).toFixed(1) + '%';
+                            }
+                        }
+                    } else {
+                        console.warn("Failed to fetch match ratings:", ratingsResponse.status);
                     }
                 } catch (error) {
-                    console.error('Error loading profile:', error);
+                    console.error('Error loading profile details:', error);
                 }
                 
                 // Set up profile button handlers
@@ -2578,12 +2588,37 @@
         // Save user name
         async function saveUserName(userId, newName) {
             try {
-                const { error } = await supabase
-                    .from('profiles')
-                    .update({ display_name: newName })
-                    .eq('id', userId);
-                    
-                if (error) throw error;
+                console.log(`Updating display name to: ${newName} for user: ${userId}`);
+                
+                // Create the update URL - matching Swift app implementation
+                const url = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}`;
+                
+                // Set up headers
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': window.config.supabaseKey,
+                    'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+                };
+                
+                // Create the update body with display_name
+                const updateData = {
+                    display_name: newName
+                };
+                
+                // Make the PATCH request
+                const response = await fetch(url, {
+                    method: 'PATCH',
+                    headers: headers,
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to update name: HTTP ${response.status} - ${errorText}`);
+                }
+                
+                // Update local storage to match Swift app behavior
+                localStorage.setItem('currentUserFullName', newName);
                 
                 alert('Your name has been updated successfully.');
             } catch (error) {
@@ -2639,37 +2674,98 @@
                 refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
                 refreshBtn.disabled = true;
                 
-                // Re-fetch profile data
-                const { data: ratings, error: ratingsError } = await supabase
-                    .from('ratings_coach')
-                    .select('*')
-                    .eq('player_id', userId)
-                    .order('date', { ascending: false });
-                    
-                if (ratingsError) throw ratingsError;
+                console.log("Forcing profile refresh for user ID:", userId);
                 
-                if (ratings && ratings.length > 0) {
-                    const latestRating = ratings[0];
+                // Clear any local cache first - matching Swift app behavior
+                localStorage.removeItem('profileCache_' + userId);
+                
+                // Re-fetch profile data using the same endpoint pattern as Swift app
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': window.config.supabaseKey,
+                    'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+                };
+                
+                // Create the combined profile endpoint that includes clubs and ratings
+                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach(*)`;
+                
+                const response = await fetch(profileEndpoint, {
+                    method: 'GET',
+                    headers: headers,
+                    cache: 'no-store' // Force fresh data
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Profile refresh failed with status: ${response.status}`);
+                }
+                
+                const profileData = await response.json();
+                console.log("Refreshed profile data:", profileData);
+                
+                if (profileData && profileData.length > 0) {
+                    const profile = profileData[0];
                     
-                    // Update player rating
-                    if (latestRating.rating) {
-                        document.getElementById('playerRating').textContent = latestRating.rating.toFixed(1);
+                    // Update name if available
+                    if (profile.display_name) {
+                        document.getElementById('playerName').value = profile.display_name;
                     }
                     
-                    // Update category
-                    if (latestRating.category) {
-                        document.getElementById('playerCategory').textContent = latestRating.category;
+                    // Get ratings data
+                    const ratings = profile.ratings_coach;
+                    if (ratings && ratings.length > 0) {
+                        // Sort ratings by date in descending order
+                        const sortedRatings = ratings.sort((a, b) => {
+                            return new Date(b.date) - new Date(a.date);
+                        });
+                        
+                        const latestRating = sortedRatings[0];
+                        
+                        // Update player rating
+                        if (latestRating.rating) {
+                            document.getElementById('playerRating').textContent = latestRating.rating.toFixed(1);
+                        }
+                        
+                        // Update category
+                        if (latestRating.category) {
+                            document.getElementById('playerCategory').textContent = latestRating.category;
+                        }
+                        
+                        // Update assessment date
+                        if (latestRating.date) {
+                            const assessmentDate = new Date(latestRating.date);
+                            document.getElementById('assessmentDate').textContent = assessmentDate.toLocaleDateString();
+                        }
+                        
+                        // Update coach name
+                        if (latestRating.coach_name || latestRating.assessor) {
+                            document.getElementById('assessedBy').textContent = latestRating.coach_name || latestRating.assessor;
+                        }
                     }
+                }
+                
+                // Also refresh match ratings
+                const ratingsEndpoint = `${window.config.supabaseUrl}/rest/v1/ratings?id=eq.${userId}&select=rating_0_10,confidence_pct,date&order=date.desc&limit=1`;
+                
+                const ratingsResponse = await fetch(ratingsEndpoint, {
+                    method: 'GET',
+                    headers: headers,
+                    cache: 'no-store' // Force fresh data
+                });
+                
+                if (ratingsResponse.ok) {
+                    const matchRatings = await ratingsResponse.json();
                     
-                    // Update assessment date
-                    if (latestRating.date) {
-                        const assessmentDate = new Date(latestRating.date);
-                        document.getElementById('assessmentDate').textContent = assessmentDate.toLocaleDateString();
-                    }
-                    
-                    // Update coach name
-                    if (latestRating.coach_name || latestRating.assessor) {
-                        document.getElementById('assessedBy').textContent = latestRating.coach_name || latestRating.assessor;
+                    if (matchRatings && matchRatings.length > 0) {
+                        const latestMatchRating = matchRatings[0];
+                        
+                        if (latestMatchRating.rating_0_10) {
+                            document.getElementById('matchRating').textContent = latestMatchRating.rating_0_10.toFixed(1);
+                        }
+                        
+                        if (latestMatchRating.confidence_pct) {
+                            document.getElementById('ratingConfidence').textContent = 
+                                (latestMatchRating.confidence_pct * 100).toFixed(1) + '%';
+                        }
                     }
                 }
                 
