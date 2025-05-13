@@ -1,42 +1,45 @@
-Config file created at: Tue May 13 11:05:12 UTC 2025
+Config file created at: Tue May 13 11:10:15 UTC 2025
 File size: 443 bytes
 File exists: Yes
 Directory listing:
-total 9636
-drwxr-xr-x 6 runner docker    4096 May 13 11:05 .
-drwxr-xr-x 3 runner docker    4096 May 13 11:05 ..
--rw-r--r-- 1 runner docker    6148 May 13 11:05 .DS_Store
-drwxr-xr-x 7 runner docker    4096 May 13 11:05 .git
-drwxr-xr-x 3 runner docker    4096 May 13 11:05 .github
--rw-r--r-- 1 runner docker      79 May 13 11:05 .gitignore
--rw-r--r-- 1 runner docker       1 May 13 11:05 .nojekyll
--rw-r--r-- 1 runner docker      17 May 13 11:05 CNAME
--rw-r--r-- 1 runner docker    4671 May 13 11:05 README.md
--rw-r--r-- 1 runner docker   15258 May 13 11:05 api-test.html
--rw-r--r-- 1 runner docker   14028 May 13 11:05 auth-callback.html
--rw-r--r-- 1 runner docker   13245 May 13 11:05 auth.html
--rw-r--r-- 1 runner docker 9433088 May 13 11:05 bfg.jar
--rw-r--r-- 1 runner docker    9614 May 13 11:05 boxleague.html
--rw-r--r-- 1 runner docker     110 May 13 11:05 config-created.txt
--rw-r--r-- 1 runner docker   23724 May 13 11:05 config-inspector.html
--rw-r--r-- 1 runner docker    2984 May 13 11:05 config-loader.js
--rw-r--r-- 1 runner docker     443 May 13 11:05 config.js
--rw-r--r-- 1 runner docker   93709 May 13 11:05 dashboard.html
--rw-r--r-- 1 runner docker   11030 May 13 11:05 db-inspect.html
--rw-r--r-- 1 runner docker    2843 May 13 11:05 fix-github-pages.md
--rw-r--r-- 1 runner docker    6754 May 13 11:05 fixed-api-test.html
--rw-r--r-- 1 runner docker   24872 May 13 11:05 guide.html
-drwxr-xr-x 2 runner docker    4096 May 13 11:05 images
--rw-r--r-- 1 runner docker    6613 May 13 11:05 improved-api-test.html
--rw-r--r-- 1 runner docker   10543 May 13 11:05 index.html
--rw-r--r-- 1 runner docker   13939 May 13 11:05 inline-api-test.html
-drwxr-xr-x 3 runner docker    4096 May 13 11:05 netlify
--rw-r--r-- 1 runner docker     367 May 13 11:05 netlify.toml.disabled
--rw-r--r-- 1 runner docker   21025 May 13 11:05 permission-test.html
--rw-r--r-- 1 runner docker   16287 May 13 11:05 privacy.html
--rw-r--r-- 1 runner docker    3213 May 13 11:05 simple-direct-test.html
--rw-r--r-- 1 runner docker    6148 May 13 11:05 simple-test.html
--rw-r--r-- 1 runner docker    1698 May 13 11:05 supabase-config.js
--rw-r--r-- 1 runner docker   11240 May 13 11:05 supabase-rls-policies.sql
--rw-r--r-- 1 runner docker   20088 May 13 11:05 support.html
--rw-r--r-- 1 runner docker    2035 May 13 11:05 verify-config.js
+total 9644
+drwxr-xr-x 8 runner docker    4096 May 13 11:10 .
+drwxr-xr-x 3 runner docker    4096 May 13 11:10 ..
+-rw-r--r-- 1 runner docker    6148 May 13 11:10 .DS_Store
+drwxr-xr-x 7 runner docker    4096 May 13 11:10 .git
+drwxr-xr-x 3 runner docker    4096 May 13 11:10 .github
+-rw-r--r-- 1 runner docker      79 May 13 11:10 .gitignore
+-rw-r--r-- 1 runner docker       1 May 13 11:10 .nojekyll
+-rw-r--r-- 1 runner docker      17 May 13 11:10 CNAME
+-rw-r--r-- 1 runner docker    4671 May 13 11:10 README.md
+-rw-r--r-- 1 runner docker   15258 May 13 11:10 api-test.html
+-rw-r--r-- 1 runner docker   14028 May 13 11:10 auth-callback.html
+-rw-r--r-- 1 runner docker   13245 May 13 11:10 auth.html
+-rw-r--r-- 1 runner docker 9433088 May 13 11:10 bfg.jar
+-rw-r--r-- 1 runner docker    9614 May 13 11:10 boxleague.html
+drwxr-xr-x 2 runner docker    4096 May 13 11:10 components
+-rw-r--r-- 1 runner docker     110 May 13 11:10 config-created.txt
+-rw-r--r-- 1 runner docker   23724 May 13 11:10 config-inspector.html
+-rw-r--r-- 1 runner docker    2984 May 13 11:10 config-loader.js
+-rw-r--r-- 1 runner docker     443 May 13 11:10 config.js
+-rwxr-xr-x 1 runner docker    3387 May 13 11:10 convert-to-components.sh
+-rw-r--r-- 1 runner docker   93709 May 13 11:10 dashboard.html
+-rw-r--r-- 1 runner docker   11030 May 13 11:10 db-inspect.html
+-rw-r--r-- 1 runner docker    2843 May 13 11:10 fix-github-pages.md
+-rw-r--r-- 1 runner docker    6754 May 13 11:10 fixed-api-test.html
+-rw-r--r-- 1 runner docker   24872 May 13 11:10 guide.html
+drwxr-xr-x 2 runner docker    4096 May 13 11:10 images
+-rw-r--r-- 1 runner docker    6613 May 13 11:10 improved-api-test.html
+-rw-r--r-- 1 runner docker   10543 May 13 11:10 index.html
+-rw-r--r-- 1 runner docker   13939 May 13 11:10 inline-api-test.html
+drwxr-xr-x 2 runner docker    4096 May 13 11:10 js
+drwxr-xr-x 3 runner docker    4096 May 13 11:10 netlify
+-rw-r--r-- 1 runner docker     367 May 13 11:10 netlify.toml.disabled
+-rw-r--r-- 1 runner docker   21025 May 13 11:10 permission-test.html
+-rw-r--r-- 1 runner docker   10044 May 13 11:10 privacy.html
+-rw-r--r-- 1 runner docker    3213 May 13 11:10 simple-direct-test.html
+-rw-r--r-- 1 runner docker    6148 May 13 11:10 simple-test.html
+-rw-r--r-- 1 runner docker    1698 May 13 11:10 supabase-config.js
+-rw-r--r-- 1 runner docker   11240 May 13 11:10 supabase-rls-policies.sql
+-rw-r--r-- 1 runner docker   20088 May 13 11:10 support.html
+-rw-r--r-- 1 runner docker    2035 May 13 11:10 verify-config.js
