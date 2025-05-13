@@ -994,6 +994,7 @@
                 }
                 
                 console.log('Retrieved teams:', teams?.length || 0);
+                console.log('Team data format sample:', JSON.stringify(teams.slice(0, 3), null, 2));
                 
                 // Get matches for the box
                 const { data: matches, error: matchesError } = await supabase
@@ -1426,6 +1427,12 @@
             if (!name) return 'NA';
             
             try {
+                // Handle "Team X" format by just showing the number
+                const teamMatch = name.match(/^Team\s+(\d+)$/i);
+                if (teamMatch) {
+                    return `T${teamMatch[1]}`;
+                }
+                
                 // Pattern: "First1 Last1 & First2 Last2" or similar variations
                 const components = name.split(' & ');
                 if (components.length >= 2) {
@@ -1434,6 +1441,22 @@
                     const secondPerson = components[1].trim().split(' ')[0] || '';
                     return `${firstPerson.slice(0, 3)}/${secondPerson.slice(0, 3)}`;
                 } else {
+                    // Check for other delimiters
+                    let parts = [];
+                    if (name.includes('-')) {
+                        parts = name.split('-').map(p => p.trim());
+                    } else if (name.includes('/')) {
+                        parts = name.split('/').map(p => p.trim());
+                    } else if (name.includes(',')) {
+                        parts = name.split(',').map(p => p.trim());
+                    }
+                    
+                    if (parts.length >= 2) {
+                        const first = parts[0].split(' ')[0];
+                        const second = parts[1].split(' ')[0];
+                        return `${first[0]}${second[0]}`.toUpperCase();
+                    }
+                    
                     // Handle single name or other formats
                     const words = name.trim().split(' ');
                     if (words.length >= 2) {
@@ -1455,6 +1478,15 @@
             if (!name) return 'Unknown Team';
             
             try {
+                // Log the actual name we're processing for debugging
+                console.log('Processing team name:', name);
+                
+                // Special case: If the name has format "Team X", just return it as is
+                if (name.match(/^Team\s+\d+$/i)) {
+                    return name;
+                }
+                
+                // Try "First1 Last1 & First2 Last2" pattern
                 const components = name.split(' & ');
                 if (components.length >= 2) {
                     // Extract first names from each part
@@ -1462,7 +1494,26 @@
                     const secondPerson = components[1].trim().split(' ')[0] || '';
                     return `${firstPerson} & ${secondPerson}`;
                 } else {
-                    return name; // Return original if not in expected format
+                    // The name might have other formats like "Ben - Kerry"
+                    // Try splitting by different delimiters
+                    let parts = [];
+                    if (name.includes('-')) {
+                        parts = name.split('-').map(p => p.trim());
+                    } else if (name.includes('/')) {
+                        parts = name.split('/').map(p => p.trim());
+                    } else if (name.includes(',')) {
+                        parts = name.split(',').map(p => p.trim());
+                    }
+                    
+                    if (parts.length >= 2) {
+                        // Take first words of each part
+                        const first = parts[0].split(' ')[0];
+                        const second = parts[1].split(' ')[0];
+                        return `${first} & ${second}`;
+                    }
+                    
+                    // If we can't parse it, return original
+                    return name;
                 }
             } catch (error) {
                 console.error('Error extracting player names:', name, error);
