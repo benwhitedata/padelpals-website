@@ -1667,38 +1667,150 @@
                             <head>
                                 <title>${leagueName} - Box League Tables</title>
                                 <style>
-                                    body { font-family: Arial, sans-serif; margin: 20px; }
-                                    h1 { text-align: center; margin-bottom: 20px; }
-                                    .box-container { margin-bottom: 30px; page-break-inside: avoid; }
-                                    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-                                    th:first-child, td:first-child { text-align: left; }
-                                    th { background-color: #f2f2f2; }
-                                    .team-name { font-weight: normal; }
-                                    .points { font-weight: bold; }
+                                    body { 
+                                        font-family: Arial, sans-serif; 
+                                        margin: 10px;
+                                        font-size: 11px;
+                                    }
+                                    h1 { 
+                                        text-align: center; 
+                                        margin-bottom: 10px;
+                                        font-size: 18px;
+                                    }
+                                    h2 {
+                                        font-size: 16px;
+                                        margin: 8px 0;
+                                    }
+                                    .box-container { 
+                                        margin-bottom: 15px; 
+                                        page-break-inside: avoid; 
+                                    }
+                                    table { 
+                                        width: 100%; 
+                                        border-collapse: collapse; 
+                                        margin-bottom: 10px;
+                                    }
+                                    th, td { 
+                                        border: 1px solid #ddd; 
+                                        padding: 4px; 
+                                        text-align: center;
+                                        font-size: 10px;
+                                    }
+                                    th:first-child, td:first-child { 
+                                        text-align: left; 
+                                        padding-left: 5px;
+                                    }
+                                    th { 
+                                        background-color: #f2f2f2; 
+                                        font-weight: bold;
+                                    }
+                                    .team-name { 
+                                        font-weight: normal;
+                                        max-width: 180px;
+                                    }
+                                    .points { 
+                                        font-weight: bold; 
+                                        background-color: #f8f9fa;
+                                    }
                                     .match-result { 
-                                        width: 25px; 
-                                        height: 25px; 
+                                        width: 18px; 
+                                        height: 18px; 
                                         border-radius: 50%; 
                                         margin: 0 auto;
                                         display: flex;
                                         align-items: center;
                                         justify-content: center;
+                                        font-weight: bold;
+                                        font-size: 9px;
                                     }
-                                    .match-win { background-color: rgba(40, 167, 69, 0.2); }
-                                    .match-loss { background-color: rgba(220, 53, 69, 0.15); }
-                                    .match-unplayed { background-color: rgba(108, 117, 125, 0.1); }
-                                    .match-scheduled { background-color: rgba(0, 123, 255, 0.15); }
-                                    .match-walkover-win { background-color: rgba(0, 123, 255, 0.2); }
-                                    .match-walkover-loss { background-color: rgba(255, 193, 7, 0.2); }
+                                    .match-win { 
+                                        background-color: #a3e4b7; 
+                                        color: #0a6522;
+                                    }
+                                    .match-loss { 
+                                        background-color: #f8c1c7; 
+                                        color: #7a1520;
+                                    }
+                                    .match-unplayed { 
+                                        background-color: #e2e2e2; 
+                                        color: #555555;
+                                    }
+                                    .match-scheduled { 
+                                        background-color: #b8daff; 
+                                        color: #004085;
+                                    }
+                                    .match-walkover-win { 
+                                        background-color: #b3d3ff; 
+                                        color: #002a66;
+                                    }
+                                    .match-walkover-loss { 
+                                        background-color: #fff3cd; 
+                                        color: #745800;
+                                    }
                                     @media print {
-                                        @page { size: landscape; }
+                                        @page { 
+                                            size: landscape;
+                                            margin: 0.5cm;
+                                        }
                                         h1 { margin-top: 0; }
+                                        .print-footer {
+                                            position: fixed;
+                                            bottom: 0;
+                                            width: 100%;
+                                            text-align: center;
+                                        }
+                                    }
+                                    .legend {
+                                        margin: 10px 0;
+                                        display: flex;
+                                        flex-wrap: wrap;
+                                        justify-content: center;
+                                        gap: 10px;
+                                        font-size: 9px;
+                                    }
+                                    .legend-item {
+                                        display: flex;
+                                        align-items: center;
+                                        margin-right: 10px;
+                                    }
+                                    .legend-marker {
+                                        width: 16px;
+                                        height: 16px;
+                                        border-radius: 50%;
+                                        margin-right: 4px;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        font-weight: bold;
+                                        font-size: 9px;
                                     }
                                 </style>
                             </head>
                             <body>
                                 <h1>${leagueName} - Box League Tables</h1>
+                                
+                                <div class="legend">
+                                    <div class="legend-item">
+                                        <div class="legend-marker match-win">W</div>
+                                        <span>Win</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-marker match-loss">L</div>
+                                        <span>Loss</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-marker match-unplayed">+</div>
+                                        <span>Not Played</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-marker match-scheduled">⏰</div>
+                                        <span>Scheduled</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-marker match-walkover-win">WO</div>
+                                        <span>Walkover</span>
+                                    </div>
+                                </div>
                         `;
                         
                         // Process each box
@@ -1805,7 +1917,7 @@
                         
                         // Close HTML
                         printContent += `
-                                <div style="text-align: center; margin-top: 30px; color: #666; font-size: 12px;">
+                                <div style="text-align: center; margin-top: 20px; color: #666; font-size: 8px;">
                                     Printed from Padel Pals Box League | ${new Date().toLocaleDateString()}
                                 </div>
                             </body>
