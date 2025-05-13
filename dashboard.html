@@ -919,6 +919,8 @@
         // Load details for a specific box
         async function loadBoxDetails(boxId) {
             try {
+                console.log('Loading box details for box ID:', boxId);
+                
                 // Get teams for the box
                 const { data: teams, error: teamsError } = await supabase
                     .from('box_league_teams')
@@ -926,8 +928,11 @@
                     .eq('box_id', boxId);
                 
                 if (teamsError) {
+                    console.error('Error fetching teams:', teamsError);
                     throw teamsError;
                 }
+                
+                console.log('Retrieved teams:', teams?.length || 0);
                 
                 // Get matches for the box
                 const { data: matches, error: matchesError } = await supabase
@@ -936,8 +941,24 @@
                     .eq('box_id', boxId);
                 
                 if (matchesError) {
+                    console.error('Error fetching matches:', matchesError);
                     throw matchesError;
                 }
+                
+                console.log('Retrieved matches:', matches?.length || 0);
+                
+                // Validate teams data
+                if (!teams || !Array.isArray(teams)) {
+                    throw new Error('Teams data is not valid: ' + JSON.stringify(teams));
+                }
+                
+                // Validate team names
+                teams.forEach((team, index) => {
+                    if (!team.name) {
+                        console.warn(`Team at index ${index} has no name:`, team);
+                        team.name = `Team ${index + 1}`;
+                    }
+                });
                 
                 // Create league table
                 createLeagueTable(teams, matches);
@@ -952,9 +973,17 @@
                 console.error('Error loading box details:', error);
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
-                        Error loading box details: ${error.message}
+                        <h4>Error loading box details</h4>
+                        <p>${error.message}</p>
+                        <details>
+                            <summary>Technical Details</summary>
+                            <pre class="mt-2" style="font-size: 0.8rem; max-height: 150px; overflow: auto;">${error.stack || 'No stack trace available'}</pre>
+                        </details>
+                        <button class="btn btn-sm btn-outline-primary mt-3" onclick="window.location.reload()">Refresh Page</button>
                     </div>
                 `;
+                document.getElementById('upcomingMatches').innerHTML = '<p>Failed to load match data.</p>';
+                document.getElementById('matchResults').innerHTML = '<p>Failed to load match data.</p>';
             }
         }
         
@@ -965,67 +994,95 @@
                 return;
             }
             
-            // Sort teams by calculated points
-            const sortedTeams = teams.sort((a, b) => {
-                const pointsA = calculatePoints(a.id, matches);
-                const pointsB = calculatePoints(b.id, matches);
-                return pointsB - pointsA;
-            });
-            
-            // Create table with headers
-            let tableHTML = `
-                <div class="league-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Team</th>
-                                <th>Pts</th>
-                                ${sortedTeams.map(team => `<th>${getInitials(team.name)}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            
-            // Create table rows
-            sortedTeams.forEach((team, index) => {
-                tableHTML += `
-                    <tr>
-                        <td class="team-name">${index + 1}. ${team.name}</td>
-                        <td><strong>${calculatePoints(team.id, matches)}</strong></td>
+            try {
+                // Sort teams by calculated points
+                const sortedTeams = teams.sort((a, b) => {
+                    const pointsA = calculatePoints(a.id, matches);
+                    const pointsB = calculatePoints(b.id, matches);
+                    return pointsB - pointsA;
+                });
+                
+                // Create table with headers
+                let tableHTML = `
+                    <div class="league-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th>Pts</th>
+                                    ${sortedTeams.map(team => {
+                                        try {
+                                            return `<th>${getInitials(team.name || 'Unknown')}</th>`;
+                                        } catch (e) {
+                                            console.error('Error in team header:', team, e);
+                                            return '<th>??</th>';
+                                        }
+                                    }).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
                 
-                // Create cells for each opponent
-                sortedTeams.forEach(opponent => {
-                    if (team.id === opponent.id) {
-                        tableHTML += '<td>—</td>';
-                    } else {
-                        const matchResult = getMatchResult(team.id, opponent.id, matches);
-                        tableHTML += `<td>
-                            <div class="match-result ${matchResult.class}" 
-                                 data-team1="${team.id}" 
-                                 data-team2="${opponent.id}"
-                                 data-match-id="${matchResult.matchId || ''}">
-                                ${matchResult.text}
-                            </div>
-                        </td>`;
+                // Create table rows
+                sortedTeams.forEach((team, index) => {
+                    try {
+                        tableHTML += `
+                            <tr>
+                                <td class="team-name">${index + 1}. ${team.name || 'Unknown Team'}</td>
+                                <td><strong>${calculatePoints(team.id, matches)}</strong></td>
+                        `;
+                        
+                        // Create cells for each opponent
+                        sortedTeams.forEach(opponent => {
+                            try {
+                                if (team.id === opponent.id) {
+                                    tableHTML += '<td>—</td>';
+                                } else {
+                                    const matchResult = getMatchResult(team.id, opponent.id, matches);
+                                    tableHTML += `<td>
+                                        <div class="match-result ${matchResult.class}" 
+                                             data-team1="${team.id}" 
+                                             data-team2="${opponent.id}"
+                                             data-match-id="${matchResult.matchId || ''}">
+                                            ${matchResult.text}
+                                        </div>
+                                    </td>`;
+                                }
+                            } catch (e) {
+                                console.error('Error in opponent cell:', team, opponent, e);
+                                tableHTML += '<td>ERR</td>';
+                            }
+                        });
+                        
+                        tableHTML += '</tr>';
+                    } catch (e) {
+                        console.error('Error in team row:', team, e);
+                        tableHTML += `<tr><td colspan="${2 + sortedTeams.length}">Error loading team data</td></tr>`;
                     }
                 });
                 
-                tableHTML += '</tr>';
-            });
-            
-            tableHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            
-            document.getElementById('leagueTableContainer').innerHTML = tableHTML;
-            
-            // Add event listeners to match-result divs
-            document.querySelectorAll('.match-result').forEach(el => {
-                el.addEventListener('click', handleMatchClick);
-            });
+                tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                document.getElementById('leagueTableContainer').innerHTML = tableHTML;
+                
+                // Add event listeners to match-result divs
+                document.querySelectorAll('.match-result').forEach(el => {
+                    el.addEventListener('click', handleMatchClick);
+                });
+            } catch (error) {
+                console.error('Error creating league table:', error);
+                document.getElementById('leagueTableContainer').innerHTML = `
+                    <div class="alert alert-danger">
+                        <h4>Error creating league table</h4>
+                        <p>${error.message}</p>
+                        <pre class="mt-2" style="font-size: 0.8rem; max-height: 100px; overflow: auto;">${error.stack}</pre>
+                    </div>
+                `;
+            }
         }
         
         // Create upcoming matches list
@@ -1295,20 +1352,28 @@
         
         // Helper function: Get initials from team name
         function getInitials(name) {
-            const components = name.split(' & ');
-            if (components.length >= 2) {
-                const firstInitial = components[0].trim()[0] || '';
-                const secondInitial = components[1].trim()[0] || '';
-                return `${firstInitial}${secondInitial}`.toUpperCase();
-            } else {
-                const words = name.trim().split(' ');
-                if (words.length >= 2) {
-                    return (words[0][0] + words[1][0]).toUpperCase();
-                } else if (name.length >= 2) {
-                    return name.substring(0, 2).toUpperCase();
+            // Check if name is undefined or null
+            if (!name) return 'NA';
+            
+            try {
+                const components = name.split(' & ');
+                if (components.length >= 2) {
+                    const firstInitial = components[0].trim()[0] || '';
+                    const secondInitial = components[1].trim()[0] || '';
+                    return `${firstInitial}${secondInitial}`.toUpperCase();
                 } else {
-                    return name.toUpperCase();
+                    const words = name.trim().split(' ');
+                    if (words.length >= 2) {
+                        return (words[0][0] + words[1][0]).toUpperCase();
+                    } else if (name.length >= 2) {
+                        return name.substring(0, 2).toUpperCase();
+                    } else {
+                        return name.toUpperCase();
+                    }
                 }
+            } catch (error) {
+                console.error('Error getting initials from name:', name, error);
+                return 'NA'; // Return a generic placeholder for invalid inputs
             }
         }
         
