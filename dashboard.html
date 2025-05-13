@@ -1074,7 +1074,7 @@
                                     <th>Pts</th>
                                     ${sortedTeams.map(team => {
                                         try {
-                                            return `<th>${getInitials(team.name || 'Unknown')}</th>`;
+                                            return `<th>${getInitials(team)}</th>`;
                                         } catch (e) {
                                             console.error('Error in team header:', team, e);
                                             return '<th>??</th>';
@@ -1088,10 +1088,10 @@
                 // Create table rows
                 sortedTeams.forEach((team, index) => {
                     try {
-                        const playerNames = getPlayerNames(team.name);
+                        const playerNamesDisplay = getPlayerNames(team);
                         tableHTML += `
                             <tr>
-                                <td class="team-name">${index + 1}. ${playerNames}</td>
+                                <td class="team-name">${index + 1}. ${playerNamesDisplay}</td>
                                 <td><strong>${calculatePoints(team.id, matches)}</strong></td>
                         `;
                         
@@ -1170,8 +1170,8 @@
                     const team2 = teams.find(t => t.id === match.team2_id);
                     
                     if (team1 && team2) {
-                        const team1Names = getPlayerNames(team1.name);
-                        const team2Names = getPlayerNames(team2.name);
+                        const team1Names = getPlayerNames(team1);
+                        const team2Names = getPlayerNames(team2);
                         
                         upcomingHTML += `
                             <div class="match-card" data-match-id="${match.id}">
@@ -1221,8 +1221,8 @@
                     const team2 = teams.find(t => t.id === match.team2_id);
                     
                     if (team1 && team2) {
-                        const team1Names = getPlayerNames(team1.name);
-                        const team2Names = getPlayerNames(team2.name);
+                        const team1Names = getPlayerNames(team1);
+                        const team2Names = getPlayerNames(team2);
                         const team1Score = match.team1_score;
                         const team2Score = match.team2_score;
                         const team1SetScores = match.team1_set_scores || [];
@@ -1282,8 +1282,8 @@
             
             if (!team1 || !team2) return;
             
-            const team1Names = getPlayerNames(team1.name);
-            const team2Names = getPlayerNames(team2.name);
+            const team1Names = getPlayerNames(team1);
+            const team2Names = getPlayerNames(team2);
             
             console.log(`Match card clicked: ${team1Names} vs ${team2Names}`);
             
@@ -1421,103 +1421,106 @@
             return points;
         }
         
-        // Helper function: Get initials from team name
-        function getInitials(name) {
-            // Check if name is undefined or null
-            if (!name) return 'NA';
+        // Helper function: Get player names display from team object
+        function getPlayerNames(team) {
+            if (!team) return 'Unknown Team';
             
             try {
-                // Handle "Team X" format by just showing the number
-                const teamMatch = name.match(/^Team\s+(\d+)$/i);
-                if (teamMatch) {
-                    return `T${teamMatch[1]}`;
+                // Log the actual team object we're processing for debugging
+                console.log('Processing team:', team);
+                
+                // If we have a team object with player names fields
+                if (team.player1_name || team.player2_name) {
+                    const player1 = extractFirstName(team.player1_name || '');
+                    
+                    // If there's no player2, just return player1
+                    if (!team.player2_name) {
+                        return player1 || team.name || 'Unknown';
+                    }
+                    
+                    const player2 = extractFirstName(team.player2_name || '');
+                    return `${player1} & ${player2}`;
                 }
                 
-                // Pattern: "First1 Last1 & First2 Last2" or similar variations
-                const components = name.split(' & ');
-                if (components.length >= 2) {
-                    // Extract first names from each part
-                    const firstPerson = components[0].trim().split(' ')[0] || '';
-                    const secondPerson = components[1].trim().split(' ')[0] || '';
-                    return `${firstPerson.slice(0, 3)}/${secondPerson.slice(0, 3)}`;
-                } else {
-                    // Check for other delimiters
-                    let parts = [];
-                    if (name.includes('-')) {
-                        parts = name.split('-').map(p => p.trim());
-                    } else if (name.includes('/')) {
-                        parts = name.split('/').map(p => p.trim());
-                    } else if (name.includes(',')) {
-                        parts = name.split(',').map(p => p.trim());
-                    }
-                    
-                    if (parts.length >= 2) {
-                        const first = parts[0].split(' ')[0];
-                        const second = parts[1].split(' ')[0];
-                        return `${first[0]}${second[0]}`.toUpperCase();
-                    }
-                    
-                    // Handle single name or other formats
-                    const words = name.trim().split(' ');
-                    if (words.length >= 2) {
-                        return (words[0][0] + words[1][0]).toUpperCase();
-                    } else if (name.length >= 2) {
-                        return name.substring(0, 2).toUpperCase();
-                    } else {
-                        return name.toUpperCase();
-                    }
+                // If we just have a team name string (legacy support)
+                if (typeof team === 'string') {
+                    return team;
                 }
+                
+                // If we have a team object with just a name field
+                return team.name || 'Unknown Team';
             } catch (error) {
-                console.error('Error getting initials from name:', name, error);
-                return 'NA'; // Return a generic placeholder for invalid inputs
+                console.error('Error extracting player names:', error);
+                // Return whatever name is available
+                return team.name || 'Unknown Team';
             }
         }
         
-        // Helper function: Extract player names from team name
-        function getPlayerNames(name) {
-            if (!name) return 'Unknown Team';
+        // Helper function to extract first name from a full name
+        function extractFirstName(fullName) {
+            if (!fullName) return '';
+            
+            // Handle names with ratings in parentheses like "John Smith (5.0)"
+            const nameWithoutRating = fullName.replace(/\s*\([^)]*\)\s*$/, '');
+            
+            // Get first word as first name
+            const parts = nameWithoutRating.trim().split(' ');
+            return parts[0] || '';
+        }
+        
+        // Helper function: Get initials for table header
+        function getInitials(team) {
+            if (!team) return 'NA';
             
             try {
-                // Log the actual name we're processing for debugging
-                console.log('Processing team name:', name);
-                
-                // Special case: If the name has format "Team X", just return it as is
-                if (name.match(/^Team\s+\d+$/i)) {
-                    return name;
+                // If we have a team object with player names fields
+                if (team.player1_name || team.player2_name) {
+                    const player1 = extractFirstName(team.player1_name || '');
+                    
+                    // If there's no player2, just return player1 initials
+                    if (!team.player2_name) {
+                        return player1.substring(0, 3) || 'NA';
+                    }
+                    
+                    const player2 = extractFirstName(team.player2_name || '');
+                    // Format: first 2 chars of each name
+                    return `${player1.substring(0, 2)}/${player2.substring(0, 2)}`;
                 }
                 
-                // Try "First1 Last1 & First2 Last2" pattern
-                const components = name.split(' & ');
-                if (components.length >= 2) {
-                    // Extract first names from each part
-                    const firstPerson = components[0].trim().split(' ')[0] || '';
-                    const secondPerson = components[1].trim().split(' ')[0] || '';
-                    return `${firstPerson} & ${secondPerson}`;
-                } else {
-                    // The name might have other formats like "Ben - Kerry"
-                    // Try splitting by different delimiters
-                    let parts = [];
-                    if (name.includes('-')) {
-                        parts = name.split('-').map(p => p.trim());
+                // Legacy support for cases where we receive just a name string
+                if (typeof team === 'string') {
+                    const name = team;
+                    // Handle "Team X" format by just showing the number
+                    const teamMatch = name.match(/^Team\s+(\d+)$/i);
+                    if (teamMatch) {
+                        return `T${teamMatch[1]}`;
+                    }
+                    
+                    // Try splitting by common separators
+                    if (name.includes(' & ')) {
+                        const parts = name.split(' & ');
+                        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+                    } else if (name.includes('-')) {
+                        const parts = name.split('-');
+                        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
                     } else if (name.includes('/')) {
-                        parts = name.split('/').map(p => p.trim());
-                    } else if (name.includes(',')) {
-                        parts = name.split(',').map(p => p.trim());
+                        const parts = name.split('/');
+                        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
                     }
                     
-                    if (parts.length >= 2) {
-                        // Take first words of each part
-                        const first = parts[0].split(' ')[0];
-                        const second = parts[1].split(' ')[0];
-                        return `${first} & ${second}`;
-                    }
-                    
-                    // If we can't parse it, return original
-                    return name;
+                    // Fall back to first 2 characters
+                    return name.substring(0, 2).toUpperCase();
                 }
+                
+                // If we have a team object with just a name field
+                if (team.name) {
+                    return team.name.substring(0, 2).toUpperCase();
+                }
+                
+                return 'NA';
             } catch (error) {
-                console.error('Error extracting player names:', name, error);
-                return name;
+                console.error('Error getting initials from team:', error);
+                return 'NA';
             }
         }
         
