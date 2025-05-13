@@ -249,15 +249,21 @@
                             addDebugInfo('Session set explicitly');
                             showStatusMessage('Authentication successful! Redirecting to dashboard...', 'success');
                             
-                            // If we have a hash fragment, redirect to dashboard with it
-                            if (window.location.hash) {
-                                addDebugInfo('Found hash fragment, redirecting to dashboard with hash');
-                                window.location.href = '/dashboard.html' + window.location.hash;
-                            } else {
-                                // Otherwise, redirect to dashboard normally
-                                addDebugInfo('No hash fragment, redirecting to dashboard');
-                                window.location.href = '/dashboard.html';
+                            // Show dashboard button
+                            const dashboardBtn = document.getElementById('continueToDashboard');
+                            if (dashboardBtn) {
+                                dashboardBtn.style.display = 'inline-block';
                             }
+                            
+                            // Hide spinner
+                            if (spinnerElement) {
+                                spinnerElement.style.display = 'none';
+                            }
+                            
+                            // Redirect after a short delay
+                            setTimeout(() => {
+                                window.location.href = '/dashboard.html';
+                            }, 3000);
                             
                             return;
                         }
