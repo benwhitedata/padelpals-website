@@ -407,14 +407,12 @@
                     <div class="box-league-container">
                         <div class="selector-area">
                             <div class="d-flex justify-content-between align-items-start mb-4">
-                                <div id="statusFilter">
+                                <div id="statusFilter" class="mb-0">
                                     <!-- Status filter will be populated here -->
                                 </div>
-                                <div>
-                                    <button id="printLeagueBtn" class="btn btn-primary">
-                                        <i class="fas fa-print me-1"></i> Print League Tables
-                                    </button>
-                                </div>
+                                <button id="printLeagueBtn" class="btn btn-primary">
+                                    <i class="fas fa-print me-1"></i> Print League Tables
+                                </button>
                             </div>
 
                             <div id="leagueSelector" class="mb-4">
@@ -496,6 +494,17 @@
             </div>
             
             <!-- Authentication Test Section -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="stats-card">
+                        <h3>Authentication & Connection Test</h3>
+                        <div id="connectionTest">
+                            <div class="spinner" style="width: 20px; height: 20px;"></div>
+                            <p>Testing connection...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1988,7 +1997,62 @@
             document.getElementById('recentMatches').innerHTML = '<p>No recent matches found.</p>';
             document.getElementById('boxLeagueStatus').innerHTML = '<p>Box league data is not available yet.</p>';
             
+            // Run a simple test query to verify connection
+            testSupabaseConnection(session);
+            
             // Show dashboard content
             document.getElementById('loading').style.display = 'none';
             document.getElementById('dashboardContent').style.display = 'block';
         }
+        
+        // Function to test Supabase connection
+        async function testSupabaseConnection(session) {
+            const testElement = document.getElementById('connectionTest');
+            
+            try {
+                // Display authentication info
+                let testHtml = `
+                    <h4>Authentication Status</h4>
+                    <p><strong>Status:</strong> <span class="text-success">Authenticated</span></p>
+                    <p><strong>User ID:</strong> ${session.user.id}</p>
+                    <p><strong>Provider:</strong> ${session.user.app_metadata.provider || 'Unknown'}</p>
+                `;
+                
+                // Run a simple query to test database access
+                testHtml += `<h4>Database Connection Test</h4>`;
+                
+                try {
+                    // Try to query a random table to verify permissions work
+                    const { count, error: countError } = await supabase
+                        .from('profiles')
+                        .select('*', { count: 'exact', head: true });
+                        
+                    if (countError) {
+                        testHtml += `<p><strong>Database Access:</strong> <span class="text-danger">Failed</span> - ${countError.message}</p>`;
+                        testHtml += `<div class="alert alert-warning mt-3">
+                            <strong>Note:</strong> Your account may have limited database access. Some features may not be available.
+                        </div>`;
+                    } else {
+                        testHtml += `<p><strong>Database Access:</strong> <span class="text-success">Success</span> - Found ${count} profiles</p>`;
+                        testHtml += `<div class="alert alert-success mt-3">
+                            <strong>Connection Test Complete:</strong> Your authentication is working correctly!
+                        </div>`;
+                    }
+                } catch (dbError) {
+                    testHtml += `<p><strong>Database Access:</strong> <span class="text-danger">Failed</span> - ${dbError.message}</p>`;
+                }
+                
+                testElement.innerHTML = testHtml;
+                
+            } catch (error) {
+                testElement.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h4>Connection Test Failed</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 
