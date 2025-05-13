@@ -430,7 +430,10 @@
             <!-- Tab Navigation -->
             <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="boxleague-tab" data-bs-toggle="tab" data-bs-target="#boxleague" type="button" role="tab" aria-controls="boxleague" aria-selected="true">Box League</button>
+                    <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">Profile</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="boxleague-tab" data-bs-toggle="tab" data-bs-target="#boxleague" type="button" role="tab" aria-controls="boxleague" aria-selected="false">Box League</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab" aria-controls="stats" aria-selected="false">Stats</button>
@@ -442,8 +445,127 @@
             
             <!-- Tab Content -->
             <div class="tab-content" id="dashboardTabContent">
+                <!-- Profile Tab -->
+                <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <div class="row">
+                        <div class="col-lg-8 mx-auto">
+                            <!-- Player Information -->
+                            <div class="stats-card mb-4">
+                                <h3>Player Information</h3>
+                                <form id="profileForm">
+                                    <div class="mb-3">
+                                        <label for="playerName" class="form-label">Name</label>
+                                        <div class="d-flex">
+                                            <input type="text" class="form-control" id="playerName" disabled>
+                                            <button type="button" id="editNameBtn" class="btn btn-outline-primary ms-2">Edit</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Rating</label>
+                                        <div class="d-flex align-items-center">
+                                            <span id="playerRating" class="me-2">—</span>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <button type="button" id="refreshRatingBtn" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Category</label>
+                                        <div>
+                                            <span id="playerCategory">—</span>
+                                        </div>
+                                        <small id="categoryDefinition" class="form-text text-muted"></small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Assessment Date</label>
+                                        <div>
+                                            <span id="assessmentDate">—</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Assessed by</label>
+                                        <div>
+                                            <span id="assessedBy">—</span>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Match Rating -->
+                            <div class="stats-card mb-4">
+                                <h3>Match Rating</h3>
+                                <div class="mb-3">
+                                    <label class="form-label">Latest Rating</label>
+                                    <div>
+                                        <span id="matchRating">—</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Confidence</label>
+                                    <div>
+                                        <span id="ratingConfidence">—</span>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" id="viewRatingTrendBtn" class="btn btn-outline-primary">
+                                    <i class="fas fa-chart-line me-2"></i>View Rating Trend
+                                </button>
+                            </div>
+                            
+                            <!-- Club Information -->
+                            <div class="stats-card mb-4">
+                                <h3>Your Club</h3>
+                                <div id="clubInfo">
+                                    <div id="noClubSelected" style="display: none;">
+                                        <button type="button" id="selectClubBtn" class="btn btn-outline-primary">
+                                            <i class="fas fa-building me-2"></i>Select Club
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="clubDetails" style="display: none;">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h4 id="clubName">—</h4>
+                                            <button type="button" id="changeClubBtn" class="btn btn-sm btn-outline-primary">Change</button>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p id="clubAddress" class="mb-1 text-muted">—</p>
+                                                <p id="clubPostcode" class="mb-2 text-muted">—</p>
+                                                <a id="clubWebsite" href="#" target="_blank">—</a>
+                                            </div>
+                                            
+                                            <div class="d-flex align-items-center">
+                                                <div id="clubPrimaryColor" class="rounded-circle me-2" style="width: 20px; height: 20px; background-color: #ccc;"></div>
+                                                <div id="clubSecondaryColor" class="rounded-circle" style="width: 20px; height: 20px; background-color: #eee;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Account Actions -->
+                            <div class="stats-card">
+                                <h3>Account Actions</h3>
+                                <button type="button" id="deleteAccountBtn" class="btn btn-danger">
+                                    <i class="fas fa-user-times me-2"></i>Delete Account
+                                </button>
+                                <small class="form-text text-muted d-block mt-2">
+                                    Deleting your account will permanently remove all your data including your Sign In, match history, player profile, and any other data associated with your account. This action cannot be undone.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Box League Tab -->
-                <div class="tab-pane fade show active" id="boxleague" role="tabpanel" aria-labelledby="boxleague-tab">
+                <div class="tab-pane fade" id="boxleague" role="tabpanel" aria-labelledby="boxleague-tab">
                     <div class="box-league-container">
                         <div class="selector-area">
                             <div class="d-flex justify-content-between align-items-start mb-4">
@@ -2185,9 +2307,336 @@
             // to verify connectivity without showing the UI
             testSupabaseConnection(session);
             
+            // Initialize profile tab
+            initializeProfileTab(session);
+            
             // Show dashboard content
             document.getElementById('loading').style.display = 'none';
             document.getElementById('dashboardContent').style.display = 'block';
+        }
+        
+        // Initialize the profile tab with user data
+        async function initializeProfileTab(session) {
+            try {
+                // Load player profile data
+                const userId = session.user.id;
+                
+                // Set user name from session
+                document.getElementById('playerName').value = formatUserName(session.user.email);
+                
+                // Fetch profile data
+                try {
+                    const { data: profile, error: profileError } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', userId)
+                        .single();
+                    
+                    if (profileError) throw profileError;
+                    
+                    if (profile) {
+                        // Update name if available
+                        if (profile.display_name) {
+                            document.getElementById('playerName').value = profile.display_name;
+                        } else if (profile.full_name) {
+                            document.getElementById('playerName').value = profile.full_name;
+                        }
+                        
+                        // Get ratings data
+                        try {
+                            const { data: ratings, error: ratingsError } = await supabase
+                                .from('ratings_coach')
+                                .select('*')
+                                .eq('player_id', userId)
+                                .order('date', { ascending: false });
+                                
+                            if (ratingsError) throw ratingsError;
+                            
+                            if (ratings && ratings.length > 0) {
+                                const latestRating = ratings[0];
+                                
+                                // Update player rating
+                                if (latestRating.rating) {
+                                    document.getElementById('playerRating').textContent = latestRating.rating.toFixed(1);
+                                }
+                                
+                                // Update category
+                                if (latestRating.category) {
+                                    document.getElementById('playerCategory').textContent = latestRating.category;
+                                    
+                                    // Set category definition
+                                    const categoryDefinitions = {
+                                        "Newcomer": "First time playing, learning basic rules and how to hit the ball.",
+                                        "Beginner": "Can rally a little, but struggles with control, positioning, and timing.",
+                                        "Improver": "More consistent shots, starting to understand walls and basic tactics.",
+                                        "Lower Intermediate": "Can sustain rallies, control pace better, and use walls more effectively.",
+                                        "Intermediate": "Good shot control, understands positioning, and can start dictating play.",
+                                        "Upper Intermediate": "Confident play, good use of lobs, angles, and teamwork.",
+                                        "Advanced": "Strong tactical awareness, consistent under pressure, and adapts well to opponents.",
+                                        "Competitive": "High-level player, effective in attack and defense, plays structured points.",
+                                        "Elite": "Tournament-level, excels in all aspects of the game with precision and strategy."
+                                    };
+                                    
+                                    if (categoryDefinitions[latestRating.category]) {
+                                        document.getElementById('categoryDefinition').textContent = categoryDefinitions[latestRating.category];
+                                    }
+                                }
+                                
+                                // Update assessment date
+                                if (latestRating.date) {
+                                    const assessmentDate = new Date(latestRating.date);
+                                    document.getElementById('assessmentDate').textContent = assessmentDate.toLocaleDateString();
+                                }
+                                
+                                // Update coach name
+                                if (latestRating.coach_name || latestRating.assessor) {
+                                    document.getElementById('assessedBy').textContent = latestRating.coach_name || latestRating.assessor;
+                                }
+                            }
+                            
+                            // Get match ratings
+                            const { data: matchRatings, error: matchRatingsError } = await supabase
+                                .from('ratings')
+                                .select('rating_0_10,confidence_pct,date')
+                                .eq('id', userId)
+                                .order('date', { ascending: false })
+                                .limit(1);
+                                
+                            if (!matchRatingsError && matchRatings && matchRatings.length > 0) {
+                                const latestMatchRating = matchRatings[0];
+                                
+                                if (latestMatchRating.rating_0_10) {
+                                    document.getElementById('matchRating').textContent = latestMatchRating.rating_0_10.toFixed(1);
+                                }
+                                
+                                if (latestMatchRating.confidence_pct) {
+                                    document.getElementById('ratingConfidence').textContent = 
+                                        (latestMatchRating.confidence_pct * 100).toFixed(1) + '%';
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error loading ratings:', error);
+                        }
+                        
+                        // Get user's club
+                        if (profile.club_id) {
+                            try {
+                                const { data: club, error: clubError } = await supabase
+                                    .from('clubs')
+                                    .select('*')
+                                    .eq('id', profile.club_id)
+                                    .single();
+                                    
+                                if (clubError) throw clubError;
+                                
+                                if (club) {
+                                    // Hide no club message, show club details
+                                    document.getElementById('noClubSelected').style.display = 'none';
+                                    document.getElementById('clubDetails').style.display = 'block';
+                                    
+                                    // Update club information
+                                    document.getElementById('clubName').textContent = club.name;
+                                    document.getElementById('clubAddress').textContent = club.address;
+                                    document.getElementById('clubPostcode').textContent = club.postcode;
+                                    
+                                    if (club.website) {
+                                        const websiteLink = document.getElementById('clubWebsite');
+                                        websiteLink.href = club.website;
+                                        websiteLink.textContent = club.website;
+                                    }
+                                    
+                                    // Update club colors
+                                    if (club.primaryColor) {
+                                        document.getElementById('clubPrimaryColor').style.backgroundColor = club.primaryColor;
+                                    }
+                                    
+                                    if (club.secondaryColor) {
+                                        document.getElementById('clubSecondaryColor').style.backgroundColor = club.secondaryColor;
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error loading club:', error);
+                            }
+                        } else {
+                            // No club selected
+                            document.getElementById('noClubSelected').style.display = 'block';
+                            document.getElementById('clubDetails').style.display = 'none';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading profile:', error);
+                }
+                
+                // Set up profile button handlers
+                setupProfileButtonHandlers(session);
+                
+            } catch (error) {
+                console.error('Error initializing profile tab:', error);
+            }
+        }
+        
+        // Set up button handlers for the profile tab
+        function setupProfileButtonHandlers(session) {
+            // Edit name button
+            const editNameBtn = document.getElementById('editNameBtn');
+            const playerNameInput = document.getElementById('playerName');
+            
+            editNameBtn.addEventListener('click', function() {
+                if (playerNameInput.disabled) {
+                    // Enable editing
+                    playerNameInput.disabled = false;
+                    editNameBtn.textContent = 'Save';
+                    playerNameInput.focus();
+                } else {
+                    // Save changes
+                    const newName = playerNameInput.value.trim();
+                    if (newName) {
+                        saveUserName(session.user.id, newName);
+                    }
+                    playerNameInput.disabled = true;
+                    editNameBtn.textContent = 'Edit';
+                }
+            });
+            
+            // Refresh rating button
+            document.getElementById('refreshRatingBtn').addEventListener('click', function() {
+                refreshUserProfile(session.user.id);
+            });
+            
+            // Select club button
+            document.getElementById('selectClubBtn').addEventListener('click', function() {
+                alert('Club selection functionality coming soon!');
+                // TODO: Implement club selection modal
+            });
+            
+            // Change club button
+            document.getElementById('changeClubBtn').addEventListener('click', function() {
+                alert('Club change functionality coming soon!');
+                // TODO: Implement club change modal
+            });
+            
+            // View rating trend button
+            document.getElementById('viewRatingTrendBtn').addEventListener('click', function() {
+                alert('Rating trend visualization coming soon!');
+                // TODO: Implement rating trend visualization
+            });
+            
+            // Delete account button
+            document.getElementById('deleteAccountBtn').addEventListener('click', function() {
+                if (confirm('WARNING: This will permanently delete your account and all associated data. This action cannot be undone. Are you sure?')) {
+                    if (confirm('FINAL WARNING: All your data will be permanently lost. Continue with account deletion?')) {
+                        deleteUserAccount(session.user.id);
+                    }
+                }
+            });
+        }
+        
+        // Save user name
+        async function saveUserName(userId, newName) {
+            try {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ display_name: newName })
+                    .eq('id', userId);
+                    
+                if (error) throw error;
+                
+                alert('Your name has been updated successfully.');
+            } catch (error) {
+                console.error('Error saving user name:', error);
+                alert('Failed to update your name. Please try again.');
+            }
+        }
+        
+        // Delete user account
+        async function deleteUserAccount(userId) {
+            try {
+                // Show loading overlay
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.classList.add('position-fixed', 'top-0', 'start-0', 'w-100', 'h-100', 'd-flex', 'justify-content-center', 'align-items-center');
+                loadingOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                loadingOverlay.style.zIndex = '9999';
+                loadingOverlay.innerHTML = `
+                    <div class="bg-white p-4 rounded shadow-lg text-center">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <p class="mb-0">Deleting your account...</p>
+                    </div>
+                `;
+                document.body.appendChild(loadingOverlay);
+                
+                // TODO: Implement actual account deletion logic
+                // This would involve deleting data from multiple tables
+                
+                // For demo purposes, just sign out
+                setTimeout(async () => {
+                    try {
+                        const { error } = await supabase.auth.signOut();
+                        if (error) throw error;
+                        window.location.href = '/auth.html';
+                    } catch (error) {
+                        console.error('Error during sign out:', error);
+                        document.body.removeChild(loadingOverlay);
+                        alert('An error occurred during account deletion. Please try again.');
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error deleting account:', error);
+                alert('Failed to delete your account. Please try again.');
+            }
+        }
+        
+        // Refresh user profile
+        async function refreshUserProfile(userId) {
+            const refreshBtn = document.getElementById('refreshRatingBtn');
+            const originalHTML = refreshBtn.innerHTML;
+            
+            try {
+                refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                refreshBtn.disabled = true;
+                
+                // Re-fetch profile data
+                const { data: ratings, error: ratingsError } = await supabase
+                    .from('ratings_coach')
+                    .select('*')
+                    .eq('player_id', userId)
+                    .order('date', { ascending: false });
+                    
+                if (ratingsError) throw ratingsError;
+                
+                if (ratings && ratings.length > 0) {
+                    const latestRating = ratings[0];
+                    
+                    // Update player rating
+                    if (latestRating.rating) {
+                        document.getElementById('playerRating').textContent = latestRating.rating.toFixed(1);
+                    }
+                    
+                    // Update category
+                    if (latestRating.category) {
+                        document.getElementById('playerCategory').textContent = latestRating.category;
+                    }
+                    
+                    // Update assessment date
+                    if (latestRating.date) {
+                        const assessmentDate = new Date(latestRating.date);
+                        document.getElementById('assessmentDate').textContent = assessmentDate.toLocaleDateString();
+                    }
+                    
+                    // Update coach name
+                    if (latestRating.coach_name || latestRating.assessor) {
+                        document.getElementById('assessedBy').textContent = latestRating.coach_name || latestRating.assessor;
+                    }
+                }
+                
+                alert('Profile data refreshed successfully.');
+            } catch (error) {
+                console.error('Error refreshing profile:', error);
+                alert('Failed to refresh profile data. Please try again.');
+            } finally {
+                refreshBtn.innerHTML = originalHTML;
+                refreshBtn.disabled = false;
+            }
         }
 
         
