@@ -395,6 +395,50 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
+        /* Fix for tab navigation */
+        .nav-tabs {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .nav-tabs .nav-item {
+            margin-bottom: -1px;
+            display: inline-block;
+        }
+
+        .nav-tabs .nav-link {
+            color: #495057;
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+            display: inline-block;
+            text-decoration: none;
+            background-color: transparent;
+        }
+
+        .nav-tabs .nav-link:hover {
+            border-color: #e9ecef #e9ecef #dee2e6;
+            color: var(--gold);
+            background-color: rgba(26, 34, 56, 0.05);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--gold);
+            background-color: var(--dark-blue);
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+
+        /* Ensure tabs are all visible */
+        #dashboardTabs {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        #dashboardTabs .nav-item {
+            flex: 0 0 auto;
+            margin-right: 2px;
+        }
+
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
