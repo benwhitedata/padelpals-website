@@ -16,29 +16,36 @@
             --gold: #d4af37;
             --dark-blue: #1a2238;
         }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
             line-height: 1.6;
             background-color: #ffffff;
         }
+
         .navbar {
             background-color: var(--dark-blue);
         }
+
         .navbar-brand, .nav-link {
             color: white;
         }
+
         .nav-link:hover {
             color: var(--gold);
         }
+
         .nav-link.active {
             color: var(--gold) !important;
         }
+
         .dashboard-container {
             max-width: 1200px;
             margin: 40px auto;
             padding: 20px;
         }
+
         .stats-card {
             background: white;
             border-radius: 10px;
@@ -46,10 +53,12 @@
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .stats-card h3 {
             color: var(--dark-blue);
             margin-bottom: 15px;
         }
+
         .footer {
             background-color: var(--dark-blue);
             color: white;
@@ -57,53 +66,71 @@
             text-align: center;
             margin-top: 40px;
         }
+
         .footer a {
             color: var(--gold);
             text-decoration: none;
         }
+
         .footer a:hover {
             text-decoration: underline;
         }
+
         .loading {
             text-align: center;
             padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 50vh;
         }
+
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #1a2238;
+            border: 5px solid rgba(26, 34, 56, 0.1);
+            border-top: 5px solid var(--dark-blue);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
             animation: spin 1s linear infinite;
             margin: 20px auto;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
+
             100% { transform: rotate(360deg); }
+
         }
+
         .message {
             margin-top: 15px;
             padding: 10px;
             border-radius: 5px;
         }
+
         .error-message {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .info-message {
             background-color: #d1ecf1;
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+
         .navbar-toggler-icon {
             background-color: unset;
         }
+
         
         /* Box League Styles */
         .box-league-container {
             margin-bottom: 40px;
         }
+
         .league-table {
             width: 100%;
             overflow-x: auto;
@@ -111,32 +138,39 @@
             border-radius: 10px;
             margin-bottom: 20px;
         }
+
         .league-table table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
         }
+
         .league-table th, .league-table td {
             padding: 8px 12px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .league-table th {
             background-color: rgba(26, 34, 56, 0.7);
             color: white;
             position: sticky;
             top: 0;
         }
+
         .league-table th:first-child {
             text-align: left;
             min-width: 150px;
         }
+
         .league-table td:first-child {
             text-align: left;
         }
+
         .league-table .team-name {
             font-weight: 500;
         }
+
         .match-result {
             width: 30px;
             height: 30px;
@@ -147,59 +181,72 @@
             font-weight: 600;
             cursor: pointer;
         }
+
         .match-win {
             background-color: rgba(40, 167, 69, 0.2);
             color: #28a745;
         }
+
         .match-loss {
             background-color: rgba(220, 53, 69, 0.15);
             color: #dc3545;
         }
+
         .match-unplayed {
             background-color: rgba(108, 117, 125, 0.1);
             color: #6c757d;
         }
+
         .match-scheduled {
             background-color: rgba(0, 123, 255, 0.15);
             color: #007bff;
         }
+
         .match-walkover-win {
             background-color: rgba(0, 123, 255, 0.2);
             color: #007bff;
         }
+
         .match-walkover-loss {
             background-color: rgba(255, 193, 7, 0.2);
             color: #ffc107;
         }
+
         .matches-container {
             max-height: 360px;
             overflow-y: auto;
         }
+
         .match-card {
             background-color: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 10px;
         }
+
         .match-card .match-date {
             color: #6c757d;
             font-size: 0.9rem;
         }
+
         .match-card .team-names {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin: 8px 0;
         }
+
         .match-card .team {
             max-width: 45%;
             text-align: center;
         }
+
         .match-card .score {
             font-weight: bold;
             min-width: 60px;
             text-align: center;
         }
+
         .match-status {
             display: inline-block;
             font-size: 0.8rem;
@@ -207,22 +254,27 @@
             border-radius: 12px;
             margin-left: 8px;
         }
+
         .status-scheduled {
             background-color: rgba(0, 123, 255, 0.2);
             color: #007bff;
         }
+
         .status-completed {
             background-color: rgba(40, 167, 69, 0.2);
             color: #28a745;
         }
+
         .status-walkover {
             background-color: rgba(255, 193, 7, 0.2);
             color: #ffc107;
         }
+
         .placeholder-text {
             color: #6c757d;
             font-style: italic;
         }
+
         #boxSelector select {
             background-color: #343a40;
             color: #f8f9fa;
@@ -233,6 +285,7 @@
             font-weight: 500;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
+
         #leagueSelector select {
             background-color: #343a40;
             color: #f8f9fa;
@@ -243,27 +296,32 @@
             font-weight: 500;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
+
         .form-select {
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23f8f9fa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
             background-repeat: no-repeat;
             background-position: right 0.75rem center;
             background-size: 16px 12px;
         }
+
         .form-select:focus {
             border-color: var(--gold);
             box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25);
         }
+
         .form-label {
             color: #333333;
             font-weight: 600;
             display: block;
             margin-bottom: 0.5rem;
         }
+
         .status-filters {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
         }
+
         .status-filter-btn {
             padding: 8px 16px;
             border-radius: 20px;
@@ -276,32 +334,38 @@
             font-weight: 500;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
+
         /* Status-specific styling */
         .status-filter-btn[data-status="active"] {
             background-color: #1e3a8a;
             border-color: #1e4d8a;
             color: #ffffff;
         }
+
         .status-filter-btn[data-status="upcoming"] {
             background-color: #0e7490;
             border-color: #0e6890;
             color: #ffffff;
         }
+
         .status-filter-btn[data-status="completed"] {
             background-color: #4b5563;
             border-color: #6b7280;
             color: #ffffff;
         }
+
         .status-filter-btn[data-status="cancelled"] {
             background-color: #991b1b;
             border-color: #7f1d1d;
             color: #ffffff;
         }
+
         .status-filter-btn[data-status="all"] {
             background-color: #525252;
             border-color: #6b7280;
             color: #ffffff;
         }
+
         .status-filter-btn.active {
             background-color: var(--dark-blue);
             border-color: var(--dark-blue);
@@ -309,15 +373,18 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             transform: translateY(-1px);
         }
+
         .status-filter-btn:hover:not(.active) {
             filter: brightness(1.2);
             transform: translateY(-1px);
         }
+
         .form-select option {
             background-color: #343a40;
             color: #f8f9fa;
             padding: 8px;
         }
+
         /* Custom selection area styling */
         .selector-area {
             padding: 15px;
@@ -327,12 +394,14 @@
             border: 1px solid #dee2e6;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+
       gtag('js', new Date());
 
       gtag('config', 'G-L426ZMNKFK');
@@ -349,21 +418,9 @@
         <div id="loading" class="loading">
             <div class="spinner"></div>
             <h2>Loading your data...</h2>
-            <p id="loadingMessage" class="info-message" style="display: none;">Preparing your dashboard...</p>
-            <div id="loadingDebug" style="display: none;">
-                <h4>Debug Information:</h4>
-                <pre id="debugInfo" style="background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 300px; overflow: auto;"></pre>
-                <button id="goToAuth" class="btn btn-primary mt-3" style="display: none;">Go to Sign In</button>
-                <div id="manualAuthForm" style="display: none; margin-top: 20px;">
-                    <h4>Manual Authentication</h4>
-                    <div class="mb-3">
-                        <input type="email" class="form-control" id="emailInput" placeholder="Email">
-                    </div>
-                    <div class="mb-3">
-                        <input type="password" class="form-control" id="passwordInput" placeholder="Password">
-                    </div>
-                    <button id="manualSignIn" class="btn btn-primary">Sign In</button>
-                </div>
+            <!-- Hidden elements for error handling -->
+            <div style="display: none;">
+                <button id="goToAuth" class="btn btn-primary mt-3">Go to Sign In</button>
             </div>
         </div>
         
@@ -507,36 +564,39 @@
             console.log(message);  // Always log to console for developers
             // Don't add to visible debug area
         }
+
         
-        // Show a loading message
+        // Show a loading message (now just logs to console)
         function showLoadingMessage(message, isError = false) {
-            const loadingMessage = document.getElementById('loadingMessage');
-            if (loadingMessage) {
-                loadingMessage.textContent = message;
-                loadingMessage.className = isError ? 'error-message' : 'info-message';
-                loadingMessage.style.display = message ? 'block' : 'none';
-            }
+            console.log(isError ? "Error: " : "Info: ", message);
         }
+
         
         // Initialize page elements
         document.addEventListener('DOMContentLoaded', function() {
-            debugInfoElement = document.getElementById('debugInfo');
-            
-            // Check for recent redirect to prevent loops
+            // Handle redirect loops
             if (currentTime - authRedirectTime < 5000) { // 5 seconds
-                // We've been redirected too recently, stay on this page
-                document.getElementById('loadingDebug').style.display = 'block';
-                document.getElementById('goToAuth').style.display = 'block';
-                showLoadingMessage('Detected a potential redirect loop. Please click "Go to Sign In" to authenticate manually.', true);
-                addDebugInfo('Potential redirect loop detected. Staying on dashboard page.');
+                // We've been redirected too recently, show sign in button
+                const goToAuthBtn = document.getElementById('goToAuth');
+                if (goToAuthBtn) {
+                    goToAuthBtn.style.display = 'block';
+                    goToAuthBtn.addEventListener('click', function() {
+                        window.location.href = '/auth.html';
+                    });
+                }
+
+                console.log('Potential redirect loop detected. Staying on dashboard page.');
             }
+
+            
+            debugInfoElement = document.getElementById('debugInfo');
             
             // Set up button listeners
             document.getElementById('goToAuth').addEventListener('click', function() {
                 window.location.href = '/auth.html';
             });
-        });
         
+        });
         // Listen for the configLoaded event from config-loader.js
         document.addEventListener('configLoaded', function() {
             addDebugInfo('Configuration loaded successfully');
@@ -559,6 +619,7 @@
                 if (!supabase || !supabase.auth) {
                     throw new Error('Failed to initialize Supabase client');
                 }
+
                 
                 addDebugInfo('Supabase client initialized successfully');
                 
@@ -576,26 +637,26 @@
                         localStorage.removeItem('authRedirectTime');
                         window.location.href = '/auth.html';
                     }
+
                 });
             } catch (error) {
                 console.error('Dashboard initialization error:', error);
-                showLoadingMessage('Failed to initialize the dashboard: ' + error.message, true);
-                document.getElementById('loadingDebug').style.display = 'block';
+                document.getElementById('goToAuth').style.display = 'block';
             }
+
         }
+
         
         // Check authentication and load user data
         async function loadUserData() {
             try {
-                // Show loading message
-                showLoadingMessage('Checking your authentication...');
-                
-                // Get session
+                // Get session silently without showing status updates
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 
                 if (sessionError) {
                     throw sessionError;
                 }
+
                 
                 if (!session) {
                     addDebugInfo('No active session found');
@@ -608,9 +669,11 @@
                             localStorage.setItem('authRedirectTime', Date.now().toString());
                             window.location.href = '/auth.html';
                         }
+
                     }, 2000);
                     return;
                 }
+
                 
                 addDebugInfo(`Session found for user: ${session.user.id}`);
                 showLoadingMessage('Authentication successful! Loading your data...');
@@ -645,6 +708,7 @@
                         } else {
                             console.log('Using formatted email for user:', formatUserName(session.user.email));
                         }
+
                         
                         addDebugInfo('Profile data loaded successfully');
                         
@@ -655,6 +719,7 @@
                         // Store admin status for later use
                         window.userIsAdmin = isAdmin;
                     }
+
                     
                     // Load box league data
                     await loadBoxLeagueData(session.user.id);
@@ -667,6 +732,7 @@
                     // If we fail to get profile but have a session, still show a basic dashboard
                     showBasicDashboard(session);
                 }
+
             } catch (error) {
                 console.error('Error checking authentication:', error);
                 addDebugInfo(`Authentication error: ${error.message}`);
@@ -674,7 +740,9 @@
                 document.getElementById('goToAuth').style.display = 'block';
                 showLoadingMessage('Failed to authenticate. Please try signing in again.', true);
             }
+
         }
+
         
         // Helper function: Format email to a more user-friendly display name
         function formatUserName(email) {
@@ -702,11 +770,14 @@
                     // Just capitalize the first letter
                     return username.charAt(0).toUpperCase() + username.slice(1);
                 }
+
             }
+
             
             // Return original if not an email
             return email;
         }
+
         
         // Load Box League Data
         async function loadBoxLeagueData(userId) {
@@ -727,6 +798,7 @@
                 if (leaguesError) {
                     throw leaguesError;
                 }
+
                 
                 if (!leagues || leagues.length === 0) {
                     // Log to console but don't show in UI
@@ -739,6 +811,7 @@
                             <p>${isAdmin ? 
                                 'There are no box leagues in the system yet.' : 
                                 'You are not currently part of any box leagues.'}
+
                             </p>
                             ${!isAdmin ? `
                             <hr>
@@ -749,6 +822,7 @@
                                 <li>The leagues you're part of are not set as visible to you</li>
                             </ul>
                             <p>Please contact your league administrator for assistance.</p>` : ''}
+
                         </div>
                     `;
                     
@@ -759,6 +833,7 @@
                     document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
                     return;
                 }
+
                 
                 // Try to verify if we really have access or if this is an RLS issue
                 if (!isAdmin) {
@@ -783,7 +858,9 @@
                             </div>
                         `);
                     }
+
                 }
+
                 
                 // Log to console but don't show in UI
                 addDebugInfo(`Found ${leagues.length} box leagues available to user`);
@@ -813,7 +890,9 @@
                 document.getElementById('upcomingMatches').innerHTML = '<p>Unable to load matches.</p>';
                 document.getElementById('matchResults').innerHTML = '<p>Unable to load results.</p>';
             }
+
         }
+
         
         // Create status filter buttons
         function createStatusFilter(leagues) {
@@ -828,6 +907,7 @@
                 if (!statuses.includes(status)) {
                     statuses.push(status);
                 }
+
             });
             
             // Get icons for each status
@@ -869,6 +949,7 @@
                 });
             });
         }
+
         
         // Filter leagues by status and update the league selector
         function filterLeaguesByStatus(status, allLeagues) {
@@ -883,12 +964,14 @@
                     (status === 'active' && (!league.status || league.status === ''))
                 );
             }
+
             
             // If no leagues match the filter, show a message
             if (filteredLeagues.length === 0) {
                 document.getElementById('leagueSelector').innerHTML = `
                     <div class="alert alert-info">
                         No leagues found with status: ${status}
+
                     </div>
                 `;
                 document.getElementById('boxSelector').style.display = 'none';
@@ -897,6 +980,7 @@
                 document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
                 return;
             }
+
             
             // Create league selector with filtered leagues
             createLeagueSelector(filteredLeagues);
@@ -904,6 +988,7 @@
             // Load boxes for the first filtered league
             loadBoxesForLeague(filteredLeagues[0].id);
         }
+
         
         // Create league selector dropdown
         function createLeagueSelector(leagues) {
@@ -918,6 +1003,7 @@
                             '';
                         return `<option value="${league.id}">${league.name || 'Unnamed League'} ${statusBadge}</option>`;
                     }).join('')}
+
                 </select>
                 <small class="form-text text-muted mt-1">Select a league to view its boxes and matches</small>
             `;
@@ -929,6 +1015,7 @@
                 loadBoxesForLeague(this.value);
             });
         }
+
         
         // Helper function to get color for status badge
         function getStatusColor(status) {
@@ -939,13 +1026,16 @@
                 case 'cancelled': return 'danger';
                 default: return 'info';
             }
+
         }
+
         
         // Helper function to capitalize first letter
         function capitalizeFirstLetter(string) {
             if (!string) return '';
             return string.charAt(0).toUpperCase() + string.slice(1);
         }
+
         
         // Load boxes for a specific league
         async function loadBoxesForLeague(leagueId) {
@@ -972,6 +1062,7 @@
                 if (boxesError) {
                     throw boxesError;
                 }
+
                 
                 if (!boxes || boxes.length === 0) {
                     addDebugInfo('No boxes found for league');
@@ -990,6 +1081,7 @@
                     document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
                     return;
                 }
+
                 
                 // Create box selector
                 createBoxSelector(boxes);
@@ -1008,10 +1100,13 @@
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
                         Error loading boxes: ${error.message}
+
                     </div>
                 `;
             }
+
         }
+
         
         // Create box selector dropdown
         function createBoxSelector(boxes) {
@@ -1021,6 +1116,7 @@
                 <label for="boxSelect" class="form-label">Select Box:</label>
                 <select id="boxSelect" class="form-select" aria-label="Select a box">
                     ${boxes.map(box => `<option value="${box.id}">${box.name || 'Unnamed Box'}</option>`).join('')}
+
                 </select>
                 <small class="form-text text-muted mt-1">Select a box to view teams and matches</small>
             `;
@@ -1032,6 +1128,7 @@
                 loadBoxDetails(this.value);
             });
         }
+
         
         // Load details for a specific box
         async function loadBoxDetails(boxId) {
@@ -1048,6 +1145,7 @@
                     console.error('Error fetching teams:', teamsError);
                     throw teamsError;
                 }
+
                 
                 console.log('Retrieved teams:', teams?.length || 0);
                 console.log('Team data format sample:', JSON.stringify(teams.slice(0, 3), null, 2));
@@ -1062,6 +1160,7 @@
                     console.error('Error fetching matches:', matchesError);
                     throw matchesError;
                 }
+
                 
                 console.log('Retrieved matches:', matches?.length || 0);
                 
@@ -1069,6 +1168,7 @@
                 if (!teams || !Array.isArray(teams)) {
                     throw new Error('Teams data is not valid: ' + JSON.stringify(teams));
                 }
+
                 
                 // Validate team names
                 teams.forEach((team, index) => {
@@ -1076,6 +1176,7 @@
                         console.warn(`Team at index ${index} has no name:`, team);
                         team.name = `Team ${index + 1}`;
                     }
+
                 });
                 
                 // Create league table
@@ -1103,7 +1204,9 @@
                 document.getElementById('upcomingMatches').innerHTML = '<p>Failed to load match data.</p>';
                 document.getElementById('matchResults').innerHTML = '<p>Failed to load match data.</p>';
             }
+
         }
+
         
         // Create league table
         function createLeagueTable(teams, matches) {
@@ -1111,6 +1214,7 @@
                 document.getElementById('leagueTableContainer').innerHTML = '<p>No teams found for this box.</p>';
                 return;
             }
+
             
             try {
                 // Sort teams by calculated points
@@ -1135,7 +1239,9 @@
                                             console.error('Error in team header:', team, e);
                                             return '<th>??</th>';
                                         }
+
                                     }).join('')}
+
                                 </tr>
                             </thead>
                             <tbody>
@@ -1164,13 +1270,16 @@
                                              data-team2="${opponent.id}"
                                              data-match-id="${matchResult.matchId || ''}">
                                             ${matchResult.text}
+
                                         </div>
                                     </td>`;
                                 }
+
                             } catch (e) {
                                 console.error('Error in opponent cell:', team, opponent, e);
                                 tableHTML += '<td>ERR</td>';
                             }
+
                         });
                         
                         tableHTML += '</tr>';
@@ -1178,6 +1287,7 @@
                         console.error('Error in team row:', team, e);
                         tableHTML += `<tr><td colspan="${2 + sortedTeams.length}">Error loading team data</td></tr>`;
                     }
+
                 });
                 
                 tableHTML += `
@@ -1202,7 +1312,9 @@
                     </div>
                 `;
             }
+
         }
+
         
         // Create upcoming matches list
         function createUpcomingMatches(teams, matches) {
@@ -1243,8 +1355,10 @@
                             </div>
                         `;
                     }
+
                 });
             }
+
             
             document.getElementById('upcomingMatches').innerHTML = upcomingHTML;
             
@@ -1256,6 +1370,7 @@
                 });
             });
         }
+
         
         // Create match results list
         function createMatchResults(teams, matches) {
@@ -1291,6 +1406,7 @@
                                     ${match.is_walkover ? 
                                         '<span class="match-status status-walkover">Walkover</span>' : 
                                         '<span class="match-status status-completed">Completed</span>'}
+
                                 </div>
                                 <div class="team-names">
                                     <div class="team">${team1Names}</div>
@@ -1298,11 +1414,14 @@
                                     <div class="team">${team2Names}</div>
                                 </div>
                                 ${formatSetScores(team1SetScores, team2SetScores)}
+
                             </div>
                         `;
                     }
+
                 });
             }
+
             
             document.getElementById('matchResults').innerHTML = resultsHTML;
             
@@ -1314,6 +1433,7 @@
                 });
             });
         }
+
         
         // Handle match click in league table
         function handleMatchClick(event) {
@@ -1326,6 +1446,7 @@
             // TODO: Open match details modal or form
             alert(`Match detail view coming soon for ${team1Id} vs ${team2Id}`);
         }
+
         
         // Handle match card click
         function handleMatchCardClick(matchId, matches, teams) {
@@ -1346,6 +1467,7 @@
             // TODO: Open match details modal or form
             alert(`Match detail view coming soon for ${team1Names} vs ${team2Names}`);
         }
+
         
         // Helper function: Get match result for display in the grid
         function getMatchResult(team1Id, team2Id, matches) {
@@ -1359,6 +1481,7 @@
                 // No match exists
                 return { text: '+', class: 'match-unplayed', matchId: null };
             }
+
             
             if (!match.is_completed) {
                 // Match exists but not completed
@@ -1367,7 +1490,9 @@
                 } else {
                     return { text: '+', class: 'match-unplayed', matchId: match.id };
                 }
+
             }
+
             
             // Match is completed
             // Check if it's a walkover
@@ -1381,7 +1506,9 @@
                 } else {
                     return { text: 'WO', class: 'match-walkover-loss', matchId: match.id };
                 }
+
             }
+
             
             // Regular completed match
             const isWinner = (match.team1_id === team1Id && match.team1_score > match.team2_score) ||
@@ -1392,7 +1519,9 @@
             } else {
                 return { text: 'L', class: 'match-loss', matchId: match.id };
             }
+
         }
+
         
         // Helper function: Calculate points for a team
         function calculatePoints(teamId, matches) {
@@ -1413,8 +1542,10 @@
                         (!isTeam1 && match.team2_score > match.team1_score)) {
                         points += 4;
                     }
+
                     continue;
                 }
+
                 
                 // Get set scores if available
                 const team1Sets = match.team1_set_scores || [];
@@ -1428,15 +1559,19 @@
                         } else {
                             points += 1; // Default points for loss
                         }
+
                     } else {
                         if (match.team2_score > match.team1_score) {
                             points += 4; // Default points for win
                         } else {
                             points += 1; // Default points for loss
                         }
+
                     }
+
                     continue;
                 }
+
                 
                 // Count sets won by each team
                 let team1SetsWon = 0;
@@ -1448,7 +1583,9 @@
                     } else if (team2Sets[i] > team1Sets[i]) {
                         team2SetsWon++;
                     }
+
                 }
+
                 
                 // Apply scoring system
                 if (isTeam1) {
@@ -1461,6 +1598,7 @@
                     } else if (team1SetsWon === 0 && team2SetsWon === 2) {
                         points += 1; // 0-2 loss
                     }
+
                 } else {
                     if (team2SetsWon === 2 && team1SetsWon === 0) {
                         points += 5; // 2-0 win
@@ -1471,11 +1609,15 @@
                     } else if (team2SetsWon === 0 && team1SetsWon === 2) {
                         points += 1; // 0-2 loss
                     }
+
                 }
+
             }
+
             
             return points;
         }
+
         
         // Helper function: Get player names display from team object
         function getPlayerNames(team) {
@@ -1493,15 +1635,18 @@
                     if (!team.player2_name) {
                         return player1 || team.name || 'Unknown';
                     }
+
                     
                     const player2 = extractFirstName(team.player2_name || '');
                     return `${player1} & ${player2}`;
                 }
+
                 
                 // If we just have a team name string (legacy support)
                 if (typeof team === 'string') {
                     return team;
                 }
+
                 
                 // If we have a team object with just a name field
                 return team.name || 'Unknown Team';
@@ -1510,7 +1655,9 @@
                 // Return whatever name is available
                 return team.name || 'Unknown Team';
             }
+
         }
+
         
         // Helper function to extract first name from a full name
         function extractFirstName(fullName) {
@@ -1523,6 +1670,7 @@
             const parts = nameWithoutRating.trim().split(' ');
             return parts[0] || '';
         }
+
         
         // Helper function: Get initials for table header
         function getInitials(team) {
@@ -1537,11 +1685,13 @@
                     if (!team.player2_name) {
                         return player1.substring(0, 3) || 'NA';
                     }
+
                     
                     const player2 = extractFirstName(team.player2_name || '');
                     // Format: first 2 chars of each name
                     return `${player1.substring(0, 2)}/${player2.substring(0, 2)}`;
                 }
+
                 
                 // Legacy support for cases where we receive just a name string
                 if (typeof team === 'string') {
@@ -1551,6 +1701,7 @@
                     if (teamMatch) {
                         return `T${teamMatch[1]}`;
                     }
+
                     
                     // Try splitting by common separators
                     if (name.includes(' & ')) {
@@ -1563,22 +1714,27 @@
                         const parts = name.split('/');
                         return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
                     }
+
                     
                     // Fall back to first 2 characters
                     return name.substring(0, 2).toUpperCase();
                 }
+
                 
                 // If we have a team object with just a name field
                 if (team.name) {
                     return team.name.substring(0, 2).toUpperCase();
                 }
+
                 
                 return 'NA';
             } catch (error) {
                 console.error('Error getting initials from team:', error);
                 return 'NA';
             }
+
         }
+
         
         // Helper function: Format date
         function formatDate(dateString) {
@@ -1593,20 +1749,24 @@
                 minute: '2-digit'
             });
         }
+
         
         // Helper function: Format set scores
         function formatSetScores(team1Sets, team2Sets) {
             if (!team1Sets || !team2Sets || team1Sets.length === 0 || team2Sets.length === 0) {
                 return '';
             }
+
             
             const setScores = [];
             for (let i = 0; i < Math.min(team1Sets.length, team2Sets.length); i++) {
                 setScores.push(`${team1Sets[i]}-${team2Sets[i]}`);
             }
+
             
             return `<div class="set-scores text-center mt-1 text-secondary">Sets: ${setScores.join(', ')}</div>`;
         }
+
         
         // Handle print league tables button
         function setupPrintButton() {
@@ -1620,6 +1780,7 @@
                             alert('Please select a league first');
                             return;
                         }
+
                         
                         const leagueId = leagueSelect.value;
                         const leagueName = leagueSelect.options[leagueSelect.selectedIndex].text;
@@ -1639,6 +1800,7 @@
                             alert('No boxes found for this league');
                             return;
                         }
+
                         
                         // Sort boxes alphanumerically by name
                         boxes.sort((a, b) => {
@@ -1662,6 +1824,7 @@
                                         size: portrait;
                                         margin: 0.5cm;
                                     }
+
                                     
                                     body { 
                                         font-family: Arial, sans-serif; 
@@ -1669,6 +1832,7 @@
                                         font-size: 10px;
                                         line-height: 1.3;
                                     }
+
                                     
                                     h1 { 
                                         text-align: center; 
@@ -1676,16 +1840,19 @@
                                         font-size: 16px;
                                         margin-top: 0;
                                     }
+
                                     
                                     h2 {
                                         font-size: 14px;
                                         margin: 6px 0;
                                     }
+
                                     
                                     .box-container { 
                                         margin-bottom: 12px; 
                                         page-break-inside: avoid; 
                                     }
+
                                     
                                     table { 
                                         width: 100%; 
@@ -1693,6 +1860,7 @@
                                         margin-bottom: 8px;
                                         table-layout: fixed;
                                     }
+
                                     
                                     th, td { 
                                         border: 1px solid #ddd; 
@@ -1703,21 +1871,25 @@
                                         white-space: nowrap;
                                         text-overflow: ellipsis;
                                     }
+
                                     
                                     th:first-child, td:first-child { 
                                         text-align: left; 
                                         padding-left: 4px;
                                         width: 25%;
                                     }
+
                                     
                                     th:nth-child(2), td:nth-child(2) {
                                         width: 8%;
                                     }
+
                                     
                                     th { 
                                         background-color: #f2f2f2; 
                                         font-weight: bold;
                                     }
+
                                     
                                     .team-name { 
                                         font-weight: normal;
@@ -1725,11 +1897,13 @@
                                         overflow: hidden;
                                         text-overflow: ellipsis;
                                     }
+
                                     
                                     .points { 
                                         font-weight: bold; 
                                         background-color: #f8f9fa;
                                     }
+
                                     
                                     .match-result { 
                                         width: 16px; 
@@ -1742,36 +1916,43 @@
                                         font-weight: bold;
                                         font-size: 8px;
                                     }
+
                                     
                                     .match-win { 
                                         background-color: #a3e4b7; 
                                         color: #0a6522;
                                     }
+
                                     
                                     .match-loss { 
                                         background-color: #f8c1c7; 
                                         color: #7a1520;
                                     }
+
                                     
                                     .match-unplayed { 
                                         background-color: #e2e2e2; 
                                         color: #555555;
                                     }
+
                                     
                                     .match-scheduled { 
                                         background-color: #b8daff; 
                                         color: #004085;
                                     }
+
                                     
                                     .match-walkover-win { 
                                         background-color: #b3d3ff; 
                                         color: #002a66;
                                     }
+
                                     
                                     .match-walkover-loss { 
                                         background-color: #fff3cd; 
                                         color: #745800;
                                     }
+
                                     
                                     .print-footer {
                                         position: fixed;
@@ -1779,6 +1960,7 @@
                                         width: 100%;
                                         text-align: center;
                                     }
+
                                     
                                     .legend {
                                         margin: 5px 0;
@@ -1788,12 +1970,14 @@
                                         gap: 5px;
                                         font-size: 8px;
                                     }
+
                                     
                                     .legend-item {
                                         display: flex;
                                         align-items: center;
                                         margin-right: 5px;
                                     }
+
                                     
                                     .legend-marker {
                                         width: 14px;
@@ -1806,6 +1990,7 @@
                                         font-weight: bold;
                                         font-size: 8px;
                                     }
+
                                 </style>
                             </head>
                             <body>
@@ -1849,6 +2034,7 @@
                                 console.error('Error fetching teams:', teamsError);
                                 continue;
                             }
+
                             
                             if (!teams || teams.length === 0) continue;
                             
@@ -1862,6 +2048,7 @@
                                 console.error('Error fetching matches:', matchesError);
                                 continue;
                             }
+
                             
                             // Sort teams by calculated points
                             const sortedTeams = teams.sort((a, b) => {
@@ -1885,7 +2072,9 @@
                                                     } catch (e) {
                                                         return '<th>??</th>';
                                                     }
+
                                                 }).join('')}
+
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1911,18 +2100,22 @@
                                                 tableHTML += `<td>
                                                     <div class="match-result ${matchResult.class}">
                                                         ${matchResult.text}
+
                                                     </div>
                                                 </td>`;
                                             }
+
                                         } catch (e) {
                                             tableHTML += '<td>ERR</td>';
                                         }
+
                                     });
                                     
                                     tableHTML += '</tr>';
                                 } catch (e) {
                                     tableHTML += `<tr><td colspan="${2 + sortedTeams.length}">Error loading team data</td></tr>`;
                                 }
+
                             });
                             
                             tableHTML += `
@@ -1933,6 +2126,7 @@
                             
                             processedBoxes.push(tableHTML);
                         }
+
                         
                         // Add all tables to the print content
                         printContent += processedBoxes.join('');
@@ -1941,6 +2135,7 @@
                         printContent += `
                                 <div style="text-align: center; margin-top: 10px; color: #666; font-size: 7px;">
                                     Padel Pals Box League | ${new Date().toLocaleDateString()}
+
                                 </div>
                             </body>
                             </html>
@@ -1964,9 +2159,12 @@
                         printButton.innerHTML = '<i class="fas fa-print me-1"></i> Print League Tables';
                         printButton.disabled = false;
                     }
+
                 });
             }
+
         }
+
         
         // Show a basic dashboard even if profile data fails
         function showBasicDashboard(session) {
@@ -1983,6 +2181,7 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('dashboardContent').style.display = 'block';
         }
+
         
         // Function to test Supabase connection
         async function testSupabaseConnection(session) {
@@ -2005,13 +2204,17 @@
                     } else {
                         console.log('Database Access: Success - Found', count, 'profiles');
                     }
+
                 } catch (dbError) {
                     console.error('Database Access Failed:', dbError.message);
                 }
+
             } catch (error) {
                 console.error('Connection Test Failed:', error.message);
             }
+
         }
+
         
         // Check if the user is authenticated
         async function checkAuthentication() {
@@ -2032,9 +2235,11 @@
                             localStorage.setItem('authRedirectTime', Date.now().toString());
                             window.location.href = '/auth.html';
                         }
+
                     }, 2000);
                     return;
                 }
+
                 
                 if (!session) {
                     // Log to console but don't show in UI
@@ -2047,9 +2252,11 @@
                             localStorage.setItem('authRedirectTime', Date.now().toString());
                             window.location.href = '/auth.html';
                         }
+
                     }, 2000);
                     return;
                 }
+
                 
                 // Log to console but don't show in UI
                 addDebugInfo(`Session found for user: ${session.user.id}`);
@@ -2086,6 +2293,7 @@
                         } else {
                             console.log('Using formatted email for user:', formatUserName(session.user.email));
                         }
+
                         
                         // Log to console but don't show in UI
                         addDebugInfo('Profile data loaded successfully');
@@ -2097,6 +2305,7 @@
                         // Store admin status for later use
                         window.userIsAdmin = isAdmin;
                     }
+
                     
                     // Load box league data
                     await loadBoxLeagueData(session.user.id);
@@ -2111,6 +2320,7 @@
                     // If we fail to get profile but have a session, still show a basic dashboard
                     showBasicDashboard(session);
                 }
+
             } catch (error) {
                 console.error('Error checking authentication:', error);
                 // Log to console but don't show in UI
@@ -2123,9 +2333,12 @@
                         localStorage.setItem('authRedirectTime', Date.now().toString());
                         window.location.href = '/auth.html';
                     }
+
                 }, 2000);
             }
+
         }
+
     </script>
 </body>
-</html> 
+</html>
