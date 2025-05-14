@@ -3855,9 +3855,9 @@
                     });
                 }
                 
-                // Filter to only show completed matches
+                // Filter to only show completed matches where there is a clear winner
                 filteredMatches = filteredMatches.filter(match => 
-                    match.status === 'completed'
+                    match.status === 'completed' && match.team1.setsWon !== match.team2.setsWon
                 );
                 
                 // Sort by date (newest first)
@@ -4028,9 +4028,9 @@
                     });
                 }
                 
-                // Filter to only show completed matches
+                // Filter to only show completed matches where there is a clear winner
                 filteredMatches = filteredMatches.filter(match => 
-                    match.status === 'completed'
+                    match.status === 'completed' && match.team1.setsWon !== match.team2.setsWon
                 );
                 
                 // Sort by date (newest first)
@@ -4616,7 +4616,7 @@
                         <div class="col-6 col-md-3">
                             <div class="border border-secondary rounded p-2">
                                 <h5>${highestWinStreak}</h5>
-                                <small>Best Streak</small>
+                                <small>Best Run</small>
                             </div>
                         </div>
                     </div>
