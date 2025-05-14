@@ -1101,10 +1101,10 @@
                                 <table class="table table-dark table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Rank</th>
-                                            <th>Player</th>
-                                            <th>Rating</th>
-                                            <th>Last Updated</th>
+                                            <th width="10%">Rank</th>
+                                            <th width="55%">Player</th>
+                                            <th width="15%">Rating</th>
+                                            <th width="20%">Last Updated</th>
                                         </tr>
                                     </thead>
                                     <tbody id="playerRankingsList">
@@ -5029,10 +5029,11 @@
                         // Add row to table with medal emojis and gold highlight for 1st place
                         const rankDisplay = getRankDisplay(index + 1);
                         const isFirstPlace = index === 0;
+                        const isMedal = index < 3; // Top 3 positions get medals
                         
                         rankingsHTML += `
                             <tr data-player-id="${player.id}" ${isFirstPlace ? 'class="first-place"' : ''}>
-                                <td>${rankDisplay}</td>
+                                <td ${isMedal ? 'class="medal-cell"' : ''}>${rankDisplay}</td>
                                 <td class="player-name">${playerName}</td>
                                 <td>${player.rating_0_10.toFixed(2)}</td>
                                 <td>${formattedDate}</td>
@@ -5043,7 +5044,7 @@
                     // Update the rankings list
                     rankingsList.innerHTML = rankingsHTML;
                     
-                    // Add CSS for the first place highlight
+                    // Add CSS for the first place highlight and bigger medals
                     const style = document.createElement('style');
                     style.textContent = `
                         #playerRankingsList .first-place {
@@ -5052,6 +5053,24 @@
                         }
                         #playerRankingsList .first-place td {
                             color: var(--gold);
+                        }
+                        #playerRankingsList .medal-cell {
+                            font-size: 28px;
+                            line-height: 1;
+                            padding-top: 6px;
+                            padding-bottom: 6px;
+                            vertical-align: middle;
+                            text-align: center;
+                            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+                        }
+                        #playerRankingsTable th {
+                            position: sticky;
+                            top: 0;
+                            z-index: 10;
+                            background-color: var(--dark-blue);
+                        }
+                        #playerRankingsTable td {
+                            vertical-align: middle;
                         }
                     `;
                     document.head.appendChild(style);
