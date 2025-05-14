@@ -678,6 +678,30 @@
         .table-dark th, .table-dark td {
             border-color: rgba(255, 255, 255, 0.1);
         }
+
+        /* Custom date picker styling */
+        .date-picker {
+            background-color: var(--dark-blue);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .date-picker:focus {
+            background-color: var(--dark-blue);
+            color: white;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25);
+        }
+        
+        /* Date-picker calendar icon */
+        .date-picker::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.7;
+        }
+        
+        .date-picker::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -972,12 +996,34 @@
                                             <option value="club">My Club</option>
                                         </select>
                                         <select id="matchDateRangeFilter" class="form-select">
+                                            <option value="7">Last 7 Days</option>
                                             <option value="30">Last 30 Days</option>
                                             <option value="90">Last 90 Days</option>
                                             <option value="180">Last 6 Months</option>
                                             <option value="365">Last Year</option>
                                             <option value="all">All Time</option>
                                         </select>
+                                        <button id="toggleCustomDateBtn" class="btn btn-outline-light ms-2" title="Custom Date Range">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Custom date range selector (initially hidden) -->
+                                <div id="customDateSelector" class="mb-3 p-3 rounded" style="display: none; background-color: rgba(255, 255, 255, 0.1);">
+                                    <h6 class="mb-3">Custom Date Range</h6>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-2">
+                                            <label for="startDatePicker" class="form-label">Start Date</label>
+                                            <input type="date" id="startDatePicker" class="form-control date-picker">
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <label for="endDatePicker" class="form-label">End Date</label>
+                                            <input type="date" id="endDatePicker" class="form-control date-picker">
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <button id="applyCustomDateBtn" class="btn btn-primary">Apply Date Range</button>
                                     </div>
                                 </div>
                                 
@@ -3658,6 +3704,167 @@
 
         }
 
+        // Custom date range selector functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure this only runs once the DOM is loaded
+            const toggleCustomDateBtn = document.getElementById('toggleCustomDateBtn');
+            const customDateSelector = document.getElementById('customDateSelector');
+            const startDatePicker = document.getElementById('startDatePicker');
+            const endDatePicker = document.getElementById('endDatePicker');
+            const applyCustomDateBtn = document.getElementById('applyCustomDateBtn');
+            const dateRangeFilter = document.getElementById('matchDateRangeFilter');
+            
+            if (toggleCustomDateBtn) {
+                // Set default dates - start date 30 days ago, end date today
+                const today = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                
+                // Format dates as YYYY-MM-DD for date inputs
+                startDatePicker.value = formatDateForInput(thirtyDaysAgo);
+                endDatePicker.value = formatDateForInput(today);
+                
+                // Toggle custom date selector visibility
+                toggleCustomDateBtn.addEventListener('click', function() {
+                    customDateSelector.style.display = customDateSelector.style.display === 'none' ? 'block' : 'none';
+                    
+                    // Toggle active class on button
+                    this.classList.toggle('active');
+                    
+                    // If hiding, reset to selected dropdown value
+                    if (customDateSelector.style.display === 'none') {
+                        dateRangeFilter.disabled = false;
+                        filterMatches();
+                    } else {
+                        // If showing, disable the dropdown
+                        dateRangeFilter.disabled = true;
+                    }
+                });
+                
+                // Apply custom date range
+                applyCustomDateBtn.addEventListener('click', function() {
+                    const startDate = new Date(startDatePicker.value);
+                    const endDate = new Date(endDatePicker.value);
+                    
+                    // Validate date range
+                    if (startDate > endDate) {
+                        alert('Start date must be before end date');
+                        return;
+                    }
+                    
+                    // Apply custom filter
+                    filterMatchesByCustomDateRange(startDate, endDate);
+                });
+            }
+            
+            // Helper function to format date as YYYY-MM-DD
+            function formatDateForInput(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+        });
+        
+        // Function to filter matches by custom date range
+        async function filterMatchesByCustomDateRange(startDate, endDate) {
+            try {
+                console.log(`Filtering matches between ${startDate.toISOString()} and ${endDate.toISOString()}`);
+                
+                // Set end date to end of day
+                endDate.setHours(23, 59, 59, 999);
+                
+                // Get filter values
+                const filterType = document.getElementById('matchHistoryFilter').value;
+                const searchText = document.getElementById('matchSearchInput').value.toLowerCase();
+                
+                // Get current user ID from the authenticated session
+                const { data: { user } } = await supabase.auth.getUser();
+                const currentUserId = user ? user.id.toLowerCase() : null;
+                const userClubId = userProfile?.clubs?.id;
+                
+                // Start with all matches
+                let filteredMatches = [...allMatches];
+                
+                // First, filter out private matches that the user is not part of
+                if (currentUserId) {
+                    filteredMatches = filteredMatches.filter(match => {
+                        // If it's not a private match, keep it
+                        if (match.matchType !== 'private') {
+                            return true;
+                        }
+                        
+                        // If it's a private match, check if the user is a participant
+                        const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
+                            id && id.toLowerCase() === currentUserId
+                        );
+                        
+                        const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
+                            id && id.toLowerCase() === currentUserId
+                        );
+                        
+                        // Only keep private matches where the user is participating
+                        return inTeam1 || inTeam2;
+                    });
+                }
+                
+                // Apply user/club filter
+                if (filterType === 'my' && currentUserId) {
+                    console.log("Filtering by user ID:", currentUserId);
+                    filteredMatches = filteredMatches.filter(match => {
+                        // Check if user is in team1
+                        const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
+                            id && id.toLowerCase() === currentUserId
+                        );
+                        
+                        // Check if user is in team2
+                        const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
+                            id && id.toLowerCase() === currentUserId
+                        );
+                        
+                        return inTeam1 || inTeam2;
+                    });
+                } else if (filterType === 'club' && userClubId) {
+                    console.log("Filtering by club ID:", userClubId);
+                    filteredMatches = filteredMatches.filter(match => 
+                        match.clubId === userClubId
+                    );
+                }
+                
+                // Apply custom date range filter
+                filteredMatches = filteredMatches.filter(match => 
+                    match.playedDate >= startDate && match.playedDate <= endDate
+                );
+                
+                // Filter by search text
+                if (searchText) {
+                    console.log("Filtering by search text:", searchText);
+                    filteredMatches = filteredMatches.filter(match => {
+                        // Check if any player name contains the search text
+                        const team1Players = match.team1.players.join(' ').toLowerCase();
+                        const team2Players = match.team2.players.join(' ').toLowerCase();
+                        
+                        return team1Players.includes(searchText) || team2Players.includes(searchText);
+                    });
+                }
+                
+                // Filter to only show completed matches
+                filteredMatches = filteredMatches.filter(match => 
+                    match.status === 'completed'
+                );
+                
+                // Sort by date (newest first)
+                filteredMatches.sort((a, b) => b.playedDate - a.playedDate);
+                
+                console.log(`Final filtered matches count (custom date range): ${filteredMatches.length}`);
+                
+                // Update the UI with filtered matches
+                await renderMatchHistory(filteredMatches);
+                
+            } catch (error) {
+                console.error("Error filtering by custom date range:", error);
+            }
+        }
     </script>
     
     <!-- JavaScript for Match History -->
@@ -4328,9 +4535,9 @@
                         totalSetsLost += match.team1.setsWon;
                     }
                     
-                    // Keep only the 5 most recent results for display
-                    if (recentResults.length > 5) {
-                        recentResults = recentResults.slice(0, 5);
+                    // Keep only the 10 most recent results for display
+                    if (recentResults.length > 10) {
+                        recentResults = recentResults.slice(0, 10);
                     }
                 });
                 
@@ -4387,10 +4594,10 @@
                     </div>
                     
                     <div class="mt-3">
-                        <h6>Recent Results</h6>
-                        <div class="d-flex">
+                        <h6>Match Form</h6>
+                        <div class="d-flex flex-wrap">
                             ${recentResults.map(result => `
-                                <div class="me-2 rounded-circle d-flex align-items-center justify-content-center" 
+                                <div class="me-2 mb-2 rounded-circle d-flex align-items-center justify-content-center" 
                                     style="width: 30px; height: 30px; background-color: ${result === 'W' ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)'}; 
                                     color: ${result === 'W' ? '#28a745' : '#dc3545'}; font-weight: bold;">
                                     ${result}
