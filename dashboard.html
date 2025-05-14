@@ -4970,7 +4970,28 @@
                 console.log('Player rankings data retrieved:', data.length, 'records');
                 console.log('Sample data:', data.length > 0 ? JSON.stringify(data[0], null, 2) : 'No data');
                 
-                if (data.length === 0) {
+                // Process the data to get only the most recent rating for each player
+                const playerMap = new Map();
+                
+                // First pass - find the latest rating for each player
+                data.forEach(record => {
+                    const playerId = record.id;
+                    const recordDate = new Date(record.date);
+                    
+                    if (!playerMap.has(playerId) || 
+                        recordDate > new Date(playerMap.get(playerId).date)) {
+                        playerMap.set(playerId, record);
+                    }
+                });
+                
+                // Convert map to array and sort by rating (highest first)
+                const uniquePlayers = Array.from(playerMap.values())
+                    .sort((a, b) => b.rating_0_10 - a.rating_0_10)
+                    .slice(0, 15); // Take top 15
+                
+                console.log(`Found ${uniquePlayers.length} unique players with their latest ratings`);
+                
+                if (uniquePlayers.length === 0) {
                     rankingsList.innerHTML = `
                         <tr>
                             <td colspan="4" class="text-center">No player ratings found.</td>
@@ -4981,7 +5002,7 @@
                     let rankingsHTML = '';
                     
                     // Create player rows
-                    data.forEach((player, index) => {
+                    uniquePlayers.forEach((player, index) => {
                         // For now, just use the player ID as the name
                         // In a real implementation, you would fetch profile details separately
                         let playerName = player.id;
@@ -5011,7 +5032,7 @@
                     // Try to get user profile info for each player
                     try {
                         // Get player names if possible
-                        await fetchPlayerNames();
+                        await fetchPlayerNames(uniquePlayers);
                     } catch (nameError) {
                         console.warn('Could not fetch player names:', nameError);
                         // Continue with just IDs
@@ -5031,10 +5052,60 @@
         }
         
         // Helper function to try to fetch player names
-        async function fetchPlayerNames() {
-            // This would be implemented to get player names from profiles
-            // For now, we'll keep it simple and just use the IDs
-            console.log('Player name fetching not implemented yet');
+        async function fetchPlayerNames(players) {
+            try {
+                // Only proceed if we have players
+                if (!players || players.length === 0) return;
+                
+                // Get the session
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) return;
+                
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': window.config.supabaseKey,
+                    'Authorization': `Bearer ${session.access_token}`
+                };
+                
+                // Get unique player IDs
+                const playerIds = [...new Set(players.map(p => p.id))];
+                console.log(`Attempting to fetch names for ${playerIds.length} unique players`);
+                
+                // For each player ID, try to fetch the profile
+                for (const playerId of playerIds) {
+                    try {
+                        const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/profiles?id=eq.${playerId}&select=display_name,full_name`;
+                        
+                        const response = await fetch(profileEndpoint, {
+                            method: 'GET',
+                            headers: headers
+                        });
+                        
+                        if (response.ok) {
+                            const profileData = await response.json();
+                            
+                            if (profileData && profileData.length > 0) {
+                                const profile = profileData[0];
+                                let displayName = profile.display_name || profile.full_name || playerId;
+                                
+                                // Update the name in the table
+                                const cells = document.querySelectorAll(`#playerRankingsList td:nth-child(2)`);
+                                cells.forEach(cell => {
+                                    if (cell.textContent === playerId) {
+                                        cell.textContent = displayName;
+                                    }
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Could not fetch profile for player ${playerId}:`, e);
+                        // Continue with next player
+                    }
+                }
+            } catch (error) {
+                console.warn('Error fetching player names:', error);
+                // Don't rethrow - we want to continue even if names can't be fetched
+            }
         }
     </script>
 </body>
