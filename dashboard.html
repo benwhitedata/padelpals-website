@@ -3656,7 +3656,7 @@
                     .select(`
                         id,
                         created_at,
-                        played_at,
+                        played_date,
                         team1_players,
                         team2_players,
                         team1_player_ids,
@@ -3671,7 +3671,7 @@
                         club_id,
                         match_category
                     `)
-                    .order('played_at', { ascending: false });
+                    .order('played_date', { ascending: false });
                 
                 if (error) {
                     throw error;
@@ -3681,7 +3681,7 @@
                 
                 // Process the matches to be in a similar format to the iOS app
                 allMatches = matches.map(match => {
-                    const playedDate = new Date(match.played_at);
+                    const playedDate = new Date(match.played_date);
                     
                     return {
                         id: match.id,
