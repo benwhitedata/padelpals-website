@@ -759,7 +759,7 @@
                     <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab" aria-controls="stats" aria-selected="false">Stats</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Settings</button>
+                    <button class="nav-link" id="rankings-tab" data-bs-toggle="tab" data-bs-target="#rankings" type="button" role="tab" aria-controls="rankings" aria-selected="false">Rankings</button>
                 </li>
             </ul>
             
@@ -1084,13 +1084,34 @@
                     </div>
                 </div>
                 
-                <!-- Settings Tab -->
-                <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                <!-- Rankings Tab (replacing Settings) -->
+                <div class="tab-pane fade" id="rankings" role="tabpanel" aria-labelledby="rankings-tab">
                     <div class="stats-card">
-                        <h3>Account Settings</h3>
-                        <div id="accountSettings">
-                            <!-- Account settings will be loaded here -->
-                            <p>Account settings coming soon.</p>
+                        <h3>Player Rankings</h3>
+                        <p class="mb-3">Top 15 players by match rating</p>
+                        <div id="playerRankingsLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading rankings...</span>
+                            </div>
+                            <p class="mt-2">Loading player rankings...</p>
+                        </div>
+                        <div id="playerRankingsError" class="alert alert-danger" style="display: none;"></div>
+                        <div id="playerRankingsTable" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Player</th>
+                                            <th>Rating</th>
+                                            <th>Last Updated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="playerRankingsList">
+                                        <!-- Player rankings will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4889,5 +4910,118 @@
             </div>
         </div>
     </div>
+
+    <!-- JavaScript for Player Rankings -->
+    <script>
+        // Initialize player rankings
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize when the rankings tab is shown
+            const rankingsTab = document.getElementById('rankings-tab');
+            if (rankingsTab) {
+                rankingsTab.addEventListener('shown.bs.tab', function() {
+                    loadPlayerRankings();
+                });
+            }
+        });
+
+        // Function to load player rankings from Supabase
+        async function loadPlayerRankings() {
+            const rankingsLoading = document.getElementById('playerRankingsLoading');
+            const rankingsError = document.getElementById('playerRankingsError');
+            const rankingsTable = document.getElementById('playerRankingsTable');
+            const rankingsList = document.getElementById('playerRankingsList');
+            
+            // Show loading, hide error and table
+            rankingsLoading.style.display = 'block';
+            rankingsError.style.display = 'none';
+            rankingsTable.style.display = 'none';
+            
+            try {
+                // Get session and access token
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    throw new Error('No active session found');
+                }
+                
+                console.log("Loading player rankings...");
+                
+                // Set up headers for the request
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': window.config.supabaseKey,
+                    'Authorization': `Bearer ${session.access_token}`
+                };
+                
+                // Create the endpoint to fetch the top 15 player ratings
+                // Using the ratings table, ordering by rating_0_10 descending, and limit to 15
+                const endpoint = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date,user_profiles(display_name,full_name)&order=rating_0_10.desc&limit=15`;
+                
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch player rankings: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Player rankings data retrieved:', data.length, 'records');
+                
+                if (data.length === 0) {
+                    rankingsList.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center">No player ratings found.</td>
+                        </tr>
+                    `;
+                } else {
+                    // Process the rankings data
+                    let rankingsHTML = '';
+                    
+                    data.forEach((player, index) => {
+                        // Get player name - prioritize display_name from related user_profiles
+                        let playerName = 'Unknown';
+                        if (player.user_profiles && player.user_profiles.display_name) {
+                            playerName = player.user_profiles.display_name;
+                        } else if (player.user_profiles && player.user_profiles.full_name) {
+                            playerName = player.user_profiles.full_name;
+                        }
+                        
+                        // Format date
+                        const ratingDate = new Date(player.date);
+                        const formattedDate = ratingDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        // Add row to table
+                        rankingsHTML += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${playerName}</td>
+                                <td>${player.rating_0_10.toFixed(1)}</td>
+                                <td>${formattedDate}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    // Update the rankings list
+                    rankingsList.innerHTML = rankingsHTML;
+                }
+                
+                // Hide loading, show table
+                rankingsLoading.style.display = 'none';
+                rankingsTable.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading player rankings:', error);
+                rankingsLoading.style.display = 'none';
+                rankingsError.style.display = 'block';
+                rankingsError.textContent = `Error loading player rankings: ${error.message}`;
+            }
+        }
+    </script>
 </body>
 </html>
