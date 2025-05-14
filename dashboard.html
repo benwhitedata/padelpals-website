@@ -579,15 +579,27 @@
 
         /* Stats card modifications */
         .stats-card {
+            background-color: #ffffff;
+            color: #333;
+        }
+        
+        /* Only make titles in the Stats tab white */
+        #stats .stats-card {
             background-color: var(--dark-blue);
             color: white;
         }
-
-        .stats-card h3 {
+        
+        #stats .stats-card h3 {
             color: white;
         }
-
+        
+        /* Keep text-muted as its original color in Profile tab */
         .text-muted {
+            color: #6c757d !important;
+        }
+        
+        /* Override text-muted only in Stats tab */
+        #stats .text-muted {
             color: rgba(255, 255, 255, 0.6) !important;
         }
 
@@ -3660,9 +3672,9 @@
                 console.log("Initializing match history");
                 
                 // Set up event listeners for filters
-                document.getElementById('matchHistoryFilter').addEventListener('change', filterMatches);
-                document.getElementById('matchDateRangeFilter').addEventListener('change', filterMatches);
-                document.getElementById('matchSearchInput').addEventListener('input', filterMatches);
+                document.getElementById('matchHistoryFilter').addEventListener('change', () => filterMatches());
+                document.getElementById('matchDateRangeFilter').addEventListener('change', () => filterMatches());
+                document.getElementById('matchSearchInput').addEventListener('input', () => filterMatches());
                 
                 // Ensure "My Matches" is selected by default
                 document.getElementById('matchHistoryFilter').value = 'my';
@@ -3690,6 +3702,7 @@
                 }
                 
                 const userId = session.user.id;
+                console.log("Loading match history for user ID:", userId);
                 
                 // First get the user's profile to have access to their club ID
                 try {
@@ -3759,10 +3772,10 @@
                     const playedDate = new Date(match.match_date);
                     
                     // Parse comma-separated strings back into arrays
-                    const team1Players = match.team1_players ? match.team1_players.split(',') : [];
-                    const team2Players = match.team2_players ? match.team2_players.split(',') : [];
-                    const team1PlayerIds = match.team1_player_ids ? match.team1_player_ids.split(',') : [];
-                    const team2PlayerIds = match.team2_player_ids ? match.team2_player_ids.split(',') : [];
+                    const team1Players = match.team1_players ? match.team1_players.split(',').map(p => p.trim()) : [];
+                    const team2Players = match.team2_players ? match.team2_players.split(',').map(p => p.trim()) : [];
+                    const team1PlayerIds = match.team1_player_ids ? match.team1_player_ids.split(',').map(id => id.trim()) : [];
+                    const team2PlayerIds = match.team2_player_ids ? match.team2_player_ids.split(',').map(id => id.trim()) : [];
                     const team1SetScores = match.team1_set_scores ? match.team1_set_scores.split(',').map(Number) : [];
                     const team2SetScores = match.team2_set_scores ? match.team2_set_scores.split(',').map(Number) : [];
                     
@@ -3790,8 +3803,9 @@
                     };
                 });
                 
-                // Apply filters to matches
-                filterMatches();
+                // Apply filters to matches - use the dropdown's value which should be "my" by default
+                console.log("Applying initial filter based on dropdown selection:", document.getElementById('matchHistoryFilter').value);
+                await filterMatches();
                 
             } catch (error) {
                 console.error("Error loading match history:", error);
@@ -3800,7 +3814,7 @@
         }
         
         // Function to filter matches based on selected filters
-        function filterMatches() {
+        async function filterMatches() {
             console.log("Filtering matches with current criteria");
             
             // Get filter values
@@ -3808,29 +3822,38 @@
             const dateRangeFilter = document.getElementById('matchDateRangeFilter').value;
             const searchText = document.getElementById('matchSearchInput').value.toLowerCase();
             
-            // Get current user ID and club ID
-            const currentUserId = supabase.auth.getUser()?.data?.user?.id?.toLowerCase();
+            console.log("Filter type:", filterType, "Date range:", dateRangeFilter);
+            
+            // Get current user ID and club ID from the authenticated session
+            const { data: { user } } = await supabase.auth.getUser();
+            const currentUserId = user ? user.id.toLowerCase() : null;
             const userClubId = userProfile?.clubs?.id;
+            
+            console.log("Current user ID for filtering:", currentUserId);
             
             // Start with all matches
             let filteredMatches = [...allMatches];
             
-            // Filter by owner
+            // Filter by owner/user
             if (filterType === 'my' && currentUserId) {
                 console.log("Filtering by user ID:", currentUserId);
                 filteredMatches = filteredMatches.filter(match => {
                     // Check if user is in team1
-                    const inTeam1 = match.team1.playerIds.some(id => 
+                    const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
                         id && id.toLowerCase() === currentUserId
                     );
                     
                     // Check if user is in team2
-                    const inTeam2 = match.team2.playerIds.some(id => 
+                    const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
                         id && id.toLowerCase() === currentUserId
                     );
                     
-                    return inTeam1 || inTeam2;
+                    const isUserMatch = inTeam1 || inTeam2;
+                    console.log(`Match ${match.id}: User in Team1: ${inTeam1}, User in Team2: ${inTeam2}, Is User Match: ${isUserMatch}`);
+                    return isUserMatch;
                 });
+                
+                console.log(`After user filtering: ${filteredMatches.length} matches remain`);
             } else if (filterType === 'club' && userClubId) {
                 console.log("Filtering by club ID:", userClubId);
                 filteredMatches = filteredMatches.filter(match => 
@@ -3871,12 +3894,14 @@
             // Sort by date (newest first)
             filteredMatches.sort((a, b) => b.playedDate - a.playedDate);
             
+            console.log(`Final filtered matches count: ${filteredMatches.length}`);
+            
             // Update the UI with filtered matches
             renderMatchHistory(filteredMatches);
         }
         
         // Function to render match history to the UI
-        function renderMatchHistory(matches) {
+        async function renderMatchHistory(matches) {
             const matchesList = document.getElementById('matchesList');
             const matchesEmpty = document.getElementById('matchesEmpty');
             const matchesLoading = document.getElementById('matchesLoading');
@@ -3888,8 +3913,8 @@
                 // Show empty state
                 matchesList.style.display = 'none';
                 matchesEmpty.style.display = 'block';
-                updateMatchStatistics([]); // Update stats with empty array
-                updateRecentMatches([]); // Update recent matches with empty array
+                await updateMatchStatistics([]); // Update stats with empty array
+                await updateRecentMatches([]); // Update recent matches with empty array
                 return;
             }
             
@@ -3907,10 +3932,10 @@
             });
             
             // Update match statistics
-            updateMatchStatistics(matches);
+            await updateMatchStatistics(matches);
             
             // Update recent matches
-            updateRecentMatches(matches);
+            await updateRecentMatches(matches);
         }
         
         // Function to create a match card element
@@ -4207,150 +4232,160 @@
         });
         
         // Function to update match statistics based on filtered matches
-        function updateMatchStatistics(matches) {
+        async function updateMatchStatistics(matches) {
             const statsContainer = document.getElementById('matchStats');
-            const currentUserId = supabase.auth.getUser()?.data?.user?.id?.toLowerCase();
             
-            if (!currentUserId || matches.length === 0) {
-                statsContainer.innerHTML = `
-                    <p class="text-center py-3">No match statistics available yet.</p>
-                `;
-                return;
-            }
-            
-            // Calculate statistics
-            let totalMatches = 0;
-            let wins = 0;
-            let losses = 0;
-            let totalSetsWon = 0;
-            let totalSetsLost = 0;
-            let highestWinStreak = 0;
-            let currentWinStreak = 0;
-            let recentResults = [];
-            
-            // Sort matches by date (newest first) to calculate streaks correctly
-            const sortedMatches = [...matches].sort((a, b) => b.playedDate - a.playedDate);
-            
-            // Process each match to calculate stats
-            sortedMatches.forEach(match => {
-                // Check if user participated in this match
-                const inTeam1 = match.team1.playerIds.some(id => 
-                    id.toLowerCase() === currentUserId
-                );
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                const currentUserId = user ? user.id.toLowerCase() : null;
                 
-                const inTeam2 = match.team2.playerIds.some(id => 
-                    id.toLowerCase() === currentUserId
-                );
-                
-                if (!inTeam1 && !inTeam2) {
-                    return; // User didn't participate in this match
+                if (!currentUserId || matches.length === 0) {
+                    statsContainer.innerHTML = `
+                        <p class="text-center py-3">No match statistics available yet.</p>
+                    `;
+                    return;
                 }
                 
-                totalMatches++;
+                // Calculate statistics
+                let totalMatches = 0;
+                let wins = 0;
+                let losses = 0;
+                let totalSetsWon = 0;
+                let totalSetsLost = 0;
+                let highestWinStreak = 0;
+                let currentWinStreak = 0;
+                let recentResults = [];
                 
-                // Determine if user won or lost
-                const userWon = (inTeam1 && match.team1.setsWon > match.team2.setsWon) || 
-                               (inTeam2 && match.team2.setsWon > match.team1.setsWon);
+                // Sort matches by date (newest first) to calculate streaks correctly
+                const sortedMatches = [...matches].sort((a, b) => b.playedDate - a.playedDate);
                 
-                if (userWon) {
-                    wins++;
-                    currentWinStreak++;
-                    if (currentWinStreak > highestWinStreak) {
-                        highestWinStreak = currentWinStreak;
+                // Process each match to calculate stats
+                sortedMatches.forEach(match => {
+                    // Check if user participated in this match
+                    const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
+                        id && id.toLowerCase() === currentUserId
+                    );
+                    
+                    const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
+                        id && id.toLowerCase() === currentUserId
+                    );
+                    
+                    if (!inTeam1 && !inTeam2) {
+                        return; // User didn't participate in this match
                     }
-                    recentResults.push('W');
-                } else {
-                    losses++;
-                    currentWinStreak = 0;
-                    recentResults.push('L');
-                }
+                    
+                    totalMatches++;
+                    
+                    // Determine if user won or lost
+                    const userWon = (inTeam1 && match.team1.setsWon > match.team2.setsWon) || 
+                                   (inTeam2 && match.team2.setsWon > match.team1.setsWon);
+                    
+                    if (userWon) {
+                        wins++;
+                        currentWinStreak++;
+                        if (currentWinStreak > highestWinStreak) {
+                            highestWinStreak = currentWinStreak;
+                        }
+                        recentResults.push('W');
+                    } else {
+                        losses++;
+                        currentWinStreak = 0;
+                        recentResults.push('L');
+                    }
+                    
+                    // Calculate sets won/lost by the user
+                    if (inTeam1) {
+                        totalSetsWon += match.team1.setsWon;
+                        totalSetsLost += match.team2.setsWon;
+                    } else {
+                        totalSetsWon += match.team2.setsWon;
+                        totalSetsLost += match.team1.setsWon;
+                    }
+                    
+                    // Keep only the 5 most recent results for display
+                    if (recentResults.length > 5) {
+                        recentResults = recentResults.slice(0, 5);
+                    }
+                });
                 
-                // Calculate sets won/lost by the user
-                if (inTeam1) {
-                    totalSetsWon += match.team1.setsWon;
-                    totalSetsLost += match.team2.setsWon;
-                } else {
-                    totalSetsWon += match.team2.setsWon;
-                    totalSetsLost += match.team1.setsWon;
-                }
+                // Calculate win rate
+                const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
                 
-                // Keep only the 5 most recent results for display
-                if (recentResults.length > 5) {
-                    recentResults = recentResults.slice(0, 5);
-                }
-            });
-            
-            // Calculate win rate
-            const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
-            
-            // Create statistics HTML
-            statsContainer.innerHTML = `
-                <div class="row text-center g-2">
-                    <div class="col-6 col-md-3">
-                        <div class="border border-secondary rounded p-2">
-                            <h5>${totalMatches}</h5>
-                            <small>Matches</small>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border border-secondary rounded p-2">
-                            <h5>${wins} - ${losses}</h5>
-                            <small>Record</small>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border border-secondary rounded p-2">
-                            <h5>${winRate}%</h5>
-                            <small>Win Rate</small>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border border-secondary rounded p-2">
-                            <h5>${highestWinStreak}</h5>
-                            <small>Best Streak</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-3">
-                    <h6>Set Statistics</h6>
-                    <div class="progress">
-                        <div class="progress-bar bg-success" role="progressbar" 
-                            style="width: ${totalSetsWon + totalSetsLost > 0 ? (totalSetsWon / (totalSetsWon + totalSetsLost) * 100) : 0}%" 
-                            aria-valuenow="${totalSetsWon}" aria-valuemin="0" aria-valuemax="${totalSetsWon + totalSetsLost}">
-                            ${totalSetsWon}
-                        </div>
-                        <div class="progress-bar bg-danger" role="progressbar" 
-                            style="width: ${totalSetsWon + totalSetsLost > 0 ? (totalSetsLost / (totalSetsWon + totalSetsLost) * 100) : 0}%" 
-                            aria-valuenow="${totalSetsLost}" aria-valuemin="0" aria-valuemax="${totalSetsWon + totalSetsLost}">
-                            ${totalSetsLost}
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1">
-                        <small class="text-muted">Sets Won</small>
-                        <small class="text-muted">Sets Lost</small>
-                    </div>
-                </div>
-                
-                <div class="mt-3">
-                    <h6>Recent Results</h6>
-                    <div class="d-flex">
-                        ${recentResults.map(result => `
-                            <div class="me-2 rounded-circle d-flex align-items-center justify-content-center" 
-                                style="width: 30px; height: 30px; background-color: ${result === 'W' ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)'}; 
-                                color: ${result === 'W' ? '#28a745' : '#dc3545'}; font-weight: bold;">
-                                ${result}
+                // Create statistics HTML
+                statsContainer.innerHTML = `
+                    <div class="row text-center g-2">
+                        <div class="col-6 col-md-3">
+                            <div class="border border-secondary rounded p-2">
+                                <h5>${totalMatches}</h5>
+                                <small>Matches</small>
                             </div>
-                        `).join('')}
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border border-secondary rounded p-2">
+                                <h5>${wins} - ${losses}</h5>
+                                <small>Record</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border border-secondary rounded p-2">
+                                <h5>${winRate}%</h5>
+                                <small>Win Rate</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border border-secondary rounded p-2">
+                                <h5>${highestWinStreak}</h5>
+                                <small>Best Streak</small>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            `;
+                    
+                    <div class="mt-3">
+                        <h6>Set Statistics</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                style="width: ${totalSetsWon + totalSetsLost > 0 ? (totalSetsWon / (totalSetsWon + totalSetsLost) * 100) : 0}%" 
+                                aria-valuenow="${totalSetsWon}" aria-valuemin="0" aria-valuemax="${totalSetsWon + totalSetsLost}">
+                                ${totalSetsWon}
+                            </div>
+                            <div class="progress-bar bg-danger" role="progressbar" 
+                                style="width: ${totalSetsWon + totalSetsLost > 0 ? (totalSetsLost / (totalSetsWon + totalSetsLost) * 100) : 0}%" 
+                                aria-valuenow="${totalSetsLost}" aria-valuemin="0" aria-valuemax="${totalSetsWon + totalSetsLost}">
+                                ${totalSetsLost}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Sets Won</small>
+                            <small class="text-muted">Sets Lost</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Recent Results</h6>
+                        <div class="d-flex">
+                            ${recentResults.map(result => `
+                                <div class="me-2 rounded-circle d-flex align-items-center justify-content-center" 
+                                    style="width: 30px; height: 30px; background-color: ${result === 'W' ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)'}; 
+                                    color: ${result === 'W' ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                                    ${result}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error updating match statistics:', error);
+                statsContainer.innerHTML = `
+                    <p class="text-center py-3">Error loading match statistics.</p>
+                `;
+            }
         }
         
         // Function to update the recent matches section
         function updateRecentMatches(matches) {
             const recentMatchesContainer = document.getElementById('recentMatches');
-            const currentUserId = supabase.auth.getUser()?.data?.user?.id?.toLowerCase();
+            const { data: { user } } = supabase.auth.getUser();
+            const currentUserId = user ? user.id.toLowerCase() : null;
             
             if (!matches || matches.length === 0) {
                 recentMatchesContainer.innerHTML = `
@@ -4366,11 +4401,11 @@
             const userMatches = sortedMatches.filter(match => {
                 if (!currentUserId) return false;
                 
-                const inTeam1 = match.team1.playerIds.some(id => 
+                const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
                     id && id.toLowerCase() === currentUserId
                 );
                 
-                const inTeam2 = match.team2.playerIds.some(id => 
+                const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
                     id && id.toLowerCase() === currentUserId
                 );
                 
@@ -4392,7 +4427,7 @@
             
             recentMatches.forEach(match => {
                 // Determine if user was in team 1 or 2
-                const inTeam1 = match.team1.playerIds.some(id => 
+                const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
                     id && id.toLowerCase() === currentUserId
                 );
                 
