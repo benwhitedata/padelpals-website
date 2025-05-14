@@ -3652,57 +3652,65 @@
                 // This query structure is similar to the one in the iOS app
                 // First we'll get all matches (both completed and pending)
                 const { data: matches, error } = await supabase
-                    .from('matches')
+                    .from('padel_matches_view')
                     .select(`
                         id,
-                        created_at,
-                        played_date,
                         team1_players,
                         team2_players,
                         team1_player_ids,
                         team2_player_ids,
-                        team1_sets,
-                        team2_sets,
-                        team1_sets_won,
-                        team2_sets_won,
+                        match_date,
+                        team1_set_scores,
+                        team2_set_scores,
+                        team1_score,
+                        team2_score,
+                        location_id,
                         match_type,
-                        status,
-                        submitter_id,
-                        club_id,
-                        match_category
+                        match_status,
+                        match_category,
+                        submission_date,
+                        submitter_id
                     `)
-                    .order('played_date', { ascending: false });
+                    .order('match_date', { ascending: false });
                 
                 if (error) {
                     throw error;
                 }
                 
-                console.log(`Loaded ${matches.length} matches from Supabase`);
+                console.log(`Loaded ${matches.length} matches from Supabase view`);
                 
                 // Process the matches to be in a similar format to the iOS app
                 allMatches = matches.map(match => {
-                    const playedDate = new Date(match.played_date);
+                    const playedDate = new Date(match.match_date);
+                    
+                    // Parse comma-separated strings back into arrays
+                    const team1Players = match.team1_players ? match.team1_players.split(',') : [];
+                    const team2Players = match.team2_players ? match.team2_players.split(',') : [];
+                    const team1PlayerIds = match.team1_player_ids ? match.team1_player_ids.split(',') : [];
+                    const team2PlayerIds = match.team2_player_ids ? match.team2_player_ids.split(',') : [];
+                    const team1SetScores = match.team1_set_scores ? match.team1_set_scores.split(',').map(Number) : [];
+                    const team2SetScores = match.team2_set_scores ? match.team2_set_scores.split(',').map(Number) : [];
                     
                     return {
                         id: match.id,
                         playedDate: playedDate,
-                        createdAt: new Date(match.created_at),
+                        createdAt: new Date(match.submission_date),
                         team1: {
-                            players: match.team1_players || [],
-                            playerIds: match.team1_player_ids || [],
-                            setScores: match.team1_sets || [],
-                            setsWon: match.team1_sets_won || 0
+                            players: team1Players,
+                            playerIds: team1PlayerIds,
+                            setScores: team1SetScores,
+                            setsWon: match.team1_score || 0
                         },
                         team2: {
-                            players: match.team2_players || [],
-                            playerIds: match.team2_player_ids || [],
-                            setScores: match.team2_sets || [],
-                            setsWon: match.team2_sets_won || 0
+                            players: team2Players,
+                            playerIds: team2PlayerIds,
+                            setScores: team2SetScores,
+                            setsWon: match.team2_score || 0
                         },
-                        status: match.status === 'completed' ? 'completed' : 'pending',
-                        matchType: match.match_type || 'open',
+                        status: match.match_status?.toLowerCase() === 'completed' ? 'completed' : 'pending',
+                        matchType: match.match_type?.toLowerCase() || 'open',
                         submitterId: match.submitter_id,
-                        clubId: match.club_id,
+                        clubId: match.location_id,
                         matchCategory: match.match_category || 'regular'
                     };
                 });
