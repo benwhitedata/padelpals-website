@@ -441,7 +441,7 @@
 
         /* Match History Styles */
         .match-history-card {
-            background-color: rgba(255, 255, 255, 0.05);
+            background-color: rgba(26, 34, 56, 0.8);
             border-radius: 12px;
             border: 1px solid var(--gold);
             padding: 15px;
@@ -486,9 +486,10 @@
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.2);
             text-align: center;
             line-height: 24px;
+            color: white;
         }
 
         .match-history-card .winning-team {
@@ -506,23 +507,24 @@
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 0.8rem;
-            background-color: rgba(26, 34, 56, 0.5);
+            background-color: rgba(26, 34, 56, 0.9);
+            color: white;
         }
 
         .match-history-card .match-type-private {
-            background-color: rgba(108, 117, 125, 0.2);
+            background-color: rgba(108, 117, 125, 0.6);
         }
 
         .match-history-card .match-type-open {
-            background-color: rgba(0, 123, 255, 0.2);
+            background-color: rgba(0, 123, 255, 0.6);
         }
 
         .match-history-card .match-type-competitive {
-            background-color: rgba(40, 167, 69, 0.2);
+            background-color: rgba(40, 167, 69, 0.6);
         }
 
         .match-history-card .match-type-boxleague {
-            background-color: rgba(255, 193, 7, 0.2);
+            background-color: rgba(255, 193, 7, 0.6);
         }
 
         #matchHistoryContent {
@@ -540,7 +542,7 @@
         .match-filter-pill {
             padding: 5px 12px;
             border-radius: 16px;
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(26, 34, 56, 0.7);
             color: white;
             font-size: 0.85rem;
             display: flex;
@@ -558,10 +560,76 @@
             font-size: 0.75rem;
         }
 
+        /* Match filters and inputs */
+        #matchHistoryFilter, #matchDateRangeFilter {
+            background-color: var(--dark-blue);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        #matchSearchInput {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        #matchSearchInput::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Stats card modifications */
+        .stats-card {
+            background-color: var(--dark-blue);
+            color: white;
+        }
+
+        .text-muted {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        /* Match details modal improvement */
+        .match-detail-result {
+            background-color: rgba(26, 34, 56, 0.9) !important;
+        }
+        
+        .table-dark {
+            background-color: rgba(26, 34, 56, 0.6) !important;
+        }
+        
+        .modal-content.bg-dark {
+            background-color: var(--dark-blue) !important;
+            color: white;
+        }
+        
+        #matchesEmpty {
+            color: white;
+        }
+        
+        #matchesEmpty .text-muted {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        
+        /* Recent matches section */
+        #recentMatches .d-flex {
+            background-color: rgba(26, 34, 56, 0.7) !important;
+        }
+        
+        /* Match stats elements */
+        #matchStats .border {
+            background-color: rgba(26, 34, 56, 0.7);
+        }
+        
         @media (max-width: 768px) {
             .match-history-card .team-score {
                 min-width: 80px;
             }
+        }
+        
+        /* Input group for search */
+        .input-group-text {
+            background-color: var(--dark-blue);
+            color: rgba(255, 255, 255, 0.8);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         
         /* Match Detail Modal Styles */
