@@ -1055,7 +1055,7 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="stats-card">
                                 <h3>Match Statistics</h3>
                                 <div id="matchStats">
@@ -1063,19 +1063,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="stats-card">
                                 <h3>Recent Matches</h3>
                                 <div id="recentMatches">
                                     <!-- Recent matches will be loaded here -->
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stats-card">
-                                <h3>Box League Status</h3>
-                                <div id="boxLeagueStatus">
-                                    <!-- Box league status will be loaded here -->
                                 </div>
                             </div>
                         </div>
@@ -3855,15 +3847,16 @@
                     });
                 }
                 
-                // Filter to only show completed matches where there is a clear winner
+                // Filter to only show completed matches
+                // (Previously filtered out draws, now just ensure they're completed)
                 filteredMatches = filteredMatches.filter(match => 
-                    match.status === 'completed' && match.team1.setsWon !== match.team2.setsWon
+                    match.status === 'completed'
                 );
                 
                 // Sort by date (newest first)
                 filteredMatches.sort((a, b) => b.playedDate - a.playedDate);
                 
-                console.log(`Final filtered matches count (custom date range): ${filteredMatches.length}`);
+                console.log(`Final filtered matches count: ${filteredMatches.length}`);
                 
                 // Update the UI with filtered matches
                 await renderMatchHistory(filteredMatches);
@@ -4028,9 +4021,10 @@
                     });
                 }
                 
-                // Filter to only show completed matches where there is a clear winner
+                // Filter to only show completed matches
+                // (Previously filtered out draws, now just ensure they're completed)
                 filteredMatches = filteredMatches.filter(match => 
-                    match.status === 'completed' && match.team1.setsWon !== match.team2.setsWon
+                    match.status === 'completed'
                 );
                 
                 // Sort by date (newest first)
@@ -4557,6 +4551,13 @@
                     
                     totalMatches++;
                     
+                    // Skip drawn matches for statistics calculation but still count them in total
+                    if (match.team1.setsWon === match.team2.setsWon) {
+                        // Add a "D" for draw to recent results
+                        recentResults.push('D');
+                        return;
+                    }
+                    
                     // Determine if user won or lost
                     const userWon = (inTeam1 && match.team1.setsWon > match.team2.setsWon) || 
                                    (inTeam2 && match.team2.setsWon > match.team1.setsWon);
@@ -4590,7 +4591,7 @@
                 });
                 
                 // Calculate win rate
-                const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
+                const winRate = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
                 
                 // Create statistics HTML
                 statsContainer.innerHTML = `
@@ -4622,6 +4623,26 @@
                     </div>
                     
                     <div class="mt-3">
+                        <h6>Match Statistics</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                style="width: ${wins + losses > 0 ? (wins / (wins + losses) * 100) : 0}%" 
+                                aria-valuenow="${wins}" aria-valuemin="0" aria-valuemax="${wins + losses}">
+                                ${wins}
+                            </div>
+                            <div class="progress-bar bg-danger" role="progressbar" 
+                                style="width: ${wins + losses > 0 ? (losses / (wins + losses) * 100) : 0}%" 
+                                aria-valuenow="${losses}" aria-valuemin="0" aria-valuemax="${wins + losses}">
+                                ${losses}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Matches Won</small>
+                            <small class="text-muted">Matches Lost</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
                         <h6>Set Statistics</h6>
                         <div class="progress">
                             <div class="progress-bar bg-success" role="progressbar" 
@@ -4646,8 +4667,17 @@
                         <div class="d-flex flex-wrap">
                             ${recentResults.map(result => `
                                 <div class="me-2 mb-2 rounded-circle d-flex align-items-center justify-content-center" 
-                                    style="width: 30px; height: 30px; background-color: ${result === 'W' ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)'}; 
-                                    color: ${result === 'W' ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                                    style="width: 30px; height: 30px; 
+                                    background-color: ${
+                                        result === 'W' ? 'rgba(40, 167, 69, 0.2)' : 
+                                        result === 'L' ? 'rgba(220, 53, 69, 0.2)' : 
+                                        'rgba(108, 117, 125, 0.2)'
+                                    }; 
+                                    color: ${
+                                        result === 'W' ? '#28a745' : 
+                                        result === 'L' ? '#dc3545' : 
+                                        '#6c757d'
+                                    }; font-weight: bold;">
                                     ${result}
                                 </div>
                             `).join('')}
@@ -4704,8 +4734,8 @@
                     return inTeam1 || inTeam2;
                 });
                 
-                // Take up to 5 most recent matches
-                const recentMatches = userMatches.slice(0, 5);
+                // Take up to 10 most recent matches (was 5 before)
+                const recentMatches = userMatches.slice(0, 10);
                 
                 if (recentMatches.length === 0) {
                     recentMatchesContainer.innerHTML = `
