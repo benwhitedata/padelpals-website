@@ -3855,18 +3855,24 @@
                     });
                 }
                 
-                // Filter to only show completed matches where there is a clear winner
-                filteredMatches = filteredMatches.filter(match => 
-                    match.status === 'completed' && match.team1.setsWon !== match.team2.setsWon
+                // Filter to only show completed matches
+                let displayMatches = filteredMatches.filter(match => 
+                    match.status === 'completed'
+                );
+                
+                // Create a separate copy for statistics (excluding tied matches)
+                let statsMatches = displayMatches.filter(match => 
+                    match.team1.setsWon !== match.team2.setsWon
                 );
                 
                 // Sort by date (newest first)
-                filteredMatches.sort((a, b) => b.playedDate - a.playedDate);
+                displayMatches.sort((a, b) => b.playedDate - a.playedDate);
                 
-                console.log(`Final filtered matches count (custom date range): ${filteredMatches.length}`);
+                console.log(`Final filtered matches count for display (custom date range): ${displayMatches.length}`);
+                console.log(`Final filtered matches count for statistics (custom date range): ${statsMatches.length}`);
                 
                 // Update the UI with filtered matches
-                await renderMatchHistory(filteredMatches);
+                await renderMatchHistory(displayMatches, statsMatches);
                 
             } catch (error) {
                 console.error("Error filtering by custom date range:", error);
@@ -4028,18 +4034,24 @@
                     });
                 }
                 
-                // Filter to only show completed matches where there is a clear winner
-                filteredMatches = filteredMatches.filter(match => 
-                    match.status === 'completed' && match.team1.setsWon !== match.team2.setsWon
+                // Filter to only show completed matches
+                let displayMatches = filteredMatches.filter(match => 
+                    match.status === 'completed'
+                );
+                
+                // Create a separate copy for statistics (excluding tied matches)
+                let statsMatches = displayMatches.filter(match => 
+                    match.team1.setsWon !== match.team2.setsWon
                 );
                 
                 // Sort by date (newest first)
-                filteredMatches.sort((a, b) => b.playedDate - a.playedDate);
+                displayMatches.sort((a, b) => b.playedDate - a.playedDate);
                 
-                console.log(`Final filtered matches count: ${filteredMatches.length}`);
+                console.log(`Final filtered matches count for display: ${displayMatches.length}`);
+                console.log(`Final filtered matches count for statistics: ${statsMatches.length}`);
                 
                 // Update the UI with filtered matches
-                await renderMatchHistory(filteredMatches);
+                await renderMatchHistory(displayMatches, statsMatches);
             } catch (error) {
                 console.error("Error filtering matches:", error);
                 showMatchHistoryError("Error filtering matches: " + error.message);
@@ -4173,7 +4185,7 @@
         }
         
         // Function to render match history to the UI
-        async function renderMatchHistory(matches) {
+        async function renderMatchHistory(matches, statsMatches) {
             const matchesList = document.getElementById('matchesList');
             const matchesEmpty = document.getElementById('matchesEmpty');
             const matchesLoading = document.getElementById('matchesLoading');
@@ -4185,8 +4197,9 @@
                 // Show empty state
                 matchesList.style.display = 'none';
                 matchesEmpty.style.display = 'block';
-                await updateMatchStatistics([]); // Update stats with empty array
-                await updateRecentMatches([]); // Update recent matches with empty array
+                // Use statsMatches for statistics and recent match calculations
+                await updateMatchStatistics(statsMatches || []); 
+                await updateRecentMatches(statsMatches || []); 
                 return;
             }
             
@@ -4203,17 +4216,18 @@
                 matchesList.appendChild(matchCard);
             });
             
-            // Update match statistics
-            await updateMatchStatistics(matches);
+            // Update match statistics with statsMatches (excluding tied matches)
+            await updateMatchStatistics(statsMatches || []);
             
-            // Update recent matches
-            await updateRecentMatches(matches);
+            // Update recent matches with statsMatches (excluding tied matches)
+            await updateRecentMatches(statsMatches || []);
         }
         
         // Function to create a match card element
         function createMatchCard(match) {
             const team1Won = match.team1.setsWon > match.team2.setsWon;
             const team2Won = match.team2.setsWon > match.team1.setsWon;
+            const isTiedMatch = match.team1.setsWon === match.team2.setsWon;
             
             // Create card container
             const card = document.createElement('div');
@@ -4263,6 +4277,7 @@
                 <div class="match-date">
                     <span>${formattedDate}</span>
                     <span class="match-category ${matchTypeClass}">${matchTypeName}</span>
+                    ${isTiedMatch ? '<span class="badge bg-warning text-dark ms-1">Tied</span>' : ''}
                 </div>
                 <div class="match-teams">
                     <div class="team-row ${team1Won ? 'winning-team' : ''}">
@@ -4350,6 +4365,16 @@
                 
                 matchDetailCategory.textContent = matchTypeName;
                 matchDetailCategory.className = 'match-category ' + matchTypeClass;
+            }
+            
+            // Check if match is tied
+            const isTiedMatch = match.team1.setsWon === match.team2.setsWon;
+            if (isTiedMatch) {
+                // Add tied indicator next to category
+                const tiedBadge = document.createElement('span');
+                tiedBadge.className = 'badge bg-warning text-dark ms-2';
+                tiedBadge.textContent = 'Tied';
+                matchDetailCategory.parentNode.appendChild(tiedBadge);
             }
             
             // Set club info if available
