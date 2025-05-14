@@ -4954,7 +4954,7 @@
                 
                 // Create the endpoint to fetch the top 15 player ratings
                 // Using the ratings table, ordering by rating_0_10 descending, and limit to 15
-                const endpoint = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date,user_profiles(display_name,full_name)&order=rating_0_10.desc&limit=15`;
+                const endpoint = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date&order=rating_0_10.desc&limit=15`;
                 
                 const response = await fetch(endpoint, {
                     method: 'GET',
@@ -4968,6 +4968,7 @@
                 
                 const data = await response.json();
                 console.log('Player rankings data retrieved:', data.length, 'records');
+                console.log('Sample data:', data.length > 0 ? JSON.stringify(data[0], null, 2) : 'No data');
                 
                 if (data.length === 0) {
                     rankingsList.innerHTML = `
@@ -4979,14 +4980,11 @@
                     // Process the rankings data
                     let rankingsHTML = '';
                     
+                    // Create player rows
                     data.forEach((player, index) => {
-                        // Get player name - prioritize display_name from related user_profiles
-                        let playerName = 'Unknown';
-                        if (player.user_profiles && player.user_profiles.display_name) {
-                            playerName = player.user_profiles.display_name;
-                        } else if (player.user_profiles && player.user_profiles.full_name) {
-                            playerName = player.user_profiles.full_name;
-                        }
+                        // For now, just use the player ID as the name
+                        // In a real implementation, you would fetch profile details separately
+                        let playerName = player.id;
                         
                         // Format date
                         const ratingDate = new Date(player.date);
@@ -5009,6 +5007,15 @@
                     
                     // Update the rankings list
                     rankingsList.innerHTML = rankingsHTML;
+                    
+                    // Try to get user profile info for each player
+                    try {
+                        // Get player names if possible
+                        await fetchPlayerNames();
+                    } catch (nameError) {
+                        console.warn('Could not fetch player names:', nameError);
+                        // Continue with just IDs
+                    }
                 }
                 
                 // Hide loading, show table
@@ -5021,6 +5028,13 @@
                 rankingsError.style.display = 'block';
                 rankingsError.textContent = `Error loading player rankings: ${error.message}`;
             }
+        }
+        
+        // Helper function to try to fetch player names
+        async function fetchPlayerNames() {
+            // This would be implemented to get player names from profiles
+            // For now, we'll keep it simple and just use the IDs
+            console.log('Player name fetching not implemented yet');
         }
     </script>
 </body>
