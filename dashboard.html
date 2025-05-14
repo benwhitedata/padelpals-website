@@ -3834,6 +3834,32 @@
             // Start with all matches
             let filteredMatches = [...allMatches];
             
+            // First, filter out private matches that the user is not part of (regardless of filter type)
+            // This ensures private matches are only visible to participants
+            if (currentUserId) {
+                filteredMatches = filteredMatches.filter(match => {
+                    // If it's not a private match, keep it
+                    if (match.matchType !== 'private') {
+                        return true;
+                    }
+                    
+                    // If it's a private match, check if the user is a participant
+                    const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
+                        id && id.toLowerCase() === currentUserId
+                    );
+                    
+                    const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
+                        id && id.toLowerCase() === currentUserId
+                    );
+                    
+                    // Only keep private matches where the user is participating
+                    return inTeam1 || inTeam2;
+                });
+                
+                console.log(`After private match privacy filtering: ${filteredMatches.length} matches remain`);
+            }
+            
+            // Now apply the regular filters
             // Filter by owner/user
             if (filterType === 'my' && currentUserId) {
                 console.log("Filtering by user ID:", currentUserId);
@@ -3897,7 +3923,7 @@
             console.log(`Final filtered matches count: ${filteredMatches.length}`);
             
             // Update the UI with filtered matches
-            renderMatchHistory(filteredMatches);
+            await renderMatchHistory(filteredMatches);
         }
         
         // Function to render match history to the UI
