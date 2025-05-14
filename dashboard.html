@@ -4279,7 +4279,6 @@
                 <div class="match-date">
                     <span>${formattedDate}</span>
                     <span class="match-category ${matchTypeClass}">${matchTypeName}</span>
-                    ${isTiedMatch ? '<span class="badge bg-warning text-dark ms-1">Tied</span>' : ''}
                 </div>
                 <div class="match-teams">
                     <div class="team-row ${team1Won ? 'winning-team' : ''}">
@@ -4369,15 +4368,9 @@
                 matchDetailCategory.className = 'match-category ' + matchTypeClass;
             }
             
-            // Check if match is tied
+            // Check for match outcome
             const isTiedMatch = match.team1.setsWon === match.team2.setsWon;
-            if (isTiedMatch) {
-                // Add tied indicator next to category
-                const tiedBadge = document.createElement('span');
-                tiedBadge.className = 'badge bg-warning text-dark ms-2';
-                tiedBadge.textContent = 'Tied';
-                matchDetailCategory.parentNode.appendChild(tiedBadge);
-            }
+            // Tied badge removed
             
             // Set club info if available
             const clubElement = document.getElementById('matchDetailClub');
