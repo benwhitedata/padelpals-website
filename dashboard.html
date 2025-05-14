@@ -4924,6 +4924,20 @@
             }
         });
 
+        // Helper function to convert rank numbers to medal emojis
+        function getRankDisplay(rank) {
+            switch(rank) {
+                case 1:
+                    return '🥇'; // Gold medal
+                case 2:
+                    return '🥈'; // Silver medal
+                case 3:
+                    return '🥉'; // Bronze medal
+                default:
+                    return rank; // Regular number for other positions
+            }
+        }
+
         // Function to load player rankings from Supabase
         async function loadPlayerRankings() {
             const rankingsLoading = document.getElementById('playerRankingsLoading');
@@ -5012,12 +5026,15 @@
                             day: 'numeric'
                         });
                         
-                        // Add row to table
+                        // Add row to table with medal emojis and gold highlight for 1st place
+                        const rankDisplay = getRankDisplay(index + 1);
+                        const isFirstPlace = index === 0;
+                        
                         rankingsHTML += `
-                            <tr data-player-id="${player.id}">
-                                <td>${index + 1}</td>
+                            <tr data-player-id="${player.id}" ${isFirstPlace ? 'class="first-place"' : ''}>
+                                <td>${rankDisplay}</td>
                                 <td class="player-name">${playerName}</td>
-                                <td>${player.rating_0_10.toFixed(1)}</td>
+                                <td>${player.rating_0_10.toFixed(2)}</td>
                                 <td>${formattedDate}</td>
                             </tr>
                         `;
@@ -5025,6 +5042,19 @@
                     
                     // Update the rankings list
                     rankingsList.innerHTML = rankingsHTML;
+                    
+                    // Add CSS for the first place highlight
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        #playerRankingsList .first-place {
+                            background-color: rgba(212, 175, 55, 0.15);
+                            font-weight: bold;
+                        }
+                        #playerRankingsList .first-place td {
+                            color: var(--gold);
+                        }
+                    `;
+                    document.head.appendChild(style);
                     
                     // Try to get user profile info for each player
                     try {
