@@ -1080,14 +1080,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="stats-card">
-                                <h3>Box League Status</h3>
-                                <div id="boxLeagueStatus">
-                                    <!-- Box league status will be loaded here -->
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 
@@ -2749,7 +2741,7 @@
             // Set placeholder content
             document.getElementById('matchStats').innerHTML = '<p>Your match data is not available yet.</p>';
             document.getElementById('recentMatches').innerHTML = '<p>No recent matches found.</p>';
-            document.getElementById('boxLeagueStatus').innerHTML = '<p>Box league data is not available yet.</p>';
+            // Reference to boxLeagueStatus removed
             
             // Still run the connection test silently in the background 
             // to verify connectivity without showing the UI
