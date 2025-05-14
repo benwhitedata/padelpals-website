@@ -583,6 +583,10 @@
             color: white;
         }
 
+        .stats-card h3 {
+            color: white;
+        }
+
         .text-muted {
             color: rgba(255, 255, 255, 0.6) !important;
         }
@@ -3660,6 +3664,9 @@
                 document.getElementById('matchDateRangeFilter').addEventListener('change', filterMatches);
                 document.getElementById('matchSearchInput').addEventListener('input', filterMatches);
                 
+                // Ensure "My Matches" is selected by default
+                document.getElementById('matchHistoryFilter').value = 'my';
+                
                 // Load match history data
                 await loadMatchHistory();
             } catch (error) {
@@ -3802,7 +3809,7 @@
             const searchText = document.getElementById('matchSearchInput').value.toLowerCase();
             
             // Get current user ID and club ID
-            const currentUserId = supabase.auth.getUser()?.data?.user?.id;
+            const currentUserId = supabase.auth.getUser()?.data?.user?.id?.toLowerCase();
             const userClubId = userProfile?.clubs?.id;
             
             // Start with all matches
@@ -3814,12 +3821,12 @@
                 filteredMatches = filteredMatches.filter(match => {
                     // Check if user is in team1
                     const inTeam1 = match.team1.playerIds.some(id => 
-                        id.toLowerCase() === currentUserId.toLowerCase()
+                        id && id.toLowerCase() === currentUserId
                     );
                     
                     // Check if user is in team2
                     const inTeam2 = match.team2.playerIds.some(id => 
-                        id.toLowerCase() === currentUserId.toLowerCase()
+                        id && id.toLowerCase() === currentUserId
                     );
                     
                     return inTeam1 || inTeam2;
