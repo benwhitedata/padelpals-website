@@ -5072,6 +5072,19 @@
                         #playerRankingsTable td {
                             vertical-align: middle;
                         }
+                        /* Fix alignment between medals and numbers */
+                        #playerRankingsTable tbody tr td:first-child {
+                            text-align: center;
+                            width: 10%;
+                            min-width: 40px;
+                        }
+                        /* Style for numeric ranks (4-15) */
+                        #playerRankingsTable tbody tr:nth-child(n+4) td:first-child {
+                            font-size: 16px;
+                            padding-top: 12px;
+                            padding-bottom: 12px;
+                            font-weight: 500;
+                        }
                     `;
                     document.head.appendChild(style);
                     
