@@ -725,6 +725,27 @@
         #playerRankingsTable td {
             vertical-align: middle;
         }
+        /* Style for numeric ranks (4-15) */
+        #playerRankingsTable tbody tr:nth-child(n+4) td:first-child {
+            font-size: 16px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            font-weight: 500;
+        }
+        /* Ensure all rows have the same height */
+        #playerRankingsTable tbody tr {
+            height: 52px; /* Set a consistent height for all rows */
+        }
+        /* Adjust medal cells to match numeric rows height */
+        #playerRankingsTable .medal-cell {
+            font-size: 28px;
+            line-height: 1;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            vertical-align: middle;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -5101,6 +5122,20 @@
                             padding-top: 12px;
                             padding-bottom: 12px;
                             font-weight: 500;
+                        }
+                        /* Ensure all rows have the same height */
+                        #playerRankingsTable tbody tr {
+                            height: 52px; /* Set a consistent height for all rows */
+                        }
+                        /* Adjust medal cells to match numeric rows height */
+                        #playerRankingsTable .medal-cell {
+                            font-size: 28px;
+                            line-height: 1;
+                            padding-top: 12px;
+                            padding-bottom: 12px;
+                            vertical-align: middle;
+                            text-align: center;
+                            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
                         }
                     `;
                     document.head.appendChild(style);
