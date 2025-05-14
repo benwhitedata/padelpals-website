@@ -4952,9 +4952,9 @@
                     'Authorization': `Bearer ${session.access_token}`
                 };
                 
-                // Create the endpoint to fetch the top 15 player ratings
-                // Using the ratings table, ordering by rating_0_10 descending, and limit to 15
-                const endpoint = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date&order=rating_0_10.desc&limit=15`;
+                // Create the endpoint to fetch the top player ratings
+                // We'll get a larger set first since we need to filter by latest rating per player
+                const endpoint = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date&order=date.desc&limit=500`;
                 
                 const response = await fetch(endpoint, {
                     method: 'GET',
@@ -4968,7 +4968,6 @@
                 
                 const data = await response.json();
                 console.log('Player rankings data retrieved:', data.length, 'records');
-                console.log('Sample data:', data.length > 0 ? JSON.stringify(data[0], null, 2) : 'No data');
                 
                 // Process the data to get only the most recent rating for each player
                 const playerMap = new Map();
@@ -4976,10 +4975,9 @@
                 // First pass - find the latest rating for each player
                 data.forEach(record => {
                     const playerId = record.id;
-                    const recordDate = new Date(record.date);
                     
-                    if (!playerMap.has(playerId) || 
-                        recordDate > new Date(playerMap.get(playerId).date)) {
+                    // Only add if this player hasn't been seen yet (we sorted by date desc)
+                    if (!playerMap.has(playerId)) {
                         playerMap.set(playerId, record);
                     }
                 });
@@ -5003,9 +5001,8 @@
                     
                     // Create player rows
                     uniquePlayers.forEach((player, index) => {
-                        // For now, just use the player ID as the name
-                        // In a real implementation, you would fetch profile details separately
-                        let playerName = player.id;
+                        // Add a data attribute to help identify rows for name updating
+                        let playerName = 'Loading...';
                         
                         // Format date
                         const ratingDate = new Date(player.date);
@@ -5017,9 +5014,9 @@
                         
                         // Add row to table
                         rankingsHTML += `
-                            <tr>
+                            <tr data-player-id="${player.id}">
                                 <td>${index + 1}</td>
-                                <td>${playerName}</td>
+                                <td class="player-name">${playerName}</td>
                                 <td>${player.rating_0_10.toFixed(1)}</td>
                                 <td>${formattedDate}</td>
                             </tr>
@@ -5035,7 +5032,16 @@
                         await fetchPlayerNames(uniquePlayers);
                     } catch (nameError) {
                         console.warn('Could not fetch player names:', nameError);
-                        // Continue with just IDs
+                        // Show player IDs as fallback
+                        uniquePlayers.forEach(player => {
+                            const row = document.querySelector(`#playerRankingsList tr[data-player-id="${player.id}"]`);
+                            if (row) {
+                                const nameCell = row.querySelector('.player-name');
+                                if (nameCell && nameCell.textContent === 'Loading...') {
+                                    nameCell.textContent = player.id;
+                                }
+                            }
+                        });
                     }
                 }
                 
@@ -5071,10 +5077,53 @@
                 const playerIds = [...new Set(players.map(p => p.id))];
                 console.log(`Attempting to fetch names for ${playerIds.length} unique players`);
                 
+                // Try different endpoints until we find one that works
+                const endpointOptions = [
+                    // Try profiles first
+                    `${window.config.supabaseUrl}/rest/v1/profiles`,
+                    // Then user_profiles
+                    `${window.config.supabaseUrl}/rest/v1/user_profiles`,
+                    // Then users
+                    `${window.config.supabaseUrl}/rest/v1/users`
+                ];
+                
+                let successfulEndpoint = null;
+                
+                // Find an endpoint that works
+                for (const endpoint of endpointOptions) {
+                    try {
+                        const testResponse = await fetch(`${endpoint}?limit=1`, {
+                            method: 'GET', 
+                            headers
+                        });
+                        
+                        if (testResponse.ok) {
+                            console.log(`Found working endpoint: ${endpoint}`);
+                            successfulEndpoint = endpoint;
+                            break;
+                        }
+                    } catch (e) {
+                        console.warn(`Endpoint ${endpoint} not available`);
+                    }
+                }
+                
+                if (!successfulEndpoint) {
+                    console.warn('No profile endpoint available');
+                    return;
+                }
+                
                 // For each player ID, try to fetch the profile
                 for (const playerId of playerIds) {
                     try {
-                        const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/profiles?id=eq.${playerId}&select=display_name,full_name`;
+                        // Get the row element by player ID
+                        const row = document.querySelector(`#playerRankingsList tr[data-player-id="${playerId}"]`);
+                        if (!row) continue;
+                        
+                        const nameCell = row.querySelector('.player-name');
+                        if (!nameCell) continue;
+                        
+                        // Try to get the profile
+                        const profileEndpoint = `${successfulEndpoint}?id=eq.${playerId}`;
                         
                         const response = await fetch(profileEndpoint, {
                             method: 'GET',
@@ -5086,25 +5135,48 @@
                             
                             if (profileData && profileData.length > 0) {
                                 const profile = profileData[0];
-                                let displayName = profile.display_name || profile.full_name || playerId;
                                 
-                                // Update the name in the table
-                                const cells = document.querySelectorAll(`#playerRankingsList td:nth-child(2)`);
-                                cells.forEach(cell => {
-                                    if (cell.textContent === playerId) {
-                                        cell.textContent = displayName;
-                                    }
-                                });
+                                // Look for a name in the profile
+                                let displayName = profile.display_name || 
+                                                 profile.full_name || 
+                                                 profile.name ||
+                                                 profile.username ||
+                                                 profile.email ||
+                                                 playerId;
+                                
+                                // Update the cell content
+                                nameCell.textContent = displayName;
+                            } else {
+                                // No profile found, use ID
+                                nameCell.textContent = playerId;
                             }
+                        } else {
+                            nameCell.textContent = playerId;
                         }
                     } catch (e) {
                         console.warn(`Could not fetch profile for player ${playerId}:`, e);
-                        // Continue with next player
+                        // Set cell to player ID as fallback
+                        const row = document.querySelector(`#playerRankingsList tr[data-player-id="${playerId}"]`);
+                        if (row) {
+                            const nameCell = row.querySelector('.player-name');
+                            if (nameCell) {
+                                nameCell.textContent = playerId;
+                            }
+                        }
                     }
                 }
             } catch (error) {
                 console.warn('Error fetching player names:', error);
-                // Don't rethrow - we want to continue even if names can't be fetched
+                // Update any remaining "Loading..." cells to show IDs
+                document.querySelectorAll('#playerRankingsList .player-name').forEach(cell => {
+                    if (cell.textContent === 'Loading...') {
+                        const row = cell.closest('tr');
+                        if (row) {
+                            const playerId = row.getAttribute('data-player-id');
+                            cell.textContent = playerId || 'Unknown';
+                        }
+                    }
+                });
             }
         }
     </script>
