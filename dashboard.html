@@ -702,6 +702,15 @@
         .date-picker::-webkit-calendar-picker-indicator:hover {
             opacity: 1;
         }
+
+        /* Custom date range selector */
+        #customDateSelector label {
+            color: white;
+        }
+
+        #startDatePicker, #endDatePicker {
+            color: white;
+        }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -1065,7 +1074,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="stats-card">
-                                <h3>Recent Matches</h3>
+                                <h3>Recent Completed Matches</h3>
                                 <div id="recentMatches">
                                     <!-- Recent matches will be loaded here -->
                                 </div>
@@ -4643,6 +4652,26 @@
                                 <h5>${highestWinStreak}</h5>
                                 <small>Best Run</small>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Match Statistics</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                style="width: ${wins + losses > 0 ? (wins / (wins + losses) * 100) : 0}%" 
+                                aria-valuenow="${wins}" aria-valuemin="0" aria-valuemax="${wins + losses}">
+                                ${wins}
+                            </div>
+                            <div class="progress-bar bg-danger" role="progressbar" 
+                                style="width: ${wins + losses > 0 ? (losses / (wins + losses) * 100) : 0}%" 
+                                aria-valuenow="${losses}" aria-valuemin="0" aria-valuemax="${wins + losses}">
+                                ${losses}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Matches Won</small>
+                            <small class="text-muted">Matches Lost</small>
                         </div>
                     </div>
                     
