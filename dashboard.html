@@ -3778,10 +3778,17 @@
                 const filterType = document.getElementById('matchHistoryFilter').value;
                 const searchText = document.getElementById('matchSearchInput').value.toLowerCase();
                 
-                // Get current user ID from the authenticated session
-                const { data: { user } } = await supabase.auth.getUser();
-                const currentUserId = user ? user.id.toLowerCase() : null;
+                // Get current user ID from the authenticated session using more reliable method
+                const auth = await supabase.auth.getSession();
+                if (!auth.data?.session?.user) {
+                    console.warn("No authenticated user found for custom date filtering");
+                    throw new Error("Authentication required to filter matches");
+                }
+                
+                const currentUserId = auth.data.session.user.id.toLowerCase();
                 const userClubId = userProfile?.clubs?.id;
+                
+                console.log("Current user ID for custom date filtering:", currentUserId);
                 
                 // Start with all matches
                 let filteredMatches = [...allMatches];
@@ -3863,6 +3870,7 @@
                 
             } catch (error) {
                 console.error("Error filtering by custom date range:", error);
+                showMatchHistoryError("Error filtering by date range: " + error.message);
             }
         }
     </script>
@@ -3878,6 +3886,27 @@
             try {
                 console.log("Initializing match history");
                 
+                // First check if authentication is ready
+                const { data, error } = await supabase.auth.getSession();
+                if (error || !data.session) {
+                    console.warn("Authentication not ready yet:", error?.message || "No session found");
+                    
+                    // Show message that we're waiting for authentication
+                    document.getElementById('matchesLoading').innerHTML = `
+                        <div class="d-flex flex-column align-items-center py-3">
+                            <div class="spinner-border text-primary mb-2" role="status"></div>
+                            <p>Waiting for authentication...</p>
+                            <p class="text-muted small">Please wait a moment or refresh the page if this persists.</p>
+                        </div>
+                    `;
+                    
+                    // Try again in 1 second
+                    setTimeout(() => {
+                        initializeMatchHistory();
+                    }, 1000);
+                    return;
+                }
+                
                 // Set up event listeners for filters
                 document.getElementById('matchHistoryFilter').addEventListener('change', () => filterMatches());
                 document.getElementById('matchDateRangeFilter').addEventListener('change', () => filterMatches());
@@ -3891,6 +3920,129 @@
             } catch (error) {
                 console.error("Error initializing match history:", error);
                 showMatchHistoryError("Failed to initialize match history: " + error.message);
+            }
+        }
+        
+        // Function to filter matches based on selected criteria
+        async function filterMatches() {
+            try {
+                console.log("Filtering matches with current criteria");
+                
+                // Get filter values
+                const filterType = document.getElementById('matchHistoryFilter').value;
+                const dateRangeFilter = document.getElementById('matchDateRangeFilter').value;
+                const searchText = document.getElementById('matchSearchInput').value.toLowerCase();
+                
+                console.log("Filter type:", filterType, "Date range:", dateRangeFilter);
+                
+                // Get current user ID and club ID from the authenticated session
+                const auth = await supabase.auth.getSession();
+                if (!auth.data?.session?.user) {
+                    console.warn("No authenticated user found for filtering");
+                    throw new Error("Authentication required to filter matches");
+                }
+                
+                const currentUserId = auth.data.session.user.id.toLowerCase();
+                const userClubId = userProfile?.clubs?.id;
+                
+                console.log("Current user ID for filtering:", currentUserId);
+                
+                // Start with all matches
+                let filteredMatches = [...allMatches];
+                
+                // First, filter out private matches that the user is not part of (regardless of filter type)
+                // This ensures private matches are only visible to participants
+                if (currentUserId) {
+                    filteredMatches = filteredMatches.filter(match => {
+                        // If it's not a private match, keep it
+                        if (match.matchType !== 'private') {
+                            return true;
+                        }
+                        
+                        // If it's a private match, check if the user is a participant
+                        const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
+                            id && id.toLowerCase() === currentUserId
+                        );
+                        
+                        const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
+                            id && id.toLowerCase() === currentUserId
+                        );
+                        
+                        // Only keep private matches where the user is participating
+                        return inTeam1 || inTeam2;
+                    });
+                    
+                    console.log(`After private match privacy filtering: ${filteredMatches.length} matches remain`);
+                }
+                
+                // Now apply the regular filters
+                // Filter by owner/user
+                if (filterType === 'my' && currentUserId) {
+                    console.log("Filtering by user ID:", currentUserId);
+                    filteredMatches = filteredMatches.filter(match => {
+                        // Check if user is in team1
+                        const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
+                            id && id.toLowerCase() === currentUserId
+                        );
+                        
+                        // Check if user is in team2
+                        const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
+                            id && id.toLowerCase() === currentUserId
+                        );
+                        
+                        const isUserMatch = inTeam1 || inTeam2;
+                        console.log(`Match ${match.id}: User in Team1: ${inTeam1}, User in Team2: ${inTeam2}, Is User Match: ${isUserMatch}`);
+                        return isUserMatch;
+                    });
+                    
+                    console.log(`After user filtering: ${filteredMatches.length} matches remain`);
+                } else if (filterType === 'club' && userClubId) {
+                    console.log("Filtering by club ID:", userClubId);
+                    filteredMatches = filteredMatches.filter(match => 
+                        match.clubId === userClubId
+                    );
+                }
+                
+                // Filter by date range
+                if (dateRangeFilter !== 'all') {
+                    const daysToLookBack = parseInt(dateRangeFilter);
+                    const cutoffDate = new Date();
+                    cutoffDate.setDate(cutoffDate.getDate() - daysToLookBack);
+                    
+                    console.log(`Filtering matches played after ${cutoffDate.toISOString()}`);
+                    
+                    filteredMatches = filteredMatches.filter(match => 
+                        match.playedDate >= cutoffDate
+                    );
+                }
+                
+                // Filter by search text
+                if (searchText) {
+                    console.log("Filtering by search text:", searchText);
+                    filteredMatches = filteredMatches.filter(match => {
+                        // Check if any player name contains the search text
+                        const team1Players = match.team1.players.join(' ').toLowerCase();
+                        const team2Players = match.team2.players.join(' ').toLowerCase();
+                        
+                        return team1Players.includes(searchText) || team2Players.includes(searchText);
+                    });
+                }
+                
+                // Filter to only show completed matches
+                filteredMatches = filteredMatches.filter(match => 
+                    match.status === 'completed'
+                );
+                
+                // Sort by date (newest first)
+                filteredMatches.sort((a, b) => b.playedDate - a.playedDate);
+                
+                console.log(`Final filtered matches count: ${filteredMatches.length}`);
+                
+                // Update the UI with filtered matches
+                await renderMatchHistory(filteredMatches);
+            } catch (error) {
+                console.error("Error filtering matches:", error);
+                showMatchHistoryError("Error filtering matches: " + error.message);
             }
         }
         
@@ -4018,119 +4170,6 @@
                 console.error("Error loading match history:", error);
                 showMatchHistoryError("Failed to load matches: " + error.message);
             }
-        }
-        
-        // Function to filter matches based on selected filters
-        async function filterMatches() {
-            console.log("Filtering matches with current criteria");
-            
-            // Get filter values
-            const filterType = document.getElementById('matchHistoryFilter').value;
-            const dateRangeFilter = document.getElementById('matchDateRangeFilter').value;
-            const searchText = document.getElementById('matchSearchInput').value.toLowerCase();
-            
-            console.log("Filter type:", filterType, "Date range:", dateRangeFilter);
-            
-            // Get current user ID and club ID from the authenticated session
-            const { data: { user } } = await supabase.auth.getUser();
-            const currentUserId = user ? user.id.toLowerCase() : null;
-            const userClubId = userProfile?.clubs?.id;
-            
-            console.log("Current user ID for filtering:", currentUserId);
-            
-            // Start with all matches
-            let filteredMatches = [...allMatches];
-            
-            // First, filter out private matches that the user is not part of (regardless of filter type)
-            // This ensures private matches are only visible to participants
-            if (currentUserId) {
-                filteredMatches = filteredMatches.filter(match => {
-                    // If it's not a private match, keep it
-                    if (match.matchType !== 'private') {
-                        return true;
-                    }
-                    
-                    // If it's a private match, check if the user is a participant
-                    const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
-                        id && id.toLowerCase() === currentUserId
-                    );
-                    
-                    const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
-                        id && id.toLowerCase() === currentUserId
-                    );
-                    
-                    // Only keep private matches where the user is participating
-                    return inTeam1 || inTeam2;
-                });
-                
-                console.log(`After private match privacy filtering: ${filteredMatches.length} matches remain`);
-            }
-            
-            // Now apply the regular filters
-            // Filter by owner/user
-            if (filterType === 'my' && currentUserId) {
-                console.log("Filtering by user ID:", currentUserId);
-                filteredMatches = filteredMatches.filter(match => {
-                    // Check if user is in team1
-                    const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
-                        id && id.toLowerCase() === currentUserId
-                    );
-                    
-                    // Check if user is in team2
-                    const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
-                        id && id.toLowerCase() === currentUserId
-                    );
-                    
-                    const isUserMatch = inTeam1 || inTeam2;
-                    console.log(`Match ${match.id}: User in Team1: ${inTeam1}, User in Team2: ${inTeam2}, Is User Match: ${isUserMatch}`);
-                    return isUserMatch;
-                });
-                
-                console.log(`After user filtering: ${filteredMatches.length} matches remain`);
-            } else if (filterType === 'club' && userClubId) {
-                console.log("Filtering by club ID:", userClubId);
-                filteredMatches = filteredMatches.filter(match => 
-                    match.clubId === userClubId
-                );
-            }
-            
-            // Filter by date range
-            if (dateRangeFilter !== 'all') {
-                const daysToLookBack = parseInt(dateRangeFilter);
-                const cutoffDate = new Date();
-                cutoffDate.setDate(cutoffDate.getDate() - daysToLookBack);
-                
-                console.log(`Filtering matches played after ${cutoffDate.toISOString()}`);
-                
-                filteredMatches = filteredMatches.filter(match => 
-                    match.playedDate >= cutoffDate
-                );
-            }
-            
-            // Filter by search text
-            if (searchText) {
-                console.log("Filtering by search text:", searchText);
-                filteredMatches = filteredMatches.filter(match => {
-                    // Check if any player name contains the search text
-                    const team1Players = match.team1.players.join(' ').toLowerCase();
-                    const team2Players = match.team2.players.join(' ').toLowerCase();
-                    
-                    return team1Players.includes(searchText) || team2Players.includes(searchText);
-                });
-            }
-            
-            // Filter to only show completed matches
-            filteredMatches = filteredMatches.filter(match => 
-                match.status === 'completed'
-            );
-            
-            // Sort by date (newest first)
-            filteredMatches.sort((a, b) => b.playedDate - a.playedDate);
-            
-            console.log(`Final filtered matches count: ${filteredMatches.length}`);
-            
-            // Update the UI with filtered matches
-            await renderMatchHistory(filteredMatches);
         }
         
         // Function to render match history to the UI
@@ -4469,10 +4508,19 @@
             const statsContainer = document.getElementById('matchStats');
             
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                const currentUserId = user ? user.id.toLowerCase() : null;
+                // Get current user using supabase.auth.getSession() for better error handling
+                const auth = await supabase.auth.getSession();
+                if (!auth.data?.session?.user) {
+                    console.warn("No authenticated user found for match statistics");
+                    statsContainer.innerHTML = `
+                        <p class="text-center py-3">Please sign in to view match statistics.</p>
+                    `;
+                    return;
+                }
                 
-                if (!currentUserId || matches.length === 0) {
+                const currentUserId = auth.data.session.user.id.toLowerCase();
+                
+                if (matches.length === 0) {
                     statsContainer.innerHTML = `
                         <p class="text-center py-3">No match statistics available yet.</p>
                     `;
@@ -4609,101 +4657,118 @@
             } catch (error) {
                 console.error('Error updating match statistics:', error);
                 statsContainer.innerHTML = `
-                    <p class="text-center py-3">Error loading match statistics.</p>
+                    <p class="text-center py-3">Error loading match statistics: ${error.message}</p>
                 `;
             }
         }
         
         // Function to update the recent matches section
-        function updateRecentMatches(matches) {
+        async function updateRecentMatches(matches) {
             const recentMatchesContainer = document.getElementById('recentMatches');
-            const { data: { user } } = supabase.auth.getUser();
-            const currentUserId = user ? user.id.toLowerCase() : null;
             
-            if (!matches || matches.length === 0) {
-                recentMatchesContainer.innerHTML = `
-                    <p class="text-center py-3">No recent matches found.</p>
-                `;
-                return;
-            }
-            
-            // Sort matches by date (newest first)
-            const sortedMatches = [...matches].sort((a, b) => b.playedDate - a.playedDate);
-            
-            // Get matches where the user participated
-            const userMatches = sortedMatches.filter(match => {
-                if (!currentUserId) return false;
+            try {
+                // Get current user using supabase.auth.getSession() for better error handling
+                const auth = await supabase.auth.getSession();
+                if (!auth.data?.session?.user) {
+                    console.warn("No authenticated user found for recent matches");
+                    recentMatchesContainer.innerHTML = `
+                        <p class="text-center py-3">Please sign in to view recent matches.</p>
+                    `;
+                    return;
+                }
                 
-                const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
-                    id && id.toLowerCase() === currentUserId
-                );
+                const currentUserId = auth.data.session.user.id.toLowerCase();
                 
-                const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
-                    id && id.toLowerCase() === currentUserId
-                );
+                if (!matches || matches.length === 0) {
+                    recentMatchesContainer.innerHTML = `
+                        <p class="text-center py-3">No recent matches found.</p>
+                    `;
+                    return;
+                }
                 
-                return inTeam1 || inTeam2;
-            });
-            
-            // Take up to 5 most recent matches
-            const recentMatches = userMatches.slice(0, 5);
-            
-            if (recentMatches.length === 0) {
-                recentMatchesContainer.innerHTML = `
-                    <p class="text-center py-3">No recent matches found.</p>
-                `;
-                return;
-            }
-            
-            // Generate HTML for recent matches
-            let recentMatchesHTML = '';
-            
-            recentMatches.forEach(match => {
-                // Determine if user was in team 1 or 2
-                const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
-                    id && id.toLowerCase() === currentUserId
-                );
+                // Sort matches by date (newest first)
+                const sortedMatches = [...matches].sort((a, b) => b.playedDate - a.playedDate);
                 
-                // Determine if user won
-                const userWon = (inTeam1 && match.team1.setsWon > match.team2.setsWon) || 
-                               (!inTeam1 && match.team2.setsWon > match.team1.setsWon);
-                
-                // Format the date
-                const matchDate = new Date(match.playedDate);
-                const dateString = matchDate.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric'
+                // Get matches where the user participated
+                const userMatches = sortedMatches.filter(match => {
+                    if (!currentUserId) return false;
+                    
+                    const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
+                        id && id.toLowerCase() === currentUserId
+                    );
+                    
+                    const inTeam2 = match.team2.playerIds && match.team2.playerIds.some(id => 
+                        id && id.toLowerCase() === currentUserId
+                    );
+                    
+                    return inTeam1 || inTeam2;
                 });
                 
-                // Get opponent name(s)
-                const opponentTeam = inTeam1 ? match.team2 : match.team1;
-                const opponentNames = opponentTeam.players.join(' & ');
+                // Take up to 5 most recent matches
+                const recentMatches = userMatches.slice(0, 5);
                 
-                // Result text
-                const resultText = userWon ? "Won" : "Lost";
-                const resultClass = userWon ? "text-success" : "text-danger";
+                if (recentMatches.length === 0) {
+                    recentMatchesContainer.innerHTML = `
+                        <p class="text-center py-3">No recent matches found.</p>
+                    `;
+                    return;
+                }
                 
-                recentMatchesHTML += `
-                    <div class="d-flex align-items-center mb-2 p-2 rounded" style="background-color: rgba(255, 255, 255, 0.05);">
-                        <div class="me-3 d-flex flex-column align-items-center">
-                            <span class="badge ${userWon ? 'bg-success' : 'bg-danger'}">${resultText}</span>
-                            <small class="text-muted">${dateString}</small>
+                // Generate HTML for recent matches
+                let recentMatchesHTML = '';
+                
+                recentMatches.forEach(match => {
+                    // Determine if user was in team 1 or 2
+                    const inTeam1 = match.team1.playerIds && match.team1.playerIds.some(id => 
+                        id && id.toLowerCase() === currentUserId
+                    );
+                    
+                    // Determine if user won
+                    const userWon = (inTeam1 && match.team1.setsWon > match.team2.setsWon) || 
+                                   (!inTeam1 && match.team2.setsWon > match.team1.setsWon);
+                    
+                    // Format the date
+                    const matchDate = new Date(match.playedDate);
+                    const dateString = matchDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    
+                    // Get opponent name(s)
+                    const opponentTeam = inTeam1 ? match.team2 : match.team1;
+                    const opponentNames = opponentTeam.players.join(' & ');
+                    
+                    // Result text
+                    const resultText = userWon ? "Won" : "Lost";
+                    const resultClass = userWon ? "text-success" : "text-danger";
+                    
+                    recentMatchesHTML += `
+                        <div class="d-flex align-items-center mb-2 p-2 rounded" style="background-color: rgba(255, 255, 255, 0.05);">
+                            <div class="me-3 d-flex flex-column align-items-center">
+                                <span class="badge ${userWon ? 'bg-success' : 'bg-danger'}">${resultText}</span>
+                                <small class="text-muted">${dateString}</small>
+                            </div>
+                            <div class="flex-grow-1">
+                                <small class="text-muted">vs</small>
+                                <span class="ms-1">${opponentNames}</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="${resultClass} fw-bold">
+                                    ${inTeam1 ? `${match.team1.setsWon}-${match.team2.setsWon}` : `${match.team2.setsWon}-${match.team1.setsWon}`}
+                                </span>
+                            </div>
                         </div>
-                        <div class="flex-grow-1">
-                            <small class="text-muted">vs</small>
-                            <span class="ms-1">${opponentNames}</span>
-                        </div>
-                        <div class="text-end">
-                            <span class="${resultClass} fw-bold">
-                                ${inTeam1 ? `${match.team1.setsWon}-${match.team2.setsWon}` : `${match.team2.setsWon}-${match.team1.setsWon}`}
-                            </span>
-                        </div>
-                    </div>
+                    `;
+                });
+                
+                // Update container
+                recentMatchesContainer.innerHTML = recentMatchesHTML;
+            } catch (error) {
+                console.error('Error updating recent matches:', error);
+                recentMatchesContainer.innerHTML = `
+                    <p class="text-center py-3">Error loading recent matches: ${error.message}</p>
                 `;
-            });
-            
-            // Update container
-            recentMatchesContainer.innerHTML = recentMatchesHTML;
+            }
         }
     </script>
     
