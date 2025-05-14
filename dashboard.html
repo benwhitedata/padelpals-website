@@ -439,6 +439,161 @@
             margin-right: 2px;
         }
 
+        /* Match History Styles */
+        .match-history-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid var(--gold);
+            padding: 15px;
+            margin-bottom: 16px;
+            color: white;
+        }
+
+        .match-history-card .match-date {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .match-history-card .match-teams {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .match-history-card .team-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .match-history-card .team-players {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .match-history-card .team-score {
+            display: flex;
+            gap: 6px;
+            min-width: 100px;
+            justify-content: flex-end;
+        }
+
+        .match-history-card .set-score {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            text-align: center;
+            line-height: 24px;
+        }
+
+        .match-history-card .winning-team {
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .match-history-card .set-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 10px 0;
+        }
+
+        .match-history-card .match-category {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            background-color: rgba(26, 34, 56, 0.5);
+        }
+
+        .match-history-card .match-type-private {
+            background-color: rgba(108, 117, 125, 0.2);
+        }
+
+        .match-history-card .match-type-open {
+            background-color: rgba(0, 123, 255, 0.2);
+        }
+
+        .match-history-card .match-type-competitive {
+            background-color: rgba(40, 167, 69, 0.2);
+        }
+
+        .match-history-card .match-type-boxleague {
+            background-color: rgba(255, 193, 7, 0.2);
+        }
+
+        #matchHistoryContent {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .match-filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .match-filter-pill {
+            padding: 5px 12px;
+            border-radius: 16px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .match-filter-pill.active {
+            background-color: var(--gold);
+            color: var(--dark-blue);
+        }
+
+        .match-filter-pill i {
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+            .match-history-card .team-score {
+                min-width: 80px;
+            }
+        }
+        
+        /* Match Detail Modal Styles */
+        .border-gold {
+            border: 1px solid var(--gold);
+        }
+        
+        .modal-content.bg-dark {
+            background-color: var(--dark-blue) !important;
+        }
+        
+        .modal-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-footer {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .winning-score {
+            color: var(--gold);
+            font-weight: bold;
+        }
+        
+        .table-dark {
+            background-color: transparent;
+            color: white;
+        }
+        
+        .table-dark th, .table-dark td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -722,6 +877,54 @@
                 <!-- Stats Tab -->
                 <div class="tab-pane fade" id="stats" role="tabpanel" aria-labelledby="stats-tab">
                     <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="stats-card">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h3>Match History</h3>
+                                    <div class="d-flex">
+                                        <select id="matchHistoryFilter" class="form-select me-2">
+                                            <option value="all">All Matches</option>
+                                            <option value="my" selected>My Matches</option>
+                                            <option value="club">My Club</option>
+                                        </select>
+                                        <select id="matchDateRangeFilter" class="form-select">
+                                            <option value="30">Last 30 Days</option>
+                                            <option value="90">Last 90 Days</option>
+                                            <option value="180">Last 6 Months</option>
+                                            <option value="365">Last Year</option>
+                                            <option value="all">All Time</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Searchbar for matches -->
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" id="matchSearchInput" class="form-control" placeholder="Search players...">
+                                </div>
+                                
+                                <!-- Match history content -->
+                                <div id="matchHistoryContent">
+                                    <div id="matchesLoading" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading matches...</span>
+                                        </div>
+                                        <p class="mt-2">Loading your match history...</p>
+                                    </div>
+                                    
+                                    <div id="matchesEmpty" class="text-center py-4" style="display: none;">
+                                        <i class="fas fa-trophy fa-3x mb-3 text-secondary"></i>
+                                        <h4>No Matches Found</h4>
+                                        <p class="text-muted">You don't have any recorded matches yet.</p>
+                                    </div>
+                                    
+                                    <div id="matchesList" style="display: none;">
+                                        <!-- Match results will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="col-md-4">
                             <div class="stats-card">
                                 <h3>Match Statistics</h3>
@@ -3372,5 +3575,863 @@
         }
 
     </script>
+    
+    <!-- JavaScript for Match History -->
+    <script>
+        // Store match data globally for filtering
+        let allMatches = [];
+        let userProfile = null;
+        
+        // Function to initialize match history
+        async function initializeMatchHistory() {
+            try {
+                console.log("Initializing match history");
+                
+                // Set up event listeners for filters
+                document.getElementById('matchHistoryFilter').addEventListener('change', filterMatches);
+                document.getElementById('matchDateRangeFilter').addEventListener('change', filterMatches);
+                document.getElementById('matchSearchInput').addEventListener('input', filterMatches);
+                
+                // Load match history data
+                await loadMatchHistory();
+            } catch (error) {
+                console.error("Error initializing match history:", error);
+                showMatchHistoryError("Failed to initialize match history: " + error.message);
+            }
+        }
+        
+        // Function to load match history from Supabase
+        async function loadMatchHistory() {
+            try {
+                // Show loading indicator
+                document.getElementById('matchesLoading').style.display = 'block';
+                document.getElementById('matchesEmpty').style.display = 'none';
+                document.getElementById('matchesList').style.display = 'none';
+                
+                // Get session and access token
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    throw new Error('No active session found');
+                }
+                
+                const userId = session.user.id;
+                
+                // First get the user's profile to have access to their club ID
+                try {
+                    // Create the combined profile endpoint that includes clubs and ratings
+                    const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*)`;
+                    
+                    // Set up headers for the request
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'apikey': window.config.supabaseKey,
+                        'Authorization': `Bearer ${session.access_token}`
+                    };
+                    
+                    // Make the request
+                    const response = await fetch(profileEndpoint, {
+                        method: 'GET',
+                        headers: headers
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Profile fetch failed with status: ${response.status}`);
+                    }
+                    
+                    const profileData = await response.json();
+                    if (profileData && profileData.length > 0) {
+                        userProfile = profileData[0];
+                        console.log("User profile loaded:", userProfile);
+                    }
+                } catch (error) {
+                    console.warn("Could not load user profile:", error);
+                    // Continue anyway, we'll just not have the club filter available
+                }
+                
+                // Query for matches
+                // This query structure is similar to the one in the iOS app
+                // First we'll get all matches (both completed and pending)
+                const { data: matches, error } = await supabase
+                    .from('matches')
+                    .select(`
+                        id,
+                        created_at,
+                        played_at,
+                        team1_players,
+                        team2_players,
+                        team1_player_ids,
+                        team2_player_ids,
+                        team1_sets,
+                        team2_sets,
+                        team1_sets_won,
+                        team2_sets_won,
+                        match_type,
+                        status,
+                        submitter_id,
+                        club_id,
+                        match_category
+                    `)
+                    .order('played_at', { ascending: false });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                console.log(`Loaded ${matches.length} matches from Supabase`);
+                
+                // Process the matches to be in a similar format to the iOS app
+                allMatches = matches.map(match => {
+                    const playedDate = new Date(match.played_at);
+                    
+                    return {
+                        id: match.id,
+                        playedDate: playedDate,
+                        createdAt: new Date(match.created_at),
+                        team1: {
+                            players: match.team1_players || [],
+                            playerIds: match.team1_player_ids || [],
+                            setScores: match.team1_sets || [],
+                            setsWon: match.team1_sets_won || 0
+                        },
+                        team2: {
+                            players: match.team2_players || [],
+                            playerIds: match.team2_player_ids || [],
+                            setScores: match.team2_sets || [],
+                            setsWon: match.team2_sets_won || 0
+                        },
+                        status: match.status === 'completed' ? 'completed' : 'pending',
+                        matchType: match.match_type || 'open',
+                        submitterId: match.submitter_id,
+                        clubId: match.club_id,
+                        matchCategory: match.match_category || 'regular'
+                    };
+                });
+                
+                // Apply filters to matches
+                filterMatches();
+                
+            } catch (error) {
+                console.error("Error loading match history:", error);
+                showMatchHistoryError("Failed to load matches: " + error.message);
+            }
+        }
+        
+        // Function to filter matches based on selected filters
+        function filterMatches() {
+            console.log("Filtering matches with current criteria");
+            
+            // Get filter values
+            const filterType = document.getElementById('matchHistoryFilter').value;
+            const dateRangeFilter = document.getElementById('matchDateRangeFilter').value;
+            const searchText = document.getElementById('matchSearchInput').value.toLowerCase();
+            
+            // Get current user ID and club ID
+            const currentUserId = supabase.auth.getUser()?.data?.user?.id;
+            const userClubId = userProfile?.clubs?.id;
+            
+            // Start with all matches
+            let filteredMatches = [...allMatches];
+            
+            // Filter by owner
+            if (filterType === 'my' && currentUserId) {
+                console.log("Filtering by user ID:", currentUserId);
+                filteredMatches = filteredMatches.filter(match => {
+                    // Check if user is in team1
+                    const inTeam1 = match.team1.playerIds.some(id => 
+                        id.toLowerCase() === currentUserId.toLowerCase()
+                    );
+                    
+                    // Check if user is in team2
+                    const inTeam2 = match.team2.playerIds.some(id => 
+                        id.toLowerCase() === currentUserId.toLowerCase()
+                    );
+                    
+                    return inTeam1 || inTeam2;
+                });
+            } else if (filterType === 'club' && userClubId) {
+                console.log("Filtering by club ID:", userClubId);
+                filteredMatches = filteredMatches.filter(match => 
+                    match.clubId === userClubId
+                );
+            }
+            
+            // Filter by date range
+            if (dateRangeFilter !== 'all') {
+                const daysToLookBack = parseInt(dateRangeFilter);
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - daysToLookBack);
+                
+                console.log(`Filtering matches played after ${cutoffDate.toISOString()}`);
+                
+                filteredMatches = filteredMatches.filter(match => 
+                    match.playedDate >= cutoffDate
+                );
+            }
+            
+            // Filter by search text
+            if (searchText) {
+                console.log("Filtering by search text:", searchText);
+                filteredMatches = filteredMatches.filter(match => {
+                    // Check if any player name contains the search text
+                    const team1Players = match.team1.players.join(' ').toLowerCase();
+                    const team2Players = match.team2.players.join(' ').toLowerCase();
+                    
+                    return team1Players.includes(searchText) || team2Players.includes(searchText);
+                });
+            }
+            
+            // Filter to only show completed matches
+            filteredMatches = filteredMatches.filter(match => 
+                match.status === 'completed'
+            );
+            
+            // Sort by date (newest first)
+            filteredMatches.sort((a, b) => b.playedDate - a.playedDate);
+            
+            // Update the UI with filtered matches
+            renderMatchHistory(filteredMatches);
+        }
+        
+        // Function to render match history to the UI
+        function renderMatchHistory(matches) {
+            const matchesList = document.getElementById('matchesList');
+            const matchesEmpty = document.getElementById('matchesEmpty');
+            const matchesLoading = document.getElementById('matchesLoading');
+            
+            // Hide loading indicator
+            matchesLoading.style.display = 'none';
+            
+            if (matches.length === 0) {
+                // Show empty state
+                matchesList.style.display = 'none';
+                matchesEmpty.style.display = 'block';
+                updateMatchStatistics([]); // Update stats with empty array
+                updateRecentMatches([]); // Update recent matches with empty array
+                return;
+            }
+            
+            // Show matches list
+            matchesList.style.display = 'block';
+            matchesEmpty.style.display = 'none';
+            
+            // Clear previous content
+            matchesList.innerHTML = '';
+            
+            // Render each match
+            matches.forEach(match => {
+                const matchCard = createMatchCard(match);
+                matchesList.appendChild(matchCard);
+            });
+            
+            // Update match statistics
+            updateMatchStatistics(matches);
+            
+            // Update recent matches
+            updateRecentMatches(matches);
+        }
+        
+        // Function to create a match card element
+        function createMatchCard(match) {
+            const team1Won = match.team1.setsWon > match.team2.setsWon;
+            const team2Won = match.team2.setsWon > match.team1.setsWon;
+            
+            // Create card container
+            const card = document.createElement('div');
+            card.className = 'match-history-card';
+            card.setAttribute('data-match-id', match.id);
+            
+            // Format date
+            const dateOptions = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const formattedDate = match.playedDate.toLocaleDateString('en-US', dateOptions);
+            
+            // Create match header with date and category
+            let matchTypeClass = '';
+            let matchTypeName = '';
+            
+            if (match.matchCategory === 'BoxLeague') {
+                matchTypeClass = 'match-type-boxleague';
+                matchTypeName = 'Box League';
+            } else {
+                // Determine match type label and class
+                switch (match.matchType) {
+                    case 'private':
+                        matchTypeClass = 'match-type-private';
+                        matchTypeName = 'Private';
+                        break;
+                    case 'open':
+                        matchTypeClass = 'match-type-open';
+                        matchTypeName = 'Open';
+                        break;
+                    case 'competitive':
+                        matchTypeClass = 'match-type-competitive';
+                        matchTypeName = 'Competitive';
+                        break;
+                    default:
+                        matchTypeClass = 'match-type-open';
+                        matchTypeName = 'Open';
+                }
+            }
+            
+            // Create match date header
+            card.innerHTML = `
+                <div class="match-date">
+                    <span>${formattedDate}</span>
+                    <span class="match-category ${matchTypeClass}">${matchTypeName}</span>
+                </div>
+                <div class="match-teams">
+                    <div class="team-row ${team1Won ? 'winning-team' : ''}">
+                        <div class="team-players">${match.team1.players.join(' & ')}</div>
+                        <div class="team-score">
+                            ${createSetScoresHtml(match.team1.setScores)}
+                        </div>
+                    </div>
+                    <div class="set-divider"></div>
+                    <div class="team-row ${team2Won ? 'winning-team' : ''}">
+                        <div class="team-players">${match.team2.players.join(' & ')}</div>
+                        <div class="team-score">
+                            ${createSetScoresHtml(match.team2.setScores)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add click event to show match details
+            card.addEventListener('click', () => {
+                showMatchDetails(match);
+            });
+            
+            return card;
+        }
+        
+        // Helper function to create set scores HTML
+        function createSetScoresHtml(setScores) {
+            if (!setScores || !Array.isArray(setScores) || setScores.length === 0) {
+                return '';
+            }
+            
+            return setScores.map(score => `
+                <span class="set-score">${score}</span>
+            `).join('');
+        }
+        
+        // Function to show match details
+        function showMatchDetails(match) {
+            console.log("Showing details for match:", match);
+            
+            // Get a reference to the modal
+            const modal = new bootstrap.Modal(document.getElementById('matchDetailModal'));
+            
+            // Format date
+            const dateOptions = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const formattedDate = match.playedDate.toLocaleDateString('en-US', dateOptions);
+            
+            // Set match date
+            document.getElementById('matchDetailDate').textContent = formattedDate;
+            
+            // Set match category/type
+            const matchDetailCategory = document.getElementById('matchDetailCategory');
+            if (match.matchCategory === 'BoxLeague') {
+                matchDetailCategory.textContent = 'Box League';
+                matchDetailCategory.className = 'match-category match-type-boxleague';
+            } else {
+                // Determine match type name and class
+                let matchTypeClass = '';
+                let matchTypeName = '';
+                
+                switch (match.matchType) {
+                    case 'private':
+                        matchTypeClass = 'match-type-private';
+                        matchTypeName = 'Private';
+                        break;
+                    case 'open':
+                        matchTypeClass = 'match-type-open';
+                        matchTypeName = 'Open';
+                        break;
+                    case 'competitive':
+                        matchTypeClass = 'match-type-competitive';
+                        matchTypeName = 'Competitive';
+                        break;
+                    default:
+                        matchTypeClass = 'match-type-open';
+                        matchTypeName = 'Open';
+                }
+                
+                matchDetailCategory.textContent = matchTypeName;
+                matchDetailCategory.className = 'match-category ' + matchTypeClass;
+            }
+            
+            // Set club info if available
+            const clubElement = document.getElementById('matchDetailClub');
+            if (match.clubId) {
+                // Try to resolve club name (this would be better if we fetched club details)
+                clubElement.innerHTML = '<i class="fas fa-map-marker-alt me-1"></i> Club details not available';
+                clubElement.style.display = 'block';
+                
+                // In a real implementation, you'd fetch the club details from Supabase
+                // based on the club ID and then populate this field
+            } else {
+                clubElement.style.display = 'none';
+            }
+            
+            // Set team 1 info
+            document.getElementById('matchDetailTeam1').textContent = match.team1.players.join(' & ');
+            const team1Won = match.team1.setsWon > match.team2.setsWon;
+            if (team1Won) {
+                document.getElementById('matchDetailTeam1Row').classList.add('winning-score');
+            } else {
+                document.getElementById('matchDetailTeam1Row').classList.remove('winning-score');
+            }
+            
+            // Set team 2 info
+            document.getElementById('matchDetailTeam2').textContent = match.team2.players.join(' & ');
+            const team2Won = match.team2.setsWon > match.team1.setsWon;
+            if (team2Won) {
+                document.getElementById('matchDetailTeam2Row').classList.add('winning-score');
+            } else {
+                document.getElementById('matchDetailTeam2Row').classList.remove('winning-score');
+            }
+            
+            // Set set scores
+            document.getElementById('matchDetailTeam1Score').textContent = match.team1.setsWon;
+            document.getElementById('matchDetailTeam2Score').textContent = match.team2.setsWon;
+            
+            // Set header names for sets table
+            const team1Short = getTeamShortName(match.team1.players);
+            const team2Short = getTeamShortName(match.team2.players);
+            document.getElementById('matchDetailSetTeam1Header').textContent = team1Short;
+            document.getElementById('matchDetailSetTeam2Header').textContent = team2Short;
+            
+            // Create set details
+            const setScoresTable = document.getElementById('matchDetailSetScores');
+            setScoresTable.innerHTML = '';
+            
+            // We need both team's set scores to be available and have the same length
+            if (match.team1.setScores && match.team2.setScores && 
+                match.team1.setScores.length === match.team2.setScores.length) {
+                
+                // Create a row for each set
+                for (let i = 0; i < match.team1.setScores.length; i++) {
+                    const row = document.createElement('tr');
+                    
+                    // Set number
+                    const setCell = document.createElement('td');
+                    setCell.textContent = `Set ${i + 1}`;
+                    row.appendChild(setCell);
+                    
+                    // Team 1 score
+                    const team1Cell = document.createElement('td');
+                    team1Cell.textContent = match.team1.setScores[i];
+                    // Highlight the winning score
+                    if (match.team1.setScores[i] > match.team2.setScores[i]) {
+                        team1Cell.classList.add('winning-score');
+                    }
+                    row.appendChild(team1Cell);
+                    
+                    // Team 2 score
+                    const team2Cell = document.createElement('td');
+                    team2Cell.textContent = match.team2.setScores[i];
+                    // Highlight the winning score
+                    if (match.team2.setScores[i] > match.team1.setScores[i]) {
+                        team2Cell.classList.add('winning-score');
+                    }
+                    row.appendChild(team2Cell);
+                    
+                    setScoresTable.appendChild(row);
+                }
+                
+                // Show the sets section
+                document.getElementById('matchDetailSets').style.display = 'block';
+            } else {
+                // Hide the sets section if no detailed set scores
+                document.getElementById('matchDetailSets').style.display = 'none';
+            }
+            
+            // Set submitter info
+            const submitterElement = document.getElementById('matchDetailSubmitter');
+            submitterElement.textContent = 'Submitted on ' + new Date(match.createdAt).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric'
+            });
+            
+            // Show the modal
+            modal.show();
+        }
+        
+        // Helper function to get shortened team name
+        function getTeamShortName(players) {
+            if (!players || players.length === 0) {
+                return "Team";
+            }
+            
+            if (players.length === 1) {
+                // If just one player, return first name
+                const names = players[0].split(' ');
+                return names[0];
+            }
+            
+            // For doubles, use initials
+            return players.map(player => {
+                const names = player.split(' ');
+                return names[0].charAt(0);
+            }).join(' & ');
+        }
+        
+        // Function to show error message
+        function showMatchHistoryError(message) {
+            const matchesList = document.getElementById('matchesList');
+            const matchesEmpty = document.getElementById('matchesEmpty');
+            const matchesLoading = document.getElementById('matchesLoading');
+            
+            // Hide loading indicator and empty state
+            matchesLoading.style.display = 'none';
+            matchesEmpty.style.display = 'none';
+            
+            // Show error in matches list
+            matchesList.style.display = 'block';
+            matchesList.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    ${message}
+                </div>
+            `;
+        }
+        
+        // Add the initialization of match history when the dashboard content is shown
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize when the stats tab is shown
+            const statsTab = document.getElementById('stats-tab');
+            if (statsTab) {
+                statsTab.addEventListener('shown.bs.tab', function() {
+                    // Only initialize if not already loaded
+                    if (allMatches.length === 0) {
+                        initializeMatchHistory();
+                    }
+                });
+            }
+        });
+        
+        // Function to update match statistics based on filtered matches
+        function updateMatchStatistics(matches) {
+            const statsContainer = document.getElementById('matchStats');
+            const currentUserId = supabase.auth.getUser()?.data?.user?.id?.toLowerCase();
+            
+            if (!currentUserId || matches.length === 0) {
+                statsContainer.innerHTML = `
+                    <p class="text-center py-3">No match statistics available yet.</p>
+                `;
+                return;
+            }
+            
+            // Calculate statistics
+            let totalMatches = 0;
+            let wins = 0;
+            let losses = 0;
+            let totalSetsWon = 0;
+            let totalSetsLost = 0;
+            let highestWinStreak = 0;
+            let currentWinStreak = 0;
+            let recentResults = [];
+            
+            // Sort matches by date (newest first) to calculate streaks correctly
+            const sortedMatches = [...matches].sort((a, b) => b.playedDate - a.playedDate);
+            
+            // Process each match to calculate stats
+            sortedMatches.forEach(match => {
+                // Check if user participated in this match
+                const inTeam1 = match.team1.playerIds.some(id => 
+                    id.toLowerCase() === currentUserId
+                );
+                
+                const inTeam2 = match.team2.playerIds.some(id => 
+                    id.toLowerCase() === currentUserId
+                );
+                
+                if (!inTeam1 && !inTeam2) {
+                    return; // User didn't participate in this match
+                }
+                
+                totalMatches++;
+                
+                // Determine if user won or lost
+                const userWon = (inTeam1 && match.team1.setsWon > match.team2.setsWon) || 
+                               (inTeam2 && match.team2.setsWon > match.team1.setsWon);
+                
+                if (userWon) {
+                    wins++;
+                    currentWinStreak++;
+                    if (currentWinStreak > highestWinStreak) {
+                        highestWinStreak = currentWinStreak;
+                    }
+                    recentResults.push('W');
+                } else {
+                    losses++;
+                    currentWinStreak = 0;
+                    recentResults.push('L');
+                }
+                
+                // Calculate sets won/lost by the user
+                if (inTeam1) {
+                    totalSetsWon += match.team1.setsWon;
+                    totalSetsLost += match.team2.setsWon;
+                } else {
+                    totalSetsWon += match.team2.setsWon;
+                    totalSetsLost += match.team1.setsWon;
+                }
+                
+                // Keep only the 5 most recent results for display
+                if (recentResults.length > 5) {
+                    recentResults = recentResults.slice(0, 5);
+                }
+            });
+            
+            // Calculate win rate
+            const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
+            
+            // Create statistics HTML
+            statsContainer.innerHTML = `
+                <div class="row text-center g-2">
+                    <div class="col-6 col-md-3">
+                        <div class="border border-secondary rounded p-2">
+                            <h5>${totalMatches}</h5>
+                            <small>Matches</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border border-secondary rounded p-2">
+                            <h5>${wins} - ${losses}</h5>
+                            <small>Record</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border border-secondary rounded p-2">
+                            <h5>${winRate}%</h5>
+                            <small>Win Rate</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border border-secondary rounded p-2">
+                            <h5>${highestWinStreak}</h5>
+                            <small>Best Streak</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Set Statistics</h6>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                            style="width: ${totalSetsWon + totalSetsLost > 0 ? (totalSetsWon / (totalSetsWon + totalSetsLost) * 100) : 0}%" 
+                            aria-valuenow="${totalSetsWon}" aria-valuemin="0" aria-valuemax="${totalSetsWon + totalSetsLost}">
+                            ${totalSetsWon}
+                        </div>
+                        <div class="progress-bar bg-danger" role="progressbar" 
+                            style="width: ${totalSetsWon + totalSetsLost > 0 ? (totalSetsLost / (totalSetsWon + totalSetsLost) * 100) : 0}%" 
+                            aria-valuenow="${totalSetsLost}" aria-valuemin="0" aria-valuemax="${totalSetsWon + totalSetsLost}">
+                            ${totalSetsLost}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted">Sets Won</small>
+                        <small class="text-muted">Sets Lost</small>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Recent Results</h6>
+                    <div class="d-flex">
+                        ${recentResults.map(result => `
+                            <div class="me-2 rounded-circle d-flex align-items-center justify-content-center" 
+                                style="width: 30px; height: 30px; background-color: ${result === 'W' ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)'}; 
+                                color: ${result === 'W' ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                                ${result}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Function to update the recent matches section
+        function updateRecentMatches(matches) {
+            const recentMatchesContainer = document.getElementById('recentMatches');
+            const currentUserId = supabase.auth.getUser()?.data?.user?.id?.toLowerCase();
+            
+            if (!matches || matches.length === 0) {
+                recentMatchesContainer.innerHTML = `
+                    <p class="text-center py-3">No recent matches found.</p>
+                `;
+                return;
+            }
+            
+            // Sort matches by date (newest first)
+            const sortedMatches = [...matches].sort((a, b) => b.playedDate - a.playedDate);
+            
+            // Get matches where the user participated
+            const userMatches = sortedMatches.filter(match => {
+                if (!currentUserId) return false;
+                
+                const inTeam1 = match.team1.playerIds.some(id => 
+                    id && id.toLowerCase() === currentUserId
+                );
+                
+                const inTeam2 = match.team2.playerIds.some(id => 
+                    id && id.toLowerCase() === currentUserId
+                );
+                
+                return inTeam1 || inTeam2;
+            });
+            
+            // Take up to 5 most recent matches
+            const recentMatches = userMatches.slice(0, 5);
+            
+            if (recentMatches.length === 0) {
+                recentMatchesContainer.innerHTML = `
+                    <p class="text-center py-3">No recent matches found.</p>
+                `;
+                return;
+            }
+            
+            // Generate HTML for recent matches
+            let recentMatchesHTML = '';
+            
+            recentMatches.forEach(match => {
+                // Determine if user was in team 1 or 2
+                const inTeam1 = match.team1.playerIds.some(id => 
+                    id && id.toLowerCase() === currentUserId
+                );
+                
+                // Determine if user won
+                const userWon = (inTeam1 && match.team1.setsWon > match.team2.setsWon) || 
+                               (!inTeam1 && match.team2.setsWon > match.team1.setsWon);
+                
+                // Format the date
+                const matchDate = new Date(match.playedDate);
+                const dateString = matchDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                // Get opponent name(s)
+                const opponentTeam = inTeam1 ? match.team2 : match.team1;
+                const opponentNames = opponentTeam.players.join(' & ');
+                
+                // Result text
+                const resultText = userWon ? "Won" : "Lost";
+                const resultClass = userWon ? "text-success" : "text-danger";
+                
+                recentMatchesHTML += `
+                    <div class="d-flex align-items-center mb-2 p-2 rounded" style="background-color: rgba(255, 255, 255, 0.05);">
+                        <div class="me-3 d-flex flex-column align-items-center">
+                            <span class="badge ${userWon ? 'bg-success' : 'bg-danger'}">${resultText}</span>
+                            <small class="text-muted">${dateString}</small>
+                        </div>
+                        <div class="flex-grow-1">
+                            <small class="text-muted">vs</small>
+                            <span class="ms-1">${opponentNames}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="${resultClass} fw-bold">
+                                ${inTeam1 ? `${match.team1.setsWon}-${match.team2.setsWon}` : `${match.team2.setsWon}-${match.team1.setsWon}`}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Update container
+            recentMatchesContainer.innerHTML = recentMatchesHTML;
+        }
+    </script>
+    
+    <!-- Match Detail Modal -->
+    <div class="modal fade" id="matchDetailModal" tabindex="-1" aria-labelledby="matchDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-gold">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="matchDetailModalLabel">Match Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="match-detail-content">
+                        <!-- Date and location -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="far fa-calendar-alt me-2"></i>
+                                    <span id="matchDetailDate"></span>
+                                </div>
+                                <div id="matchDetailCategory" class="match-category"></div>
+                            </div>
+                            <div id="matchDetailClub" class="text-muted mt-1"></div>
+                        </div>
+                        
+                        <!-- Teams and scores -->
+                        <div class="match-detail-result p-3 mb-3 rounded" style="background-color: rgba(255, 255, 255, 0.1);">
+                            <div class="row mb-2">
+                                <div class="col-7">
+                                    <strong>Players</strong>
+                                </div>
+                                <div class="col-5 text-end">
+                                    <strong>Sets</strong>
+                                </div>
+                            </div>
+                            
+                            <!-- Team 1 -->
+                            <div class="row mb-2" id="matchDetailTeam1Row">
+                                <div class="col-7" id="matchDetailTeam1"></div>
+                                <div class="col-5 text-end" id="matchDetailTeam1Score"></div>
+                            </div>
+                            
+                            <!-- Team 2 -->
+                            <div class="row" id="matchDetailTeam2Row">
+                                <div class="col-7" id="matchDetailTeam2"></div>
+                                <div class="col-5 text-end" id="matchDetailTeam2Score"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Set scores details -->
+                        <div class="match-set-details mb-3" id="matchDetailSets">
+                            <h6>Set Details</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th>Set</th>
+                                            <th id="matchDetailSetTeam1Header"></th>
+                                            <th id="matchDetailSetTeam2Header"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="matchDetailSetScores">
+                                        <!-- Set scores will be added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional info -->
+                        <div class="match-detail-info">
+                            <p class="text-muted" id="matchDetailSubmitter"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
