@@ -125,6 +125,32 @@
             background-color: unset;
         }
 
+        /* Rankings Pagination Styles */
+        .rankings-pagination {
+            display: flex;
+            align-items: center;
+        }
+
+        .rankings-pagination .btn {
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .rankings-pagination .badge {
+            font-size: 0.85rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        .rankings-pagination .btn:disabled {
+            opacity: 0.4;
+        }
+
         
         /* Box League Styles */
         .box-league-container {
@@ -1122,8 +1148,21 @@
                 <!-- Rankings Tab (replacing Settings) -->
                 <div class="tab-pane fade" id="rankings" role="tabpanel" aria-labelledby="rankings-tab">
                     <div class="stats-card">
-                        <h3>Player Rankings</h3>
-                        <p class="mb-3">Top 20 players by match rating</p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h3 class="mb-1">Player Rankings</h3>
+                                <p class="mb-0" id="rankingsDescription">Top 20 players by match rating</p>
+                            </div>
+                            <div class="rankings-pagination">
+                                <button class="btn btn-outline-primary btn-sm me-2" id="prevRankingsPage" onclick="changeRankingsPage(-1)" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="badge bg-primary" id="currentRankingsPage">1-20</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2" id="nextRankingsPage" onclick="changeRankingsPage(1)">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
                         <div id="playerRankingsLoading" class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading rankings...</span>
@@ -4973,12 +5012,112 @@
             }
         }
 
+        // Global variable to track current rankings page
+        let currentRankingsPageNum = 1;
+        let allRankedPlayers = []; // Store all players for pagination
+
+        // Function to change rankings page
+        function changeRankingsPage(direction) {
+            const newPage = currentRankingsPageNum + direction;
+            if (newPage >= 1 && newPage <= Math.ceil(allRankedPlayers.length / 20)) {
+                currentRankingsPageNum = newPage;
+                displayRankingsPage();
+            }
+        }
+
+        // Function to display current rankings page
+        function displayRankingsPage() {
+            const startIndex = (currentRankingsPageNum - 1) * 20;
+            const endIndex = startIndex + 20;
+            const pageData = allRankedPlayers.slice(startIndex, endIndex);
+            
+            // Update UI elements
+            const rankingsDescription = document.getElementById('rankingsDescription');
+            const currentPageBadge = document.getElementById('currentRankingsPage');
+            const prevButton = document.getElementById('prevRankingsPage');
+            const nextButton = document.getElementById('nextRankingsPage');
+            
+            const startRank = startIndex + 1;
+            const endRank = Math.min(endIndex, allRankedPlayers.length);
+            
+            rankingsDescription.textContent = `Players ranked ${startRank}-${endRank} by match rating`;
+            currentPageBadge.textContent = `${startRank}-${endRank}`;
+            
+            // Update button states
+            prevButton.disabled = currentRankingsPageNum === 1;
+            nextButton.disabled = endIndex >= allRankedPlayers.length;
+            
+            // Display the players for this page
+            displayRankingsData(pageData, startIndex);
+        }
+
+        // Function to display rankings data
+        function displayRankingsData(players, startIndex) {
+            const rankingsList = document.getElementById('playerRankingsList');
+            
+            if (players.length === 0) {
+                rankingsList.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center">No player ratings found for this page.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let rankingsHTML = '';
+            
+            players.forEach((player, index) => {
+                const actualRank = startIndex + index + 1;
+                let playerName = 'Loading...';
+                
+                // Format date
+                const ratingDate = new Date(player.date);
+                const formattedDate = ratingDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                // Add row to table with medal emojis and gold highlight for 1st place
+                const rankDisplay = getRankDisplay(actualRank);
+                const isFirstPlace = actualRank === 1;
+                const isMedal = actualRank <= 3; // Top 3 positions get medals
+                
+                rankingsHTML += `
+                    <tr data-player-id="${player.id}" ${isFirstPlace ? 'class="first-place"' : ''}>
+                        <td ${isMedal ? 'class="medal-cell"' : ''}>${rankDisplay}</td>
+                        <td class="player-name">${playerName}</td>
+                        <td>${player.rating_0_10.toFixed(2)}</td>
+                        <td>${formattedDate}</td>
+                    </tr>
+                `;
+            });
+            
+            rankingsList.innerHTML = rankingsHTML;
+            
+            // Try to get user profile info for each player
+            try {
+                fetchPlayerNames(players);
+            } catch (nameError) {
+                console.warn('Could not fetch player names:', nameError);
+                // Show player IDs as fallback
+                players.forEach(player => {
+                    const row = document.querySelector(`#playerRankingsList tr[data-player-id="${player.id}"]`);
+                    if (row) {
+                        const nameCell = row.querySelector('.player-name');
+                        if (nameCell && nameCell.textContent === 'Loading...') {
+                            nameCell.textContent = player.id;
+                        }
+                    }
+                });
+            }
+        }
+
         // Function to load player rankings from Supabase
         async function loadPlayerRankings() {
             const rankingsLoading = document.getElementById('playerRankingsLoading');
             const rankingsError = document.getElementById('playerRankingsError');
             const rankingsTable = document.getElementById('playerRankingsTable');
-            const rankingsList = document.getElementById('playerRankingsList');
             
             // Show loading, hide error and table
             rankingsLoading.style.display = 'block';
@@ -5032,52 +5171,25 @@
                 });
                 
                 // Convert map to array and sort by rating (highest first)
-                const uniquePlayers = Array.from(playerMap.values())
-                    .sort((a, b) => b.rating_0_10 - a.rating_0_10)
-                    .slice(0, 20); // Take top 20
+                // Store all players for pagination (not just top 20)
+                allRankedPlayers = Array.from(playerMap.values())
+                    .sort((a, b) => b.rating_0_10 - a.rating_0_10);
                 
-                console.log(`Found ${uniquePlayers.length} unique players with their latest ratings`);
+                console.log(`Found ${allRankedPlayers.length} unique players with their latest ratings`);
                 
-                if (uniquePlayers.length === 0) {
+                // Reset to first page when loading new data
+                currentRankingsPageNum = 1;
+                
+                if (allRankedPlayers.length === 0) {
+                    const rankingsList = document.getElementById('playerRankingsList');
                     rankingsList.innerHTML = `
                         <tr>
                             <td colspan="4" class="text-center">No player ratings found.</td>
                         </tr>
                     `;
                 } else {
-                    // Process the rankings data
-                    let rankingsHTML = '';
-                    
-                    // Create player rows
-                    uniquePlayers.forEach((player, index) => {
-                        // Add a data attribute to help identify rows for name updating
-                        let playerName = 'Loading...';
-                        
-                        // Format date
-                        const ratingDate = new Date(player.date);
-                        const formattedDate = ratingDate.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                        });
-                        
-                        // Add row to table with medal emojis and gold highlight for 1st place
-                        const rankDisplay = getRankDisplay(index + 1);
-                        const isFirstPlace = index === 0;
-                        const isMedal = index < 3; // Top 3 positions get medals
-                        
-                        rankingsHTML += `
-                            <tr data-player-id="${player.id}" ${isFirstPlace ? 'class="first-place"' : ''}>
-                                <td ${isMedal ? 'class="medal-cell"' : ''}>${rankDisplay}</td>
-                                <td class="player-name">${playerName}</td>
-                                <td>${player.rating_0_10.toFixed(2)}</td>
-                                <td>${formattedDate}</td>
-                            </tr>
-                        `;
-                    });
-                    
-                    // Update the rankings list
-                    rankingsList.innerHTML = rankingsHTML;
+                    // Display the first page
+                    displayRankingsPage();
                     
                     // Add CSS for the first place highlight and bigger medals
                     const style = document.createElement('style');
@@ -5140,23 +5252,6 @@
                     `;
                     document.head.appendChild(style);
                     
-                    // Try to get user profile info for each player
-                    try {
-                        // Get player names if possible
-                        await fetchPlayerNames(uniquePlayers);
-                    } catch (nameError) {
-                        console.warn('Could not fetch player names:', nameError);
-                        // Show player IDs as fallback
-                        uniquePlayers.forEach(player => {
-                            const row = document.querySelector(`#playerRankingsList tr[data-player-id="${player.id}"]`);
-                            if (row) {
-                                const nameCell = row.querySelector('.player-name');
-                                if (nameCell && nameCell.textContent === 'Loading...') {
-                                    nameCell.textContent = player.id;
-                                }
-                            }
-                        });
-                    }
                 }
                 
                 // Hide loading, show table
