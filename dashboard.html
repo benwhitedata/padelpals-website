@@ -1151,11 +1151,18 @@
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <h3 class="mb-1">Player Rankings</h3>
-                                <p class="mb-0" id="rankingsDescription">Top 100 players</p>
+                                <p class="mb-0" id="rankingsDescription">Top 40 players - showing ranks 1-20</p>
                             </div>
                             <div class="rankings-pagination">
                                 <button class="btn btn-outline-secondary btn-sm me-3" id="refreshRankingsBtn" onclick="refreshRankings()" title="Refresh rankings data">
                                     <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm me-2" id="prevRankingsPage" onclick="changeRankingsPage(-1)" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="badge bg-primary" id="currentRankingsPage">1-20</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2" id="nextRankingsPage" onclick="changeRankingsPage(1)">
+                                    <i class="fas fa-chevron-right"></i>
                                 </button>
                             </div>
                         </div>
@@ -3972,46 +3979,6 @@
                 showMatchHistoryError("Error filtering by date range: " + error.message);
             }
         }
-
-        // Function to change rankings page (restricted to top 100 players only)
-        function changeRankingsPage(direction) {
-            // Pagination disabled - showing all 100 players on one page
-            return;
-        }
-
-        // Function to refresh rankings data
-        async function refreshRankings() {
-            const refreshBtn = document.getElementById('refreshRankingsBtn');
-            const originalIcon = refreshBtn.innerHTML;
-            
-            // Show spinning icon
-            refreshBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
-            refreshBtn.disabled = true;
-            
-            try {
-                await loadPlayerRankings(true); // Force refresh
-            } finally {
-                // Restore button
-                refreshBtn.innerHTML = originalIcon;
-                refreshBtn.disabled = false;
-            }
-        }
-
-        // Function to display current rankings page
-        function displayRankingsPage() {
-            const maxPlayers = 100; // Show top 100 players
-            
-            // Show all top 100 players on one page
-            const restrictedPlayers = allRankedPlayers.slice(0, maxPlayers);
-            
-            // Update UI elements
-            const rankingsDescription = document.getElementById('rankingsDescription');
-            
-            rankingsDescription.textContent = `Top ${Math.min(restrictedPlayers.length, maxPlayers)} players`;
-            
-            // Display all players
-            displayRankingsData(restrictedPlayers, 0);
-        }
     </script>
     
     <!-- JavaScript for Match History -->
@@ -5056,26 +5023,63 @@
         let rankingsCacheTimestamp = null; // Track when rankings were last fetched
         const RANKINGS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-        // Function to change rankings page (restricted to top 100 players only)
+        // Function to change rankings page (restricted to top 40 players only)
         function changeRankingsPage(direction) {
-            // Pagination disabled - showing all 100 players on one page
-            return;
+            const newPage = currentRankingsPageNum + direction;
+            const maxPages = 2; // Restrict to only 2 pages (1-20 and 21-40)
+            
+            if (newPage >= 1 && newPage <= maxPages) {
+                currentRankingsPageNum = newPage;
+                displayRankingsPage();
+            }
+        }
+
+        // Function to refresh rankings data
+        async function refreshRankings() {
+            const refreshBtn = document.getElementById('refreshRankingsBtn');
+            const originalIcon = refreshBtn.innerHTML;
+            
+            // Show spinning icon
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+            refreshBtn.disabled = true;
+            
+            try {
+                await loadPlayerRankings(true); // Force refresh
+            } finally {
+                // Restore button
+                refreshBtn.innerHTML = originalIcon;
+                refreshBtn.disabled = false;
+            }
         }
 
         // Function to display current rankings page
         function displayRankingsPage() {
-            const maxPlayers = 100; // Show top 100 players
+            const startIndex = (currentRankingsPageNum - 1) * 20;
+            const endIndex = startIndex + 20;
+            const maxPlayers = 40; // Restrict to top 40 players only
             
-            // Show all top 100 players on one page
+            // Ensure we only show top 40 players
             const restrictedPlayers = allRankedPlayers.slice(0, maxPlayers);
+            const pageData = restrictedPlayers.slice(startIndex, endIndex);
             
             // Update UI elements
             const rankingsDescription = document.getElementById('rankingsDescription');
+            const currentPageBadge = document.getElementById('currentRankingsPage');
+            const prevButton = document.getElementById('prevRankingsPage');
+            const nextButton = document.getElementById('nextRankingsPage');
             
-            rankingsDescription.textContent = `Top ${Math.min(restrictedPlayers.length, maxPlayers)} players`;
+            const startRank = startIndex + 1;
+            const endRank = Math.min(endIndex, maxPlayers);
             
-            // Display all players
-            displayRankingsData(restrictedPlayers, 0);
+            rankingsDescription.textContent = `Top ${maxPlayers} players - showing ranks ${startRank}-${endRank}`;
+            currentPageBadge.textContent = `${startRank}-${endRank}`;
+            
+            // Update button states (restricted to 2 pages max)
+            prevButton.disabled = currentRankingsPageNum === 1;
+            nextButton.disabled = currentRankingsPageNum === 2; // Max 2 pages (1-20, 21-40)
+            
+            // Display the players for this page
+            displayRankingsData(pageData, startIndex);
         }
 
         // Function to display rankings data
@@ -5242,7 +5246,7 @@
                 rankingsDataCache = allRankedPlayers;
                 rankingsCacheTimestamp = now;
                 
-                console.log(`Found ${allRankedPlayers.length} unique players with their latest ratings (showing top 100 only)`);
+                console.log(`Found ${allRankedPlayers.length} unique players with their latest ratings (showing top 40 only)`);
                 
                 // Reset to first page when loading new data
                 currentRankingsPageNum = 1;
