@@ -61,6 +61,8 @@
                 clubMemberIdsSet = null;
             }
         }
+        // Expose globally to avoid scope issues
+        window.fetchCurrentUserClubAndMembers = fetchCurrentUserClubAndMembers;
 
         // Ensure gender data is available for given players (by first name)
         async function ensureGenderDataForPlayers(players) {
@@ -104,6 +106,7 @@
                 // Non-fatal
             }
         }
+        window.ensureGenderDataForPlayers = ensureGenderDataForPlayers;
 
         // Apply club + gender filters and paginate
         async function applyFiltersAndPaginate() {
@@ -164,6 +167,7 @@
             currentRankingsPageNum = 1;
             displayRankingsPage();
         }
+        window.applyFiltersAndPaginate = applyFiltersAndPaginate;
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
