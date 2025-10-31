@@ -5354,7 +5354,45 @@
                 console.log("Loading player rankings from database...");
                 
                 // Ensure we have the user's club and club members for filtering and name cache
-                await fetchCurrentUserClubAndMembers();
+                if (typeof fetchCurrentUserClubAndMembers === 'function') {
+                    await fetchCurrentUserClubAndMembers();
+                } else {
+                    // Fallback inline implementation if helper isn't in scope
+                    try {
+                        const userId = session.user?.id;
+                        if (userId) {
+                            const headersLocal = {
+                                'Content-Type': 'application/json',
+                                'apikey': window.config.supabaseKey,
+                                'Authorization': `Bearer ${session.access_token}`
+                            };
+                            const profileEndpointLocal = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*)`;
+                            const pr = await fetch(profileEndpointLocal, { method: 'GET', headers: headersLocal });
+                            if (pr.ok) {
+                                const profiles = await pr.json();
+                                const me = Array.isArray(profiles) ? profiles[0] : null;
+                                currentUserClubId = me?.clubs?.id || me?.club_id || null;
+                            }
+                            if (currentUserClubId) {
+                                const membersEndpointLocal = `${window.config.supabaseUrl}/rest/v1/user_profiles?club_id=eq.${currentUserClubId}&select=id,display_name`;
+                                const mr = await fetch(membersEndpointLocal, { method: 'GET', headers: headersLocal });
+                                if (mr.ok) {
+                                    const members = await mr.json();
+                                    clubMemberIdsSet = new Set(members.map(m => m.id));
+                                    members.forEach(m => {
+                                        if (m.id && m.display_name) {
+                                            playerProfilesCache.set(m.id, m.display_name);
+                                        }
+                                    });
+                                }
+                            } else {
+                                clubMemberIdsSet = null;
+                            }
+                        }
+                    } catch (_) {
+                        clubMemberIdsSet = null;
+                    }
+                }
 
                 // Set up headers for the request
                 const headers = {
