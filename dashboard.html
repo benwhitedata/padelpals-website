@@ -169,6 +169,52 @@
         }
         window.applyFiltersAndPaginate = applyFiltersAndPaginate;
 
+        // Inline gender filter utility used by fallbacks
+        async function filterListByGender(list) {
+            if (!list || list.length === 0) return list || [];
+            if (currentGenderFilter === 'all') return list;
+            try {
+                // Ensure names
+                const idsMissingNames = list.map(p => p.id).filter(id => !playerProfilesCache.has(id));
+                if (idsMissingNames.length > 0) {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        const headers = {
+                            'Content-Type': 'application/json',
+                            'apikey': window.config.supabaseKey,
+                            'Authorization': `Bearer ${session.access_token}`
+                        };
+                        const batchSize = 50;
+                        for (let i = 0; i < idsMissingNames.length; i += batchSize) {
+                            const batch = idsMissingNames.slice(i, i + batchSize);
+                            const idsFilter = batch.map(id => `"${id}"`).join(',');
+                            const endpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=in.(${idsFilter})&select=id,display_name`;
+                            const resp = await fetch(endpoint, { method: 'GET', headers });
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                data.forEach(pr => {
+                                    if (pr.id && pr.display_name) {
+                                        playerProfilesCache.set(pr.id, pr.display_name);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+                await ensureGenderDataForPlayers(list);
+            } catch (_) {}
+
+            return list.filter(p => {
+                const name = playerProfilesCache.get(p.id);
+                if (!name) return true;
+                const first = String(name).trim().split(/\s+/)[0].toLowerCase();
+                const g = nameGenderCache.get(first);
+                if (!g || !g.gender) return true;
+                if (g.probability && Number(g.probability) < 0.7) return true;
+                return g.gender === currentGenderFilter;
+            });
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
@@ -5166,12 +5212,16 @@
                     if (typeof applyFiltersAndPaginate === 'function') {
                         await applyFiltersAndPaginate();
                     } else {
-                        // Minimal fallback: re-render current list without gender filter
-                        filteredRankedPlayers = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
-                            ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
-                            : allRankedPlayers;
-                        currentRankingsPageNum = 1;
-                        displayRankingsPage();
+                    // Fallback: apply club filter, then gender if requested
+                    let base = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
+                        ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
+                        : allRankedPlayers;
+                    if (currentGenderFilter !== 'all') {
+                        base = await filterListByGender(base);
+                    }
+                    filteredRankedPlayers = base;
+                    currentRankingsPageNum = 1;
+                    displayRankingsPage();
                     }
                 });
             }
@@ -5345,9 +5395,13 @@
                 if (typeof applyFiltersAndPaginate === 'function') {
                     await applyFiltersAndPaginate();
                 } else {
-                    filteredRankedPlayers = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
+                    let base = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
                         ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
                         : allRankedPlayers;
+                    if (currentGenderFilter !== 'all') {
+                        base = await filterListByGender(base);
+                    }
+                    filteredRankedPlayers = base;
                     displayRankingsPage();
                 }
                 rankingsLoading.style.display = 'none';
@@ -5496,9 +5550,13 @@
                     if (typeof applyFiltersAndPaginate === 'function') {
                         await applyFiltersAndPaginate();
                     } else {
-                        filteredRankedPlayers = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
+                        let base = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
                             ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
                             : allRankedPlayers;
+                        if (currentGenderFilter !== 'all') {
+                            base = await filterListByGender(base);
+                        }
+                        filteredRankedPlayers = base;
                         currentRankingsPageNum = 1;
                         displayRankingsPage();
                     }
