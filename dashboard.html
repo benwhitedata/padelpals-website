@@ -5163,7 +5163,16 @@
             if (genderFilterEl) {
                 genderFilterEl.addEventListener('change', async function() {
                     currentGenderFilter = this.value;
-                    await applyFiltersAndPaginate();
+                    if (typeof applyFiltersAndPaginate === 'function') {
+                        await applyFiltersAndPaginate();
+                    } else {
+                        // Minimal fallback: re-render current list without gender filter
+                        filteredRankedPlayers = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
+                            ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
+                            : allRankedPlayers;
+                        currentRankingsPageNum = 1;
+                        displayRankingsPage();
+                    }
                 });
             }
         });
@@ -5333,7 +5342,14 @@
                 console.log('Using cached rankings data');
                 allRankedPlayers = rankingsDataCache;
                 currentRankingsPageNum = 1;
-                await applyFiltersAndPaginate();
+                if (typeof applyFiltersAndPaginate === 'function') {
+                    await applyFiltersAndPaginate();
+                } else {
+                    filteredRankedPlayers = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
+                        ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
+                        : allRankedPlayers;
+                    displayRankingsPage();
+                }
                 rankingsLoading.style.display = 'none';
                 rankingsTable.style.display = 'block';
                 return;
@@ -5476,8 +5492,16 @@
                         </tr>
                     `;
                 } else {
-                    // Apply filters and display
-                    await applyFiltersAndPaginate();
+                    // Apply filters and display (with fallback)
+                    if (typeof applyFiltersAndPaginate === 'function') {
+                        await applyFiltersAndPaginate();
+                    } else {
+                        filteredRankedPlayers = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
+                            ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
+                            : allRankedPlayers;
+                        currentRankingsPageNum = 1;
+                        displayRankingsPage();
+                    }
                     
                     // Add CSS for the first place highlight and bigger medals
                     const style = document.createElement('style');
