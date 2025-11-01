@@ -5218,7 +5218,9 @@
                         ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
                         : allRankedPlayers;
                     if (currentGenderFilter !== 'all') {
-                        base = await filterListByGender(base);
+                        if (typeof filterListByGender === 'function') {
+                            base = await filterListByGender(base);
+                        }
                     }
                     filteredRankedPlayers = base;
                     currentRankingsPageNum = 1;
@@ -5400,7 +5402,9 @@
                         ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
                         : allRankedPlayers;
                     if (currentGenderFilter !== 'all') {
-                        base = await filterListByGender(base);
+                        if (typeof filterListByGender === 'function') {
+                            base = await filterListByGender(base);
+                        }
                     }
                     filteredRankedPlayers = base;
                     displayRankingsPage();
@@ -5555,7 +5559,9 @@
                             ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
                             : allRankedPlayers;
                         if (currentGenderFilter !== 'all') {
-                            base = await filterListByGender(base);
+                            if (typeof filterListByGender === 'function') {
+                                base = await filterListByGender(base);
+                            }
                         }
                         filteredRankedPlayers = base;
                         currentRankingsPageNum = 1;
