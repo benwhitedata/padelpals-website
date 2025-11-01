@@ -5293,14 +5293,63 @@
                                     console.error('Error fetching names:', e);
                                 }
                             }
-                            // Get gender data
+                            // Get gender data - inline implementation if function not available
                             const genderFn = typeof window !== 'undefined' && window.ensureGenderDataForPlayers;
                             if (typeof genderFn === 'function') {
                                 console.log('Calling ensureGenderDataForPlayers');
                                 await genderFn(base);
                                 console.log(`Gender cache now has ${nameGenderCache.size} entries`);
                             } else {
-                                console.log('ensureGenderDataForPlayers not available');
+                                console.log('ensureGenderDataForPlayers not available, using inline gender fetch');
+                                // Inline gender fetching
+                                try {
+                                    const firstNames = [];
+                                    const seen = new Set();
+                                    base.forEach(p => {
+                                        const name = playerProfilesCache.get(p.id);
+                                        if (!name) return;
+                                        const first = String(name).trim().split(/\s+/)[0].toLowerCase();
+                                        if (first && !seen.has(first) && !nameGenderCache.has(first)) {
+                                            seen.add(first);
+                                            firstNames.push(first);
+                                        }
+                                    });
+                                    console.log(`Fetching gender for ${firstNames.length} unique first names`);
+                                    if (firstNames.length > 0) {
+                                        const chunkSize = 10;
+                                        for (let i = 0; i < firstNames.length; i += chunkSize) {
+                                            const chunk = firstNames.slice(i, i + chunkSize);
+                                            const query = chunk.map(n => `name[]=${encodeURIComponent(n)}`).join('&');
+                                            const url = `https://api.genderize.io/?${query}`;
+                                            console.log(`Fetching gender for: ${chunk.join(', ')}`);
+                                            try {
+                                                const res = await fetch(url);
+                                                if (res.ok) {
+                                                    const results = await res.json();
+                                                    const arr = Array.isArray(results) ? results : [];
+                                                    console.log(`Got ${arr.length} gender results`);
+                                                    arr.forEach(r => {
+                                                        const key = (r?.name || '').toLowerCase();
+                                                        if (key) {
+                                                            nameGenderCache.set(key, { 
+                                                                gender: r?.gender || null, 
+                                                                probability: r?.probability || 0 
+                                                            });
+                                                            console.log(`Cached: "${key}" -> ${r?.gender} (${r?.probability})`);
+                                                        }
+                                                    });
+                                                } else {
+                                                    console.error(`Genderize API error: ${res.status}`);
+                                                }
+                                            } catch (e) {
+                                                console.error('Error fetching gender chunk:', e);
+                                            }
+                                        }
+                                    }
+                                    console.log(`Gender cache now has ${nameGenderCache.size} entries`);
+                                } catch (e) {
+                                    console.error('Error in inline gender fetch:', e);
+                                }
                             }
                             // Filter by gender
                             const beforeGender = base.length;
