@@ -5297,7 +5297,8 @@
             const maxPlayers = 40; // Restrict to top 40 players only
             
             // Ensure we only show top 40 players
-            const sourceList = (filteredRankedPlayers && filteredRankedPlayers.length > 0) ? filteredRankedPlayers : allRankedPlayers;
+            // If a filtered list exists (even if empty), prefer it so filters take effect
+            const sourceList = Array.isArray(filteredRankedPlayers) ? filteredRankedPlayers : allRankedPlayers;
             const restrictedPlayers = sourceList.slice(0, maxPlayers);
             const pageData = restrictedPlayers.slice(startIndex, endIndex);
             
