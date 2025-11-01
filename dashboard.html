@@ -67,7 +67,10 @@
         // Ensure gender data is available for given players (by first name)
         async function ensureGenderDataForPlayers(players) {
             try {
-                if (!players || players.length === 0) return;
+                if (!players || players.length === 0) {
+                    console.log('ensureGenderDataForPlayers: no players');
+                    return;
+                }
                 // Collect first names from cached display names
                 const firstNames = [];
                 const seen = new Set();
@@ -80,7 +83,11 @@
                         firstNames.push(first);
                     }
                 });
-                if (firstNames.length === 0) return;
+                console.log(`ensureGenderDataForPlayers: ${firstNames.length} unique first names to fetch`);
+                if (firstNames.length === 0) {
+                    console.log('No new names to fetch gender for');
+                    return;
+                }
 
                 // Batch in chunks (Genderize supports name[] params)
                 const chunkSize = 10;
@@ -88,41 +95,50 @@
                     const chunk = firstNames.slice(i, i + chunkSize);
                     const query = chunk.map(n => `name[]=${encodeURIComponent(n)}`).join('&');
                     const url = `https://api.genderize.io/?${query}`;
+                    console.log(`Fetching gender for chunk: ${chunk.join(', ')}`);
                     try {
                         const res = await fetch(url);
-                        if (!res.ok) continue;
+                        if (!res.ok) {
+                            console.error(`Genderize API error: ${res.status} ${res.statusText}`);
+                            continue;
+                        }
                         const results = await res.json();
                         const arr = Array.isArray(results) ? results : [];
+                        console.log(`Got ${arr.length} gender results`);
                         arr.forEach(r => {
                             const key = (r?.name || '').toLowerCase();
                             if (!key) return;
-                            nameGenderCache.set(key, { gender: r?.gender || null, probability: r?.probability || 0 });
+                            const genderData = { gender: r?.gender || null, probability: r?.probability || 0 };
+                            nameGenderCache.set(key, genderData);
+                            console.log(`Cached: "${key}" -> ${genderData.gender} (${genderData.probability})`);
                         });
-                    } catch (_) {
-                        // Ignore network errors; we'll simply skip gender filtering for unknowns
+                    } catch (e) {
+                        console.error('Error fetching gender data:', e);
                     }
                 }
-            } catch (_) {
-                // Non-fatal
+            } catch (e) {
+                console.error('Error in ensureGenderDataForPlayers:', e);
             }
         }
         window.ensureGenderDataForPlayers = ensureGenderDataForPlayers;
 
         // Apply club + gender filters and paginate
         async function applyFiltersAndPaginate() {
+            console.log('applyFiltersAndPaginate called, currentGenderFilter:', currentGenderFilter);
             const base = allRankedPlayers || [];
             // Club filter
             let list = base;
             if (clubMemberIdsSet && clubMemberIdsSet.size > 0) {
                 list = base.filter(p => clubMemberIdsSet.has(p.id));
+                console.log(`Club filter: ${list.length} players from ${base.length} total`);
             }
-            // Prefetch gender data for club players in background for faster UX
-            try { ensureGenderDataForPlayers(list); } catch (_) {}
             // Gender filter (requires display names)
             if (currentGenderFilter !== 'all' && list.length > 0) {
+                console.log(`Applying gender filter: ${currentGenderFilter}`);
                 // Ensure names are available; attempt to fetch any missing for visible set
                 const missingIds = list.map(p => p.id).filter(id => !playerProfilesCache.has(id));
                 if (missingIds.length > 0) {
+                    console.log(`Fetching names for ${missingIds.length} players`);
                     try {
                         const { data: { session } } = await supabase.auth.getSession();
                         if (session) {
@@ -144,25 +160,43 @@
                                             playerProfilesCache.set(pr.id, pr.display_name);
                                         }
                                     });
+                                    console.log(`Loaded ${data.length} names`);
                                 }
                             }
                         }
-                    } catch (_) {
-                        // ignore
+                    } catch (e) {
+                        console.error('Error fetching names:', e);
                     }
                 }
 
+                console.log('Fetching gender data...');
                 await ensureGenderDataForPlayers(list);
+                console.log(`Gender cache size: ${nameGenderCache.size}`);
 
+                const beforeFilter = list.length;
                 list = list.filter(p => {
                     const name = playerProfilesCache.get(p.id);
-                    if (!name) return false; // exclude if unknown when filtering
+                    if (!name) {
+                        console.log(`No name for player ${p.id}`);
+                        return false; // exclude if unknown when filtering
+                    }
                     const first = String(name).trim().split(/\s+/)[0].toLowerCase();
                     const g = nameGenderCache.get(first);
-                    if (!g || !g.gender) return false; // exclude ambiguous/unknown when filtering
-                    if (g.probability && Number(g.probability) < 0.7) return false; // exclude low-confidence when filtering
-                    return g.gender === currentGenderFilter;
+                    if (!g || !g.gender) {
+                        console.log(`No gender data for "${first}" from name "${name}"`);
+                        return false; // exclude ambiguous/unknown when filtering
+                    }
+                    if (g.probability && Number(g.probability) < 0.7) {
+                        console.log(`Low confidence (${g.probability}) for "${first}"`);
+                        return false; // exclude low-confidence when filtering
+                    }
+                    const matches = g.gender === currentGenderFilter;
+                    if (!matches) {
+                        console.log(`Gender mismatch: "${first}" is ${g.gender}, filter is ${currentGenderFilter}`);
+                    }
+                    return matches;
                 });
+                console.log(`Gender filter: ${beforeFilter} -> ${list.length} players`);
             }
 
             filteredRankedPlayers = list;
@@ -5211,10 +5245,13 @@
             const genderFilterEl = document.getElementById('genderFilter');
             if (genderFilterEl) {
                 genderFilterEl.addEventListener('change', async function() {
+                    console.log('Gender filter changed to:', this.value);
                     currentGenderFilter = this.value;
                     if (typeof applyFiltersAndPaginate === 'function') {
+                        console.log('Calling applyFiltersAndPaginate');
                         await applyFiltersAndPaginate();
                     } else {
+                        console.log('applyFiltersAndPaginate not available, using fallback');
                     // Fallback: apply club filter, then gender if requested
                     let base = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
                         ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
