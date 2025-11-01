@@ -5247,8 +5247,8 @@
                 genderFilterEl.addEventListener('change', async function() {
                     console.log('Gender filter changed to:', this.value);
                     currentGenderFilter = this.value;
-                    // Try window.applyFiltersAndPaginate first, then applyFiltersAndPaginate, then fallback
-                    const filterFn = window.applyFiltersAndPaginate || applyFiltersAndPaginate;
+                    // Try window.applyFiltersAndPaginate first, then fallback
+                    const filterFn = typeof window !== 'undefined' && window.applyFiltersAndPaginate;
                     if (typeof filterFn === 'function') {
                         console.log('Calling applyFiltersAndPaginate');
                         await filterFn();
@@ -5294,7 +5294,7 @@
                                 }
                             }
                             // Get gender data
-                            const genderFn = window.ensureGenderDataForPlayers || ensureGenderDataForPlayers;
+                            const genderFn = typeof window !== 'undefined' && window.ensureGenderDataForPlayers;
                             if (typeof genderFn === 'function') {
                                 await genderFn(base);
                             }
