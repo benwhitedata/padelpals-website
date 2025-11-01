@@ -116,6 +116,8 @@
             if (clubMemberIdsSet && clubMemberIdsSet.size > 0) {
                 list = base.filter(p => clubMemberIdsSet.has(p.id));
             }
+            // Prefetch gender data for club players in background for faster UX
+            try { ensureGenderDataForPlayers(list); } catch (_) {}
             // Gender filter (requires display names)
             if (currentGenderFilter !== 'all' && list.length > 0) {
                 // Ensure names are available; attempt to fetch any missing for visible set
@@ -154,11 +156,11 @@
 
                 list = list.filter(p => {
                     const name = playerProfilesCache.get(p.id);
-                    if (!name) return true; // keep if unknown name
+                    if (!name) return false; // exclude if unknown when filtering
                     const first = String(name).trim().split(/\s+/)[0].toLowerCase();
                     const g = nameGenderCache.get(first);
-                    if (!g || !g.gender) return true; // keep ambiguous/unknown
-                    if (g.probability && Number(g.probability) < 0.7) return true; // keep low-confidence
+                    if (!g || !g.gender) return false; // exclude ambiguous/unknown when filtering
+                    if (g.probability && Number(g.probability) < 0.7) return false; // exclude low-confidence when filtering
                     return g.gender === currentGenderFilter;
                 });
             }
@@ -206,11 +208,11 @@
 
             return list.filter(p => {
                 const name = playerProfilesCache.get(p.id);
-                if (!name) return true;
+                if (!name) return false; // exclude unknown when filtering
                 const first = String(name).trim().split(/\s+/)[0].toLowerCase();
                 const g = nameGenderCache.get(first);
-                if (!g || !g.gender) return true;
-                if (g.probability && Number(g.probability) < 0.7) return true;
+                if (!g || !g.gender) return false;
+                if (g.probability && Number(g.probability) < 0.7) return false;
                 return g.gender === currentGenderFilter;
             });
         }
@@ -5309,7 +5311,8 @@
             const endRank = Math.min(endIndex, maxPlayers);
             
             const totalAfterFilter = Math.min(sourceList.length, maxPlayers);
-            rankingsDescription.textContent = `Top ${totalAfterFilter} players - showing ranks ${startRank}-${endRank}`;
+            const genderSuffix = (currentGenderFilter !== 'all') ? ` (gender: ${currentGenderFilter.charAt(0).toUpperCase()}${currentGenderFilter.slice(1)})` : '';
+            rankingsDescription.textContent = `Top ${totalAfterFilter} players - showing ranks ${startRank}-${endRank}${genderSuffix}`;
             currentPageBadge.textContent = `${startRank}-${endRank}`;
             
             // Update button states (restricted to 2 pages max)
