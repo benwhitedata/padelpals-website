@@ -5247,23 +5247,73 @@
                 genderFilterEl.addEventListener('change', async function() {
                     console.log('Gender filter changed to:', this.value);
                     currentGenderFilter = this.value;
-                    if (typeof applyFiltersAndPaginate === 'function') {
+                    // Try window.applyFiltersAndPaginate first, then applyFiltersAndPaginate, then fallback
+                    const filterFn = window.applyFiltersAndPaginate || applyFiltersAndPaginate;
+                    if (typeof filterFn === 'function') {
                         console.log('Calling applyFiltersAndPaginate');
-                        await applyFiltersAndPaginate();
+                        await filterFn();
                     } else {
-                        console.log('applyFiltersAndPaginate not available, using fallback');
-                    // Fallback: apply club filter, then gender if requested
-                    let base = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
-                        ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
-                        : allRankedPlayers;
-                    if (currentGenderFilter !== 'all') {
-                        if (typeof filterListByGender === 'function') {
-                            base = await filterListByGender(base);
+                        console.log('applyFiltersAndPaginate not available, using inline fallback');
+                        // Fallback: apply club filter, then gender if requested
+                        let base = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
+                            ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
+                            : allRankedPlayers;
+                        console.log(`Fallback: ${base.length} players after club filter`);
+                        if (currentGenderFilter !== 'all' && base.length > 0) {
+                            console.log(`Applying gender filter: ${currentGenderFilter}`);
+                            // Ensure we have names first
+                            const missingIds = base.map(p => p.id).filter(id => !playerProfilesCache.has(id));
+                            if (missingIds.length > 0) {
+                                console.log(`Fetching ${missingIds.length} missing names`);
+                                try {
+                                    const { data: { session } } = await supabase.auth.getSession();
+                                    if (session) {
+                                        const headers = {
+                                            'Content-Type': 'application/json',
+                                            'apikey': window.config.supabaseKey,
+                                            'Authorization': `Bearer ${session.access_token}`
+                                        };
+                                        const batchSize = 50;
+                                        for (let i = 0; i < missingIds.length; i += batchSize) {
+                                            const batch = missingIds.slice(i, i + batchSize);
+                                            const idsFilter = batch.map(id => `"${id}"`).join(',');
+                                            const endpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=in.(${idsFilter})&select=id,display_name`;
+                                            const resp = await fetch(endpoint, { method: 'GET', headers });
+                                            if (resp.ok) {
+                                                const data = await resp.json();
+                                                data.forEach(pr => {
+                                                    if (pr.id && pr.display_name) {
+                                                        playerProfilesCache.set(pr.id, pr.display_name);
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Error fetching names:', e);
+                                }
+                            }
+                            // Get gender data
+                            const genderFn = window.ensureGenderDataForPlayers || ensureGenderDataForPlayers;
+                            if (typeof genderFn === 'function') {
+                                await genderFn(base);
+                            }
+                            // Filter by gender
+                            const beforeGender = base.length;
+                            base = base.filter(p => {
+                                const name = playerProfilesCache.get(p.id);
+                                if (!name) return false;
+                                const first = String(name).trim().split(/\s+/)[0].toLowerCase();
+                                const g = nameGenderCache.get(first);
+                                if (!g || !g.gender) return false;
+                                if (g.probability && Number(g.probability) < 0.7) return false;
+                                return g.gender === currentGenderFilter;
+                            });
+                            console.log(`Gender filter: ${beforeGender} -> ${base.length} players`);
                         }
-                    }
-                    filteredRankedPlayers = base;
-                    currentRankingsPageNum = 1;
-                    displayRankingsPage();
+                        filteredRankedPlayers = base;
+                        currentRankingsPageNum = 1;
+                        displayRankingsPage();
                     }
                 });
             }
