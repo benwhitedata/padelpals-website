@@ -5296,20 +5296,53 @@
                             // Get gender data
                             const genderFn = typeof window !== 'undefined' && window.ensureGenderDataForPlayers;
                             if (typeof genderFn === 'function') {
+                                console.log('Calling ensureGenderDataForPlayers');
                                 await genderFn(base);
+                                console.log(`Gender cache now has ${nameGenderCache.size} entries`);
+                            } else {
+                                console.log('ensureGenderDataForPlayers not available');
                             }
                             // Filter by gender
                             const beforeGender = base.length;
+                            let filteredCount = 0;
+                            let noNameCount = 0;
+                            let noGenderCount = 0;
+                            let lowConfidenceCount = 0;
+                            let wrongGenderCount = 0;
                             base = base.filter(p => {
                                 const name = playerProfilesCache.get(p.id);
-                                if (!name) return false;
+                                if (!name) {
+                                    noNameCount++;
+                                    return false;
+                                }
                                 const first = String(name).trim().split(/\s+/)[0].toLowerCase();
                                 const g = nameGenderCache.get(first);
-                                if (!g || !g.gender) return false;
-                                if (g.probability && Number(g.probability) < 0.7) return false;
-                                return g.gender === currentGenderFilter;
+                                if (!g || !g.gender) {
+                                    noGenderCount++;
+                                    if (filteredCount < 5) {
+                                        console.log(`No gender for "${first}" from "${name}" (player ${p.id})`);
+                                    }
+                                    return false;
+                                }
+                                if (g.probability && Number(g.probability) < 0.7) {
+                                    lowConfidenceCount++;
+                                    if (filteredCount < 5) {
+                                        console.log(`Low confidence (${g.probability}) for "${first}"`);
+                                    }
+                                    return false;
+                                }
+                                if (g.gender !== currentGenderFilter) {
+                                    wrongGenderCount++;
+                                    if (filteredCount < 5) {
+                                        console.log(`"${first}" is ${g.gender}, but filter is ${currentGenderFilter}`);
+                                    }
+                                    return false;
+                                }
+                                filteredCount++;
+                                return true;
                             });
                             console.log(`Gender filter: ${beforeGender} -> ${base.length} players`);
+                            console.log(`Breakdown: ${noNameCount} no name, ${noGenderCount} no gender, ${lowConfidenceCount} low confidence, ${wrongGenderCount} wrong gender, ${filteredCount} matches`);
                         }
                         filteredRankedPlayers = base;
                         currentRankingsPageNum = 1;
