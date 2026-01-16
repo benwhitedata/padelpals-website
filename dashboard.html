@@ -1515,11 +1515,16 @@
                 
                 addDebugInfo(`Initializing Supabase client with URL: ${window.config.supabaseUrl}`);
                 
-                // Create Supabase client
-                supabase = window.supabase.createClient(
-                    window.config.supabaseUrl,
-                    window.config.supabaseKey
-                );
+                // Use shared Supabase client instance (created by config-loader.js)
+                supabase = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : null;
+                
+                if (!supabase) {
+                    // Fallback: create client if shared instance not available
+                    supabase = window.supabase.createClient(
+                        window.config.supabaseUrl,
+                        window.config.supabaseKey
+                    );
+                }
                 
                 if (!supabase || !supabase.auth) {
                     throw new Error('Failed to initialize Supabase client - auth module not available');

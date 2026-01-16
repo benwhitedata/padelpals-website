@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Check if user is authenticated before allowing navigation
                 if (window.supabase && window.config) {
                     e.preventDefault();
-                    const supabaseClient = window.supabase.createClient(
+                    const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : window.supabase.createClient(
                         window.config.supabaseUrl,
                         window.config.supabaseKey
                     );
@@ -412,11 +412,16 @@ function updateAuthUI() {
     }
     
     try {
-        // Create Supabase client instance
-        const supabaseClient = window.supabase.createClient(
-            window.config.supabaseUrl,
-            window.config.supabaseKey
-        );
+        // Use shared Supabase client instance (created by config-loader.js)
+        let supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : null;
+        
+        if (!supabaseClient) {
+            // Fallback: create client if shared instance not available
+            supabaseClient = window.supabase.createClient(
+                window.config.supabaseUrl,
+                window.config.supabaseKey
+            );
+        }
         
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
             if (session) {
@@ -455,7 +460,7 @@ function initAuthUI() {
             updateAuthUI();
             // Listen for auth state changes
             if (window.supabase && window.config) {
-                const supabaseClient = window.supabase.createClient(
+                const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : window.supabase.createClient(
                     window.config.supabaseUrl,
                     window.config.supabaseKey
                 );

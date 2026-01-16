@@ -152,8 +152,13 @@
         // Initialize Supabase client and authentication
         function initializeAuth(config) {
             try {
-                // Create Supabase client using the config
-                const supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+                // Use shared Supabase client instance (created by config-loader.js)
+                let supabase = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : null;
+                
+                if (!supabase) {
+                    // Fallback: create client if shared instance not available
+                    supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+                }
                 
                 if (!supabase || !supabase.auth) {
                     throw new Error('Failed to initialize Supabase client');

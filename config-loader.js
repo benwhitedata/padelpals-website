@@ -59,11 +59,60 @@ async function initConfig() {
     return window.config;
 }
 
+// Shared Supabase client instance - reused across all pages
+function getOrCreateSupabaseClient() {
+    // Return existing client if already created
+    if (window.supabaseClient && window.supabaseClient.auth) {
+        return window.supabaseClient;
+    }
+    
+    // Create new client only if Supabase library is loaded and config is available
+    if (window.supabase && window.config && window.config.supabaseUrl && window.config.supabaseKey) {
+        try {
+            window.supabaseClient = window.supabase.createClient(
+                window.config.supabaseUrl,
+                window.config.supabaseKey,
+                {
+                    auth: {
+                        storageKey: 'sb-peaphqbxdmknxzsfdxuh-auth-token', // Consistent storage key
+                        autoRefreshToken: true,
+                        persistSession: true,
+                        detectSessionInUrl: true
+                    }
+                }
+            );
+            console.log('Shared Supabase client initialized');
+            return window.supabaseClient;
+        } catch (error) {
+            console.error('Error creating shared Supabase client:', error);
+            return null;
+        }
+    }
+    
+    return null;
+}
+
 // Log config source and status when available
 initConfig().then(config => {
     console.log('Configuration initialized');
     console.log('Supabase URL:', config.supabaseUrl);
     console.log('API Key available:', config.supabaseKey ? 'Yes' : 'No');
+    
+    // Initialize shared Supabase client after config is loaded
+    if (window.supabase) {
+        getOrCreateSupabaseClient();
+    } else {
+        // If Supabase library isn't loaded yet, wait for it
+        const checkSupabase = setInterval(() => {
+            if (window.supabase) {
+                clearInterval(checkSupabase);
+                getOrCreateSupabaseClient();
+            }
+        }, 100);
+        
+        // Stop checking after 5 seconds
+        setTimeout(() => clearInterval(checkSupabase), 5000);
+    }
     
     // Signal that configuration is ready
     const event = new Event('configLoaded');
@@ -74,7 +123,15 @@ initConfig().then(config => {
     window.config = fallbackConfig;
     console.warn('Falling back to embedded configuration');
     
+    // Try to initialize client with fallback config
+    if (window.supabase) {
+        getOrCreateSupabaseClient();
+    }
+    
     // Signal that configuration is ready (with fallback)
     const event = new Event('configLoaded');
     document.dispatchEvent(event);
-}); 
+});
+
+// Export the function globally so other scripts can use it
+window.getOrCreateSupabaseClient = getOrCreateSupabaseClient; 

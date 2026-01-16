@@ -60,8 +60,8 @@
 
         async function processAuthentication() {
             try {
-                // Initialize Supabase client
-                const supabase = window.supabase.createClient(
+                // Use shared Supabase client instance (created by config-loader.js)
+                const supabase = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : window.supabase.createClient(
                     window.config.supabaseUrl, 
                     window.config.supabaseKey
                 );
