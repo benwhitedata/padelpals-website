@@ -1463,7 +1463,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Global variables
-        let supabase;
+        // Note: Don't redeclare 'supabase' - it's already a global from the CDN
+        // Use 'supabaseClient' variable instead
+        let supabaseClient;
         let debugInfoElement;
         let redirectAttempted = false; // Flag to prevent infinite loops
         let authRedirectTime = parseInt(localStorage.getItem('authRedirectTime') || '0');
@@ -1534,22 +1536,22 @@
                 addDebugInfo(`Initializing Supabase client with URL: ${window.config.supabaseUrl}`);
                 
                 // Use shared Supabase client instance (created by config-loader.js)
-                supabase = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : null;
+                supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : null;
                 
-                if (!supabase) {
+                if (!supabaseClient) {
                     // Fallback: create client if shared instance not available
-                    supabase = window.supabase.createClient(
+                    supabaseClient = window.supabase.createClient(
                         window.config.supabaseUrl,
                         window.config.supabaseKey
                     );
                 }
                 
-                if (!supabase || !supabase.auth) {
+                if (!supabaseClient || !supabaseClient.auth) {
                     throw new Error('Failed to initialize Supabase client - auth module not available');
                 }
                 
                 // Test the connection by checking session
-                supabase.auth.getSession().then(({ data, error }) => {
+                supabaseClient.auth.getSession().then(({ data, error }) => {
                     if (error) {
                         console.error('Supabase connection test failed:', error);
                         addDebugInfo(`Supabase connection error: ${error.message}`);
@@ -1570,7 +1572,8 @@
                 // Setup sign out button
                 document.getElementById('signOut').addEventListener('click', async (e) => {
                     e.preventDefault();
-                    const { error } = await supabase.auth.signOut();
+                    const client = window.getOrCreateSupabaseClient();
+                    const { error } = await client.auth.signOut();
                     if (error) {
                         console.error('Error signing out:', error.message);
                     } else {
@@ -1592,7 +1595,7 @@
         async function loadUserData() {
             try {
                 // Get session silently without showing status updates
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
                 
                 if (sessionError) {
                     throw sessionError;
@@ -1612,8 +1615,8 @@
                         console.error('Redirect loop detected! Clearing session storage and showing error');
                         localStorage.removeItem('authRedirectTime');
                         // Clear any stale Supabase session data
-                        if (supabase && supabase.auth) {
-                            supabase.auth.signOut().catch(() => {});
+                        if (supabaseClient && supabaseClient.auth) {
+                            supabaseClient.auth.signOut().catch(() => {});
                         }
                         addDebugInfo('Authentication loop detected. Please clear your browser cache and try again.');
                         return;
@@ -1640,7 +1643,7 @@
                 
                 try {
                     // Try to get the user profile
-                    const { data: profile, error: profileError } = await supabase
+                    const { data: profile, error: profileError } = await supabaseClient
                         .from('profiles')
                         .select('*')
                         .eq('id', session.user.id)
@@ -3423,7 +3426,8 @@
                 chartContainer.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100"><div class="spinner-border text-primary" role="status"></div></div>';
                 
                 // Get current session and access token - similar to Swift code
-                const { data: { session } } = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
                 if (!session) {
                     throw new Error('No active session found');
                 }
@@ -3713,7 +3717,8 @@
                 console.log(`Updating display name to: ${newName} for user: ${userId}`);
                 
                 // Get current session - same way as RatingTrendView.swift
-                const { data: { session } } = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
                 if (!session) {
                     throw new Error('No active session found');
                 }
@@ -3783,7 +3788,8 @@
                 // For demo purposes, just sign out
                 setTimeout(async () => {
                     try {
-                        const { error } = await supabase.auth.signOut();
+                        const client = window.getOrCreateSupabaseClient();
+                        const { error } = await client.auth.signOut();
                         if (error) throw error;
                         window.location.href = '/auth.html';
                     } catch (error) {
@@ -3811,7 +3817,8 @@
                 console.log("Forcing profile refresh for user ID:", userId);
                 
                 // Get current session - same way as RatingTrendView.swift
-                const { data: { session } } = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
                 if (!session) {
                     throw new Error('No active session found');
                 }
@@ -3983,7 +3990,8 @@
         // Check if the user is authenticated
         async function checkAuthentication() {
             try {
-                const { data: { session }, error } = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session }, error } = await client.auth.getSession();
                 
                 if (error) {
                     console.error('Error checking session:', error);
@@ -4176,7 +4184,8 @@
                 const searchText = document.getElementById('matchSearchInput').value.toLowerCase();
                 
                 // Get current user ID from the authenticated session using more reliable method
-                const auth = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const auth = await client.auth.getSession();
                 if (!auth.data?.session?.user) {
                     console.warn("No authenticated user found for custom date filtering");
                     throw new Error("Authentication required to filter matches");
@@ -4290,7 +4299,8 @@
                 console.log("Initializing match history");
                 
                 // First check if authentication is ready
-                const { data, error } = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const { data, error } = await client.auth.getSession();
                 if (error || !data.session) {
                     console.warn("Authentication not ready yet:", error?.message || "No session found");
                     
@@ -4339,7 +4349,8 @@
                 console.log("Filter type:", filterType, "Date range:", dateRangeFilter);
                 
                 // Get current user ID and club ID from the authenticated session
-                const auth = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const auth = await client.auth.getSession();
                 if (!auth.data?.session?.user) {
                     console.warn("No authenticated user found for filtering");
                     throw new Error("Authentication required to filter matches");
@@ -4464,7 +4475,8 @@
                 document.getElementById('matchesList').style.display = 'none';
                 
                 // Get session and access token
-                const { data: { session } } = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
                 if (!session) {
                     throw new Error('No active session found');
                 }
@@ -4924,7 +4936,8 @@
             
             try {
                 // Get current user using supabase.auth.getSession() for better error handling
-                const auth = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const auth = await client.auth.getSession();
                 if (!auth.data?.session?.user) {
                     console.warn("No authenticated user found for match statistics");
                     statsContainer.innerHTML = `
@@ -5103,7 +5116,8 @@
             
             try {
                 // Get current user using supabase.auth.getSession() for better error handling
-                const auth = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const auth = await client.auth.getSession();
                 if (!auth.data?.session?.user) {
                     console.warn("No authenticated user found for recent matches");
                     recentMatchesContainer.innerHTML = `
@@ -5320,7 +5334,8 @@
                             if (missingIds.length > 0) {
                                 console.log(`Fetching ${missingIds.length} missing names`);
                                 try {
-                                    const { data: { session } } = await supabase.auth.getSession();
+                                    const client = window.getOrCreateSupabaseClient();
+                                    const { data: { session } } = await client.auth.getSession();
                                     if (session) {
                                         const headers = {
                                             'Content-Type': 'application/json',
@@ -5648,7 +5663,8 @@
             
             try {
                 // Get session and access token
-                const { data: { session } } = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
                 if (!session) {
                     throw new Error('No active session found');
                 }
@@ -5899,7 +5915,8 @@
                 if (uncachedPlayerIds.length === 0) return;
                 
                 // Get the session
-                const { data: { session } } = await supabase.auth.getSession();
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
                 if (!session) return;
                 
                 const headers = {

@@ -74,6 +74,19 @@
                 const hashFragment = window.location.hash.substring(1);
                 console.log('URL hash present:', !!hashFragment);
                 
+                // Store callback data for diagnostic tool
+                try {
+                    localStorage.setItem('oauth_last_callback', JSON.stringify({
+                        timestamp: Date.now(),
+                        url: window.location.href,
+                        hash: window.location.hash,
+                        query: window.location.search,
+                        hasHash: !!hashFragment
+                    }));
+                } catch (e) {
+                    console.warn("Could not store callback info:", e);
+                }
+                
                 if (!hashFragment) {
                     console.error('❌ No hash fragment in URL');
                     throw new Error("No authentication data in URL. The OAuth redirect may have failed.");
@@ -85,6 +98,20 @@
                 const refreshToken = params.get('refresh_token');
                 const errorParam = params.get('error');
                 const errorDescription = params.get('error_description');
+                
+                // Store parsed params for diagnostic
+                try {
+                    localStorage.setItem('oauth_callback_params', JSON.stringify({
+                        timestamp: Date.now(),
+                        hasAccessToken: !!accessToken,
+                        hasRefreshToken: !!refreshToken,
+                        error: errorParam,
+                        errorDescription: errorDescription,
+                        allParams: Object.fromEntries(params.entries())
+                    }));
+                } catch (e) {
+                    console.warn("Could not store callback params:", e);
+                }
                 
                 // Check for OAuth errors first
                 if (errorParam) {
@@ -137,6 +164,32 @@
                     name: error.name,
                     stack: error.stack
                 });
+                
+                // Store detailed error information for diagnostic tool
+                const errorInfo = {
+                    timestamp: Date.now(),
+                    message: error.message,
+                    name: error.name,
+                    url: window.location.href,
+                    hash: window.location.hash,
+                    query: window.location.search,
+                    userAgent: navigator.userAgent,
+                    errorType: 'callback_exchange'
+                };
+                
+                try {
+                    // Store in localStorage for diagnostic tool to find
+                    const existingErrors = JSON.parse(localStorage.getItem('oauth_diagnostic_errors') || '[]');
+                    existingErrors.push(errorInfo);
+                    // Keep only last 5 errors
+                    if (existingErrors.length > 5) {
+                        existingErrors.shift();
+                    }
+                    localStorage.setItem('oauth_diagnostic_errors', JSON.stringify(existingErrors));
+                    localStorage.setItem('oauth_last_error', JSON.stringify(errorInfo));
+                } catch (e) {
+                    console.error("Could not store error info:", e);
+                }
                 
                 // Clear any partial session data using the same client instance
                 try {
