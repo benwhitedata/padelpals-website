@@ -1451,6 +1451,12 @@
         let authRedirectTime = parseInt(localStorage.getItem('authRedirectTime') || '0');
         const currentTime = Date.now();
         
+        // Prevent redirect loops - if we've redirected in the last 10 seconds, stop
+        if (currentTime - authRedirectTime < 10000 && authRedirectTime > 0) {
+            console.warn('Recent redirect detected, clearing redirect time to prevent loop');
+            localStorage.removeItem('authRedirectTime');
+        }
+        
         // Add debug information
         function addDebugInfo(message) {
             console.log(message);  // Always log to console for developers
@@ -1502,6 +1508,13 @@
         // Main dashboard initialization function
         function initializeDashboard() {
             try {
+                // Validate config before creating client
+                if (!window.config || !window.config.supabaseUrl || !window.config.supabaseKey) {
+                    throw new Error('Supabase configuration is missing. Please check your config.js file.');
+                }
+                
+                addDebugInfo(`Initializing Supabase client with URL: ${window.config.supabaseUrl}`);
+                
                 // Create Supabase client
                 supabase = window.supabase.createClient(
                     window.config.supabaseUrl,
@@ -1509,8 +1522,21 @@
                 );
                 
                 if (!supabase || !supabase.auth) {
-                    throw new Error('Failed to initialize Supabase client');
+                    throw new Error('Failed to initialize Supabase client - auth module not available');
                 }
+                
+                // Test the connection by checking session
+                supabase.auth.getSession().then(({ data, error }) => {
+                    if (error) {
+                        console.error('Supabase connection test failed:', error);
+                        addDebugInfo(`Supabase connection error: ${error.message}`);
+                    } else {
+                        addDebugInfo('Supabase client initialized and connection verified successfully');
+                    }
+                }).catch(err => {
+                    console.error('Exception during Supabase connection test:', err);
+                    addDebugInfo(`Exception during connection: ${err.message}`);
+                });
 
                 
                 addDebugInfo('Supabase client initialized successfully');
@@ -1554,14 +1580,36 @@
                     addDebugInfo('No active session found');
                     console.log('Dashboard: No session found, redirecting to auth');
                     
-                    // Redirect immediately to avoid loops
+                    // Redirect immediately to avoid loops, but check if we just came from auth
+                    const lastRedirect = parseInt(localStorage.getItem('authRedirectTime') || '0');
+                    const timeSinceRedirect = Date.now() - lastRedirect;
+                    
+                    // If we redirected less than 5 seconds ago, don't redirect again (prevent loop)
+                    if (timeSinceRedirect < 5000 && lastRedirect > 0) {
+                        console.error('Redirect loop detected! Clearing session storage and showing error');
+                        localStorage.removeItem('authRedirectTime');
+                        // Clear any stale Supabase session data
+                        if (supabase && supabase.auth) {
+                            supabase.auth.signOut().catch(() => {});
+                        }
+                        addDebugInfo('Authentication loop detected. Please clear your browser cache and try again.');
+                        return;
+                    }
+                    
                     if (!redirectAttempted) {
                         redirectAttempted = true;
                         localStorage.setItem('authRedirectTime', Date.now().toString());
-                        window.location.href = '/auth.html';
+                        // Add a small delay to ensure localStorage is saved
+                        setTimeout(() => {
+                            window.location.href = '/auth.html';
+                        }, 100);
                     }
                     return;
                 }
+                
+                // Valid session found, clear redirect time
+                localStorage.removeItem('authRedirectTime');
+                redirectAttempted = false;
 
                 
                 addDebugInfo(`Session found for user: ${session.user.id}`);

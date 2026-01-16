@@ -105,8 +105,23 @@
             } catch (error) {
                 console.error("Authentication error:", error);
                 
-                // Redirect back to auth page on error
-                window.location.href = "/auth.html";
+                // Clear any partial session data
+                try {
+                    const supabase = window.supabase.createClient(
+                        window.config.supabaseUrl, 
+                        window.config.supabaseKey
+                    );
+                    await supabase.auth.signOut();
+                } catch (signOutError) {
+                    console.error("Error signing out:", signOutError);
+                }
+                
+                // Clear redirect time to prevent loops
+                localStorage.removeItem('authRedirectTime');
+                
+                // Redirect back to auth page on error with error message
+                const errorParam = encodeURIComponent(error.message || 'Authentication failed');
+                window.location.href = `/auth.html?error=${errorParam}`;
             }
         }
     </script>
