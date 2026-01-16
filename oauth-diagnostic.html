@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Diagnostic Tool - Padel Pals</title>
+    <link rel="icon" href="images/Icon.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config-loader.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4A90E2 0%, #1a2238 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #4A90E2;
+        }
+        .section.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .section.success {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+        .section.warning {
+            border-left-color: #ffc107;
+            background: #fffef0;
+        }
+        .section h2 {
+            color: #1a2238;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .check-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .check-item.success::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .check-item.error::before {
+            content: "✗";
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .check-item.warning::before {
+            content: "⚠";
+            color: #ffc107;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .check-item.info::before {
+            content: "ℹ";
+            color: #4A90E2;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: #4A90E2;
+            color: white;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.success {
+            background: #28a745;
+        }
+        .details {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .instructions {
+            background: #e7f3ff;
+            border-left: 4px solid #4A90E2;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        .instructions h3 {
+            color: #1a2238;
+            margin-bottom: 10px;
+        }
+        .instructions ol {
+            margin-left: 20px;
+        }
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 OAuth Diagnostic Tool</h1>
+            <p>Diagnosing website authentication issues</p>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <h2>Quick Actions</h2>
+                <div class="button-group">
+                    <button onclick="runFullDiagnostic()">Run Full Diagnostic</button>
+                    <button onclick="testGoogleOAuth()" class="secondary">Test Google OAuth</button>
+                    <button onclick="testAppleOAuth()" class="secondary">Test Apple OAuth</button>
+                    <button onclick="clearAllData()" class="danger">Clear All Data</button>
+                </div>
+            </div>
+
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_CALLBACK_URL = 'https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback';
+        const WEBSITE_CALLBACK_URL = 'https://www.padelpals.app/auth-callback.html';
+
+        function log(message, type = 'info') {
+            console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
+        }
+
+        function addResult(title, content, type = 'section') {
+            const resultsDiv = document.getElementById('results');
+            const section = document.createElement('div');
+            section.className = `section ${type}`;
+            section.innerHTML = `<h2>${title}</h2>${content}`;
+            resultsDiv.appendChild(section);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function runFullDiagnostic() {
+            clearResults();
+            log('Starting full diagnostic...');
+
+            // Test 1: Configuration
+            await testConfiguration();
+
+            // Test 2: Supabase Connection
+            await testSupabaseConnection();
+
+            // Test 3: OAuth URL Generation
+            await testOAuthURLGeneration();
+
+            // Test 4: Session Check
+            await testSession();
+
+            // Show Instructions
+            showInstructions();
+        }
+
+        async function testConfiguration() {
+            let html = '';
+            
+            if (!window.config) {
+                html += '<div class="check-item error">Configuration not loaded</div>';
+                addResult('1. Configuration', html, 'error');
+                return;
+            }
+
+            html += '<div class="check-item success">Configuration loaded</div>';
+            html += `<div class="check-item info">Supabase URL: <code>${window.config.supabaseUrl}</code></div>`;
+            html += `<div class="check-item info">API Key: <code>${window.config.supabaseKey ? window.config.supabaseKey.substring(0, 30) + '...' : 'MISSING'}</code></div>`;
+
+            if (!window.config.supabaseUrl || !window.config.supabaseKey) {
+                html += '<div class="check-item error">Configuration incomplete!</div>';
+                addResult('1. Configuration', html, 'error');
+            } else {
+                addResult('1. Configuration', html, 'success');
+            }
+        }
+
+        async function testSupabaseConnection() {
+            let html = '';
+
+            if (!window.supabase) {
+                html += '<div class="check-item error">Supabase library not loaded</div>';
+                addResult('2. Supabase Connection', html, 'error');
+                return;
+            }
+
+            html += '<div class="check-item success">Supabase library loaded</div>';
+
+            try {
+                const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : 
+                               window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
+
+                if (!client) {
+                    html += '<div class="check-item error">Failed to create Supabase client</div>';
+                    addResult('2. Supabase Connection', html, 'error');
+                    return;
+                }
+
+                html += '<div class="check-item success">Supabase client created</div>';
+
+                // Test network connection
+                const response = await fetch(`${window.config.supabaseUrl}/rest/v1/`, {
+                    method: 'HEAD',
+                    headers: { 'apikey': window.config.supabaseKey }
+                });
+
+                if (response.ok || response.status === 404) {
+                    html += `<div class="check-item success">Network connection OK (Status: ${response.status})</div>`;
+                    addResult('2. Supabase Connection', html, 'success');
+                } else {
+                    html += `<div class="check-item error">Unexpected status: ${response.status}</div>`;
+                    addResult('2. Supabase Connection', html, 'error');
+                }
+            } catch (error) {
+                html += `<div class="check-item error">Connection failed: ${error.message}</div>`;
+                addResult('2. Supabase Connection', html, 'error');
+            }
+        }
+
+        async function testOAuthURLGeneration() {
+            let html = '';
+
+            try {
+                const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : 
+                               window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
+
+                if (!client) {
+                    html += '<div class="check-item error">Cannot create Supabase client</div>';
+                    addResult('3. OAuth URL Generation', html, 'error');
+                    return;
+                }
+
+                html += `<div class="check-item info">Expected redirect: <code>${WEBSITE_CALLBACK_URL}</code></div>`;
+                html += `<div class="check-item info">Supabase callback: <code>${SUPABASE_CALLBACK_URL}</code></div>`;
+
+                // Test Google OAuth
+                const googleResult = await client.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: WEBSITE_CALLBACK_URL,
+                        skipBrowserRedirect: true
+                    }
+                });
+
+                if (googleResult.error) {
+                    html += `<div class="check-item error">Google OAuth Error: ${googleResult.error.message}</div>`;
+                    if (googleResult.error.message.includes('exchange') || googleResult.error.message.includes('code')) {
+                        html += '<div class="check-item warning">This suggests OAuth credentials mismatch!</div>';
+                    }
+                } else if (googleResult.data?.url) {
+                    html += '<div class="check-item success">Google OAuth URL generated successfully</div>';
+                    const url = new URL(googleResult.data.url);
+                    const clientId = url.searchParams.get('client_id');
+                    if (clientId) {
+                        html += `<div class="check-item info">Google Client ID in URL: <code>${clientId.substring(0, 20)}...</code></div>`;
+                    }
+                } else {
+                    html += '<div class="check-item error">No Google OAuth URL returned</div>';
+                }
+
+                // Test Apple OAuth
+                const appleResult = await client.auth.signInWithOAuth({
+                    provider: 'apple',
+                    options: {
+                        redirectTo: WEBSITE_CALLBACK_URL,
+                        skipBrowserRedirect: true
+                    }
+                });
+
+                if (appleResult.error) {
+                    html += `<div class="check-item error">Apple OAuth Error: ${appleResult.error.message}</div>`;
+                    if (appleResult.error.message.includes('exchange') || appleResult.error.message.includes('code')) {
+                        html += '<div class="check-item warning">This suggests OAuth credentials mismatch!</div>';
+                    }
+                } else if (appleResult.data?.url) {
+                    html += '<div class="check-item success">Apple OAuth URL generated successfully</div>';
+                } else {
+                    html += '<div class="check-item error">No Apple OAuth URL returned</div>';
+                }
+
+                const hasErrors = html.includes('error');
+                addResult('3. OAuth URL Generation', html, hasErrors ? 'error' : 'success');
+
+            } catch (error) {
+                html += `<div class="check-item error">Exception: ${error.message}</div>`;
+                addResult('3. OAuth URL Generation', html, 'error');
+            }
+        }
+
+        async function testSession() {
+            let html = '';
+
+            try {
+                const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : 
+                               window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
+
+                if (!client) {
+                    html += '<div class="check-item error">Cannot create Supabase client</div>';
+                    addResult('4. Session Status', html, 'error');
+                    return;
+                }
+
+                const { data: { session }, error } = await client.auth.getSession();
+
+                if (error) {
+                    html += `<div class="check-item error">Session error: ${error.message}</div>`;
+                } else if (session) {
+                    html += '<div class="check-item success">Active session found</div>';
+                    html += `<div class="check-item info">User ID: <code>${session.user.id}</code></div>`;
+                    html += `<div class="check-item info">Email: <code>${session.user.email || 'N/A'}</code></div>`;
+                    
+                    const now = Math.floor(Date.now() / 1000);
+                    if (session.expires_at < now) {
+                        html += '<div class="check-item error">Session is EXPIRED</div>';
+                    } else {
+                        html += `<div class="check-item success">Session expires: ${new Date(session.expires_at * 1000).toLocaleString()}</div>`;
+                    }
+                } else {
+                    html += '<div class="check-item warning">No active session (user not signed in)</div>';
+                }
+
+                addResult('4. Session Status', html, session ? 'success' : 'warning');
+
+            } catch (error) {
+                html += `<div class="check-item error">Exception: ${error.message}</div>`;
+                addResult('4. Session Status', html, 'error');
+            }
+        }
+
+        async function testGoogleOAuth() {
+            clearResults();
+            addResult('Testing Google OAuth', '<div class="check-item info">Initiating test...</div>', 'section');
+            
+            try {
+                const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : 
+                               window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
+
+                const { data, error } = await client.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: WEBSITE_CALLBACK_URL,
+                        skipBrowserRedirect: true
+                    }
+                });
+
+                clearResults();
+                let html = '';
+                if (error) {
+                    html += `<div class="check-item error">Error: ${error.message}</div>`;
+                    if (error.message.includes('exchange') || error.message.includes('code')) {
+                        html += '<div class="instructions">';
+                        html += '<h3>This error suggests OAuth credentials need updating:</h3>';
+                        html += '<ol>';
+                        html += '<li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>';
+                        html += '<li>Check your OAuth 2.0 Client ID credentials</li>';
+                        html += '<li>Verify the redirect URI includes: <code>' + SUPABASE_CALLBACK_URL + '</code></li>';
+                        html += '<li>Update Supabase Dashboard → Authentication → Providers → Google with matching credentials</li>';
+                        html += '</ol>';
+                        html += '</div>';
+                    }
+                    addResult('Google OAuth Test', html, 'error');
+                } else if (data?.url) {
+                    html += '<div class="check-item success">OAuth URL generated successfully!</div>';
+                    html += '<div class="details"><strong>URL:</strong><br><code style="word-break: break-all;">' + data.url.substring(0, 200) + '...</code></div>';
+                    html += '<div class="check-item info">Note: This is a test with skipBrowserRedirect. Actual auth will redirect to Google.</div>';
+                    addResult('Google OAuth Test', html, 'success');
+                } else {
+                    html += '<div class="check-item error">No URL returned</div>';
+                    addResult('Google OAuth Test', html, 'error');
+                }
+            } catch (error) {
+                clearResults();
+                addResult('Google OAuth Test', `<div class="check-item error">Exception: ${error.message}</div>`, 'error');
+            }
+        }
+
+        async function testAppleOAuth() {
+            clearResults();
+            addResult('Testing Apple OAuth', '<div class="check-item info">Initiating test...</div>', 'section');
+            
+            try {
+                const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : 
+                               window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
+
+                const { data, error } = await client.auth.signInWithOAuth({
+                    provider: 'apple',
+                    options: {
+                        redirectTo: WEBSITE_CALLBACK_URL,
+                        skipBrowserRedirect: true
+                    }
+                });
+
+                clearResults();
+                let html = '';
+                if (error) {
+                    html += `<div class="check-item error">Error: ${error.message}</div>`;
+                    if (error.message.includes('exchange') || error.message.includes('code')) {
+                        html += '<div class="instructions">';
+                        html += '<h3>This error suggests OAuth credentials need updating:</h3>';
+                        html += '<ol>';
+                        html += '<li>Go to <a href="https://developer.apple.com/account/" target="_blank">Apple Developer Portal</a></li>';
+                        html += '<li>Check your Services ID configuration</li>';
+                        html += '<li>Verify the return URL includes: <code>' + SUPABASE_CALLBACK_URL + '</code></li>';
+                        html += '<li>Update Supabase Dashboard → Authentication → Providers → Apple with matching credentials</li>';
+                        html += '</ol>';
+                        html += '</div>';
+                    }
+                    addResult('Apple OAuth Test', html, 'error');
+                } else if (data?.url) {
+                    html += '<div class="check-item success">OAuth URL generated successfully!</div>';
+                    html += '<div class="details"><strong>URL:</strong><br><code style="word-break: break-all;">' + data.url.substring(0, 200) + '...</code></div>';
+                    html += '<div class="check-item info">Note: This is a test with skipBrowserRedirect. Actual auth will redirect to Apple.</div>';
+                    addResult('Apple OAuth Test', html, 'success');
+                } else {
+                    html += '<div class="check-item error">No URL returned</div>';
+                    addResult('Apple OAuth Test', html, 'error');
+                }
+            } catch (error) {
+                clearResults();
+                addResult('Apple OAuth Test', `<div class="check-item error">Exception: ${error.message}</div>`, 'error');
+            }
+        }
+
+        function showInstructions() {
+            let html = '<div class="instructions">';
+            html += '<h3>📋 Next Steps - OAuth Credentials Check</h3>';
+            html += '<p><strong>Since your apps work but the website doesn\'t, you likely need to update website-specific OAuth credentials:</strong></p>';
+            html += '<ol>';
+            html += '<li><strong>Verify you have separate OAuth apps for website</strong> (not just mobile apps)</li>';
+            html += '<li><strong>For Google:</strong><ul>';
+            html += '<li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>';
+            html += '<li>Find your website OAuth Client ID</li>';
+            html += '<li>Verify redirect URI: <code>' + SUPABASE_CALLBACK_URL + '</code></li>';
+            html += '<li>Copy Client ID and Secret to Supabase Dashboard</li>';
+            html += '</ul></li>';
+            html += '<li><strong>For Apple:</strong><ul>';
+            html += '<li>Go to <a href="https://developer.apple.com/account/" target="_blank">Apple Developer Portal</a></li>';
+            html += '<li>Find your website Services ID</li>';
+            html += '<li>Verify return URL: <code>' + SUPABASE_CALLBACK_URL + '</code></li>';
+            html += '<li>Ensure Secret Key (.p8), Key ID, and Team ID are up to date</li>';
+            html += '</ul></li>';
+            html += '<li><strong>Update Supabase:</strong> Go to Dashboard → Authentication → Providers and update credentials</li>';
+            html += '<li><strong>Wait 5-10 minutes</strong> for changes to propagate</li>';
+            html += '</ol>';
+            html += '</div>';
+            addResult('📝 Instructions', html, 'section');
+        }
+
+        async function clearAllData() {
+            if (!confirm('This will sign you out and clear all local storage. Continue?')) {
+                return;
+            }
+
+            try {
+                const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : window.supabaseClient;
+                if (client) {
+                    await client.auth.signOut();
+                    log('Signed out successfully');
+                }
+                
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                alert('All data cleared! Refreshing page...');
+                location.reload();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Auto-run on load
+        document.addEventListener('configLoaded', () => {
+            log('Config loaded, ready for diagnostics');
+            setTimeout(() => runFullDiagnostic(), 500);
+        });
+
+        // If config already loaded
+        if (window.config) {
+            setTimeout(() => runFullDiagnostic(), 500);
+        }
+    </script>
+</body>
+</html>
