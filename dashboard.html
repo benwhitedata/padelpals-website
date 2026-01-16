@@ -1552,17 +1552,14 @@
                 
                 if (!session) {
                     addDebugInfo('No active session found');
-                    showLoadingMessage('You are not signed in. Redirecting to authentication page...', true);
+                    console.log('Dashboard: No session found, redirecting to auth');
                     
-                    // Wait to display the message
-                    setTimeout(() => {
-                        if (!redirectAttempted) {
-                            redirectAttempted = true;
-                            localStorage.setItem('authRedirectTime', Date.now().toString());
-                            window.location.href = '/auth.html';
-                        }
-
-                    }, 2000);
+                    // Redirect immediately to avoid loops
+                    if (!redirectAttempted) {
+                        redirectAttempted = true;
+                        localStorage.setItem('authRedirectTime', Date.now().toString());
+                        window.location.href = '/auth.html';
+                    }
                     return;
                 }
 
@@ -3914,8 +3911,6 @@
         
         // Check if the user is authenticated
         async function checkAuthentication() {
-            let redirectAttempted = false;
-            
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
                 

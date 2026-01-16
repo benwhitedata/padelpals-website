@@ -177,7 +177,6 @@ const SHARED_NAVIGATION_CSS = `
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    display: none;
 }
 
 .auth-button:hover {
@@ -298,7 +297,7 @@ const SHARED_NAVIGATION_HTML = `
             <a href="dashboard.html" class="auth-button" id="dashboardButton" style="display: none; text-decoration: none;">
                 <i class="fas fa-tachometer-alt" style="margin-right: 6px;"></i>Dashboard
             </a>
-            <a href="auth.html" class="auth-button" id="loginButton" style="text-decoration: none;">
+            <a href="auth.html" class="auth-button" id="loginButton" style="display: inline-block; text-decoration: none;">
                 <i class="fas fa-sign-in-alt" style="margin-right: 6px;"></i>Sign In
             </a>
         </div>
@@ -330,6 +329,33 @@ document.addEventListener('DOMContentLoaded', function() {
         if (linkPath === currentPage || (currentPage === '' && linkPath === 'index.html')) {
             link.style.color = '#4A90E2';
             link.style.fontWeight = '700';
+        }
+        
+        // Add protection to dashboard links
+        if (linkPath === 'dashboard.html') {
+            link.addEventListener('click', function(e) {
+                // Check if user is authenticated before allowing navigation
+                if (window.supabase && window.config) {
+                    e.preventDefault();
+                    const supabaseClient = window.supabase.createClient(
+                        window.config.supabaseUrl,
+                        window.config.supabaseKey
+                    );
+                    
+                    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                        if (session) {
+                            // User is authenticated, allow navigation
+                            window.location.href = 'dashboard.html';
+                        } else {
+                            // User is not authenticated, redirect to sign in
+                            window.location.href = 'auth.html';
+                        }
+                    }).catch(err => {
+                        console.log('Auth check error, redirecting to sign in:', err);
+                        window.location.href = 'auth.html';
+                    });
+                }
+            });
         }
     });
 });
@@ -367,9 +393,32 @@ function updateAuthUI() {
     const dashboardButton = document.getElementById('dashboardButton');
     const userInfo = document.getElementById('userInfo');
     
-    // Check if Supabase is available and user is authenticated
-    if (window.supabase && window.config) {
-        window.supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check if config is properly loaded
+    if (!window.config || !window.config.supabaseUrl || !window.config.supabaseKey) {
+        // Config not loaded yet, show login button as default
+        if (loginButton) loginButton.style.display = 'inline-block';
+        if (dashboardButton) dashboardButton.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
+        return;
+    }
+    
+    // Check if Supabase library is available
+    if (!window.supabase) {
+        console.log('Supabase library not loaded yet');
+        if (loginButton) loginButton.style.display = 'inline-block';
+        if (dashboardButton) dashboardButton.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
+        return;
+    }
+    
+    try {
+        // Create Supabase client instance
+        const supabaseClient = window.supabase.createClient(
+            window.config.supabaseUrl,
+            window.config.supabaseKey
+        );
+        
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 if (loginButton) loginButton.style.display = 'none';
                 if (dashboardButton) dashboardButton.style.display = 'inline-block';
@@ -389,38 +438,42 @@ function updateAuthUI() {
             if (dashboardButton) dashboardButton.style.display = 'none';
             if (userInfo) userInfo.style.display = 'none';
         });
-    } else {
-        // Config not loaded yet, try again later
-        if (window.configLoaderReady) {
-            setTimeout(updateAuthUI, 500);
-        }
+    } catch (err) {
+        console.error('Error creating Supabase client:', err);
+        // Show login button as fallback
+        if (loginButton) loginButton.style.display = 'inline-block';
+        if (dashboardButton) dashboardButton.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
     }
 }
 
-// Wait for Supabase to initialize and update auth UI
-if (typeof window !== 'undefined') {
+// Initialize auth UI updates after navigation is loaded
+function initAuthUI() {
     // Wait for config to load first
     document.addEventListener('configLoaded', function() {
         setTimeout(() => {
             updateAuthUI();
             // Listen for auth state changes
             if (window.supabase && window.config) {
-                window.supabase.auth.onAuthStateChange((event, session) => {
+                const supabaseClient = window.supabase.createClient(
+                    window.config.supabaseUrl,
+                    window.config.supabaseKey
+                );
+                supabaseClient.auth.onAuthStateChange((event, session) => {
                     updateAuthUI();
                 });
             }
         }, 500);
     });
     
-    // Also try after a delay in case configLoaded already fired
+    // Also try immediately in case configLoaded already fired
     setTimeout(() => {
         updateAuthUI();
-        // Listen for auth state changes
-        if (window.supabase && window.config) {
-            window.supabase.auth.onAuthStateChange((event, session) => {
-                updateAuthUI();
-            });
-        }
+    }, 100);
+    
+    // And try again after a longer delay to catch late loads
+    setTimeout(() => {
+        updateAuthUI();
     }, 1500);
 }
 `;
@@ -547,6 +600,9 @@ function initSharedNavigation() {
     const script = document.createElement('script');
     script.textContent = SHARED_NAVIGATION_JS;
     document.body.appendChild(script);
+    
+    // Initialize auth UI after navigation is in place
+    initAuthUI();
 }
 
 /**
