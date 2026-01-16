@@ -22,7 +22,13 @@
         // Fetch current user's club and club members; also seed profile name cache
         async function fetchCurrentUserClubAndMembers() {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                // Use shared Supabase client
+                const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : (typeof supabase !== 'undefined' ? supabase : null);
+                if (!supabaseClient) {
+                    console.warn('Supabase client not available for fetchCurrentUserClubAndMembers');
+                    return;
+                }
+                const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) return;
                 const userId = session.user?.id;
                 if (!userId) return;
@@ -142,7 +148,13 @@
                 if (missingIds.length > 0) {
                     console.log(`Fetching names for ${missingIds.length} players`);
                     try {
-                        const { data: { session } } = await supabase.auth.getSession();
+                        // Use shared Supabase client
+                        const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : (typeof supabase !== 'undefined' ? supabase : null);
+                        if (!supabaseClient) {
+                            console.warn('Supabase client not available for applyFiltersAndPaginate');
+                            return;
+                        }
+                        const { data: { session } } = await supabaseClient.auth.getSession();
                         if (session) {
                             const headers = {
                                 'Content-Type': 'application/json',
@@ -215,7 +227,13 @@
                 // Ensure names
                 const idsMissingNames = list.map(p => p.id).filter(id => !playerProfilesCache.has(id));
                 if (idsMissingNames.length > 0) {
-                    const { data: { session } } = await supabase.auth.getSession();
+                    // Use shared Supabase client
+                    const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : (typeof supabase !== 'undefined' ? supabase : null);
+                    if (!supabaseClient) {
+                        console.warn('Supabase client not available for filterListByGender');
+                        return list;
+                    }
+                    const { data: { session } } = await supabaseClient.auth.getSession();
                     if (session) {
                         const headers = {
                             'Content-Type': 'application/json',
