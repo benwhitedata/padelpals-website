@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Debug - Padel Pals</title>
+    <link rel="icon" href="images/Icon.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config-loader.js"></script>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4ec9b0;
+            border-bottom: 2px solid #4ec9b0;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #569cd6;
+            margin-top: 30px;
+        }
+        .section {
+            background: #252526;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 3px solid #007acc;
+        }
+        .success {
+            color: #4ec9b0;
+            border-left-color: #4ec9b0;
+        }
+        .error {
+            color: #f48771;
+            border-left-color: #f48771;
+        }
+        .warning {
+            color: #dcdcaa;
+            border-left-color: #dcdcaa;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 2px solid #007acc;
+            font-size: 13px;
+        }
+        .timestamp {
+            color: #858585;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Authentication Debug Tool</h1>
+        <p>This page helps diagnose authentication issues with Supabase.</p>
+
+        <div class="section">
+            <h2>Quick Actions</h2>
+            <button onclick="runAllTests()">🧪 Run All Tests</button>
+            <button onclick="checkSession()">🔐 Check Session</button>
+            <button onclick="clearStorage()">🗑️ Clear Storage</button>
+            <button onclick="testOAuth()">🔗 Test OAuth URL</button>
+            <button onclick="viewLogs()">📋 View Logs</button>
+        </div>
+
+        <div id="results"></div>
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        let logEntries = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logEntries.push({ timestamp, message, type });
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function viewLogs() {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = '<h2>Console Logs</h2>';
+            logEntries.forEach(entry => {
+                const div = document.createElement('div');
+                div.className = `log-entry ${entry.type}`;
+                div.innerHTML = `<span class="timestamp">${entry.timestamp}</span>${entry.message}`;
+                logsDiv.appendChild(div);
+            });
+        }
+
+        function displayResult(title, content, type = 'section') {
+            const resultsDiv = document.getElementById('results');
+            const section = document.createElement('div');
+            section.className = `section ${type}`;
+            section.innerHTML = `<h2>${title}</h2>${content}`;
+            resultsDiv.appendChild(section);
+        }
+
+        async function runAllTests() {
+            document.getElementById('results').innerHTML = '';
+            logEntries = [];
+            
+            log('Starting authentication diagnostics...', 'info');
+            
+            // Test 1: Configuration
+            await testConfiguration();
+            
+            // Test 2: Supabase Client
+            await testSupabaseClient();
+            
+            // Test 3: Session Status
+            await checkSession();
+            
+            // Test 4: Storage
+            await checkStorage();
+            
+            // Test 5: Network
+            await testNetwork();
+            
+            log('Diagnostics complete!', 'success');
+        }
+
+        async function testConfiguration() {
+            log('Testing configuration...', 'info');
+            
+            let html = '<ul>';
+            
+            // Check config object
+            if (window.config) {
+                html += `<li class="success">✓ Config loaded</li>`;
+                html += `<li>Supabase URL: <code>${window.config.supabaseUrl}</code></li>`;
+                html += `<li>API Key: <code>${window.config.supabaseKey ? window.config.supabaseKey.substring(0, 20) + '...' : 'MISSING'}</code></li>`;
+                
+                if (!window.config.supabaseUrl || !window.config.supabaseKey) {
+                    html += `<li class="error">✗ Configuration is incomplete!</li>`;
+                    log('Configuration is incomplete', 'error');
+                } else {
+                    log('Configuration is valid', 'success');
+                }
+            } else {
+                html += `<li class="error">✗ Config not loaded</li>`;
+                log('Config object not found', 'error');
+            }
+            
+            html += '</ul>';
+            displayResult('1. Configuration', html, window.config ? 'success' : 'error');
+        }
+
+        async function testSupabaseClient() {
+            log('Testing Supabase client...', 'info');
+            
+            let html = '<ul>';
+            
+            // Check Supabase library
+            if (window.supabase) {
+                html += `<li class="success">✓ Supabase library loaded</li>`;
+                log('Supabase library is available', 'success');
+            } else {
+                html += `<li class="error">✗ Supabase library not loaded</li>`;
+                log('Supabase library not found', 'error');
+                displayResult('2. Supabase Client', html, 'error');
+                return;
+            }
+            
+            // Check shared client
+            if (window.supabaseClient) {
+                html += `<li class="success">✓ Shared client exists</li>`;
+                html += `<li>Client has auth: ${window.supabaseClient.auth ? 'Yes' : 'No'}</li>`;
+                log('Shared Supabase client found', 'success');
+            } else {
+                html += `<li class="warning">⚠ Shared client not initialized</li>`;
+                log('Shared client not found, attempting to create...', 'warning');
+                
+                // Try to create
+                if (window.getOrCreateSupabaseClient) {
+                    const client = window.getOrCreateSupabaseClient();
+                    html += `<li>${client ? '✓ Created client' : '✗ Failed to create client'}</li>`;
+                }
+            }
+            
+            html += '</ul>';
+            displayResult('2. Supabase Client', html, window.supabaseClient ? 'success' : 'warning');
+        }
+
+        async function checkSession() {
+            log('Checking session...', 'info');
+            
+            let html = '<ul>';
+            
+            try {
+                const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : 
+                               (window.supabaseClient || window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey));
+                
+                if (!client) {
+                    html += `<li class="error">✗ Cannot create Supabase client</li>`;
+                    displayResult('3. Session Status', html, 'error');
+                    return;
+                }
+                
+                const { data: { session }, error } = await client.auth.getSession();
+                
+                if (error) {
+                    html += `<li class="error">✗ Error: ${error.message}</li>`;
+                    log(`Session check error: ${error.message}`, 'error');
+                } else if (session) {
+                    html += `<li class="success">✓ Active session found</li>`;
+                    html += `<li>User ID: <code>${session.user.id}</code></li>`;
+                    html += `<li>Email: <code>${session.user.email || 'N/A'}</code></li>`;
+                    html += `<li>Expires: <code>${new Date(session.expires_at * 1000).toLocaleString()}</code></li>`;
+                    
+                    // Check if expired
+                    const now = Math.floor(Date.now() / 1000);
+                    if (session.expires_at < now) {
+                        html += `<li class="error">✗ Session is EXPIRED!</li>`;
+                        log('Session is expired', 'error');
+                    } else {
+                        html += `<li class="success">✓ Session is valid</li>`;
+                        log('Session is valid and not expired', 'success');
+                    }
+                } else {
+                    html += `<li class="warning">⚠ No active session</li>`;
+                    log('No active session found', 'warning');
+                }
+                
+            } catch (err) {
+                html += `<li class="error">✗ Exception: ${err.message}</li>`;
+                log(`Exception during session check: ${err.message}`, 'error');
+            }
+            
+            html += '</ul>';
+            displayResult('3. Session Status', html);
+        }
+
+        async function checkStorage() {
+            log('Checking browser storage...', 'info');
+            
+            let html = '<ul>';
+            
+            // Check localStorage
+            try {
+                const storageKeys = Object.keys(localStorage);
+                html += `<li>LocalStorage keys: ${storageKeys.length}</li>`;
+                
+                // Find auth-related keys
+                const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('supabase'));
+                if (authKeys.length > 0) {
+                    html += `<li>Auth-related keys found: ${authKeys.length}</li>`;
+                    html += '<li><details><summary>View keys</summary><ul>';
+                    authKeys.forEach(key => {
+                        const value = localStorage.getItem(key);
+                        let preview = 'N/A';
+                        try {
+                            const parsed = JSON.parse(value);
+                            preview = `${Object.keys(parsed).join(', ')}`;
+                        } catch {
+                            preview = value ? value.substring(0, 50) + '...' : 'empty';
+                        }
+                        html += `<li><code>${key}</code>: ${preview}</li>`;
+                    });
+                    html += '</ul></details></li>';
+                    log(`Found ${authKeys.length} auth-related storage keys`, 'info');
+                } else {
+                    html += `<li class="warning">⚠ No auth keys found in storage</li>`;
+                    log('No auth keys in localStorage', 'warning');
+                }
+            } catch (err) {
+                html += `<li class="error">✗ Cannot access localStorage: ${err.message}</li>`;
+                log(`localStorage access error: ${err.message}`, 'error');
+            }
+            
+            html += '</ul>';
+            displayResult('4. Browser Storage', html);
+        }
+
+        async function testNetwork() {
+            log('Testing network connectivity...', 'info');
+            
+            let html = '<ul>';
+            
+            // Test Supabase connection
+            if (window.config && window.config.supabaseUrl) {
+                try {
+                    const url = `${window.config.supabaseUrl}/rest/v1/`;
+                    const response = await fetch(url, {
+                        method: 'HEAD',
+                        headers: {
+                            'apikey': window.config.supabaseKey
+                        }
+                    });
+                    
+                    if (response.ok || response.status === 404) {
+                        html += `<li class="success">✓ Supabase endpoint reachable</li>`;
+                        html += `<li>Status: ${response.status}</li>`;
+                        log(`Supabase endpoint responded with ${response.status}`, 'success');
+                    } else {
+                        html += `<li class="error">✗ Unexpected status: ${response.status}</li>`;
+                        log(`Unexpected response: ${response.status}`, 'error');
+                    }
+                } catch (err) {
+                    html += `<li class="error">✗ Cannot reach Supabase: ${err.message}</li>`;
+                    log(`Network error: ${err.message}`, 'error');
+                }
+            } else {
+                html += `<li class="error">✗ No Supabase URL configured</li>`;
+            }
+            
+            html += '</ul>';
+            displayResult('5. Network Connectivity', html);
+        }
+
+        async function clearStorage() {
+            log('Clearing storage...', 'info');
+            
+            if (confirm('This will sign you out and clear all local data. Continue?')) {
+                try {
+                    // Sign out first
+                    const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : window.supabaseClient;
+                    if (client) {
+                        await client.auth.signOut();
+                        log('Signed out successfully', 'success');
+                    }
+                    
+                    // Clear storage
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    
+                    log('Storage cleared', 'success');
+                    alert('Storage cleared! Please refresh the page.');
+                    location.reload();
+                } catch (err) {
+                    log(`Error clearing storage: ${err.message}`, 'error');
+                    alert('Error: ' + err.message);
+                }
+            }
+        }
+
+        async function testOAuth() {
+            log('Testing OAuth configuration...', 'info');
+            
+            let html = '<ul>';
+            
+            try {
+                const client = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : 
+                               window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
+                
+                // Try to generate OAuth URL
+                const redirectUrl = 'https://www.padelpals.app/auth-callback.html';
+                html += `<li>Redirect URL: <code>${redirectUrl}</code></li>`;
+                
+                const { data, error } = await client.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: redirectUrl,
+                        skipBrowserRedirect: true
+                    }
+                });
+                
+                if (error) {
+                    html += `<li class="error">✗ OAuth error: ${error.message}</li>`;
+                    log(`OAuth test failed: ${error.message}`, 'error');
+                } else if (data?.url) {
+                    html += `<li class="success">✓ OAuth URL generated</li>`;
+                    html += `<li><details><summary>View URL</summary><code style="word-break: break-all;">${data.url}</code></details></li>`;
+                    log('OAuth URL generated successfully', 'success');
+                } else {
+                    html += `<li class="warning">⚠ No URL returned</li>`;
+                    log('No OAuth URL returned', 'warning');
+                }
+            } catch (err) {
+                html += `<li class="error">✗ Exception: ${err.message}</li>`;
+                log(`OAuth test exception: ${err.message}`, 'error');
+            }
+            
+            html += '</ul>';
+            displayResult('OAuth Configuration', html);
+        }
+
+        // Auto-run on load
+        document.addEventListener('configLoaded', () => {
+            log('Config loaded event fired', 'success');
+            setTimeout(() => runAllTests(), 500);
+        });
+    </script>
+</body>
+</html>

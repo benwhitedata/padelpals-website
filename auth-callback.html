@@ -105,13 +105,11 @@
             } catch (error) {
                 console.error("Authentication error:", error);
                 
-                // Clear any partial session data
+                // Clear any partial session data using the same client instance
                 try {
-                    const supabase = window.supabase.createClient(
-                        window.config.supabaseUrl, 
-                        window.config.supabaseKey
-                    );
-                    await supabase.auth.signOut();
+                    if (supabase && supabase.auth) {
+                        await supabase.auth.signOut();
+                    }
                 } catch (signOutError) {
                     console.error("Error signing out:", signOutError);
                 }
