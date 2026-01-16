@@ -60,54 +60,88 @@
 
         async function processAuthentication() {
             try {
+                console.log('🔐 Starting authentication process...');
+                
                 // Use shared Supabase client instance (created by config-loader.js)
                 const supabase = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : window.supabase.createClient(
                     window.config.supabaseUrl, 
                     window.config.supabaseKey
                 );
                 
+                console.log('✓ Supabase client ready');
+                
                 // Get the hash fragment from the URL
                 const hashFragment = window.location.hash.substring(1);
+                console.log('URL hash present:', !!hashFragment);
                 
                 if (!hashFragment) {
-                    throw new Error("Authentication error");
+                    console.error('❌ No hash fragment in URL');
+                    throw new Error("No authentication data in URL. The OAuth redirect may have failed.");
                 }
                 
                 // Parse the hash parameters
                 const params = new URLSearchParams(hashFragment);
                 const accessToken = params.get('access_token');
                 const refreshToken = params.get('refresh_token');
+                const errorParam = params.get('error');
+                const errorDescription = params.get('error_description');
+                
+                // Check for OAuth errors first
+                if (errorParam) {
+                    console.error('❌ OAuth error from provider:', errorParam);
+                    console.error('Description:', errorDescription);
+                    throw new Error(`OAuth error: ${errorParam} - ${errorDescription || 'No description'}`);
+                }
+                
+                console.log('Access token present:', !!accessToken);
+                console.log('Refresh token present:', !!refreshToken);
                 
                 if (!accessToken) {
-                    throw new Error("Authentication error");
+                    console.error('❌ No access token in URL hash');
+                    throw new Error("No access token received from OAuth provider. Check Supabase provider configuration.");
                 }
                 
                 // Set the session in Supabase
+                console.log('📝 Setting session in Supabase...');
                 const { error } = await supabase.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken
                 });
                 
                 if (error) {
-                    throw error;
+                    console.error('❌ setSession error:', error);
+                    throw new Error(`Failed to set session: ${error.message}`);
                 }
                 
+                console.log('✓ Session set successfully');
+                
                 // Get the current session to confirm it worked
+                console.log('🔍 Verifying session...');
                 const { data } = await supabase.auth.getSession();
                 
                 if (!data.session) {
-                    throw new Error("Authentication error");
+                    console.error('❌ Session verification failed - no session data returned');
+                    throw new Error("Session was set but verification failed. Token may be invalid.");
                 }
+                
+                console.log('✓ Session verified! User ID:', data.session.user.id);
+                console.log('➡️ Redirecting to dashboard...');
                 
                 // Redirect to dashboard
                 window.location.href = "/dashboard.html";
                 
             } catch (error) {
-                console.error("Authentication error:", error);
+                console.error("❌ Authentication error:", error);
+                console.error("Error details:", {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack
+                });
                 
                 // Clear any partial session data using the same client instance
                 try {
                     if (supabase && supabase.auth) {
+                        console.log('🧹 Cleaning up failed session...');
                         await supabase.auth.signOut();
                     }
                 } catch (signOutError) {
@@ -119,6 +153,7 @@
                 
                 // Redirect back to auth page on error with error message
                 const errorParam = encodeURIComponent(error.message || 'Authentication failed');
+                console.log('➡️ Redirecting to auth.html with error');
                 window.location.href = `/auth.html?error=${errorParam}`;
             }
         }
