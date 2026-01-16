@@ -66,9 +66,17 @@ function getOrCreateSupabaseClient() {
         return window.supabaseClient;
     }
     
+    // Prevent multiple simultaneous creation attempts
+    if (window._creatingSupabaseClient) {
+        // Wait a bit and try again
+        return null;
+    }
+    
     // Create new client only if Supabase library is loaded and config is available
-    if (window.supabase && window.config && window.config.supabaseUrl && window.config.supabaseKey) {
+    if (window.supabase && window.supabase.createClient && window.config && window.config.supabaseUrl && window.config.supabaseKey) {
         try {
+            window._creatingSupabaseClient = true;
+            
             window.supabaseClient = window.supabase.createClient(
                 window.config.supabaseUrl,
                 window.config.supabaseKey,
@@ -82,9 +90,11 @@ function getOrCreateSupabaseClient() {
                 }
             );
             console.log('Shared Supabase client initialized');
+            window._creatingSupabaseClient = false;
             return window.supabaseClient;
         } catch (error) {
             console.error('Error creating shared Supabase client:', error);
+            window._creatingSupabaseClient = false;
             return null;
         }
     }
