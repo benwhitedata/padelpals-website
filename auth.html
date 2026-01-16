@@ -101,25 +101,36 @@
 </head>
 <body>
     
-    <div class="auth-container">
-        <h2 class="auth-title">Sign in to Padel Pals</h2>
-        <button id="appleSignIn" class="sign-in-button apple-sign-in" disabled>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.41-1.09-.47-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.41C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.19 2.31-.89 3.51-.84 1.54.07 2.7.61 3.44 1.57-3.14 1.88-2.29 5.13.22 6.41-.65 1.29-1.44 2.58-2.25 4.03zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-            </svg>
-            <span id="appleButtonText">Sign in with Apple</span>
-        </button>
-        <button id="googleSignIn" class="sign-in-button google-sign-in" disabled>
-            <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            <span id="googleButtonText">Sign in with Google</span>
-        </button>
-        <div id="statusMessages" style="display: none;">
-            <div class="status-message info-message"></div>
+    <div class="main-content">
+        <div class="auth-card">
+            <h2 class="auth-title">Sign in to Padel Pals</h2>
+            <p class="auth-subtitle">Choose your preferred sign-in method</p>
+            
+            <button id="appleSignIn" class="sign-in-button apple-sign-in" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.41-1.09-.47-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.41C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.19 2.31-.89 3.51-.84 1.54.07 2.7.61 3.44 1.57-3.14 1.88-2.29 5.13.22 6.41-.65 1.29-1.44 2.58-2.25 4.03zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                </svg>
+                <span id="appleButtonText">Sign in with Apple</span>
+            </button>
+            
+            <button id="googleSignIn" class="sign-in-button google-sign-in" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span id="googleButtonText">Sign in with Google</span>
+            </button>
+            
+            <div id="statusMessages" style="display: none;">
+                <div class="status-message info-message"></div>
+            </div>
+            
+            <button id="logoutButton" class="logout-button">
+                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>
+                Sign Out
+            </button>
         </div>
     </div>
 
@@ -257,6 +268,45 @@
                     }
                 });
         
+                // Setup logout button handler
+                const logoutButton = document.getElementById('logoutButton');
+                if (logoutButton) {
+                    logoutButton.addEventListener('click', async () => {
+                        try {
+                            logoutButton.disabled = true;
+                            logoutButton.innerHTML = '<span class="loading-spinner"></span> Signing out...';
+                            
+                            // Sign out from Supabase
+                            const { error } = await supabase.auth.signOut();
+                            
+                            if (error) {
+                                throw error;
+                            }
+                            
+                            // Clear all storage
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            
+                            // Clear redirect time
+                            localStorage.removeItem('authRedirectTime');
+                            
+                            // Show success message
+                            showStatusMessage('Signed out successfully. Refreshing page...', 'info');
+                            
+                            // Reload page after a short delay
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                            
+                        } catch (error) {
+                            console.error('Error signing out:', error);
+                            logoutButton.disabled = false;
+                            logoutButton.innerHTML = '<i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>Sign Out';
+                            showStatusMessage(`Error signing out: ${error.message}`, 'error');
+                        }
+                    });
+                }
+                
                 // Check if user is already signed in (but validate session first)
                 supabase.auth.getSession().then(({ data: { session }, error: sessionError }) => {
                     if (sessionError) {
@@ -270,13 +320,28 @@
                         // Validate session is not expired
                         const now = Math.floor(Date.now() / 1000);
                         if (session.expires_at && session.expires_at > now) {
-                            // Valid session, redirect to dashboard
-                            console.log('Valid session found, redirecting to dashboard');
-                            window.location.href = '/dashboard.html';
+                            // Valid session - show logout button instead of redirecting
+                            console.log('Valid session found');
+                            if (logoutButton) {
+                                logoutButton.style.display = 'block';
+                            }
+                            // Hide sign in buttons
+                            appleSignInButton.style.display = 'none';
+                            googleSignInButton.style.display = 'none';
+                            // Update title
+                            const authTitle = document.querySelector('.auth-title');
+                            const authSubtitle = document.querySelector('.auth-subtitle');
+                            if (authTitle) authTitle.textContent = 'You are signed in';
+                            if (authSubtitle) authSubtitle.textContent = `Signed in as ${session.user.email || 'User'}`;
                         } else {
                             // Session expired, clear it
                             console.log('Session expired, clearing');
                             supabase.auth.signOut();
+                        }
+                    } else {
+                        // No session - ensure logout button is hidden
+                        if (logoutButton) {
+                            logoutButton.style.display = 'none';
                         }
                     }
                 }).catch(error => {
