@@ -1753,7 +1753,7 @@
                 // Get leagues
                 // If RLS is properly set up, this will automatically filter to leagues the user has access to
                 // Admins would see all leagues, regular users would see leagues they created or participate in
-                const { data: leagues, error: leaguesError } = await supabase
+                const { data: leagues, error: leaguesError } = await supabaseClient
                     .from('box_leagues')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -1801,7 +1801,7 @@
                 // Try to verify if we really have access or if this is an RLS issue
                 if (!isAdmin) {
                     // Check user's teams directly to verify data model connections
-                    const { data: userTeams, error: userTeamsError } = await supabase
+                    const { data: userTeams, error: userTeamsError } = await supabaseClient
                         .from('box_league_teams')
                         .select('*')
                         .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
@@ -2017,7 +2017,7 @@
                 `;
                 
                 // Get boxes for the selected league
-                const { data: boxes, error: boxesError } = await supabase
+                const { data: boxes, error: boxesError } = await supabaseClient
                     .from('box_league_boxes')
                     .select('*')
                     .eq('league_id', leagueId);
@@ -2107,7 +2107,7 @@
                 console.log('Loading box details for box ID:', boxId);
                 
                 // Get teams for the box
-                const { data: teams, error: teamsError } = await supabase
+                const { data: teams, error: teamsError } = await supabaseClient
                     .from('box_league_teams')
                     .select('*')
                     .eq('box_id', boxId);
@@ -2122,7 +2122,7 @@
                 console.log('Team data format sample:', JSON.stringify(teams.slice(0, 3), null, 2));
                 
                 // Get matches for the box
-                const { data: matches, error: matchesError } = await supabase
+                const { data: matches, error: matchesError } = await supabaseClient
                     .from('box_league_matches')
                     .select('*')
                     .eq('box_id', boxId);
@@ -2761,7 +2761,7 @@
                         printButton.disabled = true;
                         
                         // Get all boxes for this league
-                        const { data: boxes, error: boxesError } = await supabase
+                        const { data: boxes, error: boxesError } = await supabaseClient
                             .from('box_league_boxes')
                             .select('*')
                             .eq('league_id', leagueId);
@@ -2996,7 +2996,7 @@
                         
                         for (const box of boxes) {
                             // Get teams for this box
-                            const { data: teams, error: teamsError } = await supabase
+                            const { data: teams, error: teamsError } = await supabaseClient
                                 .from('box_league_teams')
                                 .select('*')
                                 .eq('box_id', box.id);
@@ -3010,7 +3010,7 @@
                             if (!teams || teams.length === 0) continue;
                             
                             // Get matches for this box
-                            const { data: matches, error: matchesError } = await supabase
+                            const { data: matches, error: matchesError } = await supabaseClient
                                 .from('box_league_matches')
                                 .select('*')
                                 .eq('box_id', box.id);
@@ -3965,7 +3965,7 @@
                 // Still run the database test silently
                 try {
                     // Try to query a random table to verify permissions work
-                    const { count, error: countError } = await supabase
+                    const { count, error: countError } = await supabaseClient
                         .from('profiles')
                         .select('*', { count: 'exact', head: true });
                         
@@ -4033,7 +4033,7 @@
                 
                 try {
                     // Try to get the user profile
-                    const { data: profile, error: profileError } = await supabase
+                    const { data: profile, error: profileError } = await client
                         .from('profiles')
                         .select('*')
                         .eq('id', session.user.id)
@@ -4519,7 +4519,7 @@
                 // Query for matches
                 // This query structure is similar to the one in the iOS app
                 // First we'll get all matches (both completed and pending)
-                const { data: matches, error } = await supabase
+                const { data: matches, error } = await client
                     .from('padel_matches_view')
                     .select(`
                         id,

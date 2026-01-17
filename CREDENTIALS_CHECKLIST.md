@@ -128,17 +128,24 @@ This means the initial OAuth setup is working, but **credentials mismatch** is p
    **Verify these match EXACTLY:**
 
    - **Services ID (Client ID)**: Must match Apple Developer Portal Services ID
-   - **Secret Key**: Must match contents of .p8 file (entire file contents)
+   - **Secret Key**: Must be a **generated JWT** (starts with `eyJ...`) from the Supabase tool, OR entire contents of .p8 file
    - **Key ID**: Must match Key ID from Apple Developer Portal
    - **Team ID**: Must match Team ID from Apple Developer Portal
 
-3. **Check the toggle**: Is Apple **Enabled**? (should be ON)
+3. **⚠️ CRITICAL: Check the "Client IDs" field:**
+   - This field should contain **BOTH** your **Services ID** (for web) **AND** your **iOS bundle IDs** (for mobile apps)
+   - ✅ **CORRECT**: `com.playpadelpals.padelpals362.signin,com.playpadelpals.padelpals362`
+   - ✅ **Format**: Services ID (web) + iOS bundle IDs (apps), all comma-separated
+   - **Note**: You need ALL of these to support both website AND mobile app authentication
 
-4. If they don't match:
+4. **Check the toggle**: Is Apple **Enabled**? (should be ON)
+
+5. If they don't match:
    - Copy Services ID from Apple Developer Portal → Paste in Supabase
-   - Copy entire .p8 file contents → Paste in Supabase Secret Key
+   - Use Supabase tool (https://supabase.com/docs/guides/auth/social-login/auth-apple) to generate Secret Key, OR paste entire .p8 file contents
    - Copy Key ID → Paste in Supabase
    - Copy Team ID → Paste in Supabase
+   - **Remove any iOS bundle IDs from "Client IDs" field** - only include Services ID
    - Click **Save**
    - Wait 5-10 minutes
 
