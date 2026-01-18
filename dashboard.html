@@ -1470,10 +1470,25 @@
                             <div class="col-md-4 mb-2">
                                 <label for="insightsMonths" class="form-label">Rating window</label>
                                 <select id="insightsMonths" class="form-select">
+                                    <option value="1">Last 1 month</option>
                                     <option value="3">Last 3 months</option>
                                     <option value="6" selected>Last 6 months</option>
                                     <option value="12">Last 12 months</option>
+                                    <option value="custom">Custom range</option>
                                 </select>
+                            </div>
+                            <div id="insightsCustomRange" class="col-md-6 mb-2" style="display: none;">
+                                <label class="form-label">Custom date range</label>
+                                <div class="d-flex flex-wrap gap-2 align-items-end">
+                                    <div>
+                                        <label for="insightsCustomFrom" class="form-label small mb-0">From</label>
+                                        <input type="date" id="insightsCustomFrom" class="form-control form-control-sm">
+                                    </div>
+                                    <div>
+                                        <label for="insightsCustomTo" class="form-label small mb-0">To</label>
+                                        <input type="date" id="insightsCustomTo" class="form-control form-control-sm">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1486,13 +1501,13 @@
 
                     <div class="stats-card mb-4">
                         <h4 class="mb-2">Best Partnerships</h4>
-                        <p class="text-muted small mb-2">Pairs with the highest win rate (min 3 matches together)</p>
+                        <p class="text-muted small mb-2">Pairs with the highest win rate (min 5 matches together)</p>
                         <div id="insights-partnerships" style="height: 320px;"></div>
                     </div>
 
                     <div class="stats-card mb-4">
                         <h4 class="mb-2">Toughest Opponents</h4>
-                        <p class="text-muted small mb-2">Head-to-head record for a chosen player</p>
+                        <p class="text-muted small mb-2">Opponents by win % vs the chosen player (highest = toughest)</p>
                         <div class="mb-2">
                             <label for="insightsOpponentPlayer" class="form-label">Player</label>
                             <select id="insightsOpponentPlayer" class="form-select" style="max-width: 280px;">
@@ -6173,7 +6188,7 @@
                 return (getComputedStyle(document.documentElement).getPropertyValue('--orange') || '#FF6B35').trim();
             }
 
-            async function fetchRatingsHistory(playerIds, sinceDate) {
+            async function fetchRatingsHistory(playerIds, sinceDate, untilDate) {
                 if (!playerIds || playerIds.length === 0) return [];
                 const client = window.getOrCreateSupabaseClient();
                 const { data: { session } } = await client.auth.getSession();
@@ -6184,12 +6199,13 @@
                     'Authorization': 'Bearer ' + session.access_token
                 };
                 const since = sinceDate.toISOString();
+                const untilParam = (untilDate && untilDate instanceof Date) ? '&date=lte.' + untilDate.toISOString() : '';
                 const chunk = 80;
                 let out = [];
                 for (let i = 0; i < playerIds.length; i += chunk) {
                     const batch = playerIds.slice(i, i + chunk);
                     const idsFilter = batch.map(id => '"' + id + '"').join(',');
-                    const url = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date,event_type&id=in.(${idsFilter})&date=gte.${since}&order=date.asc`;
+                    const url = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date,event_type&id=in.(${idsFilter})&date=gte.${since}${untilParam}&order=date.asc`;
                     const r = await fetch(url, { method: 'GET', headers });
                     if (r.ok) {
                         const data = await r.json();
@@ -6250,15 +6266,35 @@
                 const scopeEl = document.getElementById('insightsScope');
                 const monthsEl = document.getElementById('insightsMonths');
                 const scope = (scopeEl && scopeEl.value) ? scopeEl.value : 'all';
-                const months = (monthsEl && monthsEl.value) ? parseInt(monthsEl.value, 10) : 6;
+                const monthsVal = (monthsEl && monthsEl.value) ? monthsEl.value : '6';
 
                 const client = window.getOrCreateSupabaseClient();
                 const { data: { session } } = await client.auth.getSession();
                 if (!session) return;
                 const currentUserId = session.user.id;
 
-                const since = new Date();
-                since.setMonth(since.getMonth() - months);
+                let since, until = null;
+                if (monthsVal === 'custom') {
+                    const fromEl = document.getElementById('insightsCustomFrom');
+                    const toEl = document.getElementById('insightsCustomTo');
+                    const fromStr = fromEl && fromEl.value ? fromEl.value : '';
+                    const toStr = toEl && toEl.value ? toEl.value : '';
+                    if (fromStr) {
+                        since = new Date(fromStr);
+                        since.setHours(0, 0, 0, 0);
+                    } else {
+                        since = new Date();
+                        since.setMonth(since.getMonth() - 6);
+                    }
+                    if (toStr) {
+                        until = new Date(toStr);
+                        until.setHours(23, 59, 59, 999);
+                    }
+                } else {
+                    const months = parseInt(monthsVal, 10) || 6;
+                    since = new Date();
+                    since.setMonth(since.getMonth() - months);
+                }
 
                 setInsightsPlaceholder('insights-improved', 'Loading...');
                 setInsightsPlaceholder('insights-partnerships', 'Loading...');
@@ -6272,7 +6308,7 @@
                 const playerIds = getInsightsPlayerIds(scope);
                 const matches = getInsightsMatches(currentUserId, scope);
 
-                const ratingsRaw = await fetchRatingsHistory(playerIds, since);
+                const ratingsRaw = await fetchRatingsHistory(playerIds, since, until);
 
                 const uniqueMatchPlayerIds = new Set();
                 matches.forEach(m => {
@@ -6353,8 +6389,10 @@
                 deltas.sort((a, b) => b.delta - a.delta);
                 const top = deltas.slice(0, 18);
 
-                const names = top.map(t => getName(t.id));
-                const vals = top.map(t => t.delta);
+                let names = top.map(t => getName(t.id));
+                let vals = top.map(t => t.delta);
+                names.reverse();
+                vals.reverse();
 
                 const el = document.getElementById('insights-improved');
                 if (!el || typeof Plotly === 'undefined') return;
@@ -6395,22 +6433,24 @@
                 });
                 const arr = [];
                 pair.forEach((v, k) => {
-                    if (v.total >= 3) arr.push({ key: k, wins: v.wins, total: v.total, rate: v.wins / v.total });
+                    if (v.total >= 5) arr.push({ key: k, wins: v.wins, total: v.total, rate: v.wins / v.total });
                 });
                 arr.sort((a, b) => b.rate - a.rate);
                 const top = arr.slice(0, 15);
 
-                const labels = top.map(t => {
+                let labels = top.map(t => {
                     const [a, b] = t.key.split('|');
                     return getName(a) + ' / ' + getName(b);
                 });
-                const rates = top.map(t => Math.round(t.rate * 100));
+                let rates = top.map(t => Math.round(t.rate * 100));
+                labels.reverse();
+                rates.reverse();
 
                 const el = document.getElementById('insights-partnerships');
                 if (!el || typeof Plotly === 'undefined') return;
                 el.innerHTML = '';
                 if (top.length === 0) {
-                    el.appendChild(document.createTextNode('No partnership data (need completed matches with 2v2).'));
+                    el.appendChild(document.createTextNode('No partnership data (need completed matches with 2v2, min 5 games).'));
                     return;
                 }
                 Plotly.newPlot(el, [{
@@ -6441,12 +6481,17 @@
                         if (myWon) o.w++; else o.l++;
                     });
                 });
-                const arr = Array.from(opp.entries()).map(([id, v]) => ({ id, ...v, total: v.w + v.l })).filter(x => x.total >= 1);
-                arr.sort((a, b) => b.l - a.l);
+                const arr = Array.from(opp.entries()).map(([id, v]) => {
+                    const total = v.w + v.l;
+                    return { id, ...v, total, oppWinPct: total > 0 ? (v.l / total) * 100 : 0 };
+                }).filter(x => x.total >= 1);
+                arr.sort((a, b) => b.oppWinPct - a.oppWinPct);
                 const top = arr.slice(0, 12);
 
-                const names = top.map(t => getName(t.id));
-                const losses = top.map(t => t.l);
+                let names = top.map(t => getName(t.id));
+                let pcts = top.map(t => Math.round(t.oppWinPct));
+                names.reverse();
+                pcts.reverse();
 
                 const el = document.getElementById('insights-opponents');
                 if (!el || typeof Plotly === 'undefined') return;
@@ -6456,14 +6501,15 @@
                     return;
                 }
                 Plotly.newPlot(el, [{
-                    x: names,
-                    y: losses,
+                    x: pcts,
+                    y: names,
                     type: 'bar',
+                    orientation: 'h',
                     marker: { color: getOrange() }
                 }], {
                     ...PLOTLY_LAYOUT,
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Opponent', tickangle: -45 },
-                    yaxis: { ...PLOTLY_LAYOUT.yaxis, title: 'Losses vs you' }
+                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Win % vs you', range: [0, 105] }
                 }, { responsive: true });
             }
 
@@ -6524,8 +6570,10 @@
                 arr.sort((a, b) => a.std - b.std);
                 const top = arr.slice(0, 14);
 
-                const names = top.map(t => getName(t.id));
-                const vals = top.map(t => Math.round(t.consistency * 100) / 100);
+                let names = top.map(t => getName(t.id));
+                let vals = top.map(t => Math.round(t.consistency * 100) / 100);
+                names.reverse();
+                vals.reverse();
 
                 const el = document.getElementById('insights-consistent');
                 if (!el || typeof Plotly === 'undefined') return;
@@ -6567,8 +6615,10 @@
                 deltas.sort((a, b) => b.delta - a.delta);
                 const top = deltas.slice(0, 10);
 
-                const names = top.map(t => getName(t.id));
-                const vals = top.map(t => t.delta);
+                let names = top.map(t => getName(t.id));
+                let vals = top.map(t => t.delta);
+                names.reverse();
+                vals.reverse();
 
                 const el = document.getElementById('insights-potm');
                 if (!el || typeof Plotly === 'undefined') return;
@@ -6595,7 +6645,26 @@
                 if (tab) {
                     tab.addEventListener('shown.bs.tab', function() { refreshInsightsCharts(); });
                 }
-                ['insightsScope', 'insightsMonths', 'insightsOpponentPlayer', 'insightsFormPlayer'].forEach(id => {
+                const monthsEl = document.getElementById('insightsMonths');
+                const customDiv = document.getElementById('insightsCustomRange');
+                function toggleCustomRange() {
+                    if (customDiv && monthsEl) customDiv.style.display = (monthsEl.value === 'custom') ? 'block' : 'none';
+                    if (monthsEl && monthsEl.value === 'custom') {
+                        const fromEl = document.getElementById('insightsCustomFrom');
+                        const toEl = document.getElementById('insightsCustomTo');
+                        if (fromEl && !fromEl.value) {
+                            const d = new Date();
+                            d.setMonth(d.getMonth() - 1);
+                            fromEl.value = d.toISOString().slice(0, 10);
+                        }
+                        if (toEl && !toEl.value) toEl.value = new Date().toISOString().slice(0, 10);
+                    }
+                }
+                if (monthsEl) {
+                    monthsEl.addEventListener('change', function() { toggleCustomRange(); refreshInsightsCharts(); });
+                    toggleCustomRange();
+                }
+                ['insightsScope', 'insightsCustomFrom', 'insightsCustomTo', 'insightsOpponentPlayer', 'insightsFormPlayer'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.addEventListener('change', function() { refreshInsightsCharts(); });
                 });
