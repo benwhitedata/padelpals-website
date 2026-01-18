@@ -46,22 +46,24 @@
       margin-bottom: 16px;
     }
 
-    .btn-outline-light {
-      border: 2px solid rgba(255,255,255,0.5);
-      color: white;
+    .hero-section .btn-guide {
+      background-color: rgba(255,255,255,0.95);
+      color: #1a2238;
+      border: 2px solid #1a2238;
+      font-weight: 600;
       transition: all 0.3s ease;
     }
 
-    .btn-outline-light:hover {
-      background-color: rgba(255,255,255,0.2);
-      border-color: white;
-      color: white;
+    .hero-section .btn-guide:hover {
+      background-color: #1a2238;
+      color: #fff;
+      border-color: #1a2238;
     }
 
-    .btn-outline-light.active {
-      background-color: #FFFFFF;
-      color: #4A90E2;
-      border-color: #FFFFFF;
+    .hero-section .btn-guide.active {
+      background-color: #FF6B35;
+      color: #fff;
+      border-color: #FF6B35;
     }
 
     @media (max-width: 768px) {
@@ -91,22 +93,22 @@
       <p class="mt-3">Follow these simple steps to get started and track your padel journey.</p>
       <div class="row mt-4">
         <div class="col-6 col-md-4 mb-2">
-          <button type="button" class="btn btn-outline-light w-100" onclick="showGuide('chooseClub')">Choose Club</button>
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('chooseClub')">Choose Club</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
-          <button type="button" class="btn btn-outline-light w-100" onclick="showGuide('schedule')">Schedule Matches</button>
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('schedule')">Schedule Matches</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
-          <button type="button" class="btn btn-outline-light w-100" onclick="showGuide('register')">Register Match Result</button>
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('register')">Register Match Result</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
-          <button type="button" class="btn btn-outline-light w-100" onclick="showGuide('view')">View Box League</button>
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('view')">View Box League</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
-          <button type="button" class="btn btn-outline-light w-100" onclick="showGuide('submit')">Submit Box League Result</button>
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('submit')">Submit Box League Result</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
-          <button type="button" class="btn btn-outline-light w-100" onclick="showGuide('americano')">Run Americano Session</button>
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('americano')">Run Americano Session</button>
         </div>
       </div>
     </div>
@@ -124,9 +126,9 @@
         showGuide('chooseClub');
     });
     function showGuide(option) {
-        const buttons = document.querySelectorAll('.btn-outline-light');
+        const buttons = document.querySelectorAll('.btn-guide');
         buttons.forEach(button => button.classList.remove('active'));
-        document.querySelector(`.btn-outline-light[onclick="showGuide('${option}')"]`).classList.add('active');
+        document.querySelector(`.btn-guide[onclick="showGuide('${option}')"]`).classList.add('active');
         const guideContent = document.getElementById('guide-content');
         let content = '';
         switch(option) {

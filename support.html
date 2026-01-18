@@ -26,8 +26,17 @@
         .page-header {
             background: linear-gradient(135deg, #1a2238 0%, #2a3990 100%);
             color: #FFFFFF;
-            padding: 64px 0;
+            padding: 48px 0;
             text-align: center;
+        }
+        .page-header h1 {
+            white-space: nowrap;
+        }
+        .page-header p {
+            margin: 0.35rem 0 0 0;
+        }
+        @media (max-width: 576px) {
+            .page-header h1 { font-size: 1.5rem; }
         }
         .contact-info {
             max-width: 1200px;

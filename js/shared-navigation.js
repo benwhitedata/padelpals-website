@@ -5,23 +5,37 @@
 
 // Shared CSS for navigation (to be included in page head)
 const SHARED_NAVIGATION_CSS = `
-/* Top Navigation Banner */
+/* Top Navigation Banner - fixed height for consistency across all pages */
 .top-nav {
     background: linear-gradient(90deg, #4A90E2 0%, #2a3990 100%);
-    padding: 8px 0;
+    height: 40px;
+    line-height: 40px;
+    padding: 0 16px;
     color: white;
     text-align: center;
     font-size: 0.9rem;
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+@media (max-width: 768px) {
+    .top-nav { font-size: 0.8rem; }
+}
+@media (max-width: 480px) {
+    .top-nav { font-size: 0.7rem; }
 }
 
-/* Main Navigation */
+/* Main Navigation - fixed height for consistency across all pages */
 .main-nav {
     background: #FFFFFF;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     position: sticky;
     top: 0;
     z-index: 100;
+    height: 64px;
+    min-height: 64px;
+    box-sizing: border-box;
 }
 
 .nav-container {
@@ -29,7 +43,10 @@ const SHARED_NAVIGATION_CSS = `
     margin: 0 auto;
     display: flex;
     align-items: center;
+    height: 100%;
+    min-height: 64px;
     padding: 0 20px;
+    box-sizing: border-box;
 }
 
 .logo {
@@ -73,9 +90,10 @@ const SHARED_NAVIGATION_CSS = `
     color: rgba(0, 0, 0, 0.87);
     text-decoration: none;
     font-weight: 600;
-    padding: 20px 0;
+    padding: 14px 0;
     display: block;
     transition: color 0.3s ease;
+    line-height: 1.3;
 }
 
 .nav-link:hover {
