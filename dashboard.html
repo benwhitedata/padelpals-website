@@ -17,6 +17,7 @@
             --orange: #FF6B35;
             --orange-light: #FF8C00;
             --dark-blue: #1a2238;
+            --gold: #d4af37;
         }
 
         // Fetch current user's club and club members; also seed profile name cache
@@ -281,11 +282,11 @@
 
 
         .nav-link:hover {
-            color: var(--gold);
+            color: var(--orange);
         }
 
         .nav-link.active {
-            color: var(--gold) !important;
+            color: var(--orange) !important;
         }
 
         .dashboard-container {
@@ -640,7 +641,8 @@
         .status-filter-btn.active {
             background-color: var(--dark-blue);
             border-color: var(--dark-blue);
-            color: var(--gold);
+            color: #ffffff;
+            font-weight: 600;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             transform: translateY(-1px);
         }
@@ -689,12 +691,12 @@
 
         .nav-tabs .nav-link:hover {
             border-color: #e9ecef #e9ecef #dee2e6;
-            color: var(--gold);
+            color: var(--orange);
             background-color: rgba(26, 34, 56, 0.05);
         }
 
         .nav-tabs .nav-link.active {
-            color: var(--gold);
+            color: #ffffff;
             background-color: var(--dark-blue);
             border-color: #dee2e6 #dee2e6 #fff;
         }
@@ -708,6 +710,10 @@
         #dashboardTabs .nav-item {
             flex: 0 0 auto;
             margin-right: 2px;
+        }
+
+        #dashboardTabs .nav-link.active {
+            font-weight: 600;
         }
 
         /* Match History Styles */
@@ -823,8 +829,8 @@
         }
 
         .match-filter-pill.active {
-            background-color: var(--gold);
-            color: var(--dark-blue);
+            background-color: var(--orange);
+            color: #ffffff;
         }
 
         .match-filter-pill i {
