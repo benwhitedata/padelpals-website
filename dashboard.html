@@ -1469,8 +1469,7 @@
                             </div>
                             <div class="col-md-4 mb-2">
                                 <label for="insightsMonths" class="form-label">Rating window</label>
-                                <small class="d-block text-muted">Applies to all charts except Player of the Month</small>
-                                <select id="insightsMonths" class="form-select mt-1">
+                                <select id="insightsMonths" class="form-select">
                                     <option value="1">Last 1 month</option>
                                     <option value="3">Last 3 months</option>
                                     <option value="6" selected>Last 6 months</option>
@@ -1493,13 +1492,24 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="text-muted small mb-0">Only players with at least one match in the last 6 months are included.</p>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Overall Win Rate</h4>
+                        <p class="text-muted small mb-2">Win rate in the selected period (min 3 matches, highest at top)</p>
+                        <div id="insights-winrate" style="height: 320px;"></div>
                     </div>
 
                     <div class="stats-card mb-4">
                         <h4 class="mb-2">Most Improved</h4>
                         <p class="text-muted small mb-2">Largest rating gain in the selected period</p>
                         <div id="insights-improved" style="height: 320px;"></div>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Most Matches</h4>
+                        <p class="text-muted small mb-2">Players who have played the most matches in the selected period</p>
+                        <div id="insights-matches" style="height: 320px;"></div>
                     </div>
 
                     <div class="stats-card mb-4">
@@ -1518,18 +1528,6 @@
                             </select>
                         </div>
                         <div id="insights-opponents" style="height: 300px;"></div>
-                    </div>
-
-                    <div class="stats-card mb-4">
-                        <h4 class="mb-2">Overall Win Rate</h4>
-                        <p class="text-muted small mb-2">Win rate in the selected period (min 3 matches, highest at top)</p>
-                        <div id="insights-winrate" style="height: 320px;"></div>
-                    </div>
-
-                    <div class="stats-card mb-4">
-                        <h4 class="mb-2">Most Consistent</h4>
-                        <p class="text-muted small mb-2">Lowest rating volatility in the selected period (min 4 ratings)</p>
-                        <div id="insights-consistent" style="height: 280px;"></div>
                     </div>
 
                     <div class="stats-card mb-4">
@@ -6311,11 +6309,11 @@
                     since.setMonth(since.getMonth() - months);
                 }
 
+                setInsightsPlaceholder('insights-winrate', 'Loading...');
                 setInsightsPlaceholder('insights-improved', 'Loading...');
+                setInsightsPlaceholder('insights-matches', 'Loading...');
                 setInsightsPlaceholder('insights-partnerships', 'Loading...');
                 setInsightsPlaceholder('insights-opponents', 'Loading...');
-                setInsightsPlaceholder('insights-winrate', 'Loading...');
-                setInsightsPlaceholder('insights-consistent', 'Loading...');
                 setInsightsPlaceholder('insights-potm', 'Loading...');
 
                 await ensureInsightsData(scope);
@@ -6349,11 +6347,11 @@
                 const oppSel = document.getElementById('insightsOpponentPlayer');
                 const opponentPlayerId = (oppSel && oppSel.value) ? oppSel.value : (matchPlayerIds[0] || null);
 
+                drawOverallWinRate(matches);
                 drawMostImproved(ratingsRaw);
+                drawMostMatches(matches);
                 drawPartnerships(matches);
                 drawOpponents(matches, opponentPlayerId);
-                drawOverallWinRate(matches);
-                drawMostConsistent(ratingsRaw);
                 drawPlayerOfMonth(ratingsRaw);
             }
 
@@ -6585,46 +6583,39 @@
                 }, { responsive: true });
             }
 
-            function drawMostConsistent(ratingsRaw) {
+            function drawMostMatches(matches) {
                 const byPlayer = new Map();
-                ratingsRaw.forEach(r => {
-                    const id = r.id;
-                    if (!byPlayer.has(id)) byPlayer.set(id, []);
-                    byPlayer.get(id).push(Number(r.rating_0_10));
+                matches.forEach(m => {
+                    (m.team1 && m.team1.playerIds || []).filter(Boolean).forEach(id => {
+                        byPlayer.set(id, (byPlayer.get(id) || 0) + 1);
+                    });
+                    (m.team2 && m.team2.playerIds || []).filter(Boolean).forEach(id => {
+                        byPlayer.set(id, (byPlayer.get(id) || 0) + 1);
+                    });
                 });
-                const arr = [];
-                byPlayer.forEach((vals, id) => {
-                    if (vals.length < 4) return;
-                    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-                    const variance = vals.reduce((s, v) => s + (v - mean) * (v - mean), 0) / vals.length;
-                    const std = Math.sqrt(variance);
-                    arr.push({ id, std: std, consistency: 1 / (std + 0.01) });
-                });
-                arr.sort((a, b) => a.std - b.std);
-                const top = arr.slice(0, 14);
+                const arr = Array.from(byPlayer.entries())
+                    .map(([id, count]) => ({ id, count }))
+                    .sort((a, b) => b.count - a.count);
+                const top = arr.slice(0, 18);
+                const names = top.map(t => getName(t.id));
+                const counts = top.map(t => t.count);
 
-                let names = top.map(t => getName(t.id));
-                let vals = top.map(t => Math.round(t.consistency * 100) / 100);
-                names.reverse();
-                vals.reverse();
-
-                const el = document.getElementById('insights-consistent');
+                const el = document.getElementById('insights-matches');
                 if (!el || typeof Plotly === 'undefined') return;
                 el.innerHTML = '';
                 if (top.length === 0) {
-                    el.appendChild(document.createTextNode('Not enough rating history (need 4+ points per player).'));
+                    el.appendChild(document.createTextNode('No match data in the selected period.'));
                     return;
                 }
                 Plotly.newPlot(el, [{
-                    x: vals,
-                    y: names,
+                    x: names,
+                    y: counts,
                     type: 'bar',
-                    orientation: 'h',
-                    marker: { color: getDarkBlue() }
+                    marker: { color: getOrange() }
                 }], {
                     ...PLOTLY_LAYOUT,
-                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Consistency (1/σ)' }
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Player', tickangle: -45 },
+                    yaxis: { ...PLOTLY_LAYOUT.yaxis, title: 'Matches' }
                 }, { responsive: true });
             }
 
