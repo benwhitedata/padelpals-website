@@ -49,6 +49,22 @@ $$;
 GRANT EXECUTE ON FUNCTION get_latest_player_ratings() TO authenticated;
 GRANT EXECUTE ON FUNCTION get_latest_player_ratings_windowed() TO authenticated;
 
+-- Optional: ratings history for many players (for Insights analytics when id=in.(...) hits URL limits)
+CREATE OR REPLACE FUNCTION get_ratings_history_for_players(
+    player_ids UUID[],
+    since_date TIMESTAMPTZ DEFAULT (now() - interval '12 months')
+)
+RETURNS TABLE (id UUID, rating_0_10 DECIMAL, date TIMESTAMPTZ, event_type TEXT)
+LANGUAGE SQL
+SECURITY DEFINER
+AS $$
+    SELECT r.id, r.rating_0_10, r.date, r.event_type
+    FROM ratings r
+    WHERE r.id = ANY(player_ids) AND r.date >= since_date
+    ORDER BY r.id, r.date ASC;
+$$;
+GRANT EXECUTE ON FUNCTION get_ratings_history_for_players(UUID[], TIMESTAMPTZ) TO authenticated;
+
 -- Instructions:
 -- 1. Run this SQL in your Supabase SQL editor
 -- 2. The dashboard will automatically try to use get_latest_player_ratings() 

@@ -1039,6 +1039,8 @@
     <!-- Chart.js for Rating Trend -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <!-- Plotly for Insights charts -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     
     <!-- Shared Navigation -->
     <script src="js/shared-navigation.js" data-auto-nav="true"></script>
@@ -1070,6 +1072,9 @@
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="rankings-tab" data-bs-toggle="tab" data-bs-target="#rankings" type="button" role="tab" aria-controls="rankings" aria-selected="false">Rankings</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="insights-tab" data-bs-toggle="tab" data-bs-target="#insights" type="button" role="tab" aria-controls="insights" aria-selected="false">Insights</button>
                 </li>
             </ul>
             
@@ -1447,6 +1452,78 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Insights Tab -->
+                <div class="tab-pane fade" id="insights" role="tabpanel" aria-labelledby="insights-tab">
+                    <div class="stats-card mb-4">
+                        <h3 class="mb-3">Analytics & Insights</h3>
+                        <div class="row mb-3">
+                            <div class="col-md-4 mb-2">
+                                <label for="insightsScope" class="form-label">Scope</label>
+                                <select id="insightsScope" class="form-select">
+                                    <option value="all">All players</option>
+                                    <option value="club">Club only</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label for="insightsMonths" class="form-label">Rating window</label>
+                                <select id="insightsMonths" class="form-select">
+                                    <option value="3">Last 3 months</option>
+                                    <option value="6" selected>Last 6 months</option>
+                                    <option value="12">Last 12 months</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Most Improved</h4>
+                        <p class="text-muted small mb-2">Largest rating gain in the selected period</p>
+                        <div id="insights-improved" style="height: 320px;"></div>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Best Partnerships</h4>
+                        <p class="text-muted small mb-2">Pairs with the highest win rate (min 3 matches together)</p>
+                        <div id="insights-partnerships" style="height: 320px;"></div>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Toughest Opponents</h4>
+                        <p class="text-muted small mb-2">Head-to-head record for a chosen player</p>
+                        <div class="mb-2">
+                            <label for="insightsOpponentPlayer" class="form-label">Player</label>
+                            <select id="insightsOpponentPlayer" class="form-select" style="max-width: 280px;">
+                                <option value="">Loading...</option>
+                            </select>
+                        </div>
+                        <div id="insights-opponents" style="height: 300px;"></div>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Recent Form</h4>
+                        <p class="text-muted small mb-2">Running win rate over last 30 matches</p>
+                        <div class="mb-2">
+                            <label for="insightsFormPlayer" class="form-label">Player</label>
+                            <select id="insightsFormPlayer" class="form-select" style="max-width: 280px;">
+                                <option value="">Loading...</option>
+                            </select>
+                        </div>
+                        <div id="insights-form" style="height: 280px;"></div>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Most Consistent</h4>
+                        <p class="text-muted small mb-2">Lowest rating volatility in the selected period (min 4 ratings)</p>
+                        <div id="insights-consistent" style="height: 280px;"></div>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Player of the Month</h4>
+                        <p class="text-muted small mb-2">Biggest rating gain in the last 30 days</p>
+                        <div id="insights-potm" style="height: 260px;"></div>
                     </div>
                 </div>
             </div>
@@ -4298,6 +4375,8 @@
         // Store match data globally for filtering
         let allMatches = [];
         let userProfile = null;
+        window.getInsightsAllMatches = function() { return allMatches; };
+        window.getInsightsUserProfile = function() { return userProfile; };
         
         // Function to initialize match history
         async function initializeMatchHistory() {
@@ -5495,6 +5574,9 @@
         let allRankedPlayers = []; // Store all players (unfiltered)
         let filteredRankedPlayers = []; // Store players after filters (club, gender)
         let playerProfilesCache = new Map(); // Cache player display names by user id
+        window.getInsightsAllRankedPlayers = function() { return allRankedPlayers; };
+        window.getInsightsPlayerProfilesCache = function() { return playerProfilesCache; };
+        window.getInsightsClubMemberIdsSet = function() { return clubMemberIdsSet || (typeof window.clubMemberIdsSet !== 'undefined' ? window.clubMemberIdsSet : null); };
         let rankingsDataCache = null; // Cache rankings data
         let rankingsCacheTimestamp = null; // Track when rankings were last fetched
         const RANKINGS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -6069,6 +6151,456 @@
                 });
             }
         }
+    </script>
+
+    <!-- JavaScript for Insights / Analytics -->
+    <script>
+        (function() {
+            const PLOTLY_LAYOUT = {
+                paper_bgcolor: '#fff',
+                plot_bgcolor: '#f8f9fa',
+                font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', color: '#333', size: 12 },
+                margin: { t: 24, r: 24, b: 48, l: 24 },
+                xaxis: { tickfont: { size: 11 }, gridcolor: 'rgba(0,0,0,0.06)' },
+                yaxis: { tickfont: { size: 11 }, gridcolor: 'rgba(0,0,0,0.06)' },
+                showlegend: false
+            };
+
+            function getDarkBlue() {
+                return (getComputedStyle(document.documentElement).getPropertyValue('--dark-blue') || '#1a2238').trim();
+            }
+            function getOrange() {
+                return (getComputedStyle(document.documentElement).getPropertyValue('--orange') || '#FF6B35').trim();
+            }
+
+            async function fetchRatingsHistory(playerIds, sinceDate) {
+                if (!playerIds || playerIds.length === 0) return [];
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
+                if (!session) return [];
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': window.config.supabaseKey,
+                    'Authorization': 'Bearer ' + session.access_token
+                };
+                const since = sinceDate.toISOString();
+                const chunk = 80;
+                let out = [];
+                for (let i = 0; i < playerIds.length; i += chunk) {
+                    const batch = playerIds.slice(i, i + chunk);
+                    const idsFilter = batch.map(id => '"' + id + '"').join(',');
+                    const url = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date,event_type&id=in.(${idsFilter})&date=gte.${since}&order=date.asc`;
+                    const r = await fetch(url, { method: 'GET', headers });
+                    if (r.ok) {
+                        const data = await r.json();
+                        out = out.concat(data);
+                    }
+                }
+                return out;
+            }
+
+            function getInsightsPlayerIds(scope) {
+                if (scope === 'club') {
+                    const clubSet = (window.getInsightsClubMemberIdsSet && window.getInsightsClubMemberIdsSet()) || null;
+                    if (!clubSet || clubSet.size === 0) return [];
+                    return Array.from(clubSet);
+                }
+                const ranked = (window.getInsightsAllRankedPlayers && window.getInsightsAllRankedPlayers()) || [];
+                return ranked.map(p => p.id);
+            }
+
+            function getInsightsMatches(currentUserId, scope) {
+                const am = (window.getInsightsAllMatches && window.getInsightsAllMatches()) || [];
+                let list = Array.isArray(am) ? [...am] : [];
+                const c = (currentUserId || '').toLowerCase();
+                list = list.filter(m => {
+                    if (m.matchType === 'private') {
+                        const in1 = m.team1 && m.team1.playerIds && m.team1.playerIds.some(id => id && String(id).toLowerCase() === c);
+                        const in2 = m.team2 && m.team2.playerIds && m.team2.playerIds.some(id => id && String(id).toLowerCase() === c);
+                        if (!in1 && !in2) return false;
+                    }
+                    if (scope === 'club') {
+                        const up = (window.getInsightsUserProfile && window.getInsightsUserProfile()) || null;
+                        if (up && up.clubs && up.clubs.id && m.clubId !== up.clubs.id) return false;
+                    }
+                    return m.status === 'completed';
+                });
+                return list;
+            }
+
+            async function ensureInsightsData(scope) {
+                if (typeof window.fetchCurrentUserClubAndMembers === 'function') {
+                    await window.fetchCurrentUserClubAndMembers();
+                }
+                if (scope === 'all') {
+                    if (typeof loadPlayerRankings === 'function') await loadPlayerRankings(false);
+                }
+                if (typeof initializeMatchHistory === 'function') {
+                    await initializeMatchHistory();
+                }
+            }
+
+            function getName(id) {
+                const cache = (window.getInsightsPlayerProfilesCache && window.getInsightsPlayerProfilesCache()) || new Map();
+                if (cache && cache.has(id)) return cache.get(id);
+                return id || 'Unknown';
+            }
+
+            async function refreshInsightsCharts() {
+                const scopeEl = document.getElementById('insightsScope');
+                const monthsEl = document.getElementById('insightsMonths');
+                const scope = (scopeEl && scopeEl.value) ? scopeEl.value : 'all';
+                const months = (monthsEl && monthsEl.value) ? parseInt(monthsEl.value, 10) : 6;
+
+                const client = window.getOrCreateSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
+                if (!session) return;
+                const currentUserId = session.user.id;
+
+                const since = new Date();
+                since.setMonth(since.getMonth() - months);
+
+                setInsightsPlaceholder('insights-improved', 'Loading...');
+                setInsightsPlaceholder('insights-partnerships', 'Loading...');
+                setInsightsPlaceholder('insights-opponents', 'Loading...');
+                setInsightsPlaceholder('insights-form', 'Loading...');
+                setInsightsPlaceholder('insights-consistent', 'Loading...');
+                setInsightsPlaceholder('insights-potm', 'Loading...');
+
+                await ensureInsightsData(scope);
+
+                const playerIds = getInsightsPlayerIds(scope);
+                const matches = getInsightsMatches(currentUserId, scope);
+
+                const ratingsRaw = await fetchRatingsHistory(playerIds, since);
+
+                const uniqueMatchPlayerIds = new Set();
+                matches.forEach(m => {
+                    (m.team1 && m.team1.playerIds || []).forEach(id => { if (id) uniqueMatchPlayerIds.add(id); });
+                    (m.team2 && m.team2.playerIds || []).forEach(id => { if (id) uniqueMatchPlayerIds.add(id); });
+                });
+                const matchPlayerIds = Array.from(uniqueMatchPlayerIds);
+
+                populatePlayerSelect('insightsOpponentPlayer', matchPlayerIds, null);
+                populatePlayerSelect('insightsFormPlayer', matchPlayerIds, currentUserId);
+
+                const oppSel = document.getElementById('insightsOpponentPlayer');
+                const formSel = document.getElementById('insightsFormPlayer');
+                const opponentPlayerId = (oppSel && oppSel.value) ? oppSel.value : (matchPlayerIds[0] || null);
+                const formPlayerId = (formSel && formSel.value) ? formSel.value : currentUserId;
+
+                drawMostImproved(ratingsRaw);
+                drawPartnerships(matches);
+                drawOpponents(matches, opponentPlayerId);
+                drawForm(matches, formPlayerId);
+                drawMostConsistent(ratingsRaw);
+                drawPlayerOfMonth(ratingsRaw);
+            }
+
+            function setInsightsPlaceholder(id, text) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = '';
+                if (typeof Plotly !== 'undefined') {
+                    Plotly.purge(el);
+                }
+                const div = document.createElement('div');
+                div.className = 'd-flex align-items-center justify-content-center text-muted';
+                div.style.height = '200px';
+                div.textContent = text;
+                el.appendChild(div);
+            }
+
+            function populatePlayerSelect(selectId, playerIds, meFirst) {
+                const sel = document.getElementById(selectId);
+                if (!sel) return;
+                const current = sel.value;
+                sel.innerHTML = '';
+                const opts = [];
+                if (meFirst && playerIds.indexOf(meFirst) !== -1) {
+                    opts.push({ id: meFirst, label: 'Me (current user)' });
+                }
+                playerIds.forEach(id => {
+                    if (id === meFirst) return;
+                    opts.push({ id: id, label: getName(id) });
+                });
+                opts.sort((a, b) => a.label.localeCompare(b.label));
+                opts.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o.id;
+                    opt.textContent = o.label;
+                    sel.appendChild(opt);
+                });
+                if (current && playerIds.indexOf(current) !== -1) sel.value = current;
+                else if (opts.length) sel.value = opts[0].id;
+            }
+
+            function drawMostImproved(ratingsRaw) {
+                const byPlayer = new Map();
+                ratingsRaw.forEach(r => {
+                    const id = r.id;
+                    if (!byPlayer.has(id)) byPlayer.set(id, []);
+                    byPlayer.get(id).push({ date: new Date(r.date), rating: Number(r.rating_0_10) });
+                });
+                const deltas = [];
+                byPlayer.forEach((arr, id) => {
+                    if (arr.length < 2) return;
+                    arr.sort((a, b) => a.date - b.date);
+                    const first = arr[0].rating;
+                    const last = arr[arr.length - 1].rating;
+                    deltas.push({ id, delta: last - first, first, last });
+                });
+                deltas.sort((a, b) => b.delta - a.delta);
+                const top = deltas.slice(0, 18);
+
+                const names = top.map(t => getName(t.id));
+                const vals = top.map(t => t.delta);
+
+                const el = document.getElementById('insights-improved');
+                if (!el || typeof Plotly === 'undefined') return;
+                el.innerHTML = '';
+                if (top.length === 0) {
+                    el.appendChild(document.createTextNode('No rating history in the selected period.'));
+                    return;
+                }
+                Plotly.newPlot(el, [{
+                    x: vals,
+                    y: names,
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: { color: vals.map(v => v >= 0 ? getOrange() : '#6c757d') }
+                }], {
+                    ...PLOTLY_LAYOUT,
+                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Rating change' },
+                    yaxis: { ...PLOTLY_LAYOUT.yaxis, automargin: true }
+                }, { responsive: true });
+            }
+
+            function drawPartnerships(matches) {
+                const pair = new Map();
+                matches.forEach(m => {
+                    const t1 = (m.team1 && m.team1.playerIds || []).filter(Boolean).map(String);
+                    const t2 = (m.team2 && m.team2.playerIds || []).filter(Boolean).map(String);
+                    if (t1.length < 2 || t2.length < 2) return;
+                    const key1 = [...t1].sort().join('|');
+                    const key2 = [...t2].sort().join('|');
+                    const win1 = (m.team1.setsWon || 0) > (m.team2.setsWon || 0);
+                    [key1, key2].forEach((k, i) => {
+                        if (!pair.has(k)) pair.set(k, { wins: 0, total: 0 });
+                        const rec = pair.get(k);
+                        rec.total++;
+                        if ((k === key1 && win1) || (k === key2 && !win1)) rec.wins++;
+                    });
+                });
+                const arr = [];
+                pair.forEach((v, k) => {
+                    if (v.total >= 3) arr.push({ key: k, wins: v.wins, total: v.total, rate: v.wins / v.total });
+                });
+                arr.sort((a, b) => b.rate - a.rate);
+                const top = arr.slice(0, 15);
+
+                const labels = top.map(t => {
+                    const [a, b] = t.key.split('|');
+                    return getName(a) + ' / ' + getName(b);
+                });
+                const rates = top.map(t => Math.round(t.rate * 100));
+
+                const el = document.getElementById('insights-partnerships');
+                if (!el || typeof Plotly === 'undefined') return;
+                el.innerHTML = '';
+                if (top.length === 0) {
+                    el.appendChild(document.createTextNode('No partnership data (need completed matches with 2v2).'));
+                    return;
+                }
+                Plotly.newPlot(el, [{
+                    x: rates,
+                    y: labels,
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: { color: getDarkBlue() }
+                }], {
+                    ...PLOTLY_LAYOUT,
+                    margin: { ...PLOTLY_LAYOUT.margin, l: 160 },
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Win rate %', range: [0, 105] }
+                }, { responsive: true });
+            }
+
+            function drawOpponents(matches, playerId) {
+                const opp = new Map();
+                matches.forEach(m => {
+                    const in1 = m.team1 && m.team1.playerIds && m.team1.playerIds.some(id => String(id) === String(playerId));
+                    const in2 = m.team2 && m.team2.playerIds && m.team2.playerIds.some(id => String(id) === String(playerId));
+                    if (!in1 && !in2) return;
+                    const oppIds = in1 ? (m.team2.playerIds || []) : (m.team1.playerIds || []);
+                    const myWon = (in1 && m.team1.setsWon > m.team2.setsWon) || (in2 && m.team2.setsWon > m.team1.setsWon);
+                    oppIds.forEach(id => {
+                        if (!id || String(id) === String(playerId)) return;
+                        if (!opp.has(id)) opp.set(id, { w: 0, l: 0 });
+                        const o = opp.get(id);
+                        if (myWon) o.w++; else o.l++;
+                    });
+                });
+                const arr = Array.from(opp.entries()).map(([id, v]) => ({ id, ...v, total: v.w + v.l })).filter(x => x.total >= 1);
+                arr.sort((a, b) => b.l - a.l);
+                const top = arr.slice(0, 12);
+
+                const names = top.map(t => getName(t.id));
+                const losses = top.map(t => t.l);
+
+                const el = document.getElementById('insights-opponents');
+                if (!el || typeof Plotly === 'undefined') return;
+                el.innerHTML = '';
+                if (top.length === 0) {
+                    el.appendChild(document.createTextNode('No head-to-head data for this player.'));
+                    return;
+                }
+                Plotly.newPlot(el, [{
+                    x: names,
+                    y: losses,
+                    type: 'bar',
+                    marker: { color: getOrange() }
+                }], {
+                    ...PLOTLY_LAYOUT,
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Opponent', tickangle: -45 },
+                    yaxis: { ...PLOTLY_LAYOUT.yaxis, title: 'Losses vs you' }
+                }, { responsive: true });
+            }
+
+            function drawForm(matches, playerId) {
+                const myMatches = [];
+                matches.forEach(m => {
+                    const in1 = m.team1 && m.team1.playerIds && m.team1.playerIds.some(id => String(id) === String(playerId));
+                    const in2 = m.team2 && m.team2.playerIds && m.team2.playerIds.some(id => String(id) === String(playerId));
+                    if (!in1 && !in2) return;
+                    const won = (in1 && m.team1.setsWon > m.team2.setsWon) || (in2 && m.team2.setsWon > m.team1.setsWon);
+                    myMatches.push({ date: m.playedDate, won: won ? 1 : 0 });
+                });
+                myMatches.sort((a, b) => (new Date(b.date)) - (new Date(a.date)));
+                const last30 = myMatches.slice(0, 30).reverse();
+                const run = [];
+                let w = 0, n = 0;
+                last30.forEach((m, i) => {
+                    n++; w += m.won;
+                    run.push({ i: i + 1, rate: n ? w / n : 0 });
+                });
+
+                const el = document.getElementById('insights-form');
+                if (!el || typeof Plotly === 'undefined') return;
+                el.innerHTML = '';
+                if (run.length === 0) {
+                    el.appendChild(document.createTextNode('No match history for this player.'));
+                    return;
+                }
+                Plotly.newPlot(el, [{
+                    x: run.map(r => r.i),
+                    y: run.map(r => r.rate),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    marker: { size: 6, color: getDarkBlue() },
+                    line: { color: getOrange(), width: 2 }
+                }], {
+                    ...PLOTLY_LAYOUT,
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Last N matches' },
+                    yaxis: { ...PLOTLY_LAYOUT.yaxis, title: 'Running win rate', range: [0, 1.05], dtick: 0.25 }
+                }, { responsive: true });
+            }
+
+            function drawMostConsistent(ratingsRaw) {
+                const byPlayer = new Map();
+                ratingsRaw.forEach(r => {
+                    const id = r.id;
+                    if (!byPlayer.has(id)) byPlayer.set(id, []);
+                    byPlayer.get(id).push(Number(r.rating_0_10));
+                });
+                const arr = [];
+                byPlayer.forEach((vals, id) => {
+                    if (vals.length < 4) return;
+                    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+                    const variance = vals.reduce((s, v) => s + (v - mean) * (v - mean), 0) / vals.length;
+                    const std = Math.sqrt(variance);
+                    arr.push({ id, std: std, consistency: 1 / (std + 0.01) });
+                });
+                arr.sort((a, b) => a.std - b.std);
+                const top = arr.slice(0, 14);
+
+                const names = top.map(t => getName(t.id));
+                const vals = top.map(t => Math.round(t.consistency * 100) / 100);
+
+                const el = document.getElementById('insights-consistent');
+                if (!el || typeof Plotly === 'undefined') return;
+                el.innerHTML = '';
+                if (top.length === 0) {
+                    el.appendChild(document.createTextNode('Not enough rating history (need 4+ points per player).'));
+                    return;
+                }
+                Plotly.newPlot(el, [{
+                    x: vals,
+                    y: names,
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: { color: getDarkBlue() }
+                }], {
+                    ...PLOTLY_LAYOUT,
+                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Consistency (1/σ)' }
+                }, { responsive: true });
+            }
+
+            function drawPlayerOfMonth(ratingsRaw) {
+                const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+                const last30 = ratingsRaw.filter(r => new Date(r.date).getTime() >= cutoff);
+                const byPlayer = new Map();
+                last30.forEach(r => {
+                    const id = r.id;
+                    if (!byPlayer.has(id)) byPlayer.set(id, []);
+                    byPlayer.get(id).push({ date: new Date(r.date), rating: Number(r.rating_0_10) });
+                });
+                const deltas = [];
+                byPlayer.forEach((arr, id) => {
+                    if (arr.length < 2) return;
+                    arr.sort((a, b) => a.date - b.date);
+                    const first = arr[0].rating;
+                    const last = arr[arr.length - 1].rating;
+                    deltas.push({ id, delta: last - first });
+                });
+                deltas.sort((a, b) => b.delta - a.delta);
+                const top = deltas.slice(0, 10);
+
+                const names = top.map(t => getName(t.id));
+                const vals = top.map(t => t.delta);
+
+                const el = document.getElementById('insights-potm');
+                if (!el || typeof Plotly === 'undefined') return;
+                el.innerHTML = '';
+                if (top.length === 0) {
+                    el.appendChild(document.createTextNode('No rating change in the last 30 days.'));
+                    return;
+                }
+                Plotly.newPlot(el, [{
+                    x: vals,
+                    y: names,
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: { color: vals.map(v => v >= 0 ? getOrange() : '#6c757d') }
+                }], {
+                    ...PLOTLY_LAYOUT,
+                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Rating change (30 days)' }
+                }, { responsive: true });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const tab = document.getElementById('insights-tab');
+                if (tab) {
+                    tab.addEventListener('shown.bs.tab', function() { refreshInsightsCharts(); });
+                }
+                ['insightsScope', 'insightsMonths', 'insightsOpponentPlayer', 'insightsFormPlayer'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.addEventListener('change', function() { refreshInsightsCharts(); });
+                });
+            });
+        })();
     </script>
 </body>
 </html>
