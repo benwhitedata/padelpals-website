@@ -6602,8 +6602,10 @@
                     .filter(({ id }) => (getName(id).match(/-/g) || []).length <= 2)
                     .sort((a, b) => b.count - a.count);
                 const top = arr.slice(0, 18);
-                const names = top.map(t => getName(t.id));
-                const counts = top.map(t => t.count);
+                let names = top.map(t => getName(t.id));
+                let counts = top.map(t => t.count);
+                names.reverse();
+                counts.reverse();
 
                 const el = document.getElementById('insights-matches');
                 if (!el || typeof Plotly === 'undefined') return;
@@ -6613,15 +6615,16 @@
                     return;
                 }
                 Plotly.newPlot(el, [{
-                    x: names,
-                    y: counts,
+                    x: counts,
+                    y: names,
                     type: 'bar',
+                    orientation: 'h',
                     marker: { color: getOrange() }
                 }], {
                     ...PLOTLY_LAYOUT,
-                    margin: { ...PLOTLY_LAYOUT.margin, b: 80 },
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Player', tickangle: -45 },
-                    yaxis: { ...PLOTLY_LAYOUT.yaxis, title: 'Matches' }
+                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
+                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Matches' },
+                    yaxis: { ...PLOTLY_LAYOUT.yaxis, automargin: true }
                 }, { responsive: true });
             }
 
