@@ -79,11 +79,13 @@ const SHARED_NAVIGATION_CSS = `
     list-style: none;
     align-items: center;
     flex: 1;
+    margin: 0;
+    padding: 0;
 }
 
 .nav-item {
     position: relative;
-    margin-right: 30px;
+    margin: 0 30px 0 0;
 }
 
 .nav-link {
