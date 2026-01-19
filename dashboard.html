@@ -1504,7 +1504,7 @@
 
                     <div class="stats-card mb-4">
                         <h4 class="mb-2">Overall Win Rate</h4>
-                        <p class="text-muted small mb-2">Win rate in the selected period (min 3 matches, highest at top)</p>
+                        <p class="text-muted small mb-2">Win rate in the selected period (min 5 matches, highest at top)</p>
                         <div id="insights-winrate" style="height: 320px;"></div>
                     </div>
 
@@ -6570,7 +6570,7 @@
                 });
                 const arr = Array.from(byPlayer.entries())
                     .map(([id, v]) => ({ id, wins: v.w, total: v.total, rate: v.total > 0 ? v.w / v.total : 0 }))
-                    .filter(x => x.total >= 3);
+                    .filter(x => x.total >= 5);
                 arr.sort((a, b) => b.rate - a.rate);
                 const top = arr.slice(0, 18);
 
@@ -6583,7 +6583,7 @@
                 if (!el || typeof Plotly === 'undefined') return;
                 el.innerHTML = '';
                 if (top.length === 0) {
-                    el.appendChild(document.createTextNode('No match data in the selected period (min 3 matches).'));
+                    el.appendChild(document.createTextNode('No match data in the selected period (min 5 matches).'));
                     return;
                 }
                 Plotly.newPlot(el, [{
