@@ -293,10 +293,6 @@ const SHARED_NAVIGATION_HTML = `
                 <a href="boxleague.html" class="nav-link">Box League</a>
             </li>
             
-            <li class="nav-item">
-                <a href="dashboard.html" class="nav-link">Dashboard</a>
-            </li>
-            
             <li class="nav-item has-dropdown">
                 <a href="#" class="nav-link">More</a>
                 <div class="dropdown">
@@ -445,10 +441,7 @@ function updateAuthUI() {
             if (session) {
                 if (loginButton) loginButton.style.display = 'none';
                 if (dashboardButton) dashboardButton.style.display = 'inline-block';
-                if (userInfo) {
-                    userInfo.textContent = session.user.email || 'User';
-                    userInfo.style.display = 'block';
-                }
+                if (userInfo) userInfo.style.display = 'none';
             } else {
                 if (loginButton) loginButton.style.display = 'inline-block';
                 if (dashboardButton) dashboardButton.style.display = 'none';

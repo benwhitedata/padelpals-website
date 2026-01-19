@@ -6506,18 +6506,22 @@
                     const in1 = m.team1 && m.team1.playerIds && m.team1.playerIds.some(id => String(id) === String(playerId));
                     const in2 = m.team2 && m.team2.playerIds && m.team2.playerIds.some(id => String(id) === String(playerId));
                     if (!in1 && !in2) return;
-                    const oppIds = in1 ? (m.team2.playerIds || []) : (m.team1.playerIds || []);
+                    const hasWinner = (m.team1.setsWon || 0) !== (m.team2.setsWon || 0);
                     const myWon = (in1 && m.team1.setsWon > m.team2.setsWon) || (in2 && m.team2.setsWon > m.team1.setsWon);
+                    const oppIds = in1 ? (m.team2.playerIds || []) : (m.team1.playerIds || []);
                     oppIds.forEach(id => {
                         if (!id || String(id) === String(playerId)) return;
-                        if (!opp.has(id)) opp.set(id, { w: 0, l: 0 });
+                        if (!opp.has(id)) opp.set(id, { total: 0, completed: 0, opponentWins: 0 });
                         const o = opp.get(id);
-                        if (myWon) o.w++; else o.l++;
+                        o.total++;
+                        if (hasWinner) {
+                            o.completed++;
+                            if (!myWon) o.opponentWins++;
+                        }
                     });
                 });
                 const arr = Array.from(opp.entries()).map(([id, v]) => {
-                    const total = v.w + v.l;
-                    return { id, ...v, total, oppWinPct: total > 0 ? (v.l / total) * 100 : 0 };
+                    return { id, ...v, oppWinPct: v.completed > 0 ? (v.opponentWins / v.completed) * 100 : 0 };
                 }).filter(x => x.total >= 5);
                 arr.sort((a, b) => b.oppWinPct - a.oppWinPct);
                 const top = arr.slice(0, 12);
