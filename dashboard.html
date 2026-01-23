@@ -1449,9 +1449,10 @@
                                     <thead>
                                         <tr>
                                             <th width="10%" class="text-center">Rank</th>
-                                            <th width="55%">Player</th>
-                                            <th width="15%">Rating</th>
-                                            <th width="20%">Last Updated</th>
+                                            <th width="50%">Player</th>
+                                            <th width="12%">Rating</th>
+                                            <th width="13%">Playtomic</th>
+                                            <th width="15%">Last Updated</th>
                                         </tr>
                                     </thead>
                                     <tbody id="playerRankingsList">
@@ -5675,7 +5676,7 @@
             if (players.length === 0) {
                 rankingsList.innerHTML = `
                     <tr>
-                        <td colspan="4" class="text-center">No player ratings found for this page.</td>
+                        <td colspan="5" class="text-center">No player ratings found for this page.</td>
                     </tr>
                 `;
                 return;
@@ -5700,11 +5701,15 @@
                 const isFirstPlace = actualRank === 1;
                 const isMedal = actualRank <= 3; // Top 3 positions get medals
                 
+                // Calculate Playtomic rating: Rating * (7/10) - 1
+                const playtomicRating = (player.rating_0_10 * (7/10) - 1).toFixed(1);
+                
                 rankingsHTML += `
                     <tr data-player-id="${player.id}" ${isFirstPlace ? 'class="first-place"' : ''}>
                         <td ${isMedal ? 'class="medal-cell"' : ''}>${rankDisplay}</td>
                         <td class="player-name">${playerName}</td>
                         <td>${player.rating_0_10.toFixed(2)}</td>
+                        <td>${playtomicRating}</td>
                         <td>${formattedDate}</td>
                     </tr>
                 `;
