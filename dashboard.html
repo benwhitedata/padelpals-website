@@ -1047,8 +1047,8 @@
     <!-- Chart.js for Rating Trend -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <!-- Plotly for Insights charts -->
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <!-- ApexCharts for Insights charts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
     <!-- Shared Navigation -->
     <script src="js/shared-navigation.js" data-auto-nav="true"></script>
@@ -6179,14 +6179,15 @@
     <!-- JavaScript for Insights / Analytics -->
     <script>
         (function() {
-            const PLOTLY_LAYOUT = {
-                paper_bgcolor: '#fff',
-                plot_bgcolor: '#f8f9fa',
-                font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', color: '#333', size: 12 },
-                margin: { t: 24, r: 24, b: 48, l: 24 },
-                xaxis: { tickfont: { size: 11 }, gridcolor: 'rgba(0,0,0,0.06)' },
-                yaxis: { tickfont: { size: 11 }, gridcolor: 'rgba(0,0,0,0.06)' },
-                showlegend: false
+            const insightsCharts = {};
+            const APEX_BASE = {
+                chart: { type: 'bar', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', background: '#fff' },
+                plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '70%' } },
+                dataLabels: { enabled: false },
+                grid: { borderColor: 'rgba(0,0,0,0.06)', xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
+                xaxis: { labels: { style: { fontSize: '11px', colors: '#333' } } },
+                yaxis: { labels: { style: { fontSize: '11px', colors: '#333' }, maxWidth: 160 } },
+                tooltip: { theme: 'light' }
             };
 
             function getDarkBlue() {
@@ -6371,15 +6372,43 @@
             function setInsightsPlaceholder(id, text) {
                 const el = document.getElementById(id);
                 if (!el) return;
-                el.innerHTML = '';
-                if (typeof Plotly !== 'undefined') {
-                    Plotly.purge(el);
+                if (insightsCharts[id]) {
+                    insightsCharts[id].destroy();
+                    delete insightsCharts[id];
                 }
+                el.innerHTML = '';
                 const div = document.createElement('div');
                 div.className = 'd-flex align-items-center justify-content-center text-muted';
                 div.style.height = '200px';
                 div.textContent = text;
                 el.appendChild(div);
+            }
+
+            function renderApexBar(elId, names, values, barColor, xTitle, xMin, xMax) {
+                const el = document.getElementById(elId);
+                if (!el || typeof ApexCharts === 'undefined') return;
+                if (insightsCharts[elId]) {
+                    insightsCharts[elId].destroy();
+                    delete insightsCharts[elId];
+                }
+                el.innerHTML = '';
+                const options = {
+                    ...APEX_BASE,
+                    series: [{ name: xTitle || 'Value', data: values }],
+                    xaxis: {
+                        ...APEX_BASE.xaxis,
+                        categories: names,
+                        title: { text: xTitle || '' }
+                    },
+                    colors: [barColor]
+                };
+                if (xMin != null || xMax != null) {
+                    options.xaxis.min = xMin;
+                    options.xaxis.max = xMax;
+                }
+                const chart = new ApexCharts(el, options);
+                chart.render();
+                insightsCharts[elId] = chart;
             }
 
             function populatePlayerSelect(selectId, playerIds, meFirst) {
@@ -6434,24 +6463,17 @@
                 vals.reverse();
 
                 const el = document.getElementById('insights-improved');
-                if (!el || typeof Plotly === 'undefined') return;
+                if (!el) return;
+                if (insightsCharts['insights-improved']) {
+                    insightsCharts['insights-improved'].destroy();
+                    delete insightsCharts['insights-improved'];
+                }
                 el.innerHTML = '';
                 if (top.length === 0) {
                     el.appendChild(document.createTextNode('No rating history in the selected period.'));
                     return;
                 }
-                Plotly.newPlot(el, [{
-                    x: vals,
-                    y: names,
-                    type: 'bar',
-                    orientation: 'h',
-                    marker: { color: getDarkBlue() }
-                }], {
-                    ...PLOTLY_LAYOUT,
-                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Rating change' },
-                    yaxis: { ...PLOTLY_LAYOUT.yaxis, automargin: true }
-                }, { responsive: true });
+                renderApexBar('insights-improved', names, vals, getDarkBlue(), 'Rating change', null, null);
             }
 
             function drawPartnerships(matches) {
@@ -6486,23 +6508,17 @@
                 rates.reverse();
 
                 const el = document.getElementById('insights-partnerships');
-                if (!el || typeof Plotly === 'undefined') return;
+                if (!el) return;
+                if (insightsCharts['insights-partnerships']) {
+                    insightsCharts['insights-partnerships'].destroy();
+                    delete insightsCharts['insights-partnerships'];
+                }
                 el.innerHTML = '';
                 if (top.length === 0) {
                     el.appendChild(document.createTextNode('No partnership data (need completed matches with 2v2, min 5 games).'));
                     return;
                 }
-                Plotly.newPlot(el, [{
-                    x: rates,
-                    y: labels,
-                    type: 'bar',
-                    orientation: 'h',
-                    marker: { color: getDarkBlue() }
-                }], {
-                    ...PLOTLY_LAYOUT,
-                    margin: { ...PLOTLY_LAYOUT.margin, l: 160 },
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Win rate %', range: [0, 105] }
-                }, { responsive: true });
+                renderApexBar('insights-partnerships', labels, rates, getDarkBlue(), 'Win rate %', 0, 105);
             }
 
             function drawOpponents(matches, playerId) {
@@ -6537,23 +6553,17 @@
                 pcts.reverse();
 
                 const el = document.getElementById('insights-opponents');
-                if (!el || typeof Plotly === 'undefined') return;
+                if (!el) return;
+                if (insightsCharts['insights-opponents']) {
+                    insightsCharts['insights-opponents'].destroy();
+                    delete insightsCharts['insights-opponents'];
+                }
                 el.innerHTML = '';
                 if (top.length === 0) {
                     el.appendChild(document.createTextNode('No head-to-head with 5+ matches for this player.'));
                     return;
                 }
-                Plotly.newPlot(el, [{
-                    x: pcts,
-                    y: names,
-                    type: 'bar',
-                    orientation: 'h',
-                    marker: { color: getOrange() }
-                }], {
-                    ...PLOTLY_LAYOUT,
-                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Win % vs you', range: [0, 105] }
-                }, { responsive: true });
+                renderApexBar('insights-opponents', names, pcts, getOrange(), 'Win % vs you', 0, 105);
             }
 
             function drawOverallWinRate(matches) {
@@ -6585,23 +6595,17 @@
                 pcts.reverse();
 
                 const el = document.getElementById('insights-winrate');
-                if (!el || typeof Plotly === 'undefined') return;
+                if (!el) return;
+                if (insightsCharts['insights-winrate']) {
+                    insightsCharts['insights-winrate'].destroy();
+                    delete insightsCharts['insights-winrate'];
+                }
                 el.innerHTML = '';
                 if (top.length === 0) {
                     el.appendChild(document.createTextNode('No match data in the selected period (min 5 matches).'));
                     return;
                 }
-                Plotly.newPlot(el, [{
-                    x: pcts,
-                    y: names,
-                    type: 'bar',
-                    orientation: 'h',
-                    marker: { color: getOrange() }
-                }], {
-                    ...PLOTLY_LAYOUT,
-                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Win %', range: [0, 105] }
-                }, { responsive: true });
+                renderApexBar('insights-winrate', names, pcts, getOrange(), 'Win %', 0, 105);
             }
 
             function drawMostMatches(matches) {
@@ -6625,24 +6629,17 @@
                 counts.reverse();
 
                 const el = document.getElementById('insights-matches');
-                if (!el || typeof Plotly === 'undefined') return;
+                if (!el) return;
+                if (insightsCharts['insights-matches']) {
+                    insightsCharts['insights-matches'].destroy();
+                    delete insightsCharts['insights-matches'];
+                }
                 el.innerHTML = '';
                 if (top.length === 0) {
                     el.appendChild(document.createTextNode('No match data in the selected period.'));
                     return;
                 }
-                Plotly.newPlot(el, [{
-                    x: counts,
-                    y: names,
-                    type: 'bar',
-                    orientation: 'h',
-                    marker: { color: getOrange() }
-                }], {
-                    ...PLOTLY_LAYOUT,
-                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Matches' },
-                    yaxis: { ...PLOTLY_LAYOUT.yaxis, automargin: true }
-                }, { responsive: true });
+                renderApexBar('insights-matches', names, counts, getOrange(), 'Matches', null, null);
             }
 
             function drawPlayerOfMonth(ratingsRaw) {
@@ -6671,23 +6668,17 @@
                 vals.reverse();
 
                 const el = document.getElementById('insights-potm');
-                if (!el || typeof Plotly === 'undefined') return;
+                if (!el) return;
+                if (insightsCharts['insights-potm']) {
+                    insightsCharts['insights-potm'].destroy();
+                    delete insightsCharts['insights-potm'];
+                }
                 el.innerHTML = '';
                 if (top.length === 0) {
                     el.appendChild(document.createTextNode('No rating change in the last 30 days.'));
                     return;
                 }
-                Plotly.newPlot(el, [{
-                    x: vals,
-                    y: names,
-                    type: 'bar',
-                    orientation: 'h',
-                    marker: { color: getDarkBlue() }
-                }], {
-                    ...PLOTLY_LAYOUT,
-                    margin: { ...PLOTLY_LAYOUT.margin, l: 140 },
-                    xaxis: { ...PLOTLY_LAYOUT.xaxis, title: 'Rating change (30 days)' }
-                }, { responsive: true });
+                renderApexBar('insights-potm', names, vals, getDarkBlue(), 'Rating change (30 days)', null, null);
             }
 
             document.addEventListener('DOMContentLoaded', function() {
