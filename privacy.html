@@ -40,6 +40,15 @@
             color: #1a2238;
             margin-bottom: 20px;
         }
+        .policy-section ul {
+            padding-left: 24px;
+        }
+        .policy-section li {
+            margin-bottom: 8px;
+        }
+        .policy-section p + p {
+            margin-top: 12px;
+        }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -60,7 +69,7 @@
     <section class="page-header">
         <div class="container">
             <h1>Privacy Policy</h1>
-            <p>Last updated: June 1, 2024</p>
+            <p>Last updated: 23 April 2026</p>
         </div>
     </section>
 
@@ -68,100 +77,108 @@
         <div class="container">
             <div class="policy-section">
                 <h2>Introduction</h2>
-                <p>Welcome to the Padel Pals Privacy Policy. Your privacy is critically important to us. At Padel Pals, we have a few fundamental principles:</p>
-                <ul>
-                    <li>We collect only the minimal amount of user information required to provide our services.</li>
-                    <li>We don't share your personal information with anyone except to comply with the law, develop our products, or protect our rights.</li>
-                    <li>We don't store personal information on our servers unless required for the ongoing operation of one of our services.</li>
-                </ul>
-                <p>This Privacy Policy explains how we collect, use, and protect your information when you use our mobile application ("Padel Pals"). By using Padel Pals, you agree to the collection and use of information in accordance with this policy.</p>
+                <p>This Privacy Policy explains what information Padel Pals collects, why we collect it, and what rights you have over your data. By using the Padel Pals mobile app you agree to the collection and use of information in accordance with this policy.</p>
+                <p>Padel Pals is operated by Ben White, a sole trader based in the United Kingdom. "We", "us" and "our" refer to this sole trader.</p>
+                <p>If anything here is unclear, email <a href="mailto:support@padelpals.app">support@padelpals.app</a> and we'll come back to you.</p>
             </div>
 
             <div class="policy-section">
-                <h2>Information Collection and Use</h2>
-                <p>While using our app, we may ask you to provide us with certain personally identifiable information that can be used to contact or identify you. The information we collect includes:</p>
+                <h2>Information we collect</h2>
+                <p>The information we collect includes:</p>
                 <ul>
-                    <li><strong>Apple ID Information:</strong> When you sign in with Apple, we receive a unique identifier and, if you choose to share it, your name and email address. This is used exclusively for authentication purposes.</li>
-                    <li><strong>Match Data:</strong> Information about padel matches, including scores, player names, and match dates that you choose to record in the app.</li>
-                    <li><strong>Usage Data:</strong> Anonymous information about how you interact with the app to improve our services.</li>
+                    <li><strong>Account information</strong> — a unique Apple ID identifier when you sign in with Apple, plus your display name and (if you share it) your email address.</li>
+                    <li><strong>Gameplay data</strong> — match results, ratings, tournaments, leagues, box leagues, Americano fixtures and any associated metadata you enter into the app.</li>
+                    <li><strong>Payment data</strong> — when you pay for a lesson or send a tip, your card or Apple Pay details are handled directly by our payment processor <strong>Stripe Payments Europe, Ltd</strong>. We never see or store card numbers. We do store the Stripe PaymentIntent ID, the amount, the status (succeeded / failed / refunded), a receipt URL, and the purpose of the payment.</li>
+                    <li><strong>Device data</strong> — push notification tokens (Apple Push Notification Service), crash reports and basic device model information for diagnostics.</li>
+                    <li><strong>Usage data</strong> — anonymous information about how you interact with the app to help us improve it.</li>
                 </ul>
-                <p>All data is stored securely using Supabase, our cloud database provider.</p>
+            </div>
+
+            <div class="policy-section">
+                <h2>How we use your data</h2>
+                <ul>
+                    <li>To deliver the core app features (match recording, ratings, leagues, tournaments).</li>
+                    <li>To process payments for optional tips and (where available) coaching lessons.</li>
+                    <li>To send you push notifications you have opted in to, such as match reminders.</li>
+                    <li>To prevent fraud and abuse.</li>
+                </ul>
             </div>
 
             <div class="policy-section">
                 <h2>Sign in with Apple</h2>
-                <p>Padel Pals uses Sign in with Apple as its authentication method. When you choose to sign in:</p>
+                <p>Padel Pals uses Sign in with Apple as its authentication method. When you sign in:</p>
                 <ul>
                     <li>You can choose whether to share your actual email address or use Apple's private email relay service.</li>
-                    <li>We receive a unique identifier that allows us to recognize your account across sessions.</li>
+                    <li>We receive a unique identifier that allows us to recognise your account across sessions.</li>
                     <li>We do not have access to your Apple ID password or account details beyond what you explicitly choose to share.</li>
                     <li>You can revoke access at any time through your Apple ID settings.</li>
                 </ul>
             </div>
 
             <div class="policy-section">
-                <h2>Data Storage</h2>
-                <p>Your match data and profile information are stored in our Supabase database. This information is:</p>
+                <h2>Who we share data with</h2>
+                <p>We do not sell, trade or rent your personal information. We share limited data with the following service providers, all of whom are bound by their own privacy obligations:</p>
                 <ul>
-                    <li>Associated with your unique identifier from Sign in with Apple</li>
-                    <li>Used to provide features like match history, player statistics, and tournament organization</li>
-                    <li>Automatically synchronized across your devices when you sign in with the same Apple ID</li>
-                    <li>Retained until you request deletion or delete your account</li>
+                    <li><strong>Supabase, Inc.</strong> — our database and authentication provider. Data is stored in the EU.</li>
+                    <li><strong>Stripe Payments Europe, Ltd</strong> — payment processing for tips and lessons. See <a href="https://stripe.com/privacy" target="_blank" rel="noopener">stripe.com/privacy</a>.</li>
+                    <li><strong>Apple Inc.</strong> — Sign in with Apple and push notification delivery.</li>
                 </ul>
+                <p>We may also disclose your personal information where required by law, to protect the safety, rights or property of Padel Pals, our users, or others, or in connection with a sale, merger or change of control of the business.</p>
             </div>
 
             <div class="policy-section">
-                <h2>Data Sharing and Disclosure</h2>
-                <p>We do not sell, trade, or rent your personal identification information to others. We may share generic aggregated demographic information not linked to any personal identification information regarding visitors and users with our business partners and trusted affiliates for the purposes outlined above.</p>
-                <p>We may disclose your personal information only in the following circumstances:</p>
-                <ul>
-                    <li>To comply with a law, regulation, or legal request</li>
-                    <li>To protect the safety, rights, or property of Padel Pals, our users, or others</li>
-                    <li>In connection with a sale, merger, or change of control of our business</li>
-                </ul>
+                <h2>Data storage and security</h2>
+                <p>Your match data and profile information are stored in our Supabase database, associated with your unique Sign-in-with-Apple identifier and automatically synchronised across your devices. We use HTTPS/TLS for all traffic, Row Level Security policies on the database, and Stripe's hosted SDK so payment card data never touches our servers (PCI SAQ A scope).</p>
+                <p>No method of transmission over the Internet or electronic storage is 100% secure, so while we take reasonable precautions we cannot guarantee absolute security.</p>
             </div>
 
             <div class="policy-section">
-                <h2>Data Security</h2>
-                <p>We adopt appropriate data collection, storage, and processing practices and security measures to protect against unauthorized access, alteration, disclosure, or destruction of your personal information and data stored on our app and servers.</p>
-                <p>However, please be aware that no method of transmission over the Internet or method of electronic storage is 100% secure and we cannot guarantee the absolute security of your data.</p>
+                <h2>Data retention</h2>
+                <ul>
+                    <li>Account data is kept until you delete your account.</li>
+                    <li><strong>Payment records are kept for 6 years</strong> to satisfy HMRC record-keeping requirements, even if you delete your account.</li>
+                    <li>Server logs are kept for up to 90 days.</li>
+                </ul>
             </div>
 
             <div class="policy-section">
                 <h2>Analytics</h2>
-                <p>We may use third-party Service Providers to monitor and analyze the use of our Service:</p>
+                <p>We may use third-party service providers to monitor and analyse use of the service:</p>
                 <ul>
-                    <li><strong>Apple App Analytics:</strong> Apple's analytics service provides anonymous usage data to help us improve the app. This data is not linked to your identity.</li>
+                    <li><strong>Apple App Analytics</strong> — Apple's analytics service provides anonymous usage data to help us improve the app. This data is not linked to your identity.</li>
+                    <li><strong>Google Analytics</strong> (on this website only) — anonymous visitor statistics.</li>
                 </ul>
             </div>
 
             <div class="policy-section">
                 <h2>Children's Privacy</h2>
-                <p>Our Service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from children under 13. If you are a parent or guardian and you are aware that your child has provided us with personal data, please contact us.</p>
+                <p>Our service does not address anyone under the age of 13 and you must be 18 or over to make a payment through the app. We do not knowingly collect personally identifiable information from children under 13. If you are a parent or guardian and you are aware that your child has provided us with personal data, please contact us and we will remove it.</p>
             </div>
 
             <div class="policy-section">
-                <h2>Changes to This Privacy Policy</h2>
-                <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date at the top of this page.</p>
-                <p>You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.</p>
-            </div>
-
-            <div class="policy-section">
-                <h2>Your Rights</h2>
-                <p>Depending on your location, you may have certain rights regarding your personal information, including:</p>
+                <h2>Your rights (UK GDPR)</h2>
+                <p>Depending on your location you may have rights regarding your personal information, including:</p>
                 <ul>
-                    <li>The right to access the personal information we have about you</li>
-                    <li>The right to request correction or deletion of your personal information</li>
-                    <li>The right to restrict or object to our processing of your personal information</li>
-                    <li>The right to data portability</li>
+                    <li>The right to access the personal information we hold about you.</li>
+                    <li>The right to request correction or deletion of your personal information.</li>
+                    <li>The right to restrict or object to our processing of your personal information.</li>
+                    <li>The right to data portability.</li>
+                    <li>The right to withdraw consent for marketing messages at any time.</li>
                 </ul>
-                <p>To exercise any of these rights, please contact us using the information provided in the Contact section.</p>
+                <p>You can delete your account at any time via the "Delete Account" option inside the app, which removes all your personal data (subject to the payment-record retention above).</p>
+                <p>You also have the right to complain to the UK Information Commissioner's Office (<a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a>).</p>
             </div>
 
             <div class="policy-section">
-                <h2>Contact Us</h2>
-                <p>If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at:</p>
+                <h2>Changes to this Privacy Policy</h2>
+                <p>We may update this Privacy Policy from time to time. We will notify you of any material change by posting the new policy on this page and updating the "Last updated" date at the top. You are advised to review this page periodically; continued use of the app after a change means you accept the new policy.</p>
+            </div>
+
+            <div class="policy-section">
+                <h2>Contact us</h2>
+                <p>If you have any questions, complaints or data requests, please contact us at:</p>
                 <p><a href="mailto:support@padelpals.app">support@padelpals.app</a></p>
+                <p>See also our <a href="terms.html">Terms of Service</a>.</p>
             </div>
         </div>
     </section>
