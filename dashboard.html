@@ -2202,8 +2202,10 @@
             listEl.innerHTML = filtered.map(t => {
                 const teams = allTournamentTeams[t.id] || [];
                 const matches = allTournamentMatches[t.id] || [];
-                // Exclude bye matches (round 1, completed, missing one team) from counts
-                const realMatches = matches.filter(m => m.team1_id && m.team2_id);
+                // A bye is a completed round-1 match where one team slot is null.
+                // Future match slots (both IDs null) are valid upcoming matches — keep them.
+                const isBye = m => m.round === 1 && m.is_completed && (!m.team1_id || !m.team2_id);
+                const realMatches = matches.filter(m => !isBye(m));
                 const completedMatches = realMatches.filter(m => m.is_completed);
                 const champion = getChampion(t, teams, matches);
 
