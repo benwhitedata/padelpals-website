@@ -399,6 +399,216 @@
 
         
         /* Box League Styles */
+        /* ── Tournaments tab ─────────────────────────────────────── */
+        .tournaments-container {
+            margin-bottom: 40px;
+        }
+
+        .tournament-status-btn {
+            background: rgba(255,255,255,0.08);
+            color: #ccc;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.82rem;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .tournament-status-btn:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+
+        .tournament-status-btn.active {
+            background: var(--orange);
+            color: #fff;
+            border-color: var(--orange);
+            font-weight: 600;
+        }
+
+        .tournament-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .tournament-card:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--orange);
+        }
+
+        .tournament-card .t-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .tournament-card .t-meta {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.55);
+            margin-top: 3px;
+        }
+
+        .t-status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .t-status-active   { background: rgba(40,167,69,0.25);  color: #5cd97a; }
+        .t-status-upcoming { background: rgba(255,193,7,0.2);   color: #ffd54f; }
+        .t-status-completed{ background: rgba(108,117,125,0.25);color: #adb5bd; }
+        .t-status-cancelled{ background: rgba(220,53,69,0.2);   color: #f08080; }
+
+        /* Bracket grid */
+        .bracket-wrapper {
+            display: flex;
+            gap: 0;
+            align-items: flex-start;
+            min-width: max-content;
+            padding: 12px 0 20px;
+        }
+
+        .bracket-round {
+            display: flex;
+            flex-direction: column;
+            min-width: 190px;
+        }
+
+        .bracket-round-header {
+            text-align: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--orange);
+            padding: 6px 8px 10px;
+        }
+
+        .bracket-matches {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .bracket-match-slot {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: center;
+            padding: 6px 8px;
+            position: relative;
+        }
+
+        /* connector lines between rounds */
+        .bracket-match-slot::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            width: 8px;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .bracket-round:last-child .bracket-match-slot::after {
+            display: none;
+        }
+
+        .bracket-match-card {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .bracket-team-row {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            gap: 6px;
+        }
+
+        .bracket-team-row + .bracket-team-row {
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .bracket-team-row.winner {
+            background: rgba(255,140,0,0.18);
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .bracket-team-row .seed {
+            font-size: 0.68rem;
+            color: var(--orange);
+            width: 22px;
+            flex-shrink: 0;
+        }
+
+        .bracket-team-row .team-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #e0e0e0;
+        }
+
+        .bracket-team-row.winner .team-name { color: #fff; }
+
+        .bracket-team-row .score {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #fff;
+            min-width: 16px;
+            text-align: right;
+        }
+
+        .bracket-team-row.bye .team-name,
+        .bracket-team-row.tbd .team-name {
+            color: rgba(255,255,255,0.35);
+            font-style: italic;
+        }
+
+        .champion-banner {
+            background: linear-gradient(135deg, rgba(255,140,0,0.25), rgba(255,193,7,0.15));
+            border: 1px solid rgba(255,140,0,0.4);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .champion-banner .trophy-icon {
+            font-size: 2rem;
+            color: var(--orange);
+        }
+
+        .champion-banner .champion-label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .champion-banner .champion-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* ── end Tournaments tab ──────────────────────────────────── */
+
         .box-league-container {
             margin-bottom: 40px;
         }
@@ -1073,6 +1283,9 @@
                     <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">Profile</button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tournaments-tab" data-bs-toggle="tab" data-bs-target="#tournaments" type="button" role="tab" aria-controls="tournaments" aria-selected="false">Tournaments</button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="boxleague-tab" data-bs-toggle="tab" data-bs-target="#boxleague" type="button" role="tab" aria-controls="boxleague" aria-selected="false">Box League</button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -1265,6 +1478,52 @@
                     </div>
                 </div>
                 
+                <!-- Tournaments Tab -->
+                <div class="tab-pane fade" id="tournaments" role="tabpanel" aria-labelledby="tournaments-tab">
+                    <div class="tournaments-container">
+
+                        <!-- Header row: filter pills + print button -->
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div id="tournamentStatusFilter" class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-sm tournament-status-btn active" data-status="all">All</button>
+                                <button class="btn btn-sm tournament-status-btn" data-status="active">Active</button>
+                                <button class="btn btn-sm tournament-status-btn" data-status="upcoming">Upcoming</button>
+                                <button class="btn btn-sm tournament-status-btn" data-status="completed">Completed</button>
+                            </div>
+                            <button id="printTournamentBtn" class="btn btn-primary btn-sm" style="display:none;">
+                                <i class="fas fa-print me-1"></i> Print Bracket
+                            </button>
+                        </div>
+
+                        <!-- Tournament list -->
+                        <div id="tournamentList">
+                            <p class="placeholder-text">Loading tournaments…</p>
+                        </div>
+
+                        <!-- Bracket modal -->
+                        <div class="modal fade" id="bracketModal" tabindex="-1" aria-labelledby="bracketModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                                <div class="modal-content" style="background:#1a2238; color:#fff; border:none;">
+                                    <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.15);">
+                                        <h5 class="modal-title" id="bracketModalLabel">Tournament Bracket</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body" id="bracketModalBody" style="overflow-x:auto;">
+                                        <p class="text-center text-white-50 py-4">Loading bracket…</p>
+                                    </div>
+                                    <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.15); justify-content:space-between;">
+                                        <button type="button" class="btn btn-outline-light btn-sm" id="printBracketBtn">
+                                            <i class="fas fa-print me-1"></i> Print Bracket
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
                 <!-- Box League Tab -->
                 <div class="tab-pane fade" id="boxleague" role="tabpanel" aria-labelledby="boxleague-tab">
                     <div class="box-league-container">
@@ -1842,6 +2101,543 @@
             // Return original if not an email
             return email;
         }
+
+        // ── Tournaments ────────────────────────────────────────────────────────
+
+        // All tournaments fetched once; filtered client-side.
+        let allTournaments = [];
+        let allTournamentTeams = {};   // keyed by tournament_id
+        let allTournamentMatches = {}; // keyed by tournament_id
+        let tournamentsLoaded = false;
+
+        async function loadTournamentData() {
+            if (tournamentsLoaded) return;
+            const listEl = document.getElementById('tournamentList');
+            listEl.innerHTML = '<p class="placeholder-text">Loading tournaments…</p>';
+
+            try {
+                const client = window.supabaseClient;
+
+                // Fetch all tournaments
+                const { data: tournaments, error: tErr } = await client
+                    .from('bracket_tournaments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (tErr) throw tErr;
+
+                if (!tournaments || tournaments.length === 0) {
+                    listEl.innerHTML = '<div class="alert alert-info">No tournaments found.</div>';
+                    return;
+                }
+
+                allTournaments = tournaments;
+
+                // Fetch all teams and matches in parallel
+                const ids = tournaments.map(t => t.id);
+
+                const [{ data: teams, error: teamsErr }, { data: matches, error: matchesErr }] = await Promise.all([
+                    client.from('bracket_tournament_teams').select('*').in('tournament_id', ids),
+                    client.from('bracket_tournament_matches').select('*').in('tournament_id', ids)
+                ]);
+
+                if (teamsErr) throw teamsErr;
+                if (matchesErr) throw matchesErr;
+
+                // Index by tournament_id
+                (teams || []).forEach(t => {
+                    if (!allTournamentTeams[t.tournament_id]) allTournamentTeams[t.tournament_id] = [];
+                    allTournamentTeams[t.tournament_id].push(t);
+                });
+                (matches || []).forEach(m => {
+                    if (!allTournamentMatches[m.tournament_id]) allTournamentMatches[m.tournament_id] = [];
+                    allTournamentMatches[m.tournament_id].push(m);
+                });
+
+                tournamentsLoaded = true;
+                renderTournamentList('all');
+                setupTournamentFilters();
+
+            } catch (err) {
+                console.error('Error loading tournament data:', err);
+                listEl.innerHTML = `<div class="alert alert-danger">Unable to load tournaments: ${err.message}</div>`;
+            }
+        }
+
+        function setupTournamentFilters() {
+            document.querySelectorAll('.tournament-status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tournament-status-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    renderTournamentList(this.dataset.status);
+                });
+            });
+        }
+
+        function renderTournamentList(statusFilter) {
+            const listEl = document.getElementById('tournamentList');
+            const filtered = statusFilter === 'all'
+                ? allTournaments
+                : allTournaments.filter(t => t.status === statusFilter);
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<p class="placeholder-text">No ${statusFilter === 'all' ? '' : statusFilter + ' '}tournaments.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(t => {
+                const teams = allTournamentTeams[t.id] || [];
+                const matches = allTournamentMatches[t.id] || [];
+                const completedMatches = matches.filter(m => m.is_completed);
+                const champion = getChampion(t, teams, matches);
+
+                const startDate = new Date(t.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                const statusClass = `t-status-${t.status}`;
+
+                return `
+                <div class="tournament-card" onclick="openBracketModal('${t.id}')">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="t-name">${escapeHtml(t.name)}</div>
+                            <div class="t-meta">${startDate} &nbsp;·&nbsp; ${teams.length} teams &nbsp;·&nbsp; ${completedMatches.length}/${matches.length} matches played</div>
+                        </div>
+                        <span class="t-status-badge ${statusClass}">${t.status}</span>
+                    </div>
+                    ${champion ? `
+                    <div class="d-flex align-items-center gap-2 mt-2" style="font-size:0.82rem; color:rgba(255,255,255,0.7);">
+                        <i class="fas fa-trophy" style="color:var(--orange);"></i>
+                        <span>${escapeHtml(champion.display_name || (champion.player1_name + ' & ' + champion.player2_name))}</span>
+                    </div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function getChampion(tournament, teams, matches) {
+            if (!matches.length || !teams.length) return null;
+            const maxRound = Math.max(...matches.map(m => m.round));
+            const final = matches.find(m => m.round === maxRound && m.is_completed);
+            if (!final || !final.winner_team_id) return null;
+            return teams.find(t => t.id === final.winner_team_id) || null;
+        }
+
+        function openBracketModal(tournamentId) {
+            const tournament = allTournaments.find(t => t.id === tournamentId);
+            if (!tournament) return;
+
+            const teams = allTournamentTeams[tournamentId] || [];
+            const matches = (allTournamentMatches[tournamentId] || []).slice().sort((a, b) => a.match_number - b.match_number);
+
+            const modalEl = document.getElementById('bracketModal');
+            modalEl.dataset.tournamentId = tournamentId;
+            document.getElementById('bracketModalLabel').textContent = tournament.name;
+            document.getElementById('bracketModalBody').innerHTML = renderBracket(tournament, teams, matches);
+
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        function renderBracket(tournament, teams, matches) {
+            if (!matches.length) return '<p class="text-center text-white-50 py-4">No bracket generated yet.</p>';
+
+            const teamsById = {};
+            teams.forEach(t => { teamsById[t.id] = t; });
+
+            const rounds = [...new Set(matches.map(m => m.round))].sort((a, b) => a - b);
+            const totalRounds = rounds.length;
+
+            const champion = getChampion(tournament, teams, matches);
+
+            let html = '';
+
+            if (champion) {
+                const name = escapeHtml(champion.player1_name + ' & ' + champion.player2_name);
+                html += `
+                <div class="champion-banner">
+                    <i class="fas fa-trophy trophy-icon"></i>
+                    <div>
+                        <div class="champion-label">Champion</div>
+                        <div class="champion-name">${name}</div>
+                    </div>
+                </div>`;
+            }
+
+            html += '<div class="bracket-wrapper">';
+
+            rounds.forEach(round => {
+                const roundMatches = matches.filter(m => m.round === round);
+                const label = bracketRoundLabel(round, totalRounds);
+
+                html += `
+                <div class="bracket-round">
+                    <div class="bracket-round-header">${label}</div>
+                    <div class="bracket-matches">`;
+
+                roundMatches.forEach(match => {
+                    const team1 = match.team1_id ? teamsById[match.team1_id] : null;
+                    const team2 = match.team2_id ? teamsById[match.team2_id] : null;
+                    const isBye = match.round === 1 && match.is_completed && (!team1 || !team2);
+
+                    html += `<div class="bracket-match-slot">
+                        <div class="bracket-match-card">
+                            ${renderTeamRow(team1, match, true, isBye, teamsById)}
+                            ${renderTeamRow(team2, match, false, isBye, teamsById)}
+                        </div>
+                    </div>`;
+                });
+
+                html += '</div></div>';
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        function renderTeamRow(team, match, isTeam1, isBye, teamsById) {
+            const isWinner = team && match.winner_team_id === team.id;
+            const score = isTeam1 ? match.team1_score : match.team2_score;
+            const setScores = isTeam1 ? match.team1_set_scores : match.team2_set_scores;
+
+            let nameHtml, scoreHtml = '', seedHtml = '';
+
+            if (team) {
+                const name = escapeHtml(team.player1_name.split(' ')[0] + ' & ' + team.player2_name.split(' ')[0]);
+                nameHtml = name;
+                if (team.seed) seedHtml = `<span class="seed">#${team.seed}</span>`;
+                if (match.is_completed) {
+                    const sets = Array.isArray(setScores) && setScores.length
+                        ? `<span style="font-size:0.7rem;color:rgba(255,255,255,0.55);margin-right:4px;">${setScores.join(' ')}</span>`
+                        : '';
+                    scoreHtml = `${sets}<span class="score">${score}</span>`;
+                }
+            } else if (isBye) {
+                nameHtml = 'BYE';
+            } else {
+                nameHtml = 'TBD';
+            }
+
+            const rowClass = [
+                'bracket-team-row',
+                isWinner ? 'winner' : '',
+                !team && isBye ? 'bye' : '',
+                !team && !isBye ? 'tbd' : ''
+            ].filter(Boolean).join(' ');
+
+            return `<div class="${rowClass}">
+                ${seedHtml}
+                <span class="team-name">${nameHtml}</span>
+                ${scoreHtml}
+            </div>`;
+        }
+
+        function bracketRoundLabel(round, totalRounds) {
+            const fromFinal = totalRounds - round + 1;
+            switch (fromFinal) {
+                case 1: return 'Final';
+                case 2: return 'Semifinals';
+                case 3: return 'Quarterfinals';
+                case 4: return 'Round of 16';
+                case 5: return 'Round of 32';
+                default: return 'Round ' + round;
+            }
+        }
+
+        function printBracket(tournamentId) {
+            const tournament = allTournaments.find(t => t.id === tournamentId);
+            if (!tournament) return;
+
+            const teams = allTournamentTeams[tournamentId] || [];
+            const matches = (allTournamentMatches[tournamentId] || []).slice().sort((a, b) => a.match_number - b.match_number);
+
+            const teamsById = {};
+            teams.forEach(t => { teamsById[t.id] = t; });
+
+            const rounds = [...new Set(matches.map(m => m.round))].sort((a, b) => a - b);
+            const totalRounds = rounds.length;
+            const champion = getChampion(tournament, teams, matches);
+
+            const startDate = new Date(tournament.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const printedAt = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            // Build round columns HTML
+            let roundsHtml = '';
+            rounds.forEach(round => {
+                const roundMatches = matches.filter(m => m.round === round);
+                const label = bracketRoundLabel(round, totalRounds);
+                let matchesHtml = '';
+                roundMatches.forEach(match => {
+                    const team1 = match.team1_id ? teamsById[match.team1_id] : null;
+                    const team2 = match.team2_id ? teamsById[match.team2_id] : null;
+                    const isBye = match.round === 1 && match.is_completed && (!team1 || !team2);
+
+                    const buildRow = (team, isTeam1) => {
+                        const isWinner = team && match.winner_team_id === team.id;
+                        const score = isTeam1 ? match.team1_score : match.team2_score;
+                        const setScores = isTeam1 ? match.team1_set_scores : match.team2_set_scores;
+                        let name, seedHtml = '', scoreHtml = '';
+
+                        if (team) {
+                            name = escapeHtml(team.player1_name.split(' ')[0] + ' & ' + team.player2_name.split(' ')[0]);
+                            if (team.seed) seedHtml = `<span class="seed">#${team.seed}</span>`;
+                            if (match.is_completed) {
+                                const sets = Array.isArray(setScores) && setScores.length
+                                    ? `<span class="set-scores">${setScores.join(' ')}</span>` : '';
+                                scoreHtml = `${sets}<span class="score">${score}</span>`;
+                            }
+                        } else if (isBye) {
+                            name = 'BYE';
+                        } else {
+                            name = 'TBD';
+                        }
+
+                        const rowClass = ['team-row', isWinner ? 'winner' : '', !team ? (isBye ? 'bye' : 'tbd') : ''].filter(Boolean).join(' ');
+                        return `<div class="${rowClass}">${seedHtml}<span class="team-name">${name}</span>${scoreHtml}</div>`;
+                    };
+
+                    matchesHtml += `
+                        <div class="match-slot">
+                            <div class="match-card">
+                                ${buildRow(team1, true)}
+                                ${buildRow(team2, false)}
+                            </div>
+                        </div>`;
+                });
+
+                roundsHtml += `
+                    <div class="round-col">
+                        <div class="round-header">${label}</div>
+                        <div class="round-matches">${matchesHtml}</div>
+                    </div>`;
+            });
+
+            const championHtml = champion ? `
+                <div class="champion-banner">
+                    <span class="trophy">🏆</span>
+                    <div>
+                        <div class="champion-label">Champion</div>
+                        <div class="champion-name">${escapeHtml(champion.player1_name + ' & ' + champion.player2_name)}</div>
+                    </div>
+                </div>` : '';
+
+            const printContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${escapeHtml(tournament.name)} — Bracket</title>
+    <style>
+        @page { size: landscape; margin: 1cm; }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            color: #111;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 16px;
+            margin: 0 0 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .champion-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff8e1;
+            border: 1px solid #f9a825;
+            border-radius: 6px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .trophy { font-size: 1.4rem; }
+
+        .champion-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+        }
+
+        .champion-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .bracket-wrapper {
+            display: flex;
+            gap: 0;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .round-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .round-header {
+            text-align: center;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #e65c00;
+            padding: 4px 4px 8px;
+            border-bottom: 1px solid #e65c00;
+            margin-bottom: 4px;
+        }
+
+        .round-matches {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .match-slot {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4px 6px;
+            position: relative;
+        }
+
+        .match-slot::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            width: 6px;
+            height: 1px;
+            background: #ccc;
+        }
+
+        .round-col:last-child .match-slot::after { display: none; }
+
+        .match-card {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            padding: 3px 5px;
+            gap: 4px;
+            font-size: 8.5px;
+        }
+
+        .team-row + .team-row {
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .team-row.winner {
+            background: #fff3e0;
+            font-weight: 700;
+        }
+
+        .seed {
+            font-size: 7px;
+            color: #e65c00;
+            width: 18px;
+            flex-shrink: 0;
+        }
+
+        .team-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .team-row.bye .team-name,
+        .team-row.tbd .team-name {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .set-scores {
+            font-size: 7px;
+            color: #888;
+            margin-right: 3px;
+        }
+
+        .score {
+            font-weight: 700;
+            font-size: 8.5px;
+            min-width: 12px;
+            text-align: right;
+        }
+
+        .print-footer {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 8px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <h1>${escapeHtml(tournament.name)}</h1>
+    <div class="subtitle">Started ${startDate} &nbsp;·&nbsp; ${teams.length} teams &nbsp;·&nbsp; Printed ${printedAt}</div>
+    ${championHtml}
+    <div class="bracket-wrapper">${roundsHtml}</div>
+    <div class="print-footer">PadelPals &nbsp;·&nbsp; padelpals.app</div>
+</body>
+</html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(printContent);
+            win.document.close();
+            win.focus();
+            win.print();
+        }
+
+        // Wire up the Print Bracket button inside the modal
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('bracketModal').addEventListener('show.bs.modal', function() {
+                // The tournamentId is stored on the modal when opened
+            });
+            document.getElementById('printBracketBtn').addEventListener('click', function() {
+                const tid = document.getElementById('bracketModal').dataset.tournamentId;
+                if (tid) printBracket(tid);
+            });
+        });
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Lazy-load tournaments when the tab is first shown
+        document.addEventListener('DOMContentLoaded', function() {
+            const tournamentsTab = document.getElementById('tournaments-tab');
+            if (tournamentsTab) {
+                tournamentsTab.addEventListener('shown.bs.tab', function() {
+                    loadTournamentData();
+                });
+            }
+        });
+
+        // ── end Tournaments ────────────────────────────────────────────────────
 
         
         // Load Box League Data
