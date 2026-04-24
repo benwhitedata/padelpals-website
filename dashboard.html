@@ -2202,7 +2202,9 @@
             listEl.innerHTML = filtered.map(t => {
                 const teams = allTournamentTeams[t.id] || [];
                 const matches = allTournamentMatches[t.id] || [];
-                const completedMatches = matches.filter(m => m.is_completed);
+                // Exclude bye matches (round 1, completed, missing one team) from counts
+                const realMatches = matches.filter(m => m.team1_id && m.team2_id);
+                const completedMatches = realMatches.filter(m => m.is_completed);
                 const champion = getChampion(t, teams, matches);
 
                 const startDate = new Date(t.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -2213,7 +2215,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="t-name">${escapeHtml(t.name)}</div>
-                            <div class="t-meta">${startDate} &nbsp;·&nbsp; ${teams.length} teams &nbsp;·&nbsp; ${completedMatches.length}/${matches.length} matches played</div>
+                            <div class="t-meta">${startDate} &nbsp;·&nbsp; ${teams.length} teams &nbsp;·&nbsp; ${completedMatches.length}/${realMatches.length} matches played</div>
                         </div>
                         <span class="t-status-badge ${statusClass}">${t.status}</span>
                     </div>
