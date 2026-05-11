@@ -92,18 +92,41 @@
             color: white;
         }
 
-        .app-store-badge {
+        .store-badges {
             margin-top: 24px;
-            display: inline-block;
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
-        .app-store-badge img {
+        .store-badge {
+            display: inline-flex;
+            align-items: center;
+            line-height: 0;
+        }
+
+        .store-badge img {
             height: 60px;
+            width: auto;
             transition: transform 0.3s ease;
         }
 
-        .app-store-badge img:hover {
+        /* Google's generic Play badge has built-in transparent padding,
+           so it needs a slightly larger height to visually match Apple's. */
+        .store-badge.store-badge-play img {
+            height: 88px;
+            margin: -14px 0;
+        }
+
+        .store-badge:hover img {
             transform: scale(1.05);
+        }
+
+        @media (max-width: 480px) {
+            .store-badge img { height: 52px; }
+            .store-badge.store-badge-play img { height: 76px; margin: -12px 0; }
         }
 
         /* Main Content */
@@ -286,6 +309,91 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Support Section - friendly, low-pressure tip CTA */
+        .support-section {
+            padding: 56px 0 64px;
+        }
+
+        .support-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid #E8F4F8;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .support-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4A90E2 0%, #1a2238 100%);
+        }
+
+        .support-emoji {
+            font-size: 3rem;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .support-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .support-text h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a2238;
+            margin-bottom: 6px;
+        }
+
+        .support-text p {
+            color: #555555;
+            margin: 0;
+            font-size: 0.98rem;
+        }
+
+        .support-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #4A90E2 0%, #2a3990 100%);
+            color: #FFFFFF;
+            padding: 12px 22px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .support-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(74,144,226,0.25);
+            color: #FFFFFF;
+            opacity: 0.97;
+        }
+
+        @media (max-width: 640px) {
+            .support-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 28px 20px;
+                gap: 16px;
+            }
+            .support-emoji { font-size: 2.5rem; }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero-title {
@@ -442,9 +550,14 @@
         <div class="hero-content">
             <h1 class="hero-title">Welcome to Padel Pals</h1>
             <p class="hero-subtitle">Track, manage, and improve your padel matches with ease. Experience Americano tournaments, Box League competitions, and detailed player statistics.</p>
-            <a href="https://apps.apple.com/app/padel-pals/id6742356382" class="app-store-badge">
-                <img src="images/app-store-badge.svg" alt="Download on the App Store">
-            </a>
+            <div class="store-badges">
+                <a href="https://apps.apple.com/gb/app/padel-pals/id6742356382" class="store-badge" aria-label="Download Padel Pals on the App Store">
+                    <img src="images/app-store-badge.svg" alt="Download on the App Store">
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" class="store-badge store-badge-play" aria-label="Get Padel Pals on Google Play">
+                    <img src="https://play.google.com/intl/en_gb/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
+                </a>
+            </div>
         </div>
     </section>
 
@@ -499,7 +612,7 @@
                     <div class="step-number">1</div>
                     <h3 class="step-title">Download the App</h3>
                     <p class="step-description">
-                        Get Padel Pals from the App Store and create your account to start tracking your matches.
+                        Get Padel Pals from the App Store or Google Play, then create your account to start tracking your matches.
                     </p>
                 </div>
 
@@ -518,6 +631,21 @@
                         Record your matches, view statistics, and track your progress as you improve your game.
                     </p>
                 </div>
+            </div>
+        </section>
+
+        <!-- Support the App -->
+        <section id="support" class="support-section">
+            <div class="support-card">
+                <div class="support-emoji" aria-hidden="true">☕</div>
+                <div class="support-text">
+                    <h3>Enjoying Padel Pals?</h3>
+                    <p>Padel Pals is built and maintained by one developer in their spare time. If the app has been useful, a small tip helps cover hosting and keeps new features coming. Completely optional — no features are gated.</p>
+                </div>
+                <a href="tip.html" class="support-cta">
+                    <i class="fas fa-heart" aria-hidden="true"></i>
+                    Support the app
+                </a>
             </div>
         </section>
     </main>

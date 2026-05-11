@@ -294,13 +294,19 @@ const SHARED_NAVIGATION_HTML = `
             <li class="nav-item">
                 <a href="boxleague.html" class="nav-link">Box League</a>
             </li>
-            
+
+            <li class="nav-item">
+                <a href="tip.html" class="nav-link nav-link-support" title="Support Padel Pals">
+                    <i class="fas fa-heart" aria-hidden="true" style="margin-right: 6px; color: #e25c6b;"></i>Support
+                </a>
+            </li>
+
             <li class="nav-item has-dropdown">
                 <a href="#" class="nav-link">More</a>
                 <div class="dropdown">
                     <div class="dropdown-section">
                         <div class="dropdown-title">Information</div>
-                        <a href="support.html" class="dropdown-link">💬 Support</a>
+                        <a href="support.html" class="dropdown-link">💬 Help &amp; Contact</a>
                         <a href="tip.html" class="dropdown-link">☕ Support the app</a>
                         <a href="privacy.html" class="dropdown-link">🔒 Privacy Policy</a>
                     </div>
@@ -581,7 +587,8 @@ const SHARED_FOOTER_HTML = `
             <div class="footer-section">
                 <h4>Download</h4>
                 <ul>
-                    <li><a href="https://apps.apple.com/app/padel-pals/id6742356382">App Store</a></li>
+                    <li><a href="https://apps.apple.com/gb/app/padel-pals/id6742356382">App Store (iOS)</a></li>
+                    <li><a href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid">Google Play (Android)</a></li>
                 </ul>
             </div>
         </div>
