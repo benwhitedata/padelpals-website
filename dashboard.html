@@ -308,6 +308,89 @@
             margin-bottom: 15px;
         }
 
+        /* Tip banner — warm, prominent but slim, sits above profile cards */
+        .tip-banner {
+            position: relative;
+            background: linear-gradient(135deg, #FFF8EC 0%, #FFEFD5 100%);
+            border: 1px solid #F4E2BE;
+            border-radius: 14px;
+            padding: 18px 22px 18px 26px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(196, 142, 60, 0.10);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            overflow: hidden;
+        }
+        .tip-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 5px;
+            background: linear-gradient(180deg, #F2A65A 0%, #E08540 100%);
+        }
+        .tip-banner-emoji {
+            font-size: 2rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .tip-banner-text { flex: 1; min-width: 0; }
+        .tip-banner-text strong {
+            display: block;
+            color: #1a2238;
+            font-size: 1.05rem;
+            margin-bottom: 2px;
+        }
+        .tip-banner-text span {
+            color: #6b563a;
+            font-size: 0.9rem;
+        }
+        .tip-banner-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #F2A65A 0%, #E08540 100%);
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.92rem;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(224, 133, 64, 0.30);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            flex-shrink: 0;
+        }
+        .tip-banner-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(224, 133, 64, 0.42);
+            color: #FFFFFF;
+        }
+        .tip-banner-dismiss {
+            background: transparent;
+            border: none;
+            color: #b0905a;
+            font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 6px;
+            transition: background 0.2s ease, color 0.2s ease;
+            flex-shrink: 0;
+        }
+        .tip-banner-dismiss:hover {
+            background: rgba(176, 144, 90, 0.15);
+            color: #6b563a;
+        }
+        @media (max-width: 640px) {
+            .tip-banner {
+                flex-wrap: wrap;
+                padding: 16px 18px 16px 22px;
+            }
+            .tip-banner-text { flex-basis: calc(100% - 60px); }
+            .tip-banner-cta { flex: 1; justify-content: center; }
+        }
+
         .footer {
             background-color: var(--dark-blue);
             color: white;
@@ -1319,6 +1402,39 @@
                 <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                     <div class="row">
                         <div class="col-lg-8 mx-auto">
+                            <!-- Tip banner -->
+                            <div class="tip-banner" id="tipBanner" role="region" aria-label="Support Padel Pals">
+                                <div class="tip-banner-emoji" aria-hidden="true">☕</div>
+                                <div class="tip-banner-text">
+                                    <strong>Enjoying Padel Pals?</strong>
+                                    <span>Built solo in spare time. A small tip helps keep it running — totally optional, no features gated.</span>
+                                </div>
+                                <a href="tip.html" class="tip-banner-cta">
+                                    <i class="fas fa-heart"></i> Leave a tip
+                                </a>
+                                <button type="button" class="tip-banner-dismiss" id="tipBannerDismiss" aria-label="Hide for now" title="Hide for now">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <script>
+                                (function () {
+                                    var banner = document.getElementById('tipBanner');
+                                    if (!banner) return;
+                                    try {
+                                        if (sessionStorage.getItem('padelpals_tip_banner_hidden') === '1') {
+                                            banner.style.display = 'none';
+                                        }
+                                    } catch (e) { /* ignore */ }
+                                    var btn = document.getElementById('tipBannerDismiss');
+                                    if (btn) {
+                                        btn.addEventListener('click', function () {
+                                            banner.style.display = 'none';
+                                            try { sessionStorage.setItem('padelpals_tip_banner_hidden', '1'); } catch (e) {}
+                                        });
+                                    }
+                                })();
+                            </script>
+
                             <!-- Player Information -->
                             <div class="stats-card mb-4">
                                 <h3>Player Information</h3>
@@ -1489,21 +1605,6 @@
                                 </div>
                             </div>
 
-                            <!-- Support the app -->
-                            <div class="stats-card mb-4 dashboard-tip-card">
-                                <div class="d-flex align-items-center flex-wrap" style="gap: 16px;">
-                                    <div style="font-size: 2.25rem; line-height: 1;" aria-hidden="true">☕</div>
-                                    <div style="flex: 1; min-width: 220px;">
-                                        <h3 style="margin-bottom: 4px;">Enjoying Padel Pals?</h3>
-                                        <p class="mb-0 text-muted" style="font-size: 0.95rem;">
-                                            The app is built and run by one developer. If it's been useful to you, a small tip helps cover hosting and keep improvements coming. Optional &mdash; no features are gated.
-                                        </p>
-                                    </div>
-                                    <a href="tip.html" class="btn btn-primary" style="white-space: nowrap;">
-                                        <i class="fas fa-heart me-2"></i>Support the app
-                                    </a>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
