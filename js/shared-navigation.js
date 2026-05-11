@@ -301,6 +301,7 @@ const SHARED_NAVIGATION_HTML = `
                     <div class="dropdown-section">
                         <div class="dropdown-title">Information</div>
                         <a href="support.html" class="dropdown-link">💬 Support</a>
+                        <a href="tip.html" class="dropdown-link">☕ Support the app</a>
                         <a href="privacy.html" class="dropdown-link">🔒 Privacy Policy</a>
                     </div>
                 </div>
@@ -571,6 +572,7 @@ const SHARED_FOOTER_HTML = `
                 <h4>Information</h4>
                 <ul>
                     <li><a href="support.html">Support</a></li>
+                    <li><a href="tip.html">Support the app</a></li>
                     <li><a href="privacy.html">Privacy Policy</a></li>
                     <li><a href="auth.html">Sign In</a></li>
                 </ul>
