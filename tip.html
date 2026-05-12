@@ -124,8 +124,41 @@
             color: #1b5e20;
         }
         .error-text { color: #c62828; font-size: 0.9rem; margin-top: 8px; }
-        #auth-gate { display: none; }
         #tip-flow { display: none; }
+        .email-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            background: #fff;
+        }
+        .email-row:focus-within { border-color: #4A90E2; }
+        .email-row i { color: #888; font-size: 1rem; }
+        .email-row input {
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+            flex: 1;
+            font-family: inherit;
+            min-width: 0;
+            background: transparent;
+        }
+        .email-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 18px 0 8px;
+            color: #1a2238;
+        }
+        .email-label .optional {
+            color: #888;
+            font-weight: 400;
+            font-size: 0.82rem;
+            margin-left: 4px;
+        }
+        #email-section.signed-in { display: none; }
     </style>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
     <script>
@@ -141,7 +174,7 @@
     <section class="page-header">
         <div class="container">
             <h1>Support Padel Pals</h1>
-            <p>Voluntary tips help keep the app running. They do not unlock any features. Payments are processed securely by Stripe.</p>
+            <p>Voluntary tips help keep the app running. No account needed — pay by card or Apple Pay. Payments are processed securely by Stripe.</p>
         </div>
     </section>
 
@@ -156,13 +189,6 @@
                     We could not finish confirming your payment in this browser (often because of private browsing or switching devices). If you completed checkout, check your email for a Stripe receipt. If something went wrong, email <a href="mailto:support@padelpals.app">support@padelpals.app</a>.
                 </div>
                 <p style="text-align:center;margin-top:16px;"><a href="tip.html" style="color:#4A90E2;font-weight:600;">Start again</a></p>
-            </div>
-
-            <div id="auth-gate">
-                <div class="alert-soft">
-                    <strong>Sign in required.</strong> Use the <strong>Sign In</strong> button in the header with the same account you use in the app (Sign in with Apple), then return to this page to complete a tip.
-                </div>
-                <a href="auth.html" class="btn-primary-custom" style="display:inline-block;text-align:center;text-decoration:none;">Go to sign in</a>
             </div>
 
             <div id="success-state" style="display:none;">
@@ -185,6 +211,15 @@
                     <input type="text" inputmode="decimal" id="custom-amount" placeholder="0.00" autocomplete="off" aria-label="Custom amount in pounds">
                 </div>
                 <p class="hint">Between £1 and £100. Tips are non-refundable except where required by law — see our <a href="terms.html">Terms</a>.</p>
+
+                <div id="email-section">
+                    <p class="email-label">Email for receipt <span class="optional">(optional)</span></p>
+                    <div class="email-row">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <input type="email" id="payer-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address for receipt" inputmode="email">
+                    </div>
+                    <p class="hint" style="margin-top:4px;">If you'd like Stripe to email you a receipt. We don't store it for marketing.</p>
+                </div>
 
                 <p id="amount-error" class="error-text" style="display:none;"></p>
 
@@ -311,18 +346,25 @@
         updateContinueLabel();
     });
 
-    async function createPaymentIntent(accessToken, amountPence) {
+    async function createPaymentIntent(accessToken, amountPence, email) {
         var cfg = window.config;
         if (!cfg || !cfg.supabaseUrl || !cfg.supabaseKey) throw new Error('Configuration not ready');
         var url = cfg.supabaseUrl.replace(/\/$/, '') + '/functions/v1/create-payment-intent';
+        var headers = {
+            'Content-Type': 'application/json',
+            'apikey': cfg.supabaseKey
+        };
+        if (accessToken) {
+            headers['Authorization'] = 'Bearer ' + accessToken;
+        } else {
+            headers['Authorization'] = 'Bearer ' + cfg.supabaseKey;
+        }
+        var payload = { purpose: 'donation', amount_pence: amountPence };
+        if (email) payload.email = email;
         var res = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken,
-                'apikey': cfg.supabaseKey
-            },
-            body: JSON.stringify({ purpose: 'donation', amount_pence: amountPence })
+            headers: headers,
+            body: JSON.stringify(payload)
         });
         var data = await res.json().catch(function () { return {}; });
         if (!res.ok) {
@@ -388,30 +430,31 @@
             return;
         }
 
-        function showAuthOrTip() {
+        function showTip() {
             showEl('loading-state', false);
             if (window.location.search && window.location.search.indexOf('payment_intent') !== -1) {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
+            showEl('tip-flow', true);
+
+            // If the user happens to be signed in, hide the email field — the
+            // function will use their account email for the Stripe receipt.
             var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
-            if (!client) {
-                showEl('auth-gate', true);
-                return;
+            if (client) {
+                client.auth.getSession().then(function (_ref) {
+                    var session = _ref.data && _ref.data.session;
+                    var emailSection = document.getElementById('email-section');
+                    if (session && emailSection) {
+                        emailSection.classList.add('signed-in');
+                    }
+                }).catch(function () { /* ignore */ });
             }
-            client.auth.getSession().then(function (_ref) {
-                var session = _ref.data && _ref.data.session;
-                if (!session) {
-                    showEl('auth-gate', true);
-                } else {
-                    showEl('tip-flow', true);
-                }
-            });
         }
 
         if (window.config && window.config.supabaseUrl) {
-            showAuthOrTip();
+            showTip();
         } else {
-            document.addEventListener('configLoaded', showAuthOrTip);
+            document.addEventListener('configLoaded', showTip);
         }
     }
 
@@ -425,13 +468,24 @@
             return;
         }
 
-        var client = window.getOrCreateSupabaseClient();
-        var _ref2 = await client.auth.getSession();
-        var session = _ref2.data && _ref2.data.session;
-        if (!session) {
-            showEl('tip-flow', false);
-            showEl('auth-gate', true);
+        var emailInput = document.getElementById('payer-email');
+        var email = emailInput ? emailInput.value.trim() : '';
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errEl.textContent = 'Please enter a valid email address, or leave it blank.';
+            errEl.style.display = 'block';
             return;
+        }
+
+        // Opportunistic auth: if signed in we attach the user_id server-side,
+        // otherwise the tip is recorded anonymously.
+        var accessToken = null;
+        var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
+        if (client) {
+            try {
+                var _ref2 = await client.auth.getSession();
+                var session = _ref2.data && _ref2.data.session;
+                if (session) accessToken = session.access_token;
+            } catch (e) { /* ignore - fall through to anonymous */ }
         }
 
         var btn = document.getElementById('btn-continue');
@@ -439,7 +493,7 @@
         btn.textContent = 'Preparing payment…';
 
         try {
-            var data = await createPaymentIntent(session.access_token, amount);
+            var data = await createPaymentIntent(accessToken, amount, email || null);
             clientSecret = data.client_secret;
             publishableKey = data.publishable_key;
             try {
@@ -460,6 +514,8 @@
             document.getElementById('tier-grid').style.pointerEvents = 'none';
             document.getElementById('tier-grid').style.opacity = '0.5';
             document.getElementById('custom-amount').disabled = true;
+            var pe = document.getElementById('payer-email');
+            if (pe) pe.disabled = true;
             document.getElementById('btn-continue').style.display = 'none';
             showEl('pay-section', true);
         } catch (e) {
