@@ -2616,8 +2616,23 @@
         .bracket-wrapper {
             display: flex;
             gap: 0;
-            align-items: flex-start;
+            align-items: stretch;
             width: 100%;
+        }
+
+        @media print {
+            .bracket-wrapper {
+                /* Constrain to ~90% of landscape A4 printable height
+                   (A4 landscape is 21cm tall, minus 2x1cm margins ≈ 19cm,
+                   minus title/subtitle/footer ≈ 17cm; 90% ≈ 15.3cm) */
+                height: 15.3cm;
+                max-height: 15.3cm;
+                page-break-inside: avoid;
+            }
+
+            .round-matches {
+                height: 100%;
+            }
         }
 
         .round-col {
@@ -2650,8 +2665,9 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 4px 6px;
+            padding: 2px 6px;
             position: relative;
+            min-height: 0;
         }
 
         .match-slot::after {
