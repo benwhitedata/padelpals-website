@@ -1506,73 +1506,6 @@
             background: rgba(255,255,255,0.08);
         }
 
-        /* ── Print Mode ──────────────────────────────────────────── */
-        @media print {
-            body * { visibility: hidden; }
-            #rankingsPrintArea,
-            #rankingsPrintArea * { visibility: visible; }
-            #rankingsPrintArea {
-                position: fixed;
-                inset: 0;
-                background: #fff;
-                color: #000;
-                padding: 24px 32px;
-                font-family: 'Montserrat', Arial, sans-serif;
-            }
-            .rankings-print-header {
-                display: flex !important;
-                justify-content: space-between;
-                align-items: flex-end;
-                border-bottom: 3px solid #FF6B35;
-                padding-bottom: 10px;
-                margin-bottom: 18px;
-            }
-            .rankings-print-header h2 {
-                font-size: 1.6rem;
-                font-weight: 700;
-                margin: 0;
-                color: #1a2238;
-            }
-            .rankings-print-header .print-meta {
-                font-size: 0.8rem;
-                color: #666;
-                text-align: right;
-            }
-            #rankingsPrintTable {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 0.9rem;
-            }
-            #rankingsPrintTable thead th {
-                background: #1a2238 !important;
-                color: #fff !important;
-                padding: 8px 12px;
-                font-weight: 600;
-                text-align: left;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            #rankingsPrintTable tbody tr:nth-child(even) {
-                background: #f5f5f5 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            #rankingsPrintTable tbody td {
-                padding: 7px 12px;
-                border-bottom: 1px solid #e0e0e0;
-                vertical-align: middle;
-            }
-            .print-rank-medal { font-size: 1.2rem; }
-            .print-rank-num { font-weight: 700; color: #333; }
-            .print-rating { font-weight: 700; color: #FF6B35 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .rankings-print-footer {
-                margin-top: 16px;
-                font-size: 0.75rem;
-                color: #999;
-                text-align: center;
-            }
-        }
-        #rankingsPrintArea { display: none; }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -7958,29 +7891,6 @@
         </div>
     </div>
 
-    <!-- Rankings Print Area (only visible during print) -->
-    <div id="rankingsPrintArea">
-        <div class="rankings-print-header">
-            <h2><i class="fas fa-trophy"></i> Player Rankings</h2>
-            <div class="print-meta">
-                <div id="rankingsPrintMeta"></div>
-                <div>PadelPals &mdash; padelpals.app</div>
-            </div>
-        </div>
-        <table id="rankingsPrintTable">
-            <thead>
-                <tr>
-                    <th style="width:60px; text-align:center;">Rank</th>
-                    <th>Player</th>
-                    <th>Rating</th>
-                    <th>Playtomic</th>
-                    <th>Last Updated</th>
-                </tr>
-            </thead>
-            <tbody id="rankingsPrintList"></tbody>
-        </table>
-        <div class="rankings-print-footer">Printed from PadelPals &mdash; padelpals.app</div>
-    </div>
 
     <script>
         // ── Rankings Fullscreen ───────────────────────────────────────
@@ -8255,56 +8165,111 @@
         }
 
         // ── Rankings Print ────────────────────────────────────────────
+        // Opens a clean popup window with just the rankings table and prints it,
+        // avoiding any CSS conflicts with the main dashboard page.
         function printRankings() {
-            const namesCache = (typeof playerProfilesCache !== 'undefined' ? playerProfilesCache : new Map());
-            const filtered = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
-            const all = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
+            const namesCache  = (typeof playerProfilesCache !== 'undefined' ? playerProfilesCache : new Map());
+            const filtered    = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
+            const all         = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
             const genderFilter = document.getElementById('genderFilter');
-            const gender = genderFilter ? genderFilter.value : 'all';
+            const gender      = genderFilter ? genderFilter.value : 'all';
+            const clubData    = window.currentUserClubData;
+            const primary     = clubData?.primary_color || clubData?.primaryColor || '#FF6B35';
+            const clubLabel   = clubData?.club_name ? `${clubData.club_name} · ` : '';
+            const genderLabel = gender === 'all' ? 'All genders' : (gender === 'male' ? 'Men' : 'Women');
+            const now         = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-            // Use filtered (club-scoped) list when available
             let players = filtered.length > 0 ? filtered : all;
             const top40 = players.slice(0, 40);
 
-            const tbody = document.getElementById('rankingsPrintList');
-            tbody.innerHTML = '';
-
+            let rowsHtml = '';
             top40.forEach((player, idx) => {
-                const rank = idx + 1;
-                const rankDisplay = rank <= 3
-                    ? `<span class="print-rank-medal">${['🥇','🥈','🥉'][rank - 1]}</span>`
-                    : `<span class="print-rank-num">${rank}</span>`;
-                const rating = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
-                const playtomic = typeof player.rating_0_10 === 'number'
-                    ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2)
-                    : '—';
-                // Resolve name from the shared cache, same as the main table does
-                const name = namesCache.get(player.id) || player.display_name || '—';
-                const dateField = player.last_updated || player.date;
-                const updated = dateField
+                const rank        = idx + 1;
+                const rankDisplay = rank <= 3 ? ['🥇','🥈','🥉'][rank - 1] : rank;
+                const rating      = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
+                const playtomic   = typeof player.rating_0_10 === 'number'
+                    ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2) : '—';
+                const name        = namesCache.get(player.id) || player.display_name || '—';
+                const dateField   = player.last_updated || player.date;
+                const updated     = dateField
                     ? new Date(dateField).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                     : '—';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="text-align:center;">${rankDisplay}</td>
+                const rowBg       = rank % 2 === 0 ? '#f8f8f8' : '#fff';
+                rowsHtml += `
+                <tr style="background:${rowBg};">
+                    <td style="text-align:center;font-size:${rank<=3?'1.2rem':'0.95rem'};font-weight:700;color:#333;">${rankDisplay}</td>
                     <td>${name}</td>
-                    <td class="print-rating">${rating}</td>
-                    <td>${playtomic}</td>
-                    <td>${updated}</td>
-                `;
-                tbody.appendChild(tr);
+                    <td style="font-weight:700;color:${primary};">${rating}</td>
+                    <td style="color:#555;">${playtomic}</td>
+                    <td style="color:#888;font-size:0.85rem;">${updated}</td>
+                </tr>`;
             });
 
-            const clubData = window.currentUserClubData;
-            const clubLabel = clubData?.club_name ? `${clubData.club_name} · ` : '';
-            const genderLabel = gender === 'all' ? 'All genders' : gender.charAt(0).toUpperCase() + gender.slice(1);
-            const now = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-            document.getElementById('rankingsPrintMeta').textContent = `${clubLabel}${genderLabel} · ${now}`;
+            const logoUrl = clubData?.logo_url || '';
+            const logoHtml = logoUrl
+                ? `<img src="${logoUrl}" alt="Club logo" style="height:48px;object-fit:contain;margin-right:12px;">`
+                : '';
 
-            document.getElementById('rankingsPrintArea').style.display = 'block';
-            window.print();
-            document.getElementById('rankingsPrintArea').style.display = 'none';
+            const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Player Rankings</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Montserrat, Arial, sans-serif; padding: 28px 36px; color: #1a1a2e; }
+  .print-header {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 3px solid ${primary}; padding-bottom: 12px; margin-bottom: 20px;
+  }
+  .print-title { display: flex; align-items: center; }
+  .print-title h1 { font-size: 1.6rem; font-weight: 700; color: #1a2238; }
+  .print-meta { text-align: right; font-size: 0.78rem; color: #888; line-height: 1.6; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  thead th {
+    background: #1a2238; color: #fff; padding: 9px 12px;
+    font-weight: 600; text-align: left;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  thead th:first-child { text-align: center; width: 60px; }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid #e8e8e8; vertical-align: middle; }
+  .print-footer { margin-top: 18px; text-align: center; font-size: 0.72rem; color: #bbb; }
+  @media print {
+    body { padding: 16px 20px; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+  <div class="print-header">
+    <div class="print-title">${logoHtml}<h1>🏆 Player Rankings</h1></div>
+    <div class="print-meta">
+      <div>${clubLabel}${genderLabel}</div>
+      <div>${now}</div>
+      <div>padelpals.app</div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th><th>Player</th><th>Rating</th><th>Playtomic</th><th>Last Updated</th>
+      </tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+  <div class="print-footer">PadelPals &mdash; padelpals.app</div>
+  <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };<\/script>
+</body>
+</html>`;
+
+            const win = window.open('', '_blank', 'width=900,height=700');
+            if (win) {
+                win.document.write(html);
+                win.document.close();
+            } else {
+                alert('Please allow pop-ups for this site to use the print feature.');
+            }
         }
     </script>
 </body>
