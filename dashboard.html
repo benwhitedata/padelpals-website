@@ -1338,6 +1338,199 @@
         @media (max-width: 576px) {
             #dashboardContent > h1.mb-4 { font-size: 1.25rem; }
         }
+
+        /* ── Rankings Fullscreen Overlay ─────────────────────────── */
+        #rankingsFullscreenOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #0d1b2e;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #rankingsFullscreenOverlay.active {
+            display: flex;
+        }
+        .rankings-fs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 32px 12px;
+            background: linear-gradient(135deg, #1a2238 0%, #0d1b2e 100%);
+            border-bottom: 2px solid var(--orange);
+            flex-shrink: 0;
+        }
+        .rankings-fs-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.04em;
+        }
+        .rankings-fs-header .fs-subtitle {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.55);
+            margin-top: 2px;
+        }
+        .rankings-fs-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .rankings-fs-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 40px;
+        }
+        .rankings-fs-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #fff;
+        }
+        .rankings-fs-table thead th {
+            position: sticky;
+            top: 0;
+            background: #1a2238;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            z-index: 2;
+        }
+        .rankings-fs-table tbody tr {
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: background 0.15s;
+        }
+        .rankings-fs-table tbody tr:hover {
+            background: rgba(255,107,53,0.08);
+        }
+        .rankings-fs-table tbody td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            font-size: 1.05rem;
+        }
+        .rankings-fs-table .fs-rank-cell {
+            text-align: center;
+            font-size: 1.6rem;
+            width: 80px;
+        }
+        .rankings-fs-table .fs-rank-num {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.75);
+        }
+        .rankings-fs-table .fs-player-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+        .rankings-fs-table .fs-rating {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--orange);
+        }
+        .rankings-fs-table .fs-playtomic {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.65);
+        }
+        .rankings-fs-table .fs-updated {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.45);
+        }
+        .rankings-fs-footer {
+            padding: 10px 32px;
+            background: #1a2238;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .rankings-fs-footer .fs-page-info {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.5);
+        }
+        .rankings-fs-footer .fs-nav-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .rankings-fs-logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--orange);
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Print Mode ──────────────────────────────────────────── */
+        @media print {
+            body * { visibility: hidden; }
+            #rankingsPrintArea,
+            #rankingsPrintArea * { visibility: visible; }
+            #rankingsPrintArea {
+                position: fixed;
+                inset: 0;
+                background: #fff;
+                color: #000;
+                padding: 24px 32px;
+                font-family: 'Montserrat', Arial, sans-serif;
+            }
+            .rankings-print-header {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: flex-end;
+                border-bottom: 3px solid #FF6B35;
+                padding-bottom: 10px;
+                margin-bottom: 18px;
+            }
+            .rankings-print-header h2 {
+                font-size: 1.6rem;
+                font-weight: 700;
+                margin: 0;
+                color: #1a2238;
+            }
+            .rankings-print-header .print-meta {
+                font-size: 0.8rem;
+                color: #666;
+                text-align: right;
+            }
+            #rankingsPrintTable {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9rem;
+            }
+            #rankingsPrintTable thead th {
+                background: #1a2238 !important;
+                color: #fff !important;
+                padding: 8px 12px;
+                font-weight: 600;
+                text-align: left;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            #rankingsPrintTable tbody tr:nth-child(even) {
+                background: #f5f5f5 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            #rankingsPrintTable tbody td {
+                padding: 7px 12px;
+                border-bottom: 1px solid #e0e0e0;
+                vertical-align: middle;
+            }
+            .print-rank-medal { font-size: 1.2rem; }
+            .print-rank-num { font-weight: 700; color: #333; }
+            .print-rating { font-weight: 700; color: #FF6B35 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .rankings-print-footer {
+                margin-top: 16px;
+                font-size: 0.75rem;
+                color: #999;
+                text-align: center;
+            }
+        }
+        #rankingsPrintArea { display: none; }
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -1824,6 +2017,12 @@
                                         <option value="female">Female</option>
                                     </select>
                                 </div>
+                                <button class="btn btn-outline-warning btn-sm ms-3" id="printRankingsBtn" onclick="printRankings()" title="Print rankings">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <button class="btn btn-outline-success btn-sm ms-2" id="fullscreenRankingsBtn" onclick="openRankingsFullscreen()" title="Fullscreen display">
+                                    <i class="fas fa-expand"></i>
+                                </button>
                             </div>
                         </div>
                         <div id="playerRankingsLoading" class="text-center py-4">
@@ -7658,6 +7857,248 @@
                 });
             });
         })();
+    </script>
+
+    <!-- Rankings Fullscreen Overlay -->
+    <div id="rankingsFullscreenOverlay" role="dialog" aria-modal="true" aria-label="Player Rankings Fullscreen">
+        <div class="rankings-fs-header">
+            <div>
+                <h2><i class="fas fa-trophy me-2" style="color: var(--orange);"></i>Player Rankings</h2>
+                <div class="fs-subtitle" id="rankingsFsSubtitle">PadelPals</div>
+            </div>
+            <div class="rankings-fs-controls">
+                <select id="rankingsFsGenderFilter" class="form-select form-select-sm" style="width: auto; background: #1a2238; color: #fff; border-color: rgba(255,255,255,0.2);" onchange="rankingsFsApplyGenderFilter()">
+                    <option value="all">All genders</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+                <button class="btn btn-outline-light btn-sm" onclick="closeRankingsFullscreen()" title="Exit fullscreen">
+                    <i class="fas fa-compress me-1"></i>Exit
+                </button>
+            </div>
+        </div>
+        <div class="rankings-fs-body">
+            <table class="rankings-fs-table">
+                <thead>
+                    <tr>
+                        <th style="text-align:center; width:80px;">Rank</th>
+                        <th>Player</th>
+                        <th>Rating</th>
+                        <th>Playtomic</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingsFsList"></tbody>
+            </table>
+        </div>
+        <div class="rankings-fs-footer">
+            <div class="rankings-fs-logo">PadelPals</div>
+            <div class="fs-nav-btns">
+                <button class="btn btn-outline-light btn-sm" id="rankingsFsPrevBtn" onclick="rankingsFsChangePage(-1)" disabled>
+                    <i class="fas fa-chevron-left me-1"></i>Prev
+                </button>
+                <span class="badge bg-primary px-3 py-2" id="rankingsFsPageBadge" style="font-size:0.9rem;">1–20</span>
+                <button class="btn btn-outline-light btn-sm" id="rankingsFsNextBtn" onclick="rankingsFsChangePage(1)">
+                    Next<i class="fas fa-chevron-right ms-1"></i>
+                </button>
+            </div>
+            <div class="fs-page-info" id="rankingsFsPageInfo"></div>
+        </div>
+    </div>
+
+    <!-- Rankings Print Area (only visible during print) -->
+    <div id="rankingsPrintArea">
+        <div class="rankings-print-header">
+            <h2><i class="fas fa-trophy"></i> Player Rankings</h2>
+            <div class="print-meta">
+                <div id="rankingsPrintMeta"></div>
+                <div>PadelPals &mdash; padelpals.app</div>
+            </div>
+        </div>
+        <table id="rankingsPrintTable">
+            <thead>
+                <tr>
+                    <th style="width:60px; text-align:center;">Rank</th>
+                    <th>Player</th>
+                    <th>Rating</th>
+                    <th>Playtomic</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody id="rankingsPrintList"></tbody>
+        </table>
+        <div class="rankings-print-footer">Printed from PadelPals &mdash; padelpals.app</div>
+    </div>
+
+    <script>
+        // ── Rankings Fullscreen ───────────────────────────────────────
+        let rankingsFsPage = 1;
+        let rankingsFsPlayers = [];
+        let rankingsFsGender = 'all';
+
+        function openRankingsFullscreen() {
+            const source = Array.isArray(window.filteredRankedPlayers) && window.filteredRankedPlayers.length > 0
+                ? window.filteredRankedPlayers
+                : (Array.isArray(window.allRankedPlayers) ? window.allRankedPlayers : []);
+
+            // Grab the internal variables from the rankings scope
+            const allPlayers = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
+            const filteredPlayers = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
+            rankingsFsPlayers = filteredPlayers.length > 0 ? filteredPlayers : allPlayers;
+
+            const genderFilter = document.getElementById('genderFilter');
+            rankingsFsGender = genderFilter ? genderFilter.value : 'all';
+            document.getElementById('rankingsFsGenderFilter').value = rankingsFsGender;
+
+            rankingsFsPage = 1;
+            rankingsFsRenderPage();
+
+            const overlay = document.getElementById('rankingsFullscreenOverlay');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // ESC key to close
+            document.addEventListener('keydown', rankingsFsKeyHandler);
+        }
+
+        function closeRankingsFullscreen() {
+            document.getElementById('rankingsFullscreenOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+            document.removeEventListener('keydown', rankingsFsKeyHandler);
+        }
+
+        function rankingsFsKeyHandler(e) {
+            if (e.key === 'Escape') closeRankingsFullscreen();
+            if (e.key === 'ArrowRight') rankingsFsChangePage(1);
+            if (e.key === 'ArrowLeft') rankingsFsChangePage(-1);
+        }
+
+        function rankingsFsApplyGenderFilter() {
+            rankingsFsGender = document.getElementById('rankingsFsGenderFilter').value;
+            rankingsFsPage = 1;
+            rankingsFsRenderPage();
+        }
+
+        function rankingsFsChangePage(dir) {
+            const maxPage = 2;
+            const next = rankingsFsPage + dir;
+            if (next >= 1 && next <= maxPage) {
+                rankingsFsPage = next;
+                rankingsFsRenderPage();
+            }
+        }
+
+        function rankingsFsRenderPage() {
+            const allPlayers = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
+            let players = allPlayers;
+
+            // Apply gender filter
+            if (rankingsFsGender !== 'all') {
+                const cache = (typeof nameGenderCache !== 'undefined' ? nameGenderCache : new Map());
+                players = players.filter(p => {
+                    const firstName = (p.display_name || '').split(' ')[0].toLowerCase();
+                    const entry = cache.get(firstName);
+                    if (!entry) return true; // include if unknown
+                    return entry.gender === rankingsFsGender && entry.probability >= 0.7;
+                });
+            }
+
+            const top40 = players.slice(0, 40);
+            const startIdx = (rankingsFsPage - 1) * 20;
+            const pageData = top40.slice(startIdx, startIdx + 20);
+            const totalShown = top40.length;
+
+            const tbody = document.getElementById('rankingsFsList');
+            tbody.innerHTML = '';
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:rgba(255,255,255,0.4);">No players to display</td></tr>';
+            } else {
+                pageData.forEach((player, idx) => {
+                    const rank = startIdx + idx + 1;
+                    const rankDisplay = rank <= 3
+                        ? ['🥇','🥈','🥉'][rank - 1]
+                        : `<span class="fs-rank-num">${rank}</span>`;
+                    const rankClass = rank <= 3 ? 'fs-rank-cell' : 'fs-rank-cell';
+                    const rating = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
+                    const playtomic = typeof player.rating_0_10 === 'number'
+                        ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2)
+                        : '—';
+                    const name = player.display_name || player.user_id || 'Unknown';
+                    const updated = player.last_updated
+                        ? new Date(player.last_updated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '—';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="${rankClass}" style="text-align:center;">${rankDisplay}</td>
+                        <td class="fs-player-name">${name}</td>
+                        <td class="fs-rating">${rating}</td>
+                        <td class="fs-playtomic">${playtomic}</td>
+                        <td class="fs-updated">${updated}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Update pagination controls
+            const startLabel = startIdx + 1;
+            const endLabel = Math.min(startIdx + 20, totalShown);
+            document.getElementById('rankingsFsPageBadge').textContent = `${startLabel}–${endLabel}`;
+            document.getElementById('rankingsFsPageInfo').textContent = `${totalShown} player${totalShown !== 1 ? 's' : ''} shown`;
+            document.getElementById('rankingsFsPrevBtn').disabled = rankingsFsPage <= 1;
+            document.getElementById('rankingsFsNextBtn').disabled = rankingsFsPage >= 2 || top40.length <= 20;
+
+            const genderLabel = rankingsFsGender === 'all' ? '' : ` · ${rankingsFsGender.charAt(0).toUpperCase() + rankingsFsGender.slice(1)}`;
+            document.getElementById('rankingsFsSubtitle').textContent = `Top ${Math.min(totalShown, 40)} players${genderLabel}`;
+        }
+
+        // ── Rankings Print ────────────────────────────────────────────
+        function printRankings() {
+            const allPlayers = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
+            const filteredPlayers = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
+            const genderFilter = document.getElementById('genderFilter');
+            const gender = genderFilter ? genderFilter.value : 'all';
+
+            let players = filteredPlayers.length > 0 ? filteredPlayers : allPlayers;
+            const top40 = players.slice(0, 40);
+
+            const tbody = document.getElementById('rankingsPrintList');
+            tbody.innerHTML = '';
+
+            top40.forEach((player, idx) => {
+                const rank = idx + 1;
+                const rankDisplay = rank <= 3
+                    ? `<span class="print-rank-medal">${['🥇','🥈','🥉'][rank - 1]}</span>`
+                    : `<span class="print-rank-num">${rank}</span>`;
+                const rating = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
+                const playtomic = typeof player.rating_0_10 === 'number'
+                    ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2)
+                    : '—';
+                const name = player.display_name || player.user_id || 'Unknown';
+                const updated = player.last_updated
+                    ? new Date(player.last_updated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : '—';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align:center;">${rankDisplay}</td>
+                    <td>${name}</td>
+                    <td class="print-rating">${rating}</td>
+                    <td>${playtomic}</td>
+                    <td>${updated}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const genderLabel = gender === 'all' ? 'All genders' : gender.charAt(0).toUpperCase() + gender.slice(1);
+            const now = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('rankingsPrintMeta').textContent = `${genderLabel} · ${now}`;
+
+            document.getElementById('rankingsPrintArea').style.display = 'block';
+            window.print();
+            document.getElementById('rankingsPrintArea').style.display = 'none';
+        }
     </script>
 </body>
 </html>
