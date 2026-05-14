@@ -7954,11 +7954,6 @@
         let rankingsFsGender = 'all';
 
         function openRankingsFullscreen() {
-            // Grab the internal variables from the rankings scope
-            const allPlayers = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
-            const filteredPlayers = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
-            rankingsFsPlayers = filteredPlayers.length > 0 ? filteredPlayers : allPlayers;
-
             const genderFilter = document.getElementById('genderFilter');
             rankingsFsGender = genderFilter ? genderFilter.value : 'all';
             document.getElementById('rankingsFsGenderFilter').value = rankingsFsGender;
@@ -7976,10 +7971,39 @@
                 clubLogoEl.src = '';
             }
 
+            // Apply club colour scheme
+            const overlay = document.getElementById('rankingsFullscreenOverlay');
+            const primaryColor = clubData?.primary_color || clubData?.primaryColor || null;
+            const secondaryColor = clubData?.secondary_color || clubData?.secondaryColor || null;
+            if (primaryColor) {
+                overlay.style.setProperty('--fs-primary', primaryColor);
+                // Derive a darkened background from the primary colour
+                overlay.style.background = `color-mix(in srgb, ${primaryColor} 12%, #0d1b2e)`;
+            } else {
+                overlay.style.background = '';
+                overlay.style.removeProperty('--fs-primary');
+            }
+            if (secondaryColor) {
+                overlay.style.setProperty('--fs-secondary', secondaryColor);
+            } else {
+                overlay.style.removeProperty('--fs-secondary');
+            }
+            // Recolour the accent elements using the primary colour
+            const accentEls = overlay.querySelectorAll('.rankings-fs-header');
+            accentEls.forEach(el => {
+                el.style.borderBottomColor = primaryColor || 'var(--orange)';
+                el.style.background = primaryColor
+                    ? `linear-gradient(135deg, color-mix(in srgb, ${primaryColor} 30%, #0d1b2e) 0%, color-mix(in srgb, ${primaryColor} 10%, #0d1b2e) 100%)`
+                    : '';
+            });
+            const ratingEls = overlay.querySelectorAll('.fs-rating');
+            ratingEls.forEach(el => { el.style.color = primaryColor || 'var(--orange)'; });
+            const logoEl = overlay.querySelector('.rankings-fs-logo');
+            if (logoEl) logoEl.style.color = primaryColor || 'var(--orange)';
+
             rankingsFsPage = 1;
             rankingsFsRenderPage();
 
-            const overlay = document.getElementById('rankingsFullscreenOverlay');
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
 
@@ -7988,7 +8012,14 @@
         }
 
         function closeRankingsFullscreen() {
-            document.getElementById('rankingsFullscreenOverlay').classList.remove('active');
+            const overlay = document.getElementById('rankingsFullscreenOverlay');
+            overlay.classList.remove('active');
+            // Reset any inline colour overrides applied by the club theme
+            overlay.style.background = '';
+            overlay.style.removeProperty('--fs-primary');
+            overlay.style.removeProperty('--fs-secondary');
+            const header = overlay.querySelector('.rankings-fs-header');
+            if (header) { header.style.borderBottomColor = ''; header.style.background = ''; }
             document.body.style.overflow = '';
             document.removeEventListener('keydown', rankingsFsKeyHandler);
         }
@@ -8015,16 +8046,21 @@
         }
 
         function rankingsFsRenderPage() {
-            const allPlayers = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
-            let players = allPlayers;
+            // Use filteredRankedPlayers so the club filter is already applied.
+            // Fall back to allRankedPlayers only when no filter has run yet.
+            const namesCache = (typeof playerProfilesCache !== 'undefined' ? playerProfilesCache : new Map());
+            const filtered = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
+            const all = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
+            let players = filtered.length > 0 ? filtered : all;
 
-            // Apply gender filter
+            // Apply gender filter (reuse the nameGenderCache populated by the main rankings tab)
             if (rankingsFsGender !== 'all') {
-                const cache = (typeof nameGenderCache !== 'undefined' ? nameGenderCache : new Map());
+                const gCache = (typeof nameGenderCache !== 'undefined' ? nameGenderCache : new Map());
                 players = players.filter(p => {
-                    const firstName = (p.display_name || '').split(' ')[0].toLowerCase();
-                    const entry = cache.get(firstName);
-                    if (!entry) return true; // include if unknown
+                    const name = namesCache.get(p.id) || '';
+                    const firstName = name.trim().split(/\s+/)[0].toLowerCase();
+                    const entry = gCache.get(firstName);
+                    if (!entry || !entry.gender) return true; // keep if gender unknown
                     return entry.gender === rankingsFsGender && entry.probability >= 0.7;
                 });
             }
@@ -8033,6 +8069,9 @@
             const startIdx = (rankingsFsPage - 1) * 20;
             const pageData = top40.slice(startIdx, startIdx + 20);
             const totalShown = top40.length;
+
+            const clubData = window.currentUserClubData;
+            const primaryColor = clubData?.primary_color || clubData?.primaryColor || null;
 
             const tbody = document.getElementById('rankingsFsList');
             tbody.innerHTML = '';
@@ -8045,21 +8084,25 @@
                     const rankDisplay = rank <= 3
                         ? ['🥇','🥈','🥉'][rank - 1]
                         : `<span class="fs-rank-num">${rank}</span>`;
-                    const rankClass = rank <= 3 ? 'fs-rank-cell' : 'fs-rank-cell';
                     const rating = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
                     const playtomic = typeof player.rating_0_10 === 'number'
                         ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2)
                         : '—';
-                    const name = player.display_name || player.user_id || 'Unknown';
-                    const updated = player.last_updated
-                        ? new Date(player.last_updated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                    // Look up name from the cache that the main rankings tab populates
+                    const name = namesCache.get(player.id) || player.display_name || '—';
+                    const dateField = player.last_updated || player.date;
+                    const updated = dateField
+                        ? new Date(dateField).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                         : '—';
+                    const ratingColor = primaryColor || 'var(--orange)';
+                    const isFirst = rank === 1;
 
                     const tr = document.createElement('tr');
+                    if (isFirst) tr.style.background = 'rgba(212,175,55,0.1)';
                     tr.innerHTML = `
-                        <td class="${rankClass}" style="text-align:center;">${rankDisplay}</td>
-                        <td class="fs-player-name">${name}</td>
-                        <td class="fs-rating">${rating}</td>
+                        <td class="fs-rank-cell" style="text-align:center;">${rankDisplay}</td>
+                        <td class="fs-player-name" ${isFirst ? 'style="color:var(--gold);"' : ''}>${name}</td>
+                        <td class="fs-rating" style="color:${ratingColor};">${rating}</td>
                         <td class="fs-playtomic">${playtomic}</td>
                         <td class="fs-updated">${updated}</td>
                     `;
@@ -8075,18 +8118,21 @@
             document.getElementById('rankingsFsPrevBtn').disabled = rankingsFsPage <= 1;
             document.getElementById('rankingsFsNextBtn').disabled = rankingsFsPage >= 2 || top40.length <= 20;
 
+            const clubLabel = clubData?.club_name ? ` · ${clubData.club_name}` : '';
             const genderLabel = rankingsFsGender === 'all' ? '' : ` · ${rankingsFsGender.charAt(0).toUpperCase() + rankingsFsGender.slice(1)}`;
-            document.getElementById('rankingsFsSubtitle').textContent = `Top ${Math.min(totalShown, 40)} players${genderLabel}`;
+            document.getElementById('rankingsFsSubtitle').textContent = `Top ${Math.min(totalShown, 40)} players${clubLabel}${genderLabel}`;
         }
 
         // ── Rankings Print ────────────────────────────────────────────
         function printRankings() {
-            const allPlayers = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
-            const filteredPlayers = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
+            const namesCache = (typeof playerProfilesCache !== 'undefined' ? playerProfilesCache : new Map());
+            const filtered = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
+            const all = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
             const genderFilter = document.getElementById('genderFilter');
             const gender = genderFilter ? genderFilter.value : 'all';
 
-            let players = filteredPlayers.length > 0 ? filteredPlayers : allPlayers;
+            // Use filtered (club-scoped) list when available
+            let players = filtered.length > 0 ? filtered : all;
             const top40 = players.slice(0, 40);
 
             const tbody = document.getElementById('rankingsPrintList');
@@ -8101,9 +8147,11 @@
                 const playtomic = typeof player.rating_0_10 === 'number'
                     ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2)
                     : '—';
-                const name = player.display_name || player.user_id || 'Unknown';
-                const updated = player.last_updated
-                    ? new Date(player.last_updated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                // Resolve name from the shared cache, same as the main table does
+                const name = namesCache.get(player.id) || player.display_name || '—';
+                const dateField = player.last_updated || player.date;
+                const updated = dateField
+                    ? new Date(dateField).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                     : '—';
 
                 const tr = document.createElement('tr');
@@ -8117,9 +8165,11 @@
                 tbody.appendChild(tr);
             });
 
+            const clubData = window.currentUserClubData;
+            const clubLabel = clubData?.club_name ? `${clubData.club_name} · ` : '';
             const genderLabel = gender === 'all' ? 'All genders' : gender.charAt(0).toUpperCase() + gender.slice(1);
             const now = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-            document.getElementById('rankingsPrintMeta').textContent = `${genderLabel} · ${now}`;
+            document.getElementById('rankingsPrintMeta').textContent = `${clubLabel}${genderLabel} · ${now}`;
 
             document.getElementById('rankingsPrintArea').style.display = 'block';
             window.print();
