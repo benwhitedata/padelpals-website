@@ -1477,6 +1477,35 @@
             flex-shrink: 0;
         }
 
+        /* Gender segmented control inside fullscreen */
+        .fs-gender-tabs {
+            display: flex;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        .fs-gender-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.65);
+            padding: 5px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+            letter-spacing: 0.03em;
+        }
+        .fs-gender-btn:not(:last-child) {
+            border-right: 1px solid rgba(255,255,255,0.2);
+        }
+        .fs-gender-btn.active {
+            background: rgba(255,255,255,0.18);
+            color: #fff;
+        }
+        .fs-gender-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.08);
+        }
+
         /* ── Print Mode ──────────────────────────────────────────── */
         @media print {
             body * { visibility: hidden; }
@@ -7875,20 +7904,23 @@
 
     <!-- Rankings Fullscreen Overlay -->
     <div id="rankingsFullscreenOverlay" role="dialog" aria-modal="true" aria-label="Player Rankings Fullscreen">
+        <!-- Auto-rotate progress bar -->
+        <div id="rankingsFsProgressBar" style="height:3px; width:0%; transition:none; flex-shrink:0;"></div>
         <div class="rankings-fs-header">
             <div class="d-flex align-items-center gap-3">
                 <img id="rankingsFsClubLogo" src="" alt="Club logo" class="rankings-fs-club-logo" style="display:none;">
                 <div>
-                    <h2><i class="fas fa-trophy me-2" style="color: var(--orange);"></i>Player Rankings</h2>
+                    <h2><i class="fas fa-trophy me-2" id="rankingsFsTrophyIcon"></i>Player Rankings</h2>
                     <div class="fs-subtitle" id="rankingsFsSubtitle">PadelPals</div>
                 </div>
             </div>
             <div class="rankings-fs-controls">
-                <select id="rankingsFsGenderFilter" class="form-select form-select-sm" style="width: auto; background: #1a2238; color: #fff; border-color: rgba(255,255,255,0.2);" onchange="rankingsFsApplyGenderFilter()">
-                    <option value="all">All genders</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                </select>
+                <!-- Gender segmented control -->
+                <div class="fs-gender-tabs" id="rankingsFsGenderTabs">
+                    <button class="fs-gender-btn active" data-gender="all" onclick="rankingsFsSetGender('all')">All</button>
+                    <button class="fs-gender-btn" data-gender="male" onclick="rankingsFsSetGender('male')">Men</button>
+                    <button class="fs-gender-btn" data-gender="female" onclick="rankingsFsSetGender('female')">Women</button>
+                </div>
                 <button class="btn btn-outline-light btn-sm" onclick="closeRankingsFullscreen()" title="Exit fullscreen">
                     <i class="fas fa-compress me-1"></i>Exit
                 </button>
@@ -7909,13 +7941,16 @@
             </table>
         </div>
         <div class="rankings-fs-footer">
-            <div class="rankings-fs-logo">PadelPals</div>
+            <div class="rankings-fs-logo" id="rankingsFsLogoText">PadelPals</div>
             <div class="fs-nav-btns">
-                <button class="btn btn-outline-light btn-sm" id="rankingsFsPrevBtn" onclick="rankingsFsChangePage(-1)" disabled>
+                <button class="btn btn-outline-light btn-sm" id="rankingsFsPrevBtn" onclick="rankingsFsManualPage(-1)" disabled>
                     <i class="fas fa-chevron-left me-1"></i>Prev
                 </button>
-                <span class="badge bg-primary px-3 py-2" id="rankingsFsPageBadge" style="font-size:0.9rem;">1–20</span>
-                <button class="btn btn-outline-light btn-sm" id="rankingsFsNextBtn" onclick="rankingsFsChangePage(1)">
+                <button class="btn btn-sm ms-1 me-1" id="rankingsFsRotateBtn" onclick="rankingsFsToggleRotate()" title="Pause/resume auto-rotate" style="border:1px solid rgba(255,255,255,0.3); color:#fff; background:rgba(255,255,255,0.1); min-width:36px;">
+                    <i class="fas fa-pause" id="rankingsFsRotateIcon"></i>
+                </button>
+                <span class="badge px-3 py-2" id="rankingsFsPageBadge" style="font-size:0.9rem; background:rgba(255,255,255,0.15);">1–20</span>
+                <button class="btn btn-outline-light btn-sm" id="rankingsFsNextBtn" onclick="rankingsFsManualPage(1)">
                     Next<i class="fas fa-chevron-right ms-1"></i>
                 </button>
             </div>
@@ -7949,160 +7984,256 @@
 
     <script>
         // ── Rankings Fullscreen ───────────────────────────────────────
-        let rankingsFsPage = 1;
-        let rankingsFsPlayers = [];
-        let rankingsFsGender = 'all';
+        const FS_MAX_PLAYERS  = 100;  // show up to 100 players
+        const FS_PAGE_SIZE    = 20;
+        const FS_ROTATE_MS    = 8000; // ms per page in auto-rotate
 
+        let rankingsFsPage      = 1;
+        let rankingsFsGender    = 'all';
+        let rankingsFsRotating  = true;
+        let rankingsFsTimer     = null;
+        let rankingsFsProgress  = null; // rAF handle for progress bar
+
+        // ── Colour helpers ────────────────────────────────────────────
+        function rankingsFsApplyTheme() {
+            const clubData      = window.currentUserClubData;
+            const primary       = clubData?.primary_color   || clubData?.primaryColor   || '#FF6B35';
+            const secondary     = clubData?.secondary_color || clubData?.secondaryColor || '#0d1b2e';
+            const overlay       = document.getElementById('rankingsFullscreenOverlay');
+            const header        = overlay.querySelector('.rankings-fs-header');
+            const footer        = overlay.querySelector('.rankings-fs-footer');
+            const bar           = document.getElementById('rankingsFsProgressBar');
+            const trophyIcon    = document.getElementById('rankingsFsTrophyIcon');
+            const logoText      = document.getElementById('rankingsFsLogoText');
+
+            // Solid secondary background for the whole overlay
+            overlay.style.background = secondary;
+
+            // Header uses primary as background, white text stands out
+            if (header) {
+                header.style.background       = primary;
+                header.style.borderBottomColor = primary;
+            }
+            // Footer uses a slightly darkened secondary
+            if (footer) footer.style.background = secondary;
+
+            // Progress bar colour matches primary
+            if (bar) bar.style.background = primary;
+
+            // Trophy + logo text
+            if (trophyIcon) trophyIcon.style.color = '#fff';
+            if (logoText)   logoText.style.color   = primary;
+
+            // Store for use in renderPage
+            overlay.dataset.primaryColor = primary;
+        }
+
+        function rankingsFsResetTheme() {
+            const overlay = document.getElementById('rankingsFullscreenOverlay');
+            ['background','borderBottomColor'].forEach(p => {
+                const header = overlay.querySelector('.rankings-fs-header');
+                const footer = overlay.querySelector('.rankings-fs-footer');
+                if (header) { header.style.background = ''; header.style.borderBottomColor = ''; }
+                if (footer) { footer.style.background = ''; }
+            });
+            overlay.style.background = '';
+            delete overlay.dataset.primaryColor;
+        }
+
+        // ── Open / Close ──────────────────────────────────────────────
         function openRankingsFullscreen() {
-            const genderFilter = document.getElementById('genderFilter');
-            rankingsFsGender = genderFilter ? genderFilter.value : 'all';
-            document.getElementById('rankingsFsGenderFilter').value = rankingsFsGender;
+            // Sync gender from main tab
+            const mainGender = document.getElementById('genderFilter');
+            rankingsFsGender = mainGender ? mainGender.value : 'all';
+            rankingsFsSetGender(rankingsFsGender, /* noReset */ true);
 
-            // Show club logo if available
+            // Club logo
             const clubLogoEl = document.getElementById('rankingsFsClubLogo');
-            const clubData = window.currentUserClubData;
-            if (clubData && clubData.logo_url) {
-                clubLogoEl.src = clubData.logo_url;
-                clubLogoEl.alt = clubData.club_name ? `${clubData.club_name} logo` : 'Club logo';
-                clubLogoEl.style.display = 'block';
-                clubLogoEl.onerror = function() { this.style.display = 'none'; };
+            const clubData   = window.currentUserClubData;
+            if (clubData?.logo_url) {
+                clubLogoEl.src              = clubData.logo_url;
+                clubLogoEl.alt              = clubData.club_name ? `${clubData.club_name} logo` : 'Club logo';
+                clubLogoEl.style.display    = 'block';
+                clubLogoEl.onerror          = function() { this.style.display = 'none'; };
             } else {
                 clubLogoEl.style.display = 'none';
                 clubLogoEl.src = '';
             }
 
-            // Apply club colour scheme
-            const overlay = document.getElementById('rankingsFullscreenOverlay');
-            const primaryColor = clubData?.primary_color || clubData?.primaryColor || null;
-            const secondaryColor = clubData?.secondary_color || clubData?.secondaryColor || null;
-            if (primaryColor) {
-                overlay.style.setProperty('--fs-primary', primaryColor);
-                // Derive a darkened background from the primary colour
-                overlay.style.background = `color-mix(in srgb, ${primaryColor} 12%, #0d1b2e)`;
-            } else {
-                overlay.style.background = '';
-                overlay.style.removeProperty('--fs-primary');
-            }
-            if (secondaryColor) {
-                overlay.style.setProperty('--fs-secondary', secondaryColor);
-            } else {
-                overlay.style.removeProperty('--fs-secondary');
-            }
-            // Recolour the accent elements using the primary colour
-            const accentEls = overlay.querySelectorAll('.rankings-fs-header');
-            accentEls.forEach(el => {
-                el.style.borderBottomColor = primaryColor || 'var(--orange)';
-                el.style.background = primaryColor
-                    ? `linear-gradient(135deg, color-mix(in srgb, ${primaryColor} 30%, #0d1b2e) 0%, color-mix(in srgb, ${primaryColor} 10%, #0d1b2e) 100%)`
-                    : '';
-            });
-            const ratingEls = overlay.querySelectorAll('.fs-rating');
-            ratingEls.forEach(el => { el.style.color = primaryColor || 'var(--orange)'; });
-            const logoEl = overlay.querySelector('.rankings-fs-logo');
-            if (logoEl) logoEl.style.color = primaryColor || 'var(--orange)';
+            rankingsFsApplyTheme();
 
             rankingsFsPage = 1;
             rankingsFsRenderPage();
 
+            const overlay = document.getElementById('rankingsFullscreenOverlay');
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
-
-            // ESC key to close
             document.addEventListener('keydown', rankingsFsKeyHandler);
+
+            // Start auto-rotate
+            rankingsFsRotating = true;
+            rankingsFsStartRotate();
         }
 
         function closeRankingsFullscreen() {
-            const overlay = document.getElementById('rankingsFullscreenOverlay');
-            overlay.classList.remove('active');
-            // Reset any inline colour overrides applied by the club theme
-            overlay.style.background = '';
-            overlay.style.removeProperty('--fs-primary');
-            overlay.style.removeProperty('--fs-secondary');
-            const header = overlay.querySelector('.rankings-fs-header');
-            if (header) { header.style.borderBottomColor = ''; header.style.background = ''; }
+            rankingsFsStopRotate();
+            rankingsFsResetTheme();
+            document.getElementById('rankingsFullscreenOverlay').classList.remove('active');
             document.body.style.overflow = '';
             document.removeEventListener('keydown', rankingsFsKeyHandler);
         }
 
         function rankingsFsKeyHandler(e) {
-            if (e.key === 'Escape') closeRankingsFullscreen();
-            if (e.key === 'ArrowRight') rankingsFsChangePage(1);
-            if (e.key === 'ArrowLeft') rankingsFsChangePage(-1);
+            if (e.key === 'Escape')       closeRankingsFullscreen();
+            if (e.key === 'ArrowRight')   rankingsFsManualPage(1);
+            if (e.key === 'ArrowLeft')    rankingsFsManualPage(-1);
+            if (e.key === ' ')            rankingsFsToggleRotate();
         }
 
-        function rankingsFsApplyGenderFilter() {
-            rankingsFsGender = document.getElementById('rankingsFsGenderFilter').value;
-            rankingsFsPage = 1;
+        // ── Gender segmented control ──────────────────────────────────
+        function rankingsFsSetGender(gender, noReset) {
+            rankingsFsGender = gender;
+            document.querySelectorAll('.fs-gender-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.gender === gender);
+            });
+            if (!noReset) {
+                rankingsFsPage = 1;
+                rankingsFsRenderPage();
+                rankingsFsRestartRotate();
+            }
+        }
+
+        // ── Auto-rotate ───────────────────────────────────────────────
+        let _rotateStart = null;
+
+        function rankingsFsStartRotate() {
+            rankingsFsStopRotate();
+            if (!rankingsFsRotating) return;
+            document.getElementById('rankingsFsRotateIcon').className = 'fas fa-pause';
+            _rotateStart = performance.now();
+            rankingsFsAnimateBar();
+            rankingsFsTimer = setTimeout(() => {
+                rankingsFsAutoAdvance();
+            }, FS_ROTATE_MS);
+        }
+
+        function rankingsFsStopRotate() {
+            if (rankingsFsTimer)    { clearTimeout(rankingsFsTimer); rankingsFsTimer = null; }
+            if (rankingsFsProgress) { cancelAnimationFrame(rankingsFsProgress); rankingsFsProgress = null; }
+            const bar = document.getElementById('rankingsFsProgressBar');
+            if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; }
+        }
+
+        function rankingsFsRestartRotate() {
+            if (rankingsFsRotating) rankingsFsStartRotate();
+        }
+
+        function rankingsFsToggleRotate() {
+            rankingsFsRotating = !rankingsFsRotating;
+            const icon = document.getElementById('rankingsFsRotateIcon');
+            if (rankingsFsRotating) {
+                icon.className = 'fas fa-pause';
+                rankingsFsStartRotate();
+            } else {
+                icon.className = 'fas fa-play';
+                rankingsFsStopRotate();
+            }
+        }
+
+        function rankingsFsAnimateBar() {
+            const bar = document.getElementById('rankingsFsProgressBar');
+            if (!bar) return;
+            function frame(now) {
+                const elapsed = now - _rotateStart;
+                const pct     = Math.min((elapsed / FS_ROTATE_MS) * 100, 100);
+                bar.style.width = pct + '%';
+                if (pct < 100) rankingsFsProgress = requestAnimationFrame(frame);
+            }
+            rankingsFsProgress = requestAnimationFrame(frame);
+        }
+
+        function rankingsFsAutoAdvance() {
+            const top = rankingsFsGetFilteredPlayers().slice(0, FS_MAX_PLAYERS);
+            const maxPage = Math.max(1, Math.ceil(top.length / FS_PAGE_SIZE));
+            rankingsFsPage = rankingsFsPage >= maxPage ? 1 : rankingsFsPage + 1;
             rankingsFsRenderPage();
+            rankingsFsStartRotate();
         }
 
-        function rankingsFsChangePage(dir) {
-            const maxPage = 2;
-            const next = rankingsFsPage + dir;
+        // ── Manual navigation (resets rotate timer) ───────────────────
+        function rankingsFsManualPage(dir) {
+            const top     = rankingsFsGetFilteredPlayers().slice(0, FS_MAX_PLAYERS);
+            const maxPage = Math.max(1, Math.ceil(top.length / FS_PAGE_SIZE));
+            const next    = rankingsFsPage + dir;
             if (next >= 1 && next <= maxPage) {
                 rankingsFsPage = next;
                 rankingsFsRenderPage();
+                rankingsFsRestartRotate();
             }
         }
 
-        function rankingsFsRenderPage() {
-            // Use filteredRankedPlayers so the club filter is already applied.
-            // Fall back to allRankedPlayers only when no filter has run yet.
+        // ── Build filtered player list ────────────────────────────────
+        function rankingsFsGetFilteredPlayers() {
             const namesCache = (typeof playerProfilesCache !== 'undefined' ? playerProfilesCache : new Map());
-            const filtered = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
-            const all = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
-            let players = filtered.length > 0 ? filtered : all;
+            const filtered   = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
+            const all        = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
+            let players      = filtered.length > 0 ? filtered : all;
 
-            // Apply gender filter (reuse the nameGenderCache populated by the main rankings tab)
             if (rankingsFsGender !== 'all') {
                 const gCache = (typeof nameGenderCache !== 'undefined' ? nameGenderCache : new Map());
                 players = players.filter(p => {
-                    const name = namesCache.get(p.id) || '';
+                    const name      = namesCache.get(p.id) || '';
                     const firstName = name.trim().split(/\s+/)[0].toLowerCase();
-                    const entry = gCache.get(firstName);
-                    if (!entry || !entry.gender) return true; // keep if gender unknown
-                    return entry.gender === rankingsFsGender && entry.probability >= 0.7;
+                    const entry     = gCache.get(firstName);
+                    // Exclude players with no gender data when filtering
+                    if (!entry || !entry.gender || entry.probability < 0.7) return false;
+                    return entry.gender === rankingsFsGender;
                 });
             }
+            return players;
+        }
 
-            const top40 = players.slice(0, 40);
-            const startIdx = (rankingsFsPage - 1) * 20;
-            const pageData = top40.slice(startIdx, startIdx + 20);
-            const totalShown = top40.length;
+        // ── Render current page ───────────────────────────────────────
+        function rankingsFsRenderPage() {
+            const namesCache  = (typeof playerProfilesCache !== 'undefined' ? playerProfilesCache : new Map());
+            const players     = rankingsFsGetFilteredPlayers();
+            const top         = players.slice(0, FS_MAX_PLAYERS);
+            const startIdx    = (rankingsFsPage - 1) * FS_PAGE_SIZE;
+            const pageData    = top.slice(startIdx, startIdx + FS_PAGE_SIZE);
+            const totalShown  = top.length;
+            const maxPage     = Math.max(1, Math.ceil(totalShown / FS_PAGE_SIZE));
 
-            const clubData = window.currentUserClubData;
-            const primaryColor = clubData?.primary_color || clubData?.primaryColor || null;
+            const overlay      = document.getElementById('rankingsFullscreenOverlay');
+            const primaryColor = overlay.dataset.primaryColor || '#FF6B35';
+            const clubData     = window.currentUserClubData;
 
             const tbody = document.getElementById('rankingsFsList');
             tbody.innerHTML = '';
 
             if (pageData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:rgba(255,255,255,0.4);">No players to display</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);">No players to display</td></tr>`;
             } else {
                 pageData.forEach((player, idx) => {
-                    const rank = startIdx + idx + 1;
+                    const rank        = startIdx + idx + 1;
                     const rankDisplay = rank <= 3
                         ? ['🥇','🥈','🥉'][rank - 1]
                         : `<span class="fs-rank-num">${rank}</span>`;
-                    const rating = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
-                    const playtomic = typeof player.rating_0_10 === 'number'
-                        ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2)
-                        : '—';
-                    // Look up name from the cache that the main rankings tab populates
-                    const name = namesCache.get(player.id) || player.display_name || '—';
-                    const dateField = player.last_updated || player.date;
-                    const updated = dateField
+                    const rating      = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
+                    const playtomic   = typeof player.rating_0_10 === 'number'
+                        ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2) : '—';
+                    const name        = namesCache.get(player.id) || player.display_name || '—';
+                    const dateField   = player.last_updated || player.date;
+                    const updated     = dateField
                         ? new Date(dateField).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                         : '—';
-                    const ratingColor = primaryColor || 'var(--orange)';
-                    const isFirst = rank === 1;
+                    const isFirst     = rank === 1;
 
                     const tr = document.createElement('tr');
-                    if (isFirst) tr.style.background = 'rgba(212,175,55,0.1)';
+                    if (isFirst) tr.style.background = 'rgba(212,175,55,0.12)';
                     tr.innerHTML = `
                         <td class="fs-rank-cell" style="text-align:center;">${rankDisplay}</td>
-                        <td class="fs-player-name" ${isFirst ? 'style="color:var(--gold);"' : ''}>${name}</td>
-                        <td class="fs-rating" style="color:${ratingColor};">${rating}</td>
+                        <td class="fs-player-name"${isFirst ? ' style="color:var(--gold);"' : ''}>${name}</td>
+                        <td class="fs-rating" style="color:${primaryColor};">${rating}</td>
                         <td class="fs-playtomic">${playtomic}</td>
                         <td class="fs-updated">${updated}</td>
                     `;
@@ -8110,17 +8241,17 @@
                 });
             }
 
-            // Update pagination controls
+            // Pagination controls
             const startLabel = startIdx + 1;
-            const endLabel = Math.min(startIdx + 20, totalShown);
-            document.getElementById('rankingsFsPageBadge').textContent = `${startLabel}–${endLabel}`;
-            document.getElementById('rankingsFsPageInfo').textContent = `${totalShown} player${totalShown !== 1 ? 's' : ''} shown`;
-            document.getElementById('rankingsFsPrevBtn').disabled = rankingsFsPage <= 1;
-            document.getElementById('rankingsFsNextBtn').disabled = rankingsFsPage >= 2 || top40.length <= 20;
+            const endLabel   = Math.min(startIdx + FS_PAGE_SIZE, totalShown);
+            document.getElementById('rankingsFsPageBadge').textContent  = `${startLabel}–${endLabel}`;
+            document.getElementById('rankingsFsPageInfo').textContent   = `${totalShown} player${totalShown !== 1 ? 's' : ''}`;
+            document.getElementById('rankingsFsPrevBtn').disabled       = rankingsFsPage <= 1;
+            document.getElementById('rankingsFsNextBtn').disabled       = rankingsFsPage >= maxPage;
 
-            const clubLabel = clubData?.club_name ? ` · ${clubData.club_name}` : '';
-            const genderLabel = rankingsFsGender === 'all' ? '' : ` · ${rankingsFsGender.charAt(0).toUpperCase() + rankingsFsGender.slice(1)}`;
-            document.getElementById('rankingsFsSubtitle').textContent = `Top ${Math.min(totalShown, 40)} players${clubLabel}${genderLabel}`;
+            const clubLabel   = clubData?.club_name ? ` · ${clubData.club_name}` : '';
+            const genderLabel = rankingsFsGender === 'all' ? '' : ` · ${rankingsFsGender === 'male' ? 'Men' : 'Women'}`;
+            document.getElementById('rankingsFsSubtitle').textContent = `Top ${Math.min(totalShown, FS_MAX_PLAYERS)} players${clubLabel}${genderLabel}`;
         }
 
         // ── Rankings Print ────────────────────────────────────────────
