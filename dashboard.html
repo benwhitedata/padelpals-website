@@ -7866,7 +7866,6 @@
                         <th style="text-align:center; width:80px;">Rank</th>
                         <th>Player</th>
                         <th>Rating</th>
-                        <th>Playtomic</th>
                         <th>Last Updated</th>
                     </tr>
                 </thead>
@@ -8129,8 +8128,6 @@
                         ? ['🥇','🥈','🥉'][rank - 1]
                         : `<span class="fs-rank-num">${rank}</span>`;
                     const rating      = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
-                    const playtomic   = typeof player.rating_0_10 === 'number'
-                        ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2) : '—';
                     const name        = namesCache.get(player.id) || player.display_name || '—';
                     const dateField   = player.last_updated || player.date;
                     const updated     = dateField
@@ -8144,7 +8141,6 @@
                         <td class="fs-rank-cell" style="text-align:center;">${rankDisplay}</td>
                         <td class="fs-player-name"${isFirst ? ' style="color:var(--gold);"' : ''}>${name}</td>
                         <td class="fs-rating" style="color:${primaryColor};">${rating}</td>
-                        <td class="fs-playtomic">${playtomic}</td>
                         <td class="fs-updated">${updated}</td>
                     `;
                     tbody.appendChild(tr);
@@ -8187,8 +8183,6 @@
                 const rank        = idx + 1;
                 const rankDisplay = rank <= 3 ? ['🥇','🥈','🥉'][rank - 1] : rank;
                 const rating      = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
-                const playtomic   = typeof player.rating_0_10 === 'number'
-                    ? (player.rating_0_10 * (7 / 10) - 1).toFixed(2) : '—';
                 const name        = namesCache.get(player.id) || player.display_name || '—';
                 const dateField   = player.last_updated || player.date;
                 const updated     = dateField
@@ -8200,14 +8194,13 @@
                     <td style="text-align:center;font-size:${rank<=3?'1.2rem':'0.95rem'};font-weight:700;color:#333;">${rankDisplay}</td>
                     <td>${name}</td>
                     <td style="font-weight:700;color:${primary};">${rating}</td>
-                    <td style="color:#555;">${playtomic}</td>
                     <td style="color:#888;font-size:0.85rem;">${updated}</td>
                 </tr>`;
             });
 
-            const logoUrl = clubData?.logo_url || '';
+            const logoUrl  = clubData?.logo_url || '';
             const logoHtml = logoUrl
-                ? `<img src="${logoUrl}" alt="Club logo" style="height:48px;object-fit:contain;margin-right:12px;">`
+                ? `<img src="${logoUrl}" alt="Club logo" style="height:52px;object-fit:contain;margin-right:14px;border-radius:6px;">`
                 : '';
 
             const html = `<!DOCTYPE html>
@@ -8253,7 +8246,7 @@
   <table>
     <thead>
       <tr>
-        <th>Rank</th><th>Player</th><th>Rating</th><th>Playtomic</th><th>Last Updated</th>
+        <th>Rank</th><th>Player</th><th>Rating</th><th>Last Updated</th>
       </tr>
     </thead>
     <tbody>${rowsHtml}</tbody>
