@@ -46,6 +46,9 @@
                     const profiles = await profileRes.json();
                     const me = Array.isArray(profiles) ? profiles[0] : null;
                     currentUserClubId = me?.clubs?.id || me?.club_id || null;
+                    if (me?.clubs) {
+                        window.currentUserClubData = me.clubs;
+                    }
                 }
 
                 // Fetch club members if we have a club id
@@ -1462,6 +1465,16 @@
             font-weight: 700;
             color: var(--orange);
             letter-spacing: 0.05em;
+        }
+        .rankings-fs-club-logo {
+            height: 56px;
+            width: auto;
+            max-width: 120px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            padding: 6px;
+            flex-shrink: 0;
         }
 
         /* ── Print Mode ──────────────────────────────────────────── */
@@ -4463,6 +4476,7 @@
                         // Get club information
                         const club = profile.clubs;
                         if (club) {
+                            window.currentUserClubData = club;
                             // Hide no club message, show club details
                             document.getElementById('noClubSelected').style.display = 'none';
                             document.getElementById('clubDetails').style.display = 'block';
@@ -7862,9 +7876,12 @@
     <!-- Rankings Fullscreen Overlay -->
     <div id="rankingsFullscreenOverlay" role="dialog" aria-modal="true" aria-label="Player Rankings Fullscreen">
         <div class="rankings-fs-header">
-            <div>
-                <h2><i class="fas fa-trophy me-2" style="color: var(--orange);"></i>Player Rankings</h2>
-                <div class="fs-subtitle" id="rankingsFsSubtitle">PadelPals</div>
+            <div class="d-flex align-items-center gap-3">
+                <img id="rankingsFsClubLogo" src="" alt="Club logo" class="rankings-fs-club-logo" style="display:none;">
+                <div>
+                    <h2><i class="fas fa-trophy me-2" style="color: var(--orange);"></i>Player Rankings</h2>
+                    <div class="fs-subtitle" id="rankingsFsSubtitle">PadelPals</div>
+                </div>
             </div>
             <div class="rankings-fs-controls">
                 <select id="rankingsFsGenderFilter" class="form-select form-select-sm" style="width: auto; background: #1a2238; color: #fff; border-color: rgba(255,255,255,0.2);" onchange="rankingsFsApplyGenderFilter()">
@@ -7937,10 +7954,6 @@
         let rankingsFsGender = 'all';
 
         function openRankingsFullscreen() {
-            const source = Array.isArray(window.filteredRankedPlayers) && window.filteredRankedPlayers.length > 0
-                ? window.filteredRankedPlayers
-                : (Array.isArray(window.allRankedPlayers) ? window.allRankedPlayers : []);
-
             // Grab the internal variables from the rankings scope
             const allPlayers = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
             const filteredPlayers = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
@@ -7949,6 +7962,19 @@
             const genderFilter = document.getElementById('genderFilter');
             rankingsFsGender = genderFilter ? genderFilter.value : 'all';
             document.getElementById('rankingsFsGenderFilter').value = rankingsFsGender;
+
+            // Show club logo if available
+            const clubLogoEl = document.getElementById('rankingsFsClubLogo');
+            const clubData = window.currentUserClubData;
+            if (clubData && clubData.logo_url) {
+                clubLogoEl.src = clubData.logo_url;
+                clubLogoEl.alt = clubData.club_name ? `${clubData.club_name} logo` : 'Club logo';
+                clubLogoEl.style.display = 'block';
+                clubLogoEl.onerror = function() { this.style.display = 'none'; };
+            } else {
+                clubLogoEl.style.display = 'none';
+                clubLogoEl.src = '';
+            }
 
             rankingsFsPage = 1;
             rankingsFsRenderPage();
