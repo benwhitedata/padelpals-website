@@ -8176,10 +8176,10 @@
             const now         = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
             let players = filtered.length > 0 ? filtered : all;
-            const top40 = players.slice(0, 40);
+            const top50 = players.slice(0, 50);
 
             let rowsHtml = '';
-            top40.forEach((player, idx) => {
+            top50.forEach((player, idx) => {
                 const rank        = idx + 1;
                 const rankDisplay = rank <= 3 ? ['🥇','🥈','🥉'][rank - 1] : rank;
                 const rating      = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
