@@ -3767,17 +3767,18 @@
                 }
 
                 
-                // Count sets won by each team
+                // Count sets won by each team, stopping once a team has won 2
+                // (the match may have stored all 3 set scores even if only 2 were decisive)
                 let team1SetsWon = 0;
                 let team2SetsWon = 0;
                 
                 for (let i = 0; i < Math.min(team1Sets.length, team2Sets.length); i++) {
+                    if (team1SetsWon === 2 || team2SetsWon === 2) break;
                     if (team1Sets[i] > team2Sets[i]) {
                         team1SetsWon++;
                     } else if (team2Sets[i] > team1Sets[i]) {
                         team2SetsWon++;
                     }
-
                 }
 
                 
