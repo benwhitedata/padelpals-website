@@ -296,6 +296,10 @@ const SHARED_NAVIGATION_HTML = `
             </li>
 
             <li class="nav-item">
+                <a href="ratings.html" class="nav-link">Player Levels</a>
+            </li>
+
+            <li class="nav-item">
                 <a href="tip.html" class="nav-link nav-link-support" title="Support Padel Pals">
                     <i class="fas fa-heart" aria-hidden="true" style="margin-right: 6px; color: #e25c6b;"></i>Support
                 </a>
@@ -570,6 +574,7 @@ const SHARED_FOOTER_HTML = `
                     <li><a href="index.html">Home</a></li>
                     <li><a href="guide.html">App Guide</a></li>
                     <li><a href="boxleague.html">Box League</a></li>
+                    <li><a href="ratings.html">Player Levels</a></li>
                     <li><a href="dashboard.html">Dashboard</a></li>
                 </ul>
             </div>

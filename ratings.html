@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Padel Pals Player Levels</title>
+  <meta name="description" content="Padel Pals 9-tier player rating system - detailed level definitions with Playtomic equivalents, from Newcomer to Elite." />
+  <link rel="icon" href="images/Icon.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config-loader.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      color: #333;
+      line-height: 1.6;
+      background-color: #F6F5F5;
+    }
+    h1, h2, h3 {
+      color: #1a2238;
+    }
+    .page-header {
+      background: linear-gradient(135deg, #1a2238 0%, #2a3990 100%);
+      color: #FFFFFF;
+      padding: 64px 0;
+      text-align: center;
+    }
+    .page-header h1 {
+      color: #FFFFFF;
+      margin-bottom: 12px;
+    }
+    .page-header p {
+      opacity: 0.95;
+      max-width: 720px;
+      margin: 0 auto;
+      font-size: 1.05rem;
+    }
+    .content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 20px 24px;
+    }
+    .intro {
+      margin-bottom: 32px;
+    }
+    .intro p {
+      margin-bottom: 1rem;
+    }
+    .level-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 24px 0 40px;
+    }
+    .level-nav a {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #FFFFFF;
+      border: 1px solid #d0d5dd;
+      border-radius: 6px;
+      color: #1a2238;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .level-nav a:hover {
+      background: #E8F4F8;
+      border-color: #4A90E2;
+      color: #2a3990;
+    }
+    .level-card {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 28px 28px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      border-left: 5px solid #4A90E2;
+      scroll-margin-top: 88px;
+    }
+    .level-card h2 {
+      font-size: 1.35rem;
+      margin-bottom: 4px;
+    }
+    .level-tagline {
+      font-style: italic;
+      color: #5a6478;
+      margin-bottom: 16px;
+    }
+    .level-meta {
+      display: inline-block;
+      background: #E8F4F8;
+      color: #1a2238;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    .level-card h3 {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #4A90E2;
+      margin: 16px 0 6px;
+    }
+    .level-card h3:first-of-type {
+      margin-top: 0;
+    }
+    .level-card p {
+      margin-bottom: 0;
+    }
+    .notes {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 28px;
+      margin: 40px 0 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .notes h2 {
+      margin-bottom: 16px;
+    }
+    .notes ul {
+      padding-left: 1.25rem;
+      margin-bottom: 0;
+    }
+    .notes li {
+      margin-bottom: 12px;
+    }
+    .notes li:last-child {
+      margin-bottom: 0;
+    }
+    .related {
+      text-align: center;
+      padding: 16px 0 8px;
+    }
+    .related a {
+      color: #2a3990;
+      font-weight: 600;
+    }
+    @media (max-width: 576px) {
+      .page-header {
+        padding: 48px 0;
+      }
+      .page-header h1 {
+        font-size: 1.6rem;
+      }
+      .level-card {
+        padding: 20px;
+      }
+    }
+  </style>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-L426ZMNKFK');
+  </script>
+  <script src="js/shared-navigation.js" data-auto-nav="true"></script>
+</head>
+<body>
+  <section class="page-header">
+    <div class="container">
+      <h1>Padel Pals Player Levels</h1>
+      <p>A 9-tier rating system with clear definitions - what you can do now, what still needs work, and what typically unlocks the next level.</p>
+    </div>
+  </section>
+
+  <div class="content">
+    <div class="intro">
+      <p>Each level includes a one-line summary, what play looks like at this stage, a rough Playtomic-equivalent range so players coming from other apps can orient themselves, and a practical next step.</p>
+      <p>Playtomic level 4.0 and above often includes more detail on attacking strokes, walls, and tactical variation - our upper tiers mirror that depth.</p>
+    </div>
+
+    <nav class="level-nav" aria-label="Jump to player level">
+      <a href="#newcomer">1. Newcomer</a>
+      <a href="#beginner">2. Beginner</a>
+      <a href="#improver">3. Improver</a>
+      <a href="#lower-intermediate">4. Lower Intermediate</a>
+      <a href="#intermediate">5. Intermediate</a>
+      <a href="#upper-intermediate">6. Upper Intermediate</a>
+      <a href="#advanced">7. Advanced</a>
+      <a href="#competitive">8. Competitive</a>
+      <a href="#elite">9. Elite</a>
+    </nav>
+
+    <article class="level-card" id="newcomer">
+      <h2>1. Newcomer</h2>
+      <p class="level-tagline">First steps on court.</p>
+      <span class="level-meta">Playtomic equivalent: ~0.0–0.5</span>
+      <h3>Summary</h3>
+      <p>Has never played, or has played only once or twice. Still learning the rules, scoring, and which side of the court to stand on.</p>
+      <h3>What this looks like</h3>
+      <p>Doesn't yet know the serve rules or scoring format. Ball contact is inconsistent - as many mishits as clean hits. No sense yet of where to stand or why the walls matter.</p>
+      <h3>Next step</h3>
+      <p>A few sessions of basic rules, grip, and simple rallying will move a player to Beginner quickly - this level is usually short-lived.</p>
+    </article>
+
+    <article class="level-card" id="beginner">
+      <h2>2. Beginner</h2>
+      <p class="level-tagline">Learning to rally.</p>
+      <span class="level-meta">Playtomic equivalent: ~0.5–1.5</span>
+      <h3>Summary</h3>
+      <p>Can get the ball over the net and into play some of the time, but rallies are short and often end on an unforced error rather than a deliberate shot.</p>
+      <h3>What this looks like</h3>
+      <p>Basic forehand and backhand exist but lack control of direction, depth, or pace. Positioning is reactive rather than planned - often caught standing in the wrong place. The walls are still seen as an obstacle rather than a tool; the ball off the back glass is usually mishandled or missed entirely.</p>
+      <h3>Next step</h3>
+      <p>Building a repeatable, consistent contact on both sides, and starting to understand that padel is a doubles game built around positioning, not just hitting.</p>
+    </article>
+
+    <article class="level-card" id="improver">
+      <h2>3. Improver</h2>
+      <p class="level-tagline">Rallies are becoming real.</p>
+      <span class="level-meta">Playtomic equivalent: ~1.5–2.0</span>
+      <h3>Summary</h3>
+      <p>Sustaining longer rallies with more consistent shots, and starting to grasp why the walls and basic positioning matter, even if execution is still shaky under pressure.</p>
+      <h3>What this looks like</h3>
+      <p>Forehand and backhand are more reliable at a moderate pace. Beginning to understand the serve-and-move-forward pattern, though it isn't automatic yet. First contact with the ball off the back glass - sometimes gets it back, sometimes doesn't. Shot selection is still limited; most points are won or lost on errors rather than tactics.</p>
+      <h3>Next step</h3>
+      <p>Making the serve-and-advance-to-net pattern automatic, and starting to move as a pair with a partner rather than as two individuals.</p>
+    </article>
+
+    <article class="level-card" id="lower-intermediate">
+      <h2>4. Lower Intermediate</h2>
+      <p class="level-tagline">Control is developing.</p>
+      <span class="level-meta">Playtomic equivalent: ~2.0–2.75</span>
+      <h3>Summary</h3>
+      <p>Rallies are sustained comfortably at a normal pace, and there's growing control over shot direction and depth. Walls are used deliberately rather than by accident.</p>
+      <h3>What this looks like</h3>
+      <p>Almost all strokes are in place technically, with reasonable direction control. Serving and moving forward to the net is becoming a habit rather than a conscious decision. Starting to move backwards and forwards as a pair with a partner, though positioning still breaks down under pressure. The glass game is improving - more often than not, the ball comes back off the back wall in a useful position.</p>
+      <h3>Next step</h3>
+      <p>Tightening up positioning consistency (avoiding "no man's land" between the service line and the net) and cutting down unforced errors during longer rallies.</p>
+    </article>
+
+    <article class="level-card" id="intermediate">
+      <h2>5. Intermediate</h2>
+      <p class="level-tagline">Good all-round control.</p>
+      <span class="level-meta">Playtomic equivalent: ~2.75–3.5</span>
+      <h3>Summary</h3>
+      <p>Solid shot control and a real understanding of court positioning. Starting to dictate the shape of points rather than just responding to the opponent.</p>
+      <h3>What this looks like</h3>
+      <p>Dominates most strokes and can play with pace, though unforced errors still creep in during extended rallies. Consistently serves and takes the net. Moves as a genuine unit with a partner most of the time. Comfortable retrieving off the back glass and can direct the return usefully rather than just keeping it in play. Beginning to recognise gaps and patterns rather than just hitting the ball back.</p>
+      <h3>Next step</h3>
+      <p>Adding controlled attacking shots (a reliable bandeja, more purposeful volleys) without sacrificing the consistency that got a player here.</p>
+    </article>
+
+    <article class="level-card" id="upper-intermediate">
+      <h2>6. Upper Intermediate</h2>
+      <p class="level-tagline">Confident and tactical.</p>
+      <span class="level-meta">Playtomic equivalent: ~3.5–4.5</span>
+      <h3>Summary</h3>
+      <p>Plays with real confidence - lobs, angles, and net play are used with intent, and teamwork with a partner is well established rather than improvised point to point.</p>
+      <h3>What this looks like</h3>
+      <p>Masters most strokes and can vary pace and direction on demand, though point-finishing under pressure isn't fully reliable yet. Net positioning is disciplined - prioritising holding the position over going for early winners. Actively starts using triangle formation and covering angles as a pair rather than each player defending their own half in isolation. The glass game is a genuine weapon, not just a safety net.</p>
+      <h3>Next step</h3>
+      <p>Developing a wider attacking arsenal (bandeja, víbora, controlled smashes) and the patience to wait for the right moment to use it rather than forcing it.</p>
+    </article>
+
+    <article class="level-card" id="advanced">
+      <h2>7. Advanced</h2>
+      <p class="level-tagline">Strong tactical player.</p>
+      <span class="level-meta">Playtomic equivalent: ~4.5–5.5</span>
+      <h3>Summary</h3>
+      <p>Strong tactical awareness and composure under pressure. Adapts game plan to the opponent rather than playing the same way every match, and rarely breaks down a rally with an unforced error.</p>
+      <h3>What this looks like</h3>
+      <p>High technical consistency on both wings, with depth and variety of shot. Comfortable returning difficult serves. Attacking strokes (bandeja, víbora, smash) are played with real control and used to genuinely finish points, not just as a change of pace. Reads the game well enough to identify and target an opponent's weaker side. Defensive positioning and wall play hold up even against faster-paced opponents.</p>
+      <h3>Next step</h3>
+      <p>Sharpening consistency and physical/mental endurance across a full match against similarly strong opposition - the technical toolkit is largely there.</p>
+    </article>
+
+    <article class="level-card" id="competitive">
+      <h2>8. Competitive</h2>
+      <p class="level-tagline">Structured, high-level play.</p>
+      <span class="level-meta">Playtomic equivalent: ~5.5–6.5</span>
+      <h3>Summary</h3>
+      <p>Plays structured, deliberate points rather than reactive padel. Effective in both attack and defence, and comfortable competing in organised tournaments or leagues.</p>
+      <h3>What this looks like</h3>
+      <p>Hits with real depth and power on both forehand and backhand, varying shot selection to probe for weaknesses. Plays difficult volleys and keeps pace high even against attacking opponents. Rebounding defence off the glass holds up under sustained pressure, including fast bajadas on both sides. Adjusts tactics for the specific opponent and partner rather than playing on autopilot. The main gap versus Elite is consistency - physically and mentally - across long, high-intensity matches.</p>
+      <h3>Next step</h3>
+      <p>Match-hardening at tournament level; the technical and tactical game is largely complete at this stage.</p>
+    </article>
+
+    <article class="level-card" id="elite">
+      <h2>9. Elite</h2>
+      <p class="level-tagline">Tournament / professional standard.</p>
+      <span class="level-meta">Playtomic equivalent: ~6.5–7.0 (national / WPT professional)</span>
+      <h3>Summary</h3>
+      <p>Excels in every aspect of the game - technique, tactics, physicality, and precision - and competes at national or professional tournament level.</p>
+      <h3>What this looks like</h3>
+      <p>Complete mastery of attacking and defensive strokes with minimal unforced errors even under maximum pressure. Reads and controls the rhythm of a match, exploits opponents' weaknesses systematically, and maintains a high standard of play deep into long, physically demanding matches.</p>
+      <h3>Next step</h3>
+      <p>N/A - this is the top of the scale.</p>
+    </article>
+
+    <section class="notes" aria-labelledby="notes-heading">
+      <h2 id="notes-heading">Things worth knowing</h2>
+      <ul>
+        <li><strong>Playtomic ranges</strong> are approximate guides for orientation, not exact conversions. If you already have a Playtomic number, use it as a starting point rather than re-assessing from scratch.</li>
+        <li><strong>Common plateaus:</strong> the biggest jumps in perceived difficulty tend to be <strong>Improver → Lower Intermediate</strong> (positioning becomes deliberate rather than accidental) and <strong>Upper Intermediate → Advanced</strong> (attacking shots become reliable weapons rather than occasional risks). Progress often feels slower at these stages - that's normal.</li>
+        <li><strong>Self-assessment bias:</strong> players consistently rate themselves a little high across platforms (Playtomic, MATCHi, LTA). Be honest - or ask a coach or regular partner - so matchmaking and box grouping stay fair.</li>
+      </ul>
+    </section>
+
+    <p class="related">
+      Used for grouping in our leagues? See the <a href="boxleague.html">Box League guidelines</a>.
+    </p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
