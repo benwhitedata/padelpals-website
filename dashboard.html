@@ -20,262 +20,6 @@
             --gold: #d4af37;
         }
 
-        // Fetch current user's club and club members; also seed profile name cache
-        async function fetchCurrentUserClubAndMembers() {
-            try {
-                // Use shared Supabase client
-                const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : (typeof supabase !== 'undefined' ? supabase : null);
-                if (!supabaseClient) {
-                    console.warn('Supabase client not available for fetchCurrentUserClubAndMembers');
-                    return;
-                }
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (!session) return;
-                const userId = session.user?.id;
-                if (!userId) return;
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'apikey': window.config.supabaseKey,
-                    'Authorization': `Bearer ${session.access_token}`
-                };
-
-                // Get the user's profile with club
-                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*)`;
-                const profileRes = await fetch(profileEndpoint, { method: 'GET', headers });
-                if (profileRes.ok) {
-                    const profiles = await profileRes.json();
-                    const me = Array.isArray(profiles) ? profiles[0] : null;
-                    currentUserClubId = me?.clubs?.id || me?.club_id || null;
-                    if (me?.clubs) {
-                        window.currentUserClubData = me.clubs;
-                    }
-                }
-
-                // Fetch club members if we have a club id
-                if (currentUserClubId) {
-                    const membersEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?club_id=eq.${currentUserClubId}&select=id,display_name`;
-                    const membersRes = await fetch(membersEndpoint, { method: 'GET', headers });
-                    if (membersRes.ok) {
-                        const members = await membersRes.json();
-                        clubMemberIdsSet = new Set(members.map(m => m.id));
-                        // Seed name cache for faster rendering
-                        members.forEach(m => {
-                            if (m.id && m.display_name) {
-                                playerProfilesCache.set(m.id, m.display_name);
-                            }
-                        });
-                    }
-                } else {
-                    clubMemberIdsSet = null;
-                }
-            } catch (e) {
-                console.warn('Could not fetch user club/members', e);
-                clubMemberIdsSet = null;
-            }
-        }
-        // Expose globally to avoid scope issues
-        window.fetchCurrentUserClubAndMembers = fetchCurrentUserClubAndMembers;
-
-        // Ensure gender data is available for given players (by first name)
-        async function ensureGenderDataForPlayers(players) {
-            try {
-                if (!players || players.length === 0) {
-                    console.log('ensureGenderDataForPlayers: no players');
-                    return;
-                }
-                // Collect first names from cached display names
-                const firstNames = [];
-                const seen = new Set();
-                players.forEach(p => {
-                    const name = playerProfilesCache.get(p.id);
-                    if (!name) return;
-                    const first = String(name).trim().split(/\s+/)[0].toLowerCase();
-                    if (first && !seen.has(first) && !nameGenderCache.has(first)) {
-                        seen.add(first);
-                        firstNames.push(first);
-                    }
-                });
-                console.log(`ensureGenderDataForPlayers: ${firstNames.length} unique first names to fetch`);
-                if (firstNames.length === 0) {
-                    console.log('No new names to fetch gender for');
-                    return;
-                }
-
-                // Batch in chunks (Genderize supports name[] params)
-                const chunkSize = 10;
-                for (let i = 0; i < firstNames.length; i += chunkSize) {
-                    const chunk = firstNames.slice(i, i + chunkSize);
-                    const query = chunk.map(n => `name[]=${encodeURIComponent(n)}`).join('&');
-                    const url = `https://api.genderize.io/?${query}`;
-                    console.log(`Fetching gender for chunk: ${chunk.join(', ')}`);
-                    try {
-                        const res = await fetch(url);
-                        if (!res.ok) {
-                            console.error(`Genderize API error: ${res.status} ${res.statusText}`);
-                            continue;
-                        }
-                        const results = await res.json();
-                        const arr = Array.isArray(results) ? results : [];
-                        console.log(`Got ${arr.length} gender results`);
-                        arr.forEach(r => {
-                            const key = (r?.name || '').toLowerCase();
-                            if (!key) return;
-                            const genderData = { gender: r?.gender || null, probability: r?.probability || 0 };
-                            nameGenderCache.set(key, genderData);
-                            console.log(`Cached: "${key}" -> ${genderData.gender} (${genderData.probability})`);
-                        });
-                    } catch (e) {
-                        console.error('Error fetching gender data:', e);
-                    }
-                }
-            } catch (e) {
-                console.error('Error in ensureGenderDataForPlayers:', e);
-            }
-        }
-        window.ensureGenderDataForPlayers = ensureGenderDataForPlayers;
-
-        // Apply club + gender filters and paginate
-        async function applyFiltersAndPaginate() {
-            console.log('applyFiltersAndPaginate called, currentGenderFilter:', currentGenderFilter);
-            const base = allRankedPlayers || [];
-            // Club filter
-            let list = base;
-            if (clubMemberIdsSet && clubMemberIdsSet.size > 0) {
-                list = base.filter(p => clubMemberIdsSet.has(p.id));
-                console.log(`Club filter: ${list.length} players from ${base.length} total`);
-            }
-            // Gender filter (requires display names)
-            if (currentGenderFilter !== 'all' && list.length > 0) {
-                console.log(`Applying gender filter: ${currentGenderFilter}`);
-                // Ensure names are available; attempt to fetch any missing for visible set
-                const missingIds = list.map(p => p.id).filter(id => !playerProfilesCache.has(id));
-                if (missingIds.length > 0) {
-                    console.log(`Fetching names for ${missingIds.length} players`);
-                    try {
-                        // Use shared Supabase client
-                        const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : (typeof supabase !== 'undefined' ? supabase : null);
-                        if (!supabaseClient) {
-                            console.warn('Supabase client not available for applyFiltersAndPaginate');
-                            return;
-                        }
-                        const { data: { session } } = await supabaseClient.auth.getSession();
-                        if (session) {
-                            const headers = {
-                                'Content-Type': 'application/json',
-                                'apikey': window.config.supabaseKey,
-                                'Authorization': `Bearer ${session.access_token}`
-                            };
-                            const batchSize = 50;
-                            for (let i = 0; i < missingIds.length; i += batchSize) {
-                                const batch = missingIds.slice(i, i + batchSize);
-                                const idsFilter = batch.map(id => `"${id}"`).join(',');
-                                const endpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=in.(${idsFilter})&select=id,display_name`;
-                                const resp = await fetch(endpoint, { method: 'GET', headers });
-                                if (resp.ok) {
-                                    const data = await resp.json();
-                                    data.forEach(pr => {
-                                        if (pr.id && pr.display_name) {
-                                            playerProfilesCache.set(pr.id, pr.display_name);
-                                        }
-                                    });
-                                    console.log(`Loaded ${data.length} names`);
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Error fetching names:', e);
-                    }
-                }
-
-                console.log('Fetching gender data...');
-                await ensureGenderDataForPlayers(list);
-                console.log(`Gender cache size: ${nameGenderCache.size}`);
-
-                const beforeFilter = list.length;
-                list = list.filter(p => {
-                    const name = playerProfilesCache.get(p.id);
-                    if (!name) {
-                        console.log(`No name for player ${p.id}`);
-                        return false; // exclude if unknown when filtering
-                    }
-                    const first = String(name).trim().split(/\s+/)[0].toLowerCase();
-                    const g = nameGenderCache.get(first);
-                    if (!g || !g.gender) {
-                        console.log(`No gender data for "${first}" from name "${name}"`);
-                        return false; // exclude ambiguous/unknown when filtering
-                    }
-                    if (g.probability && Number(g.probability) < 0.7) {
-                        console.log(`Low confidence (${g.probability}) for "${first}"`);
-                        return false; // exclude low-confidence when filtering
-                    }
-                    const matches = g.gender === currentGenderFilter;
-                    if (!matches) {
-                        console.log(`Gender mismatch: "${first}" is ${g.gender}, filter is ${currentGenderFilter}`);
-                    }
-                    return matches;
-                });
-                console.log(`Gender filter: ${beforeFilter} -> ${list.length} players`);
-            }
-
-            filteredRankedPlayers = list;
-            currentRankingsPageNum = 1;
-            displayRankingsPage();
-        }
-        window.applyFiltersAndPaginate = applyFiltersAndPaginate;
-
-        // Inline gender filter utility used by fallbacks
-        async function filterListByGender(list) {
-            if (!list || list.length === 0) return list || [];
-            if (currentGenderFilter === 'all') return list;
-            try {
-                // Ensure names
-                const idsMissingNames = list.map(p => p.id).filter(id => !playerProfilesCache.has(id));
-                if (idsMissingNames.length > 0) {
-                    // Use shared Supabase client
-                    const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : (typeof supabase !== 'undefined' ? supabase : null);
-                    if (!supabaseClient) {
-                        console.warn('Supabase client not available for filterListByGender');
-                        return list;
-                    }
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    if (session) {
-                        const headers = {
-                            'Content-Type': 'application/json',
-                            'apikey': window.config.supabaseKey,
-                            'Authorization': `Bearer ${session.access_token}`
-                        };
-                        const batchSize = 50;
-                        for (let i = 0; i < idsMissingNames.length; i += batchSize) {
-                            const batch = idsMissingNames.slice(i, i + batchSize);
-                            const idsFilter = batch.map(id => `"${id}"`).join(',');
-                            const endpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=in.(${idsFilter})&select=id,display_name`;
-                            const resp = await fetch(endpoint, { method: 'GET', headers });
-                            if (resp.ok) {
-                                const data = await resp.json();
-                                data.forEach(pr => {
-                                    if (pr.id && pr.display_name) {
-                                        playerProfilesCache.set(pr.id, pr.display_name);
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }
-                await ensureGenderDataForPlayers(list);
-            } catch (_) {}
-
-            return list.filter(p => {
-                const name = playerProfilesCache.get(p.id);
-                if (!name) return false; // exclude unknown when filtering
-                const first = String(name).trim().split(/\s+/)[0].toLowerCase();
-                const g = nameGenderCache.get(first);
-                if (!g || !g.gender) return false;
-                if (g.probability && Number(g.probability) < 0.7) return false;
-                return g.gender === currentGenderFilter;
-            });
-        }
-        window.filterListByGender = filterListByGender;
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
@@ -2074,6 +1818,12 @@
                         <h4 class="mb-2">Overall Win Rate</h4>
                         <p class="text-muted small mb-2">Win rate in the selected period (min 5 matches, highest at top)</p>
                         <div id="insights-winrate" style="height: 320px;"></div>
+                    </div>
+
+                    <div class="stats-card mb-4">
+                        <h4 class="mb-2">Longest Winning Streak</h4>
+                        <p class="text-muted small mb-2">Most consecutive match wins in the selected period</p>
+                        <div id="insights-streak" style="height: 320px;"></div>
                     </div>
 
                     <div class="stats-card mb-4">
@@ -6543,159 +6293,8 @@
             const genderFilterEl = document.getElementById('genderFilter');
             if (genderFilterEl) {
                 genderFilterEl.addEventListener('change', async function() {
-                    console.log('Gender filter changed to:', this.value);
                     currentGenderFilter = this.value;
-                    // Try window.applyFiltersAndPaginate first, then fallback
-                    const filterFn = typeof window !== 'undefined' && window.applyFiltersAndPaginate;
-                    if (typeof filterFn === 'function') {
-                        console.log('Calling applyFiltersAndPaginate');
-                        await filterFn();
-                    } else {
-                        console.log('applyFiltersAndPaginate not available, using inline fallback');
-                        // Fallback: apply club filter, then gender if requested
-                        let base = (clubMemberIdsSet && clubMemberIdsSet.size > 0)
-                            ? allRankedPlayers.filter(p => clubMemberIdsSet.has(p.id))
-                            : allRankedPlayers;
-                        console.log(`Fallback: ${base.length} players after club filter`);
-                        if (currentGenderFilter !== 'all' && base.length > 0) {
-                            console.log(`Applying gender filter: ${currentGenderFilter}`);
-                            // Ensure we have names first
-                            const missingIds = base.map(p => p.id).filter(id => !playerProfilesCache.has(id));
-                            if (missingIds.length > 0) {
-                                console.log(`Fetching ${missingIds.length} missing names`);
-                                try {
-                                    const client = window.getOrCreateSupabaseClient();
-                                    const { data: { session } } = await client.auth.getSession();
-                                    if (session) {
-                                        const headers = {
-                                            'Content-Type': 'application/json',
-                                            'apikey': window.config.supabaseKey,
-                                            'Authorization': `Bearer ${session.access_token}`
-                                        };
-                                        const batchSize = 50;
-                                        for (let i = 0; i < missingIds.length; i += batchSize) {
-                                            const batch = missingIds.slice(i, i + batchSize);
-                                            const idsFilter = batch.map(id => `"${id}"`).join(',');
-                                            const endpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=in.(${idsFilter})&select=id,display_name`;
-                                            const resp = await fetch(endpoint, { method: 'GET', headers });
-                                            if (resp.ok) {
-                                                const data = await resp.json();
-                                                data.forEach(pr => {
-                                                    if (pr.id && pr.display_name) {
-                                                        playerProfilesCache.set(pr.id, pr.display_name);
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.error('Error fetching names:', e);
-                                }
-                            }
-                            // Get gender data - inline implementation if function not available
-                            const genderFn = typeof window !== 'undefined' && window.ensureGenderDataForPlayers;
-                            if (typeof genderFn === 'function') {
-                                console.log('Calling ensureGenderDataForPlayers');
-                                await genderFn(base);
-                                console.log(`Gender cache now has ${nameGenderCache.size} entries`);
-                            } else {
-                                console.log('ensureGenderDataForPlayers not available, using inline gender fetch');
-                                // Inline gender fetching
-                                try {
-                                    const firstNames = [];
-                                    const seen = new Set();
-                                    base.forEach(p => {
-                                        const name = playerProfilesCache.get(p.id);
-                                        if (!name) return;
-                                        const first = String(name).trim().split(/\s+/)[0].toLowerCase();
-                                        if (first && !seen.has(first) && !nameGenderCache.has(first)) {
-                                            seen.add(first);
-                                            firstNames.push(first);
-                                        }
-                                    });
-                                    console.log(`Fetching gender for ${firstNames.length} unique first names`);
-                                    if (firstNames.length > 0) {
-                                        const chunkSize = 10;
-                                        for (let i = 0; i < firstNames.length; i += chunkSize) {
-                                            const chunk = firstNames.slice(i, i + chunkSize);
-                                            const query = chunk.map(n => `name[]=${encodeURIComponent(n)}`).join('&');
-                                            const url = `https://api.genderize.io/?${query}`;
-                                            console.log(`Fetching gender for: ${chunk.join(', ')}`);
-                                            try {
-                                                const res = await fetch(url);
-                                                if (res.ok) {
-                                                    const results = await res.json();
-                                                    const arr = Array.isArray(results) ? results : [];
-                                                    console.log(`Got ${arr.length} gender results`);
-                                                    arr.forEach(r => {
-                                                        const key = (r?.name || '').toLowerCase();
-                                                        if (key) {
-                                                            nameGenderCache.set(key, { 
-                                                                gender: r?.gender || null, 
-                                                                probability: r?.probability || 0 
-                                                            });
-                                                            console.log(`Cached: "${key}" -> ${r?.gender} (${r?.probability})`);
-                                                        }
-                                                    });
-                                                } else {
-                                                    console.error(`Genderize API error: ${res.status}`);
-                                                }
-                                            } catch (e) {
-                                                console.error('Error fetching gender chunk:', e);
-                                            }
-                                        }
-                                    }
-                                    console.log(`Gender cache now has ${nameGenderCache.size} entries`);
-                                } catch (e) {
-                                    console.error('Error in inline gender fetch:', e);
-                                }
-                            }
-                            // Filter by gender
-                            const beforeGender = base.length;
-                            let filteredCount = 0;
-                            let noNameCount = 0;
-                            let noGenderCount = 0;
-                            let lowConfidenceCount = 0;
-                            let wrongGenderCount = 0;
-                            base = base.filter(p => {
-                                const name = playerProfilesCache.get(p.id);
-                                if (!name) {
-                                    noNameCount++;
-                                    return false;
-                                }
-                                const first = String(name).trim().split(/\s+/)[0].toLowerCase();
-                                const g = nameGenderCache.get(first);
-                                if (!g || !g.gender) {
-                                    noGenderCount++;
-                                    if (filteredCount < 5) {
-                                        console.log(`No gender for "${first}" from "${name}" (player ${p.id})`);
-                                    }
-                                    return false;
-                                }
-                                if (g.probability && Number(g.probability) < 0.7) {
-                                    lowConfidenceCount++;
-                                    if (filteredCount < 5) {
-                                        console.log(`Low confidence (${g.probability}) for "${first}"`);
-                                    }
-                                    return false;
-                                }
-                                if (g.gender !== currentGenderFilter) {
-                                    wrongGenderCount++;
-                                    if (filteredCount < 5) {
-                                        console.log(`"${first}" is ${g.gender}, but filter is ${currentGenderFilter}`);
-                                    }
-                                    return false;
-                                }
-                                filteredCount++;
-                                return true;
-                            });
-                            console.log(`Gender filter: ${beforeGender} -> ${base.length} players`);
-                            console.log(`Breakdown: ${noNameCount} no name, ${noGenderCount} no gender, ${lowConfidenceCount} low confidence, ${wrongGenderCount} wrong gender, ${filteredCount} matches`);
-                        }
-                        filteredRankedPlayers = base;
-                        currentRankingsPageNum = 1;
-                        displayRankingsPage();
-                    }
+                    await applyFiltersAndPaginate();
                 });
             }
         });
@@ -6729,8 +6328,143 @@
         // Club and gender filtering
         let currentUserClubId = null;
         let clubMemberIdsSet = null; // Set of user ids in user's club
-        let nameGenderCache = new Map(); // firstName -> { gender: 'male'|'female'|null, probability: number }
+        let playerGenderCache = new Map(); // playerId -> 'male' | 'female' | 'prefer_not_to_say' | null
         let currentGenderFilter = 'all';
+
+        function normalizeProfileGender(value) {
+            if (value == null || value === '') return null;
+            const g = String(value).trim().toLowerCase();
+            if (g === 'male' || g === 'm' || g === 'man' || g === 'men') return 'male';
+            if (g === 'female' || g === 'f' || g === 'woman' || g === 'women') return 'female';
+            if (g === 'prefer_not_to_say') return 'prefer_not_to_say';
+            return null;
+        }
+
+        function cacheProfileRow(pr) {
+            if (!pr || !pr.id) return;
+            if (pr.display_name) playerProfilesCache.set(pr.id, pr.display_name);
+            if (Object.prototype.hasOwnProperty.call(pr, 'gender') || pr.gender !== undefined) {
+                playerGenderCache.set(pr.id, normalizeProfileGender(pr.gender));
+            }
+        }
+
+        async function fetchCurrentUserClubAndMembers() {
+            try {
+                const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : (typeof supabase !== 'undefined' ? supabase : null);
+                if (!supabaseClient) {
+                    console.warn('Supabase client not available for fetchCurrentUserClubAndMembers');
+                    return;
+                }
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) return;
+                const userId = session.user?.id;
+                if (!userId) return;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': window.config.supabaseKey,
+                    'Authorization': `Bearer ${session.access_token}`
+                };
+
+                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*)`;
+                const profileRes = await fetch(profileEndpoint, { method: 'GET', headers });
+                if (profileRes.ok) {
+                    const profiles = await profileRes.json();
+                    const me = Array.isArray(profiles) ? profiles[0] : null;
+                    currentUserClubId = me?.clubs?.id || me?.club_id || null;
+                    if (me) cacheProfileRow(me);
+                    if (me?.clubs) {
+                        window.currentUserClubData = me.clubs;
+                    }
+                }
+
+                if (currentUserClubId) {
+                    const membersEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?club_id=eq.${currentUserClubId}&select=id,display_name,gender`;
+                    const membersRes = await fetch(membersEndpoint, { method: 'GET', headers });
+                    if (membersRes.ok) {
+                        const members = await membersRes.json();
+                        clubMemberIdsSet = new Set(members.map(m => m.id));
+                        members.forEach(cacheProfileRow);
+                    }
+                } else {
+                    clubMemberIdsSet = null;
+                }
+            } catch (e) {
+                console.warn('Could not fetch user club/members', e);
+                clubMemberIdsSet = null;
+            }
+        }
+        window.fetchCurrentUserClubAndMembers = fetchCurrentUserClubAndMembers;
+
+        async function ensureGenderDataForPlayers(players) {
+            try {
+                if (!players || players.length === 0) return;
+                const missingIds = players
+                    .map(p => p.id)
+                    .filter(id => id && !playerGenderCache.has(id));
+                if (missingIds.length === 0) return;
+
+                const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : (typeof supabase !== 'undefined' ? supabase : null);
+                if (!supabaseClient) {
+                    console.warn('Supabase client not available for ensureGenderDataForPlayers');
+                    return;
+                }
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) return;
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': window.config.supabaseKey,
+                    'Authorization': `Bearer ${session.access_token}`
+                };
+                const batchSize = 50;
+                for (let i = 0; i < missingIds.length; i += batchSize) {
+                    const batch = missingIds.slice(i, i + batchSize);
+                    const idsFilter = batch.map(id => `"${id}"`).join(',');
+                    const endpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=in.(${idsFilter})&select=id,display_name,gender`;
+                    const resp = await fetch(endpoint, { method: 'GET', headers });
+                    if (!resp.ok) continue;
+                    const data = await resp.json();
+                    const found = new Set();
+                    data.forEach(pr => {
+                        cacheProfileRow(pr);
+                        found.add(pr.id);
+                    });
+                    // Mark missing profiles so we don't keep refetching
+                    batch.forEach(id => {
+                        if (!found.has(id) && !playerGenderCache.has(id)) {
+                            playerGenderCache.set(id, null);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error in ensureGenderDataForPlayers:', e);
+            }
+        }
+        window.ensureGenderDataForPlayers = ensureGenderDataForPlayers;
+
+        async function applyFiltersAndPaginate() {
+            const base = allRankedPlayers || [];
+            let list = base;
+            if (clubMemberIdsSet && clubMemberIdsSet.size > 0) {
+                list = base.filter(p => clubMemberIdsSet.has(p.id));
+            }
+            if (currentGenderFilter !== 'all' && list.length > 0) {
+                await ensureGenderDataForPlayers(list);
+                list = list.filter(p => playerGenderCache.get(p.id) === currentGenderFilter);
+            }
+            filteredRankedPlayers = list;
+            currentRankingsPageNum = 1;
+            displayRankingsPage();
+        }
+        window.applyFiltersAndPaginate = applyFiltersAndPaginate;
+
+        async function filterListByGender(list) {
+            if (!list || list.length === 0) return list || [];
+            if (currentGenderFilter === 'all') return list;
+            await ensureGenderDataForPlayers(list);
+            return list.filter(p => playerGenderCache.get(p.id) === currentGenderFilter);
+        }
+        window.filterListByGender = filterListByGender;
 
         // Function to change rankings page (restricted to top 40 players only)
         function changeRankingsPage(direction) {
@@ -6929,15 +6663,14 @@
                                 currentUserClubId = me?.clubs?.id || me?.club_id || null;
                             }
                             if (currentUserClubId) {
-                                const membersEndpointLocal = `${window.config.supabaseUrl}/rest/v1/user_profiles?club_id=eq.${currentUserClubId}&select=id,display_name`;
+                                const membersEndpointLocal = `${window.config.supabaseUrl}/rest/v1/user_profiles?club_id=eq.${currentUserClubId}&select=id,display_name,gender`;
                                 const mr = await fetch(membersEndpointLocal, { method: 'GET', headers: headersLocal });
                                 if (mr.ok) {
                                     const members = await mr.json();
                                     clubMemberIdsSet = new Set(members.map(m => m.id));
                                     members.forEach(m => {
-                                        if (m.id && m.display_name) {
-                                            playerProfilesCache.set(m.id, m.display_name);
-                                        }
+                                        if (typeof cacheProfileRow === 'function') cacheProfileRow(m);
+                                        else if (m.id && m.display_name) playerProfilesCache.set(m.id, m.display_name);
                                     });
                                 }
                             } else {
@@ -7162,10 +6895,10 @@
                     'Authorization': `Bearer ${session.access_token}`
                 };
                 
-                // Try different endpoints until we find one that works
+                // Prefer user_profiles (has gender); keep legacy fallbacks
                 const endpointOptions = [
+                    'user_profiles',
                     'profiles',
-                    'user_profiles', 
                     'users'
                 ];
                 
@@ -7214,7 +6947,7 @@
                     const idsFilter = batch.map(id => `"${id}"`).join(',');
                     
                     try {
-                        const profileEndpoint = `${successfulEndpoint}?id=in.(${idsFilter})`;
+                        const profileEndpoint = `${successfulEndpoint}?id=in.(${idsFilter})&select=id,display_name,gender`;
                         
                         const response = await fetch(profileEndpoint, {
                             method: 'GET',
@@ -7234,6 +6967,15 @@
                                                  profile.email ||
                                                    profile.id;
                                 profileMap.set(profile.id, displayName);
+                                if (typeof cacheProfileRow === 'function') {
+                                    cacheProfileRow({
+                                        id: profile.id,
+                                        display_name: displayName,
+                                        gender: profile.gender
+                                    });
+                                } else if (typeof playerGenderCache !== 'undefined' && profile.gender !== undefined) {
+                                    playerGenderCache.set(profile.id, normalizeProfileGender(profile.gender));
+                                }
                             });
                             
                             // Update cache and UI for this batch
@@ -7450,6 +7192,7 @@
                 }
 
                 setInsightsPlaceholder('insights-winrate', 'Loading...');
+                setInsightsPlaceholder('insights-streak', 'Loading...');
                 setInsightsPlaceholder('insights-improved', 'Loading...');
                 setInsightsPlaceholder('insights-matches', 'Loading...');
                 setInsightsPlaceholder('insights-partnerships', 'Loading...');
@@ -7488,6 +7231,7 @@
                 const opponentPlayerId = (oppSel && oppSel.value) ? oppSel.value : (matchPlayerIds[0] || null);
 
                 drawOverallWinRate(matches);
+                drawLongestWinningStreak(matches);
                 drawMostImproved(ratingsRaw);
                 drawMostMatches(matches);
                 drawPartnerships(matches);
@@ -7732,6 +7476,65 @@
                     return;
                 }
                 renderApexBar('insights-winrate', names, pcts, getOrange(), 'Win %', 0, 105);
+            }
+
+            function drawLongestWinningStreak(matches) {
+                const byPlayer = new Map();
+                const chronological = [...matches].sort((a, b) => {
+                    const ta = a.playedDate ? new Date(a.playedDate).getTime() : 0;
+                    const tb = b.playedDate ? new Date(b.playedDate).getTime() : 0;
+                    return ta - tb;
+                });
+
+                chronological.forEach(m => {
+                    const t1Won = (m.team1.setsWon || 0) > (m.team2.setsWon || 0);
+                    const t2Won = (m.team2.setsWon || 0) > (m.team1.setsWon || 0);
+
+                    (m.team1 && m.team1.playerIds || []).filter(Boolean).forEach(id => {
+                        if (!byPlayer.has(id)) byPlayer.set(id, { current: 0, best: 0 });
+                        const rec = byPlayer.get(id);
+                        if (t1Won) {
+                            rec.current++;
+                            if (rec.current > rec.best) rec.best = rec.current;
+                        } else {
+                            rec.current = 0;
+                        }
+                    });
+                    (m.team2 && m.team2.playerIds || []).filter(Boolean).forEach(id => {
+                        if (!byPlayer.has(id)) byPlayer.set(id, { current: 0, best: 0 });
+                        const rec = byPlayer.get(id);
+                        if (t2Won) {
+                            rec.current++;
+                            if (rec.current > rec.best) rec.best = rec.current;
+                        } else {
+                            rec.current = 0;
+                        }
+                    });
+                });
+
+                const arr = Array.from(byPlayer.entries())
+                    .map(([id, v]) => ({ id, streak: v.best }))
+                    .filter(x => x.streak >= 2);
+                arr.sort((a, b) => b.streak - a.streak);
+                const top = arr.slice(0, 18);
+
+                let names = top.map(t => getName(t.id));
+                let streaks = top.map(t => t.streak);
+                names.reverse();
+                streaks.reverse();
+
+                const el = document.getElementById('insights-streak');
+                if (!el) return;
+                if (insightsCharts['insights-streak']) {
+                    insightsCharts['insights-streak'].destroy();
+                    delete insightsCharts['insights-streak'];
+                }
+                el.innerHTML = '';
+                if (top.length === 0) {
+                    el.appendChild(document.createTextNode('No winning streaks of 2+ matches in the selected period.'));
+                    return;
+                }
+                renderApexBar('insights-streak', names, streaks, getDarkBlue(), 'Wins in a row', null, null);
             }
 
             function drawMostMatches(matches) {
@@ -8004,15 +7807,25 @@
         }
 
         // ── Gender segmented control ──────────────────────────────────
-        function rankingsFsSetGender(gender, noReset) {
+        async function rankingsFsSetGender(gender, noReset) {
             rankingsFsGender = gender;
             document.querySelectorAll('.fs-gender-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.gender === gender);
             });
+            if (gender !== 'all' && typeof ensureGenderDataForPlayers === 'function') {
+                const all = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
+                let base = all;
+                if (typeof clubMemberIdsSet !== 'undefined' && clubMemberIdsSet && clubMemberIdsSet.size > 0) {
+                    base = all.filter(p => clubMemberIdsSet.has(p.id));
+                }
+                await ensureGenderDataForPlayers(base);
+            }
             if (!noReset) {
                 rankingsFsPage = 1;
                 rankingsFsRenderPage();
                 rankingsFsRestartRotate();
+            } else {
+                rankingsFsRenderPage();
             }
         }
 
@@ -8087,21 +7900,15 @@
 
         // ── Build filtered player list ────────────────────────────────
         function rankingsFsGetFilteredPlayers() {
-            const namesCache = (typeof playerProfilesCache !== 'undefined' ? playerProfilesCache : new Map());
-            const filtered   = (typeof filteredRankedPlayers !== 'undefined' ? filteredRankedPlayers : []);
-            const all        = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
-            let players      = filtered.length > 0 ? filtered : all;
+            const all = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
+            let players = all;
+            if (typeof clubMemberIdsSet !== 'undefined' && clubMemberIdsSet && clubMemberIdsSet.size > 0) {
+                players = all.filter(p => clubMemberIdsSet.has(p.id));
+            }
 
             if (rankingsFsGender !== 'all') {
-                const gCache = (typeof nameGenderCache !== 'undefined' ? nameGenderCache : new Map());
-                players = players.filter(p => {
-                    const name      = namesCache.get(p.id) || '';
-                    const firstName = name.trim().split(/\s+/)[0].toLowerCase();
-                    const entry     = gCache.get(firstName);
-                    // Exclude players with no gender data when filtering
-                    if (!entry || !entry.gender || entry.probability < 0.7) return false;
-                    return entry.gender === rankingsFsGender;
-                });
+                const gCache = (typeof playerGenderCache !== 'undefined' ? playerGenderCache : new Map());
+                players = players.filter(p => gCache.get(p.id) === rankingsFsGender);
             }
             return players;
         }
