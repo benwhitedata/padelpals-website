@@ -2063,7 +2063,7 @@
                 try {
                     // Try to get the user profile
                     const { data: profile, error: profileError } = await supabaseClient
-                        .from('profiles')
+                        .from('user_profiles')
                         .select('*')
                         .eq('id', session.user.id)
                         .single();
@@ -2076,17 +2076,14 @@
                         document.getElementById('userName').textContent = displayName;
                     } else {
                         // Log available profile fields for debugging
-                        addDebugInfo(`Profile data: display_name=${profile.display_name}, full_name=${profile.full_name}`);
+                        addDebugInfo(`Profile data: display_name=${profile.display_name}`);
                         
-                        // Update UI with user data - prioritize display_name, then full_name, then friendly email format
-                        const displayName = profile.display_name || profile.full_name || formatUserName(session.user.email) || 'User';
+                        // Update UI with user data - prioritize display_name, then friendly email format
+                        const displayName = profile.display_name || formatUserName(session.user.email) || 'User';
                         document.getElementById('userName').textContent = displayName;
                         
-                        // Log which field was used
                         if (profile.display_name) {
                             console.log('Using display_name for user:', profile.display_name);
-                        } else if (profile.full_name) {
-                            console.log('Using full_name for user:', profile.full_name);
                         } else {
                             console.log('Using formatted email for user:', formatUserName(session.user.email));
                         }
@@ -2094,8 +2091,8 @@
                         
                         addDebugInfo('Profile data loaded successfully');
                         
-                        // Check if user is admin
-                        const isAdmin = profile.is_admin === true;
+                        // Check if user is admin (column is camelCase in user_profiles)
+                        const isAdmin = profile.isAdmin === true;
                         addDebugInfo(`User is admin: ${isAdmin}`);
                         
                         // Store admin status for later use
@@ -4146,7 +4143,8 @@
                 // Fetch profile data the same way Swift app does
                 try {
                     // Create the combined profile endpoint that includes clubs and ratings
-                    const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach(*)`;
+                    // Disambiguate ratings_coach: table has FKs for both player (user_id) and assessing coach (coach_id)
+                    const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach!ratings_coach_user_id_fkey(*)`;
                     
                     console.log("Fetching profile from endpoint:", profileEndpoint);
                     
@@ -4814,8 +4812,8 @@
                     'Authorization': `Bearer ${accessToken}`
                 };
                 
-                // Create the combined profile endpoint that includes clubs and ratings
-                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach(*)`;
+                // Disambiguate ratings_coach: table has FKs for both player (user_id) and assessing coach (coach_id)
+                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach!ratings_coach_user_id_fkey(*)`;
                 console.log("Refreshing profile from endpoint:", profileEndpoint);
                 
                 const response = await fetch(profileEndpoint, {
@@ -4944,14 +4942,14 @@
                 try {
                     // Try to query a random table to verify permissions work
                     const { count, error: countError } = await supabaseClient
-                        .from('profiles')
+                        .from('user_profiles')
                         .select('*', { count: 'exact', head: true });
                         
                     if (countError) {
                         console.log('Database Access: Failed -', countError.message);
                         console.warn('Note: Your account may have limited database access. Some features may not be available.');
                     } else {
-                        console.log('Database Access: Success - Found', count, 'profiles');
+                        console.log('Database Access: Success - Found', count, 'user profiles');
                     }
 
                 } catch (dbError) {
@@ -5012,7 +5010,7 @@
                 try {
                     // Try to get the user profile
                     const { data: profile, error: profileError } = await client
-                        .from('profiles')
+                        .from('user_profiles')
                         .select('*')
                         .eq('id', session.user.id)
                         .single();
@@ -5027,17 +5025,14 @@
                         document.getElementById('userName').textContent = displayName;
                     } else {
                         // Log available profile fields for debugging
-                        addDebugInfo(`Profile data: display_name=${profile.display_name}, full_name=${profile.full_name}`);
+                        addDebugInfo(`Profile data: display_name=${profile.display_name}`);
                         
-                        // Update UI with user data - prioritize display_name, then full_name, then friendly email format
-                        const displayName = profile.display_name || profile.full_name || formatUserName(session.user.email) || 'User';
+                        // Update UI with user data - prioritize display_name, then friendly email format
+                        const displayName = profile.display_name || formatUserName(session.user.email) || 'User';
                         document.getElementById('userName').textContent = displayName;
                         
-                        // Log which field was used
                         if (profile.display_name) {
                             console.log('Using display_name for user:', profile.display_name);
-                        } else if (profile.full_name) {
-                            console.log('Using full_name for user:', profile.full_name);
                         } else {
                             console.log('Using formatted email for user:', formatUserName(session.user.email));
                         }
@@ -5046,8 +5041,8 @@
                         // Log to console but don't show in UI
                         addDebugInfo('Profile data loaded successfully');
                         
-                        // Check if user is admin
-                        const isAdmin = profile.is_admin === true;
+                        // Check if user is admin (column is camelCase in user_profiles)
+                        const isAdmin = profile.isAdmin === true;
                         addDebugInfo(`User is admin: ${isAdmin}`);
                         
                         // Store admin status for later use
