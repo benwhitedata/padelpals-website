@@ -6442,11 +6442,26 @@
         }
         window.ensureGenderDataForPlayers = ensureGenderDataForPlayers;
 
+        // Leaderboard: only players with a rating update in the last N months
+        function isRankingPlayerActive(player, months = 4) {
+            const dateField = player && (player.last_updated || player.date);
+            if (!dateField) return false;
+            const updatedAt = new Date(dateField);
+            if (Number.isNaN(updatedAt.getTime())) return false;
+            const cutoff = new Date();
+            cutoff.setMonth(cutoff.getMonth() - months);
+            return updatedAt.getTime() >= cutoff.getTime();
+        }
+
+        function filterActiveRankedPlayers(list, months = 4) {
+            return (list || []).filter(p => isRankingPlayerActive(p, months));
+        }
+
         async function applyFiltersAndPaginate() {
             const base = allRankedPlayers || [];
-            let list = base;
+            let list = filterActiveRankedPlayers(base, 4);
             if (clubMemberIdsSet && clubMemberIdsSet.size > 0) {
-                list = base.filter(p => clubMemberIdsSet.has(p.id));
+                list = list.filter(p => clubMemberIdsSet.has(p.id));
             }
             if (currentGenderFilter !== 'all' && list.length > 0) {
                 await ensureGenderDataForPlayers(list);
@@ -7901,9 +7916,11 @@
         // ── Build filtered player list ────────────────────────────────
         function rankingsFsGetFilteredPlayers() {
             const all = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
-            let players = all;
+            let players = (typeof filterActiveRankedPlayers === 'function')
+                ? filterActiveRankedPlayers(all, 4)
+                : all;
             if (typeof clubMemberIdsSet !== 'undefined' && clubMemberIdsSet && clubMemberIdsSet.size > 0) {
-                players = all.filter(p => clubMemberIdsSet.has(p.id));
+                players = players.filter(p => clubMemberIdsSet.has(p.id));
             }
 
             if (rankingsFsGender !== 'all') {

@@ -286,7 +286,22 @@
             const urlParams = new URLSearchParams(window.location.search);
             const error = urlParams.get('error');
             if (error) {
-                showStatusMessage(decodeURIComponent(error), 'error');
+                const decodedError = decodeURIComponent(error);
+                const normalisedError = decodedError.toLowerCase();
+                if (
+                    normalisedError.includes('apple sign-in is temporarily unavailable') ||
+                    (
+                        normalisedError.includes('oauth error: server_error') &&
+                        normalisedError.includes('unable to exchange external code')
+                    )
+                ) {
+                    showStatusMessage(
+                        'Apple sign-in is temporarily unavailable. Please sign in with Google while we resolve this provider configuration issue.',
+                        'error'
+                    );
+                } else {
+                    showStatusMessage(decodedError, 'error');
+                }
                 // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }

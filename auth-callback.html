@@ -117,6 +117,14 @@
                 if (errorParam) {
                     console.error('❌ OAuth error from provider:', errorParam);
                     console.error('Description:', errorDescription);
+                    const normalisedDescription = (errorDescription || '').toLowerCase();
+                    // Map common provider-side misconfiguration to a clear user-facing message.
+                    if (
+                        errorParam === 'server_error' &&
+                        normalisedDescription.includes('unable to exchange external code')
+                    ) {
+                        throw new Error('Apple sign-in is temporarily unavailable due to provider configuration. Please use Google sign-in while we resolve this.');
+                    }
                     throw new Error(`OAuth error: ${errorParam} - ${errorDescription || 'No description'}`);
                 }
                 

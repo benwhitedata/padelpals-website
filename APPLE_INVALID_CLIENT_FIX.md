@@ -75,9 +75,11 @@ You created a **NEW key** (`7X94CKX99M`) but Supabase might still be using the *
    **Team ID:**
    - ✅ Should be: `783NB5H5V4`
 
-   **Client IDs field:**
-   - ❌ **REMOVE:** Any iOS bundle IDs like `com.playpadelpals.padelpals362.signin`
-   - ✅ **ONLY:** `783NB5H5V4.com.playpadelpals.padelpals362`
+   **Client IDs field (order matters):**
+   - ✅ **FIRST:** Services ID `783NB5H5V4.com.playpadelpals.padelpals362` (required for website OAuth)
+   - ✅ **THEN:** iOS App ID / bundle ID (required for native app `signInWithIdToken`)
+   - ❌ Do **not** remove the iOS App ID — that breaks app Apple login
+   - ❌ Do **not** put the iOS App ID first — website OAuth will be rejected by Apple
 
 3. **Enable Apple:** Toggle should be **ON**
 
@@ -147,7 +149,7 @@ Before testing again, verify **ALL** of these match **EXACTLY**:
 - [ ] Key ID: `7X94CKX99M` (NOT `LUDQJXUZU4`)
 - [ ] Team ID: `783NB5H5V4`
 - [ ] Services ID: `783NB5H5V4.com.playpadelpals.padelpals362`
-- [ ] Client IDs: **ONLY** `783NB5H5V4.com.playpadelpals.padelpals362` (no iOS bundle IDs)
+- [ ] Client IDs: Services ID **first**, then iOS App ID (do not remove the App ID)
 - [ ] Apple provider: **Enabled** (toggle ON)
 
 ### In Apple Developer Portal:
