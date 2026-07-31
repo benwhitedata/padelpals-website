@@ -1988,20 +1988,21 @@
                 // Load user data
                 loadUserData();
                 
-                // Setup sign out button
-                document.getElementById('signOut').addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    const client = window.getOrCreateSupabaseClient();
-                    const { error } = await client.auth.signOut();
-                    if (error) {
-                        console.error('Error signing out:', error.message);
-                    } else {
-                        // Reset the redirect time tracker
-                        localStorage.removeItem('authRedirectTime');
-                        window.location.href = '/auth.html';
-                    }
-
-                });
+                // Setup sign out button if present (shared nav may handle this instead)
+                const signOutBtn = document.getElementById('signOut');
+                if (signOutBtn) {
+                    signOutBtn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const client = window.getOrCreateSupabaseClient();
+                        const { error } = await client.auth.signOut();
+                        if (error) {
+                            console.error('Error signing out:', error.message);
+                        } else {
+                            localStorage.removeItem('authRedirectTime');
+                            window.location.href = '/auth.html';
+                        }
+                    });
+                }
             } catch (error) {
                 console.error('Dashboard initialization error:', error);
                 document.getElementById('goToAuth').style.display = 'block';
