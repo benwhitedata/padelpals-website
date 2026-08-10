@@ -7,6 +7,7 @@
   <link rel="icon" href="images/Icon.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Load Supabase JS and config loader -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config-loader.js"></script>
@@ -106,6 +107,24 @@
         </div>
         <div class="col-6 col-md-4 mb-2">
           <button type="button" class="btn btn-guide w-100" onclick="showGuide('submit')">Submit Box League Result</button>
+        </div>
+        <div class="col-6 col-md-4 mb-2">
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('profile')">Complete Your Profile</button>
+        </div>
+        <div class="col-6 col-md-4 mb-2">
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('stats')">Me Stats &amp; Leaderboard</button>
+        </div>
+        <div class="col-6 col-md-4 mb-2">
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('findMatch')">Find / Join a Match</button>
+        </div>
+        <div class="col-6 col-md-4 mb-2">
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('clubSocials')">Club Socials</button>
+        </div>
+        <div class="col-6 col-md-4 mb-2">
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('badges')">Badges</button>
+        </div>
+        <div class="col-6 col-md-4 mb-2">
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('competitions')">Competitions</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
           <button type="button" class="btn btn-guide w-100" onclick="showGuide('americano')">Run Americano Session</button>
@@ -426,6 +445,153 @@
                     <div class="col-md-6">
                         <h4>Step 3: Choose Your Club</h4>
                         <p>Find and select the club you wish to be connected with</p>
+                    </div>
+                </div>
+                `;
+                break;
+            case 'profile':
+                content = `
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_profile_own.png" alt="Own player profile" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Complete your profile</h4>
+                        <p>Open the Profile tab. Set your display name, gender, preferred side (Left / Right / Either), Playtomic level and photo. Your match rating and category appear here as you play.</p>
+                        <p>More detail: <a href="stats.html#profiles">Stats &amp; profiles</a>.</p>
+                    </div>
+                </div>
+                <div class="row align-items-center mb-5 flex-md-row-reverse">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_profile_public.png" alt="Public player profile" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Follow other players</h4>
+                        <p>Open any player from the leaderboard or Players list to see head-to-head, rating trend and Follow. Following helps when you schedule matches for people you follow only.</p>
+                    </div>
+                </div>
+                `;
+                break;
+            case 'stats':
+                content = `
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_stats_me.png" alt="Me Stats" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Me Stats</h4>
+                        <p>Open the Stats tab → Me. Review form, streaks, bagels, comebacks, best partner and toughest opponent, plus badge progress.</p>
+                    </div>
+                </div>
+                <div class="row align-items-center mb-5 flex-md-row-reverse">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_stats_leaderboard.png" alt="Club leaderboard" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Club leaderboard</h4>
+                        <p>Switch to Club for the rating ladder. Filter by Men, Ladies or Followed, then tap a player to open their public profile.</p>
+                        <p>Level definitions: <a href="ratings.html">Player Levels</a>.</p>
+                    </div>
+                </div>
+                `;
+                break;
+            case 'findMatch':
+                content = `
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_matches_menu.png" alt="Matches menu" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Open Matches</h4>
+                        <p>From the Matches menu choose Upcoming Matches or Schedule Match.</p>
+                    </div>
+                </div>
+                <div class="row align-items-center mb-5 flex-md-row-reverse">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_schedule_gates.png" alt="Who can join" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Set who can join</h4>
+                        <p>When scheduling, set gender eligibility, level range and optional “People I follow only”. Choose whether the match is shared with the club and whether it counts towards ratings.</p>
+                    </div>
+                </div>
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_join_filters.png" alt="Join filters" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Filter Upcoming</h4>
+                        <p>Use Mine / Club / Join and the filter sheet (club, gender, format, level) to find a suitable open slot.</p>
+                        <p>Full walkthrough: <a href="find-a-match.html">Find a Match</a>.</p>
+                    </div>
+                </div>
+                `;
+                break;
+            case 'clubSocials':
+                content = `
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_club_socials_list.png" alt="Club Socials list" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Open Club Socials</h4>
+                        <p>From the Matches menu tap Club Socials to see sessions open for sign-up or already arranged.</p>
+                    </div>
+                </div>
+                <div class="row align-items-center mb-5 flex-md-row-reverse">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_club_socials_availability.png" alt="Availability sign-ups" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Mark availability</h4>
+                        <p>Open a social and select the time slots you can play. Organisers use the sign-up list (with ratings) to pack courts fairly.</p>
+                    </div>
+                </div>
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_club_socials_fixtures.png" alt="Fixtures publish" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Publish fixtures</h4>
+                        <p>Club admins review court pairings, swap players if needed, then Publish to schedule — matches appear in Upcoming with notifications.</p>
+                        <p>More: <a href="club-socials.html">Club Socials</a>.</p>
+                    </div>
+                </div>
+                `;
+                break;
+            case 'badges':
+                content = `
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_badges_gallery.png" alt="Badges gallery" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Open Badges</h4>
+                        <p>From Profile or Me Stats, open Badges to browse Matches, Box League and Tournament families and your progress.</p>
+                    </div>
+                </div>
+                <div class="row align-items-center mb-5 flex-md-row-reverse">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_badges_unlock.png" alt="Badge detail" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Badge detail &amp; share</h4>
+                        <p>Tap a badge for criteria, tier and unlock date. Share badges you have earned with your club.</p>
+                        <p>Overview: <a href="badges.html">Badges</a>.</p>
+                    </div>
+                </div>
+                `;
+                break;
+            case 'competitions':
+                content = `
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6 text-center">
+                        <img src="images/mkt_competitions_box_or_bracket.png" alt="Knockout tournament draw" />
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Competitions hub</h4>
+                        <p>Open the Competitions tab for knockout tournaments (seeded draws, team average ratings) and Box Leagues. Results feed your match history and rating.</p>
+                        <p>Box League rules: <a href="boxleague.html">Box League guidelines</a>.</p>
                     </div>
                 </div>
                 `;

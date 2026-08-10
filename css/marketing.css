@@ -1,0 +1,228 @@
+/* Shared marketing page styles for Padel Pals public feature pages */
+
+:root {
+  --pp-navy: #1a2238;
+  --pp-blue: #2a3990;
+  --pp-accent: #4A90E2;
+  --pp-bg: #F6F5F5;
+  --pp-ink: #333333;
+  --pp-muted: #555555;
+}
+
+.mkt-page {
+  font-family: 'Montserrat', Arial, sans-serif;
+  background: var(--pp-bg);
+  color: var(--pp-ink);
+  line-height: 1.6;
+}
+
+.mkt-page h1,
+.mkt-page h2,
+.mkt-page h3 {
+  color: var(--pp-navy);
+}
+
+.mkt-hero {
+  background: linear-gradient(135deg, var(--pp-navy) 0%, var(--pp-blue) 55%, #3d5a9e 100%);
+  color: #fff;
+  padding: 56px 20px 64px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.mkt-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 100%, rgba(74, 144, 226, 0.35), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(255, 255, 255, 0.08), transparent 50%);
+  pointer-events: none;
+}
+
+.mkt-hero-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.mkt-hero h1 {
+  color: #fff;
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.mkt-hero p {
+  opacity: 0.95;
+  font-size: 1.1rem;
+  margin: 0 auto;
+  max-width: 560px;
+}
+
+.mkt-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 20px 72px;
+}
+
+.mkt-intro {
+  max-width: 680px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.mkt-intro p {
+  color: var(--pp-muted);
+  font-size: 1.05rem;
+}
+
+.mkt-feature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  margin-bottom: 72px;
+}
+
+.mkt-feature.reverse {
+  direction: rtl;
+}
+
+.mkt-feature.reverse > * {
+  direction: ltr;
+}
+
+.mkt-feature-copy h2 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.mkt-feature-copy p {
+  color: var(--pp-muted);
+  margin-bottom: 12px;
+}
+
+.mkt-feature-copy .mkt-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--pp-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mkt-feature-copy .mkt-link:hover {
+  color: var(--pp-blue);
+  text-decoration: underline;
+}
+
+.mkt-phone {
+  display: flex;
+  justify-content: center;
+}
+
+.mkt-phone img {
+  width: min(280px, 70vw);
+  height: auto;
+  border-radius: 28px;
+  box-shadow:
+    0 24px 48px rgba(26, 34, 56, 0.28),
+    0 0 0 1px rgba(26, 34, 56, 0.08);
+  animation: mkt-float-in 0.7s ease both;
+}
+
+@keyframes mkt-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mkt-phone img {
+    animation: none;
+  }
+}
+
+.mkt-cta-band {
+  background: linear-gradient(135deg, var(--pp-navy) 0%, var(--pp-blue) 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 36px 28px;
+  text-align: center;
+  margin-top: 24px;
+}
+
+.mkt-cta-band h2 {
+  color: #fff;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.mkt-cta-band p {
+  opacity: 0.92;
+  margin-bottom: 20px;
+}
+
+.mkt-store-row {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mkt-store-row img {
+  height: 52px;
+  width: auto;
+}
+
+.mkt-store-row a.play img {
+  height: 76px;
+  margin: -12px 0;
+}
+
+.mkt-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+
+.mkt-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pp-navy);
+}
+
+.mkt-note {
+  font-size: 0.92rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .mkt-feature,
+  .mkt-feature.reverse {
+    grid-template-columns: 1fr;
+    direction: ltr;
+    gap: 24px;
+    margin-bottom: 56px;
+  }
+
+  .mkt-phone img {
+    width: min(240px, 62vw);
+  }
+}

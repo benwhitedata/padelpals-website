@@ -1,358 +1,293 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Padel Pals - Track Your Padel Matches</title>
+    <title>Padel Pals — Know your game. Find the right match.</title>
+    <meta name="description" content="Padel Pals tracks your form, levels, open matches, club socials and badges — built for clubs and competitive padel players.">
     <link rel="icon" href="images/Icon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Load Supabase JS and config loader -->
+    <link rel="stylesheet" href="css/marketing.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config-loader.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Montserrat', Arial, sans-serif;
             background-color: #F6F5F5;
             line-height: 1.6;
+            color: #333;
         }
 
-        /* Hero Banner */
-        .hero-banner {
-            background: linear-gradient(135deg, #1a2238 0%, #2a3990 100%);
-            color: #FFFFFF;
-            padding: 64px 0;
-            text-align: center;
+        /* Full-bleed hero: brand + one line + CTA + dominant phone */
+        .home-hero {
+            min-height: min(92vh, 860px);
+            background:
+                radial-gradient(ellipse 70% 60% at 75% 40%, rgba(74, 144, 226, 0.35), transparent 55%),
+                linear-gradient(145deg, #0f1424 0%, #1a2238 40%, #2a3990 100%);
+            color: #fff;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 32px;
+            align-items: center;
+            padding: 48px clamp(20px, 5vw, 72px) 56px;
             position: relative;
             overflow: hidden;
         }
 
-        .hero-banner::before {
+        .home-hero::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(255,255,255,0.1)"><polygon points="0,0 1000,100 1000,0"/></svg>');
-            background-size: 100% 100%;
+            inset: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.06)"/></svg>');
             pointer-events: none;
+            opacity: 0.9;
         }
 
-        .hero-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
+        .home-hero-copy,
+        .home-hero-visual {
             position: relative;
             z-index: 1;
         }
 
-        .hero-title {
-            font-size: 3rem;
+        .home-brand {
+            font-size: clamp(2.4rem, 5.5vw, 3.6rem);
             font-weight: 700;
-            margin-bottom: 16px;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            letter-spacing: -0.02em;
+            margin-bottom: 14px;
+            line-height: 1.1;
         }
 
-        .hero-subtitle {
-            font-size: 1.3rem;
-            margin-bottom: 32px;
-            opacity: 0.95;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
+        .home-brand span {
+            color: #7eb6f5;
         }
 
-        .hero-cta {
-            display: inline-block;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 16px 32px;
-            border-radius: 8px;
-            text-decoration: none;
+        .home-headline {
+            font-size: clamp(1.15rem, 2.2vw, 1.45rem);
             font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            border: 2px solid rgba(255,255,255,0.3);
-            margin-top: 20px;
+            margin-bottom: 12px;
+            max-width: 28ch;
+            line-height: 1.35;
         }
 
-        .hero-cta:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-            color: white;
+        .home-support {
+            font-size: 1.05rem;
+            opacity: 0.92;
+            max-width: 38ch;
+            margin-bottom: 28px;
         }
 
         .store-badges {
-            margin-top: 24px;
             display: flex;
             gap: 14px;
-            justify-content: center;
             align-items: center;
             flex-wrap: wrap;
         }
 
-        .store-badge {
-            display: inline-flex;
-            align-items: center;
-            line-height: 0;
-        }
-
         .store-badge img {
-            height: 60px;
+            height: 56px;
             width: auto;
             transition: transform 0.3s ease;
         }
 
-        /* Google's generic Play badge has built-in transparent padding,
-           so it needs a slightly larger height to visually match Apple's. */
         .store-badge.store-badge-play img {
-            height: 88px;
-            margin: -14px 0;
+            height: 82px;
+            margin: -13px 0;
         }
 
-        .store-badge:hover img {
-            transform: scale(1.05);
+        .store-badge:hover img { transform: scale(1.04); }
+
+        .home-hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
         }
 
-        @media (max-width: 480px) {
-            .store-badge img { height: 52px; }
-            .store-badge.store-badge-play img { height: 76px; margin: -12px 0; }
+        .home-hero-phone {
+            width: min(300px, 72vw);
+            height: auto;
+            border-radius: 32px;
+            box-shadow:
+                0 40px 80px rgba(0, 0, 0, 0.45),
+                0 0 0 1px rgba(255, 255, 255, 0.08);
+            animation: hero-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        /* Subtle hero "tip" pill — visible without being pushy */
-        .hero-pill {
-            display: inline-flex;
+        @keyframes hero-rise {
+            from { opacity: 0; transform: translateY(28px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .pillar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(28px, 5vw, 56px);
             align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            color: #FFFFFF;
-            padding: 6px 14px;
-            border-radius: 999px;
-            font-size: 0.85rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 72px 20px;
+        }
+
+        .pillar.reverse { direction: rtl; }
+        .pillar.reverse > * { direction: ltr; }
+
+        .pillar-copy h2 {
+            font-size: clamp(1.5rem, 2.5vw, 1.9rem);
+            font-weight: 700;
+            color: #1a2238;
+            margin-bottom: 10px;
+        }
+
+        .pillar-copy p {
+            color: #555;
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+            max-width: 42ch;
+        }
+
+        .pillar-copy a {
+            color: #4A90E2;
             font-weight: 600;
             text-decoration: none;
-            margin-bottom: 18px;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
         }
 
-        .hero-pill:hover {
-            background: rgba(255, 255, 255, 0.22);
-            border-color: rgba(255, 255, 255, 0.4);
-            color: #FFFFFF;
-            transform: translateY(-1px);
+        .pillar-copy a:hover {
+            color: #2a3990;
+            text-decoration: underline;
         }
 
-        .hero-pill .pill-heart {
-            color: #ff8a95;
+        .pillar-phone {
+            display: flex;
+            justify-content: center;
         }
 
-        .hero-pill .pill-arrow {
-            opacity: 0.7;
-            font-size: 0.75rem;
+        .pillar-phone img {
+            width: min(260px, 68vw);
+            border-radius: 28px;
+            box-shadow: 0 24px 48px rgba(26, 34, 56, 0.22);
+            transition: transform 0.35s ease;
         }
 
-        /* Main Content */
-        .main-content {
-            max-width: 1200px;
+        .pillar:hover .pillar-phone img {
+            transform: translateY(-6px);
+        }
+
+        .pillar-alt {
+            background: linear-gradient(180deg, rgba(74, 144, 226, 0.06) 0%, transparent 100%);
+        }
+
+        .support-strip {
+            max-width: 900px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 20px 48px;
+            text-align: center;
+            color: #555;
+            font-size: 1rem;
         }
 
-        /* Features Section */
-        .features-section {
-            padding: 64px 0;
+        .support-strip a {
+            color: #4A90E2;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .how-it-works-section {
+            padding: 64px 20px;
+            background: linear-gradient(135deg, rgba(74, 144, 226, 0.05) 0%, rgba(107, 182, 255, 0.05) 100%);
         }
 
         .section-header {
             text-align: center;
-            margin-bottom: 56px;
+            margin-bottom: 40px;
         }
 
         .section-title {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: #1a2238;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
 
         .section-subtitle {
-            font-size: 1.2rem;
-            color: #555555;
-            max-width: 600px;
+            font-size: 1.1rem;
+            color: #555;
+            max-width: 560px;
             margin: 0 auto;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 32px;
-            margin-bottom: 48px;
-        }
-
-        .feature-card {
-            background: #FFFFFF;
-            border-radius: 16px;
-            padding: 40px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            border: 1px solid #E8F4F8;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #4A90E2 0%, #1a2238 100%);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(74, 144, 226, 0.15);
-        }
-
-        .feature-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
-            background: linear-gradient(45deg, #4A90E2, #6BB6FF);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-            font-size: 2rem;
-            box-shadow: 0 4px 16px rgba(74, 144, 226, 0.3);
-        }
-
-        .feature-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #1a2238;
-            margin-bottom: 12px;
-        }
-
-        .feature-description {
-            color: #555555;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        /* How It Works Section */
-        .how-it-works-section {
-            padding: 64px 0;
-            background: linear-gradient(135deg, rgba(74, 144, 226, 0.05) 0%, rgba(107, 182, 255, 0.05) 100%);
         }
 
         .steps-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 32px;
-            margin-top: 48px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
         .step-card {
-            background: #FFFFFF;
-            border-radius: 16px;
-            padding: 32px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-        }
-
-        .step-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(74, 144, 226, 0.2);
+            padding: 8px 12px;
         }
 
         .step-number {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: linear-gradient(45deg, #4A90E2, #6BB6FF);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            margin: 0 auto 20px;
+            margin: 0 auto 14px;
         }
 
         .step-title {
-            font-size: 1.3rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #1a2238;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
-        .step-description {
-            color: #555555;
-            line-height: 1.6;
+        .step-description { color: #555; }
+
+        .secondary-band {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 56px 20px 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
         }
 
-        /* Auth processing overlay */
-        #auth-processing {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        
-        .auth-processing-content {
-            background: white;
-            padding: 32px;
-            border-radius: 12px;
-            text-align: center;
-            max-width: 400px;
-        }
-        
-        .auth-spinner {
-            border: 5px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 5px solid #4A90E2;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .secondary-band article h3 {
+            font-size: 1.25rem;
+            color: #1a2238;
+            margin-bottom: 8px;
         }
 
-        /* Support Section - friendly, low-pressure tip CTA */
-        .support-section {
-            padding: 56px 0 64px;
+        .secondary-band article p {
+            color: #555;
+            margin-bottom: 10px;
         }
+
+        .secondary-band a {
+            color: #4A90E2;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .support-section { padding: 40px 20px 72px; max-width: 1100px; margin: 0 auto; }
 
         .support-card {
             background: linear-gradient(135deg, #FFF8EC 0%, #FFEFD5 100%);
             border-radius: 20px;
-            padding: 36px 36px 36px 32px;
+            padding: 36px;
             box-shadow: 0 8px 30px rgba(196, 142, 60, 0.12);
             border: 1px solid #F4E2BE;
             display: flex;
@@ -365,33 +300,27 @@
         .support-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
+            top: 0; left: 0; bottom: 0;
             width: 6px;
             background: linear-gradient(180deg, #F2A65A 0%, #E08540 100%);
         }
 
         .support-emoji {
-            font-size: 3.4rem;
+            font-size: 3rem;
             flex-shrink: 0;
-            line-height: 1;
             animation: support-bob 3.2s ease-in-out infinite;
-            transform-origin: center bottom;
         }
 
         @keyframes support-bob {
-            0%, 100% { transform: translateY(0) rotate(-2deg); }
-            50%      { transform: translateY(-4px) rotate(2deg); }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
         }
 
         @media (prefers-reduced-motion: reduce) {
+            .home-hero-phone,
+            .pillar-phone img,
             .support-emoji { animation: none; }
-        }
-
-        .support-text {
-            flex: 1;
-            min-width: 0;
+            .pillar:hover .pillar-phone img { transform: none; }
         }
 
         .support-eyebrow {
@@ -408,102 +337,100 @@
         }
 
         .support-text h3 {
-            font-size: 1.55rem;
+            font-size: 1.45rem;
             font-weight: 700;
             color: #1a2238;
             margin-bottom: 6px;
         }
 
-        .support-text p {
-            color: #5a4a32;
-            margin: 0;
-            font-size: 1rem;
-            line-height: 1.55;
-        }
+        .support-text p { color: #5a4a32; margin: 0; }
 
         .support-cta {
             display: inline-flex;
             align-items: center;
             gap: 10px;
             background: linear-gradient(135deg, #F2A65A 0%, #E08540 100%);
-            color: #FFFFFF;
+            color: #fff;
             padding: 14px 26px;
             border-radius: 12px;
             text-decoration: none;
             font-weight: 700;
-            font-size: 1rem;
-            box-shadow: 0 4px 14px rgba(224, 133, 64, 0.35);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
             white-space: nowrap;
             flex-shrink: 0;
         }
 
-        .support-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 22px rgba(224, 133, 64, 0.45);
-            color: #FFFFFF;
-        }
+        .support-cta:hover { color: #fff; transform: translateY(-2px); }
 
-        .support-cta i { font-size: 0.95rem; }
-
-        .support-meta {
-            margin-top: 10px;
-            font-size: 0.82rem;
-            color: #8a6a3a;
-            display: flex;
+        #auth-processing {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
             align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
+            z-index: 9999;
         }
 
-        .support-meta span {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .auth-processing-content {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
         }
 
-        @media (max-width: 640px) {
+        .auth-spinner {
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid #4A90E2;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 900px) {
+            .home-hero {
+                grid-template-columns: 1fr;
+                min-height: auto;
+                text-align: center;
+                padding-top: 40px;
+                padding-bottom: 40px;
+            }
+
+            .home-headline,
+            .home-support { margin-left: auto; margin-right: auto; }
+
+            .store-badges { justify-content: center; }
+
+            .pillar,
+            .pillar.reverse {
+                grid-template-columns: 1fr;
+                direction: ltr;
+                padding: 48px 20px;
+                text-align: center;
+            }
+
+            .pillar-copy p { margin-left: auto; margin-right: auto; }
+
+            .steps-grid,
+            .secondary-band { grid-template-columns: 1fr; }
+
             .support-card {
                 flex-direction: column;
                 text-align: center;
-                padding: 32px 22px 28px;
-                gap: 18px;
             }
-            .support-emoji { font-size: 2.8rem; }
-            .support-text h3 { font-size: 1.35rem; }
-            .support-meta { justify-content: center; }
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 2.2rem;
-            }
-
-            .hero-subtitle {
-                font-size: 1.1rem;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-
-            .feature-card {
-                padding: 24px;
-            }
-
-            .section-title {
-                font-size: 2rem;
-            }
-
-            .steps-grid {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
+        @media (max-width: 480px) {
+            .store-badge img { height: 48px; }
+            .store-badge.store-badge-play img { height: 70px; margin: -11px 0; }
         }
     </style>
-    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -511,112 +438,68 @@
       gtag('js', new Date());
       gtag('config', 'G-L426ZMNKFK');
     </script>
-    <!-- End Google Analytics -->
-    
-    <!-- Shared Navigation -->
     <script src="js/shared-navigation.js" data-auto-nav="true"></script>
-    
-    <!-- Auth token handler -->
     <script>
-        // Check if we have an authentication token in the URL hash
         document.addEventListener('DOMContentLoaded', function() {
-            // Wait for config to load
             document.addEventListener('configLoaded', function() {
-                // Check for hash fragment
                 if (window.location.hash && window.location.hash.includes('access_token')) {
                     processAuthentication();
                 }
             });
         });
-        
+
         async function processAuthentication() {
             try {
-                // Show the processing overlay
                 const overlay = document.getElementById('auth-processing');
                 overlay.style.display = 'flex';
                 const statusMessage = document.getElementById('auth-status');
-                
-                statusMessage.textContent = "Initializing authentication...";
-                
-                // Use shared Supabase client instance (created by config-loader.js)
-                const supabase = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : window.supabase.createClient(
-                    window.config.supabaseUrl, 
-                    window.config.supabaseKey
-                );
-                
+                statusMessage.textContent = "Initialising authentication...";
+
+                const supabase = window.getOrCreateSupabaseClient
+                    ? window.getOrCreateSupabaseClient()
+                    : window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
+
                 statusMessage.textContent = "Processing authentication response...";
-                
-                // Get the hash fragment from the URL
                 const hashFragment = window.location.hash.substring(1);
-                
-                if (!hashFragment) {
-                    throw new Error("No authentication data found in URL");
-                }
-                
-                console.log("Processing hash fragment:", hashFragment);
-                
-                // Parse the hash parameters
+                if (!hashFragment) throw new Error("No authentication data found in URL");
+
                 const params = new URLSearchParams(hashFragment);
                 const accessToken = params.get('access_token');
                 const refreshToken = params.get('refresh_token');
-                
-                if (!accessToken) {
-                    throw new Error("No access token found in response");
-                }
-                
-                // Set the session in Supabase
+                if (!accessToken) throw new Error("No access token found in response");
+
                 statusMessage.textContent = "Setting session...";
-                
                 const { error } = await supabase.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken
                 });
-                
-                if (error) {
-                    throw error;
-                }
-                
-                // Get the current session to confirm it worked
+                if (error) throw error;
+
                 const { data } = await supabase.auth.getSession();
-                
-                if (!data.session) {
-                    throw new Error("Failed to establish session");
-                }
-                
-                console.log("Authentication successful!");
+                if (!data.session) throw new Error("Failed to establish session");
+
                 statusMessage.textContent = "Authentication successful! Redirecting to dashboard...";
-                
-                // Clean the URL by removing the hash fragment
                 if (window.history && window.history.replaceState) {
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
-                
-                // Redirect to dashboard
                 window.location.href = "/dashboard.html";
-                
             } catch (error) {
                 console.error("Authentication error:", error);
                 const statusMessage = document.getElementById('auth-status');
                 statusMessage.textContent = `Authentication error: ${error.message}. Please try again.`;
                 statusMessage.style.color = "red";
-                
                 const spinner = document.querySelector('.auth-spinner');
                 if (spinner) spinner.style.display = 'none';
-                
                 const retryButton = document.createElement('button');
-                retryButton.className = 'btn btn-primary mt-3';
-                retryButton.style.cssText = 'background: #4A90E2; border: none; padding: 12px 24px; border-radius: 6px; color: white; cursor: pointer;';
+                retryButton.style.cssText = 'background: #4A90E2; border: none; padding: 12px 24px; border-radius: 6px; color: white; cursor: pointer; margin-top: 12px;';
                 retryButton.textContent = 'Try Again';
                 retryButton.onclick = () => window.location.href = "/auth.html";
-                
-                const content = document.querySelector('.auth-processing-content');
-                content.appendChild(retryButton);
+                document.querySelector('.auth-processing-content').appendChild(retryButton);
             }
         }
     </script>
 </head>
 <body>
-    <!-- Auth processing overlay -->
     <div id="auth-processing">
         <div class="auth-processing-content">
             <h3>Processing Your Login</h3>
@@ -624,17 +507,12 @@
             <p id="auth-status">Please wait while we complete your authentication...</p>
         </div>
     </div>
-    
-    <!-- Hero Banner -->
-    <section class="hero-banner">
-        <div class="hero-content">
-            <a href="tip.html" class="hero-pill" aria-label="Support Padel Pals — built solo, tips welcome">
-                <span class="pill-heart" aria-hidden="true">❤</span>
-                <span>Built solo · Tips welcome</span>
-                <span class="pill-arrow" aria-hidden="true">→</span>
-            </a>
-            <h1 class="hero-title">Welcome to Padel Pals</h1>
-            <p class="hero-subtitle">Track, manage, and improve your padel matches with ease. Experience Americano tournaments, Box League competitions, and detailed player statistics.</p>
+
+    <section class="home-hero" aria-label="Padel Pals">
+        <div class="home-hero-copy">
+            <h1 class="home-brand">Padel <span>Pals</span></h1>
+            <p class="home-headline">Know your game. Find the right match. Play with your club.</p>
+            <p class="home-support">Track form and levels, join open matches that fit you, and run club socials — all in one app for iOS and Android.</p>
             <div class="store-badges">
                 <a href="https://apps.apple.com/gb/app/padel-pals/id6742356382" class="store-badge" aria-label="Download Padel Pals on the App Store">
                     <img src="images/app-store-badge.svg" alt="Download on the App Store">
@@ -644,101 +522,128 @@
                 </a>
             </div>
         </div>
+        <div class="home-hero-visual">
+            <img class="home-hero-phone" src="images/mkt_stats_me.png" width="300" height="650" alt="Padel Pals Me Stats screen showing form, streaks and badge progress">
+        </div>
     </section>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Features Section -->
-        <section id="features" class="features-section">
-            <div class="section-header">
-                <h2 class="section-title">Why Use Padel Pals?</h2>
-                <p class="section-subtitle">Powerful features designed to enhance your padel experience</p>
+    <section class="pillar" id="stats">
+        <div class="pillar-copy">
+            <h2>Stats that matter</h2>
+            <p>See your form, streaks, bagels and comebacks, plus best partners and toughest opponents. Climb your club leaderboard with Men, Ladies and Followed views.</p>
+            <a href="stats.html">Explore stats &amp; profiles →</a>
+        </div>
+        <div class="pillar-phone">
+            <img src="images/mkt_stats_me.png" alt="Me Stats with form strip and streaks" loading="lazy">
+        </div>
+    </section>
+
+    <div class="pillar-alt">
+        <section class="pillar reverse" id="profiles">
+            <div class="pillar-copy">
+                <h2>Player profiles that mean something</h2>
+                <p>Public profiles show match rating, confidence, head-to-head and rating trend. Follow players you trust — and use that network when you schedule open matches.</p>
+                <a href="stats.html#profiles">See how profiles work →</a>
             </div>
-            
-            <div class="features-grid">
-                <!-- Match Management -->
-                <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3 class="feature-title">Match Management</h3>
-                    <p class="feature-description">
-                        Schedule, track, and edit matches with ease. Manage scores and player details effortlessly with our intuitive interface.
-                    </p>
-                </div>
-
-                <!-- Tournament Formats -->
-                <div class="feature-card">
-                    <div class="feature-icon">🏆</div>
-                    <h3 class="feature-title">Tournament Formats</h3>
-                    <p class="feature-description">
-                        Experience Americano and Box League formats. Enjoy social play and competitive leagues with flexible tournament structures.
-                    </p>
-                </div>
-
-                <!-- Player Statistics -->
-                <div class="feature-card">
-                    <div class="feature-icon">📈</div>
-                    <h3 class="feature-title">Player Statistics</h3>
-                    <p class="feature-description">
-                        Track player performance and ratings. Analyze detailed match stats and improve your game with comprehensive analytics.
-                    </p>
-                </div>
+            <div class="pillar-phone">
+                <img src="images/mkt_profile_public.png" alt="Public player profile with Follow and head-to-head" loading="lazy">
             </div>
         </section>
+    </div>
 
-        <!-- How It Works Section -->
-        <section id="how-it-works" class="how-it-works-section">
-            <div class="section-header">
-                <h2 class="section-title">How It Works</h2>
-                <p class="section-subtitle">Get started with Padel Pals in three simple steps</p>
+    <section class="pillar" id="find-a-match">
+        <div class="pillar-copy">
+            <h2>Find a match at your level</h2>
+            <p>Schedule open or competitive games with rating bands, Men’s, Ladies’ or mixed, and an optional “people I follow only” gate. Filter upcoming fixtures until you find the right slot.</p>
+            <a href="find-a-match.html">How finding a match works →</a>
+        </div>
+        <div class="pillar-phone">
+            <img src="images/mkt_schedule_gates.png" alt="Schedule match Who can join controls" loading="lazy">
+        </div>
+    </section>
+
+    <div class="pillar-alt">
+        <section class="pillar reverse" id="club-socials">
+            <div class="pillar-copy">
+                <h2>Club Socials, sorted</h2>
+                <p>Members mark availability. Organisers pack fair courts and publish in one tap — fixtures land in everyone’s schedule with notifications.</p>
+                <a href="club-socials.html">For players and clubs →</a>
             </div>
-            
-            <div class="steps-grid">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <h3 class="step-title">Download the App</h3>
-                    <p class="step-description">
-                        Get Padel Pals from the App Store or Google Play, then create your account to start tracking your matches.
-                    </p>
-                </div>
-
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <h3 class="step-title">Join a Club</h3>
-                    <p class="step-description">
-                        Connect with your padel club and start participating in tournaments and Box Leagues.
-                    </p>
-                </div>
-
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <h3 class="step-title">Track & Improve</h3>
-                    <p class="step-description">
-                        Record your matches, view statistics, and track your progress as you improve your game.
-                    </p>
-                </div>
+            <div class="pillar-phone">
+                <img src="images/mkt_club_socials_fixtures.png" alt="Club Socials fixtures with court pairings ready to publish" loading="lazy">
             </div>
         </section>
+    </div>
 
-        <!-- Support the App -->
-        <section id="support" class="support-section">
-            <div class="support-card">
-                <div class="support-emoji" aria-hidden="true">☕</div>
-                <div class="support-text">
-                    <span class="support-eyebrow">Built solo</span>
-                    <h3>Buy the developer a coffee</h3>
-                    <p>Padel Pals is built and maintained by one developer in their spare time. If the app has been useful, a small tip helps cover hosting and keeps new features coming.</p>
-                    <div class="support-meta" aria-hidden="true">
-                        <span><i class="fas fa-mug-hot"></i> from £3</span>
-                        <span><i class="fas fa-lock"></i> Stripe secure</span>
-                        <span><i class="fas fa-unlock"></i> No features gated</span>
-                    </div>
-                </div>
-                <a href="tip.html" class="support-cta">
-                    <i class="fas fa-heart" aria-hidden="true"></i>
-                    Leave a tip
-                </a>
+    <section class="pillar" id="badges">
+        <div class="pillar-copy">
+            <h2>Badges worth unlocking</h2>
+            <p>From Court Debut to Box Champion — bronze through platinum milestones across matches, leagues and tournaments. Share the ones you earn.</p>
+            <a href="badges.html">Browse badge families →</a>
+        </div>
+        <div class="pillar-phone">
+            <img src="images/mkt_badges_unlock.png" alt="Gold Box Champion badge detail" loading="lazy">
+        </div>
+    </section>
+
+    <p class="support-strip">
+        Levels are community-checked after matches —
+        <a href="ratings.html">read the Newcomer → Elite scale</a>
+        and see how each result can move your rating.
+    </p>
+
+    <section class="how-it-works-section" id="how-it-works">
+        <div class="section-header">
+            <h2 class="section-title">How it works</h2>
+            <p class="section-subtitle">Three steps to a clearer padel season</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3 class="step-title">Download the app</h3>
+                <p class="step-description">Get Padel Pals on the App Store or Google Play and sign in.</p>
             </div>
-        </section>
-    </main>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3 class="step-title">Join your club</h3>
+                <p class="step-description">Pick your club so colours, socials, leagues and leaderboards line up.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3 class="step-title">Play, track, improve</h3>
+                <p class="step-description">Log matches, join open slots, follow form — and unlock badges along the way.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="secondary-band" aria-label="More from Padel Pals">
+        <article>
+            <h3>Box League &amp; knockout tournaments</h3>
+            <p>Run ability-based boxes or seeded knockout draws — results feed your rating and history.</p>
+            <a href="boxleague.html">Box League guidelines →</a>
+            &nbsp;·&nbsp;
+            <a href="guide.html">App guide →</a>
+        </article>
+        <article>
+            <h3>Book a coach</h3>
+            <p>Browse coaches in the app, book a lesson, and pay securely. Optional tips for the developer live on the web.</p>
+            <a href="tip.html">Support the app →</a>
+        </article>
+    </section>
+
+    <section id="support" class="support-section">
+        <div class="support-card">
+            <div class="support-emoji" aria-hidden="true">☕</div>
+            <div class="support-text">
+                <span class="support-eyebrow">Built solo</span>
+                <h3>Buy the developer a coffee</h3>
+                <p>Padel Pals is built and maintained by one developer in their spare time. If the app has been useful, a small tip helps cover hosting and keeps new features coming.</p>
+            </div>
+            <a href="tip.html" class="support-cta">
+                <i class="fas fa-heart" aria-hidden="true"></i>
+                Leave a tip
+            </a>
+        </div>
+    </section>
 </body>
 </html>

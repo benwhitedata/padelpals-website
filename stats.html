@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stats &amp; Player Profiles — Padel Pals</title>
+  <meta name="description" content="Track padel form, streaks, partners, club leaderboards and public player profiles with head-to-head and follow in Padel Pals." />
+  <link rel="icon" href="images/Icon.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="css/marketing.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config-loader.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-L426ZMNKFK');
+  </script>
+  <script src="js/shared-navigation.js" data-auto-nav="true"></script>
+</head>
+<body class="mkt-page">
+  <section class="mkt-hero">
+    <div class="mkt-hero-inner">
+      <h1>Stats &amp; player profiles</h1>
+      <p>Know your form, your partners, and where you sit on the club ladder — then open any player’s public profile.</p>
+    </div>
+  </section>
+
+  <div class="mkt-wrap">
+    <div class="mkt-intro">
+      <p>The Stats tab in the app is split into <strong>Me</strong>, <strong>Players</strong> and <strong>Club</strong>. Levels still live on our <a href="ratings.html">Player Levels</a> page — this page is about what you can see and do day to day.</p>
+    </div>
+
+    <section class="mkt-feature">
+      <div class="mkt-feature-copy">
+        <h2>Me Stats</h2>
+        <p>Games, wins and win rate sit alongside recent form, current streak, best run, bagels and comebacks. A badge teaser shows how close you are to the next unlock.</p>
+        <p class="mkt-note">Filters let you focus on a time window that matches your season.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_stats_me.png" alt="Me Stats screen with form and streaks" width="280" height="608">
+      </div>
+    </section>
+
+    <section class="mkt-feature reverse">
+      <div class="mkt-feature-copy">
+        <h2>Partners &amp; rivals</h2>
+        <p>See who you thrive with and who pushes you hardest — best partner and toughest opponent, based on matches played together.</p>
+        <p>Browse the full Players directory to search clubmates by name, match count and win percentage.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_stats_players.png" alt="Players directory with match counts and win rates" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <section class="mkt-feature">
+      <div class="mkt-feature-copy">
+        <h2>Club leaderboard</h2>
+        <p>Rank by match rating with Club, All, Men, Ladies and Followed filters. Tap any row to open that player’s public profile.</p>
+        <a class="mkt-link" href="ratings.html">How the 0–10 scale works →</a>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_stats_leaderboard.png" alt="Club rating leaderboard with gender and followed filters" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <section class="mkt-feature reverse" id="profiles">
+      <div class="mkt-feature-copy">
+        <h2>Public profiles &amp; follow</h2>
+        <p>Avatars, club, match rating with confidence, coach and Playtomic levels, head-to-head as partners or opponents, and a rating trend chart.</p>
+        <p>Follow players so they appear in your network — useful when scheduling matches for people you follow only.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_profile_public.png" alt="Public profile with Follow button and head-to-head" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <section class="mkt-feature">
+      <div class="mkt-feature-copy">
+        <h2>Your own profile</h2>
+        <p>Set gender, preferred side (Left / Right / Either), Playtomic level and photo. Your match rating category — from Newcomer to Elite — sits alongside coach assessment when available.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_profile_own.png" alt="Own player profile with preferred side and ratings" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <section class="mkt-feature reverse">
+      <div class="mkt-feature-copy">
+        <h2>Every match moves the needle</h2>
+        <p>Completed matches show per-player rating deltas. You can also leave anonymous feedback on whether opponents’ ratings felt fair — helping keep levels honest across the club.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_match_detail_rating.png" alt="Match detail with rating deltas and peer feedback" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <div class="mkt-cta-band">
+      <h2>See your stats in the app</h2>
+      <p>Download Padel Pals, join your club, and open the Stats tab.</p>
+      <div class="mkt-store-row">
+        <a href="https://apps.apple.com/gb/app/padel-pals/id6742356382"><img src="images/app-store-badge.svg" alt="Download on the App Store"></a>
+        <a class="play" href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid"><img src="https://play.google.com/intl/en_gb/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play"></a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

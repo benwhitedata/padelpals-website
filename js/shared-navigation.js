@@ -272,7 +272,7 @@ const SHARED_NAVIGATION_CSS = `
 const SHARED_NAVIGATION_HTML = `
 <!-- Top Navigation Banner -->
 <div class="top-nav">
-    🎾 Track Your Padel Matches • Manage Tournaments • Improve Your Game
+    Know your game • Find the right match • Play with your club
 </div>
 
 <!-- Main Navigation -->
@@ -288,31 +288,36 @@ const SHARED_NAVIGATION_HTML = `
             </li>
             
             <li class="nav-item">
-                <a href="guide.html" class="nav-link">App Guide</a>
+                <a href="stats.html" class="nav-link">Stats</a>
             </li>
-            
+
             <li class="nav-item">
-                <a href="boxleague.html" class="nav-link">Box League</a>
+                <a href="find-a-match.html" class="nav-link">Find a Match</a>
+            </li>
+
+            <li class="nav-item">
+                <a href="club-socials.html" class="nav-link">Club Socials</a>
             </li>
 
             <li class="nav-item">
                 <a href="ratings.html" class="nav-link">Player Levels</a>
             </li>
 
-            <li class="nav-item">
-                <a href="tip.html" class="nav-link nav-link-support" title="Support Padel Pals">
-                    <i class="fas fa-heart" aria-hidden="true" style="margin-right: 6px; color: #e25c6b;"></i>Support
-                </a>
-            </li>
-
             <li class="nav-item has-dropdown">
                 <a href="#" class="nav-link">More</a>
                 <div class="dropdown">
                     <div class="dropdown-section">
+                        <div class="dropdown-title">Product</div>
+                        <a href="badges.html" class="dropdown-link">Badges</a>
+                        <a href="boxleague.html" class="dropdown-link">Box League</a>
+                        <a href="guide.html" class="dropdown-link">App Guide</a>
+                        <a href="tip.html" class="dropdown-link">Support the app</a>
+                    </div>
+                    <div class="dropdown-section">
                         <div class="dropdown-title">Information</div>
-                        <a href="support.html" class="dropdown-link">💬 Help &amp; Contact</a>
-                        <a href="tip.html" class="dropdown-link">☕ Support the app</a>
-                        <a href="privacy.html" class="dropdown-link">🔒 Privacy Policy</a>
+                        <a href="support.html" class="dropdown-link">Help &amp; Contact</a>
+                        <a href="privacy.html" class="dropdown-link">Privacy Policy</a>
+                        <a href="terms.html" class="dropdown-link">Terms</a>
                     </div>
                 </div>
             </li>
@@ -572,9 +577,10 @@ const SHARED_FOOTER_HTML = `
                 <h4>Padel Pals</h4>
                 <ul>
                     <li><a href="index.html">Home</a></li>
-                    <li><a href="guide.html">App Guide</a></li>
-                    <li><a href="boxleague.html">Box League</a></li>
-                    <li><a href="ratings.html">Player Levels</a></li>
+                    <li><a href="stats.html">Stats &amp; Profiles</a></li>
+                    <li><a href="find-a-match.html">Find a Match</a></li>
+                    <li><a href="club-socials.html">Club Socials</a></li>
+                    <li><a href="badges.html">Badges</a></li>
                     <li><a href="dashboard.html">Dashboard</a></li>
                 </ul>
             </div>
@@ -582,6 +588,9 @@ const SHARED_FOOTER_HTML = `
             <div class="footer-section">
                 <h4>Information</h4>
                 <ul>
+                    <li><a href="ratings.html">Player Levels</a></li>
+                    <li><a href="boxleague.html">Box League</a></li>
+                    <li><a href="guide.html">App Guide</a></li>
                     <li><a href="support.html">Support</a></li>
                     <li><a href="tip.html">Support the app</a></li>
                     <li><a href="privacy.html">Privacy Policy</a></li>
@@ -599,7 +608,7 @@ const SHARED_FOOTER_HTML = `
         </div>
         
         <div class="footer-bottom">
-            <p>&copy; 2025 Padel Pals. All rights reserved.</p>
+            <p>&copy; 2026 Padel Pals. All rights reserved.</p>
         </div>
     </div>
 </footer>
