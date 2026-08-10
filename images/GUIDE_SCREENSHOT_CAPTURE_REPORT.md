@@ -1,10 +1,10 @@
 # App Guide screenshot refresh — report
 
-**Captured:** 10 August 2026, ~14:44–14:50 and ~21:41 BST  
+**Captured:** 10 August 2026, ~14:44–14:50, ~21:41, and ~22:04–22:10 BST  
 **Device:** iPhone 17 Pro Max simulator, iOS 26.1, portrait, dark mode — matches the `mkt_*.png` pack  
 **Account:** signed in as Ben White (7.3), club *Mode*  
 **Output:** `padelpals-website/images/`, 1320 × 2868 full-device frames  
-**No website HTML was changed during capture. No Americano screen was opened or captured.**
+**No Americano screen was opened or captured.**
 
 Legacy assets backed up to `images/_legacy_guide_2025/` before overwrite.
 
@@ -22,12 +22,16 @@ Legacy assets backed up to `images/_legacy_guide_2025/` before overwrite.
 |---|---|
 | `step_1.png` … `step_5.png` | ✅ Schedule Match path; sheet dismissed, nothing scheduled |
 
-## Flow C — Record Result — partial
+## Flow C — Record Result — mostly complete (follow-up ~22:10)
 
 | File | Status |
 |---|---|
-| `guide_record_form.png` / `step_6.png` | ✅ Record Result with scoreboard |
-| `guide_record_confirm.png` / `step_7.png` | ❌ Not captured (avoided committing live Mode ratings) |
+| `guide_record_sheet.png` | ✅ Empty/opening **Record Result** sheet (Step 2) |
+| `guide_record_players.png` | ✅ Select Player picker from Record Result |
+| `guide_record_form.png` / `step_6.png` | ✅ Filled scoreboard + Record Result CTA |
+| `guide_record_confirm.png` / `step_7.png` | ❌ Still not a live confirm dialog — `guide_record_confirm.png` is an interim copy of the Apr 2025 Match Score screen. Needs a throwaway-club capture or approved Mode record. |
+
+Guide Step 4 therefore uses the filled form (Click **Record Result**) until a real confirm shot exists.
 
 ## Flows D & E — Box League — blocked
 
@@ -37,4 +41,4 @@ Legacy assets backed up to `images/_legacy_guide_2025/` before overwrite.
 
 ## Totals
 
-**10 of 21** guide assets refreshed (plus `guide_record_form.png`). Choose Club and Schedule Match — the flows with the most wrong copy — are done.
+**Choose Club + Schedule Match + Record Result sheet/players/form** refreshed. Still open: Record confirm dialog; full Box League pack.

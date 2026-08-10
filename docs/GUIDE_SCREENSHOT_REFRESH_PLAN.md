@@ -24,7 +24,7 @@ See [`images/GUIDE_SCREENSHOT_CAPTURE_REPORT.md`](../images/GUIDE_SCREENSHOT_CAP
 |---|---|
 | Choose Club | ✅ Club_1–3 refreshed |
 | Schedule Match | ✅ step_1–5 refreshed |
-| Record Result | ⚠️ form done (`guide_record_form` / step_6); confirm dialog still missing |
+| Record Result | ⚠️ form done; need dedicated flow via [`GUIDE_RECORD_RESULT_COWORK_PROMPT.md`](GUIDE_RECORD_RESULT_COWORK_PROMPT.md) → `guide_record_sheet`, players, confirm |
 | View / Submit Box League | ❌ blocked — My Leagues empty; Box_1–11 still Apr 2025 |
 
 **Remaining capture:** (1) Record confirm on a throwaway club or accepted live match → `guide_record_confirm.png` + `step_7.png`. (2) Seed Mode box league + fixture → re-run Flows D & E.
