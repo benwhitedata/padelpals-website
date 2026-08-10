@@ -91,16 +91,16 @@
   <section class="hero-section">
     <div class="container">
       <h1>How to Use the Padel Pals App</h1>
-      <p class="mt-3">Follow these simple steps to get started and track your padel journey.</p>
+      <p class="mt-3">Walk through the main tabs — Matches, Competitions, Stats and Profile — with screenshots from the current app.</p>
       <div class="row mt-4">
         <div class="col-6 col-md-4 mb-2">
           <button type="button" class="btn btn-guide w-100" onclick="showGuide('chooseClub')">Choose Club</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
-          <button type="button" class="btn btn-guide w-100" onclick="showGuide('schedule')">Schedule Matches</button>
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('schedule')">Schedule a Match</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
-          <button type="button" class="btn btn-guide w-100" onclick="showGuide('register')">Register Match Result</button>
+          <button type="button" class="btn btn-guide w-100" onclick="showGuide('register')">Record Match Result</button>
         </div>
         <div class="col-6 col-md-4 mb-2">
           <button type="button" class="btn btn-guide w-100" onclick="showGuide('view')">View Box League</button>
@@ -153,118 +153,82 @@
         switch(option) {
             case 'schedule':
                 content = `
-                <h4></h4>
                 <div class="row align-items-center mb-5">
                     <div class="col-md-6 text-center">
-                        <img src="images/step_1.png" alt="Step 1" />
+                        <img src="images/step_1.png" alt="Matches menu" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 1: Matches</h4>
-                        <p>Open the Matches menu.</p>
+                        <h4>Step 1: Open Matches</h4>
+                        <p>Tap the <strong>Matches</strong> tab to open the Matches menu — Club Socials, Record Result, Schedule Match, Upcoming and History.</p>
                     </div>
                 </div>
                 <div class="row align-items-center mb-5 flex-md-row-reverse">
                     <div class="col-md-6 text-center">
-                        <img src="images/step_2.png" alt="Extra Step" />
+                        <img src="images/step_2.png" alt="Schedule Match sheet" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 2: Create Match</h4>
-                        <p>Now Click "Create Match".</p>
+                        <h4>Step 2: Schedule Match</h4>
+                        <p>Tap <strong>Schedule Match</strong>. You’ll see Team 1 / Team 2 slots, date and time, your club, and Match settings.</p>
                     </div>
                 </div>
                 <div class="row align-items-center mb-5">
                     <div class="col-md-6 text-center">
-                        <img src="images/step_3.png" alt="Step 2" />
+                        <img src="images/step_3.png" alt="Select Player picker" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 3: Player Selection</h4>
-                        <p>For each slot, open the dialogue box to choose a player from the Club Members. If the player is not yet added, you can type in a name manually to add the player.</p>
+                        <h4>Step 3: Pick players</h4>
+                        <p>Tap a slot to open <strong>Select Player</strong>. Filter by Similar Rating or Club Members, search, and choose from Your Players (ratings and club tags shown).</p>
                     </div>
                 </div>
                 <div class="row align-items-center mb-5 flex-md-row-reverse">
                     <div class="col-md-6 text-center">
-                        <img src="images/step_4.png" alt="Step 3" />
+                        <img src="images/step_4.png" alt="Schedule form with four players" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 4: Repeat for all player</h4>
-                        <p>Add a player for each position.</p>
+                        <h4>Step 4: Fill the fixture</h4>
+                        <p>Add all four players, set the date and time, and confirm the club. Use Swap if you need to rearrange sides.</p>
                     </div>
                 </div>
                 <div class="row align-items-center mb-5">
                     <div class="col-md-6 text-center">
-                        <img src="images/step_5.png" alt="Step 4" />
+                        <img src="images/step_5.png" alt="Who can join settings" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 5: Schedule Match or Enter Score</h4>
-                        <p>You can save the game for later or enter the result immediately.</p>
+                        <h4>Step 5: Who can join</h4>
+                        <p>Expand <strong>Match settings</strong> to set Share with club, whether it counts towards ratings, Men’s / Ladies’ / All, level range, and optional <strong>People I follow only</strong>. Then tap <strong>Schedule</strong>.</p>
+                        <p>More on open matches: <a href="find-a-match.html">Find a Match</a>.</p>
                     </div>
                 </div>
                 `;
                 break;
             case 'register':
                 content = `
-                <h4></h4>
                 <div class="row align-items-center mb-5">
                     <div class="col-md-6 text-center">
-                        <img src="images/step_1.png" alt="Step 1" />
+                        <img src="images/step_1.png" alt="Matches menu" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 1: Matches</h4>
-                        <p>Open the Matches menu.</p>
+                        <h4>Step 1: Open Matches</h4>
+                        <p>Tap the <strong>Matches</strong> tab, then choose <strong>Record Result</strong> (not Schedule — that is for future fixtures).</p>
                     </div>
                 </div>
                 <div class="row align-items-center mb-5 flex-md-row-reverse">
                     <div class="col-md-6 text-center">
-                        <img src="images/step_2.png" alt="Extra Step" />
+                        <img src="images/guide_record_form.png" alt="Record Result with scoreboard" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 2: Create Match</h4>
-                        <p>Now Click "Create Match".</p>
+                        <h4>Step 2: Enter the scoreboard</h4>
+                        <p>Add the four players, set the played date, and enter set scores on the <strong>Scoreboard</strong>. Adjust Match settings if you need to control sharing or ratings.</p>
+                        <p>You can also open a pending scheduled match and tap <strong>Enter Score</strong>.</p>
                     </div>
                 </div>
                 <div class="row align-items-center mb-5">
                     <div class="col-md-6 text-center">
-                        <img src="images/step_3.png" alt="Step 2" />
+                        <img src="images/step_6.png" alt="Record Result ready to submit" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 3: Player Selection</h4>
-                        <p>For each slot, open the dialogue box to choose a player from the Club Members. If the player is not yet added, you can type in a name manually to add the player.</p>
-                    </div>
-                </div>
-                <div class="row align-items-center mb-5 flex-md-row-reverse">
-                    <div class="col-md-6 text-center">
-                        <img src="images/step_4.png" alt="Step 3" />
-                    </div>
-                    <div class="col-md-6">
-                        <h4>Step 4: Repeat for all player</h4>
-                        <p>Add a player for each position.</p>
-                    </div>
-                </div>
-                <div class="row align-items-center mb-5">
-                    <div class="col-md-6 text-center">
-                        <img src="images/step_5.png" alt="Step 4" />
-                    </div>
-                    <div class="col-md-6">
-                        <h4>Step 5: Schedule Match or Enter Score</h4>
-                        <p>You can save the game for later or enter the result immediately.</p>
-                    </div>
-                </div>
-                <div class="row align-items-center mb-5 flex-md-row-reverse">
-                    <div class="col-md-6 text-center">
-                        <img src="images/step_6.png" alt="Step 5" />
-                    </div>
-                    <div class="col-md-6">
-                        <h4>Step 6: Enter Set Scores</h4>
-                        <p>Make any adjustments to the match settings and date, then start entering the set scores.</p>
-                    </div>
-                </div>
-                <div class="row align-items-center mb-5">
-                    <div class="col-md-6 text-center">
-                        <img src="images/step_7.png" alt="Step 6" />
-                    </div>
-                    <div class="col-md-6">
-                        <h4>Step 7: Submit Match Result</h4>
-                        <p>Check all players are happy for the match to be submitted. Use Private mode to keep the match result private between the players involved.</p>
+                        <h4>Step 3: Record Result</h4>
+                        <p>When the scoreboard looks right, tap <strong>Record Result</strong>. Confirm if the app asks you to — once recorded, the match appears in History and can move ratings.</p>
                     </div>
                 </div>
                 `;
@@ -419,32 +383,31 @@
                 break;
             case 'chooseClub':
                 content = `
-                <h4></h4>
                 <div class="row align-items-center mb-5">
                     <div class="col-md-6 text-center">
-                        <img src="images/Club_1.png" alt="Step 1" />
+                        <img src="images/Club_1.png" alt="Player Profile" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 1: Open the App</h4>
-                        <p>Launch the Padel Pals app and click on Player Profile.</p>
+                        <h4>Step 1: Open Profile</h4>
+                        <p>Tap the <strong>Profile</strong> tab. Your photo, preferred side, Playtomic level and match rating appear at the top.</p>
                     </div>
                 </div>
                 <div class="row align-items-center mb-5 flex-md-row-reverse">
                     <div class="col-md-6 text-center">
-                        <img src="images/Club_2.png" alt="Step 2" />
+                        <img src="images/Club_2.png" alt="Your Club Change control" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 2: Navigate to Your Club</h4>
-                        <p>Under Your Club, click on "Change" next to the default club.</p>
+                        <h4>Step 2: Your Club</h4>
+                        <p>Scroll to <strong>Your Club</strong> and tap <strong>Change</strong> next to your current club.</p>
                     </div>
                 </div>
                 <div class="row align-items-center mb-5">
                     <div class="col-md-6 text-center">
-                        <img src="images/Club_3.png" alt="Step 3" />
+                        <img src="images/Club_3.png" alt="Select Club sheet" />
                     </div>
                     <div class="col-md-6">
-                        <h4>Step 3: Choose Your Club</h4>
-                        <p>Find and select the club you wish to be connected with</p>
+                        <h4>Step 3: Select Club</h4>
+                        <p>Search or scroll the list and tap the club you want. You can also <strong>Add New</strong> if your club is not listed yet.</p>
                     </div>
                 </div>
                 `;
