@@ -298,6 +298,114 @@
         .t-status-completed{ background: #e2e3e5; color: #383d41; }
         .t-status-cancelled{ background: #f8d7da; color: #721c24; }
 
+        /* ── Americanos tab ─────────────────────────────────────── */
+        .americanos-container { margin-bottom: 40px; }
+        .americano-status-btn {
+            background: #f0f0f0;
+            color: #555;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.82rem;
+            transition: background 0.15s, color 0.15s;
+        }
+        .americano-status-btn:hover { background: #e0e0e0; color: #222; }
+        .americano-status-btn.active {
+            background: var(--orange);
+            color: #fff;
+            border-color: var(--orange);
+            font-weight: 600;
+        }
+        .americano-card {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: box-shadow 0.15s, border-color 0.15s;
+        }
+        .americano-card:hover {
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+            border-color: var(--orange);
+        }
+        .americano-card .a-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--dark-blue);
+        }
+        .americano-card .a-meta {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 3px;
+        }
+        .a-status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .a-status-live      { background: #d4edda; color: #155724; }
+        .a-status-open      { background: #fff3cd; color: #856404; }
+        .a-status-completed { background: #e2e3e5; color: #383d41; }
+        .a-status-cancelled { background: #f8d7da; color: #721c24; }
+
+        .americano-modal-header-accent {
+            border-bottom: 3px solid var(--orange);
+        }
+        .americano-standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+        .americano-standings-table th {
+            color: rgba(255,255,255,0.65);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .americano-standings-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.95rem;
+        }
+        .americano-standings-table .a-pts {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--orange);
+        }
+        .americano-fixture-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .americano-fixture-row .a-score {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--orange);
+            white-space: nowrap;
+        }
+        .americano-sitting-out {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.55);
+            margin-top: 8px;
+        }
+        .americano-updated {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.45);
+        }
+
         /* Bracket grid (inside modal — dark background) */
         .bracket-wrapper {
             display: flex;
@@ -1250,6 +1358,51 @@
             background: rgba(255,255,255,0.08);
         }
 
+        /* ── Americano Fullscreen Overlay ─────────────────────────── */
+        #americanoFullscreenOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #0d1b2e;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #americanoFullscreenOverlay.active {
+            display: flex;
+        }
+        .americano-fs-fixtures {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .americano-fs-fixture {
+            background: rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #fff;
+        }
+        .americano-fs-fixture .a-fs-score {
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            margin-top: 6px;
+        }
+        .americano-fs-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        .americano-fs-badge.live { background: #28a745; }
+        .americano-fs-badge.final { background: rgba(255,255,255,0.2); }
+
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -1293,6 +1446,9 @@
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="tournaments-tab" data-bs-toggle="tab" data-bs-target="#tournaments" type="button" role="tab" aria-controls="tournaments" aria-selected="false">Tournaments</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="americanos-tab" data-bs-toggle="tab" data-bs-target="#americanos" type="button" role="tab" aria-controls="americanos" aria-selected="false">Americanos</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="boxleague-tab" data-bs-toggle="tab" data-bs-target="#boxleague" type="button" role="tab" aria-controls="boxleague" aria-selected="false">Box League</button>
@@ -1570,6 +1726,48 @@
                     </div>
                 </div>
 
+                <!-- Americanos Tab -->
+                <div class="tab-pane fade" id="americanos" role="tabpanel" aria-labelledby="americanos-tab">
+                    <div class="americanos-container">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div id="americanoStatusFilter" class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-sm americano-status-btn active" data-filter="live">Live</button>
+                                <button type="button" class="btn btn-sm americano-status-btn active" data-filter="upcoming">Upcoming</button>
+                                <button type="button" class="btn btn-sm americano-status-btn" data-filter="completed">Completed</button>
+                            </div>
+                        </div>
+                        <div id="americanoList">
+                            <p class="placeholder-text">Loading Americanos…</p>
+                        </div>
+
+                        <!-- Americano detail modal -->
+                        <div class="modal fade" id="americanoModal" tabindex="-1" aria-labelledby="americanoModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                                <div class="modal-content" style="background:#1a2238; color:#fff; border:none;">
+                                    <div class="modal-header americano-modal-header-accent" style="border-bottom:1px solid rgba(255,255,255,0.15);">
+                                        <div>
+                                            <h5 class="modal-title" id="americanoModalLabel">Americano</h5>
+                                            <div class="americano-updated" id="americanoModalMeta"></div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button type="button" class="btn btn-outline-light btn-sm" id="americanoFullscreenBtn" style="display:none;" onclick="openAmericanoFullscreen()" title="Fullscreen display">
+                                                <i class="fas fa-expand me-1"></i>Fullscreen
+                                            </button>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                    </div>
+                                    <div class="modal-body" id="americanoModalBody">
+                                        <p class="text-center text-white-50 py-4">Loading…</p>
+                                    </div>
+                                    <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.15);">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Box League Tab -->
                 <div class="tab-pane fade" id="boxleague" role="tabpanel" aria-labelledby="boxleague-tab">
                     <div class="box-league-container">
@@ -1763,7 +1961,7 @@
                                             <th width="50%">Player</th>
                                             <th width="12%">Rating</th>
                                             <th width="13%">Playtomic</th>
-                                            <th width="15%">Last Updated</th>
+                                            <th width="15%">Last rated</th>
                                         </tr>
                                     </thead>
                                     <tbody id="playerRankingsList">
@@ -2714,6 +2912,707 @@
         });
 
         // ── end Tournaments ────────────────────────────────────────────────────
+
+        // ── Americanos (view-only club live results) ───────────────────────────
+        let allAmericanos = [];
+        let americanoSignupCounts = {}; // session_id -> count
+        let americanoActiveFilters = new Set(['live', 'upcoming']); // default Live + Upcoming
+        let americanoDetailToken = null;
+        let americanoDetailData = null;
+        let americanoPollTimer = null;
+        let americanoLastUpdatedAt = null;
+        let americanoModalInstance = null;
+
+        const AMERICANO_POLL_MS = 3000;
+        const AMERICANO_SHARE_BASE = 'https://padelpals.app/americano/';
+
+        function americanoStatusLabel(status) {
+            if (status === 'open') return 'Upcoming';
+            if (status === 'live') return 'Live';
+            if (status === 'completed') return 'Completed';
+            if (status === 'cancelled') return 'Cancelled';
+            return status || '—';
+        }
+
+        function americanoFilterKey(status) {
+            if (status === 'open') return 'upcoming';
+            if (status === 'live') return 'live';
+            if (status === 'completed') return 'completed';
+            return null;
+        }
+
+        function formatAmericanoDateTime(iso) {
+            if (!iso) return '—';
+            try {
+                return new Date(iso).toLocaleString('en-GB', {
+                    weekday: 'short', day: 'numeric', month: 'short',
+                    hour: '2-digit', minute: '2-digit'
+                });
+            } catch (_) {
+                return '—';
+            }
+        }
+
+        function americanoEligibilitySummary(session) {
+            const parts = [];
+            if (session.allowed_gender === 'male') parts.push('Men only');
+            else if (session.allowed_gender === 'female') parts.push('Women only');
+            const minR = session.min_rating != null ? Number(session.min_rating) : null;
+            const maxR = session.max_rating != null ? Number(session.max_rating) : null;
+            if (minR != null && maxR != null) parts.push(`Rating ${minR}–${maxR}`);
+            else if (minR != null) parts.push(`Rating ${minR}+`);
+            else if (maxR != null) parts.push(`Rating up to ${maxR}`);
+            return parts.length ? parts.join(' · ') : 'Open to all club members';
+        }
+
+        function standingsFromAmericanoPayload(rpcData) {
+            const live = rpcData && rpcData.session && rpcData.session.payload;
+            if (!live || !Array.isArray(live.players)) return [];
+            const pointsToWin = live.points_to_win || 24;
+            const stats = {};
+            live.players.forEach(p => { stats[p.name] = { name: p.name, pts: 0, wins: 0, gp: 0 }; });
+            (live.rounds || []).forEach(round => {
+                (round.fixtures || []).forEach(f => {
+                    if (f.team1_score == null) return;
+                    const s1 = f.team1_score;
+                    const s2 = pointsToWin - s1;
+                    (f.team1 || []).forEach(p => {
+                        const row = stats[p.name] || { name: p.name, pts: 0, wins: 0, gp: 0 };
+                        row.pts += s1; row.gp += 1; if (s1 > s2) row.wins += 1; stats[p.name] = row;
+                    });
+                    (f.team2 || []).forEach(p => {
+                        const row = stats[p.name] || { name: p.name, pts: 0, wins: 0, gp: 0 };
+                        row.pts += s2; row.gp += 1; if (s2 > s1) row.wins += 1; stats[p.name] = row;
+                    });
+                });
+            });
+            return Object.values(stats).sort((a, b) => b.pts - a.pts || b.wins - a.wins);
+        }
+
+        function getAmericanoCurrentRound(payload) {
+            if (!payload || !Array.isArray(payload.rounds) || !payload.rounds.length) return null;
+            const cur = payload.current_round;
+            return payload.rounds.find(r => r.round_number === cur)
+                || payload.rounds[payload.rounds.length - 1];
+        }
+
+        function getAmericanoSupabaseClient() {
+            if (typeof window.getOrCreateSupabaseClient === 'function') {
+                const c = window.getOrCreateSupabaseClient();
+                if (c) return c;
+            }
+            if (typeof supabaseClient !== 'undefined' && supabaseClient) return supabaseClient;
+            return null;
+        }
+
+        async function resolveAmericanoClubId() {
+            if (typeof currentUserClubId !== 'undefined' && currentUserClubId) return currentUserClubId;
+            if (window.currentUserClubData?.id) return window.currentUserClubData.id;
+            try {
+                const client = getAmericanoSupabaseClient();
+                if (!client) return null;
+                const { data: { session } } = await client.auth.getSession();
+                if (!session?.user?.id) return null;
+                const { data: me } = await client
+                    .from('user_profiles')
+                    .select('club_id, clubs(id, club_name, primary_color, secondary_color, logo_url)')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+                const clubId = me?.clubs?.id || me?.club_id || null;
+                if (me?.clubs) window.currentUserClubData = me.clubs;
+                return clubId;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        async function loadAmericanoData() {
+            const listEl = document.getElementById('americanoList');
+            if (!listEl) return;
+
+            const clubId = await resolveAmericanoClubId();
+            if (!clubId) {
+                allAmericanos = [];
+                listEl.innerHTML = `
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Select a club on your profile</h5>
+                        <p class="mb-0">Americanos are club-scoped. Choose your club under Profile to see live and upcoming sessions.</p>
+                    </div>`;
+                return;
+            }
+
+            listEl.innerHTML = `<p class="placeholder-text">Loading Americanos…</p>`;
+
+            try {
+                const client = getAmericanoSupabaseClient();
+                if (!client) throw new Error('Supabase client not ready');
+                const { data, error } = await client
+                    .from('americano_sessions')
+                    .select('id,share_token,session_name,play_at,signup_deadline,status,current_round,target_players,guest_players,min_rating,max_rating,allowed_gender,updated_at')
+                    .eq('club_id', clubId)
+                    .in('status', ['open', 'live', 'completed'])
+                    .order('play_at', { ascending: false });
+
+                if (error) throw error;
+                allAmericanos = data || [];
+
+                americanoSignupCounts = {};
+                const openIds = allAmericanos.filter(s => s.status === 'open').map(s => s.id);
+                if (openIds.length) {
+                    const { data: signups } = await client
+                        .from('americano_signups')
+                        .select('session_id')
+                        .in('session_id', openIds)
+                        .eq('status', 'in');
+                    (signups || []).forEach(row => {
+                        americanoSignupCounts[row.session_id] = (americanoSignupCounts[row.session_id] || 0) + 1;
+                    });
+                }
+
+                renderAmericanoList();
+            } catch (err) {
+                console.error('loadAmericanoData', err);
+                listEl.innerHTML = `<div class="alert alert-danger">Could not load Americanos. Please try again.</div>`;
+            }
+        }
+
+        function renderAmericanoList() {
+            const listEl = document.getElementById('americanoList');
+            if (!listEl) return;
+
+            const filtered = allAmericanos.filter(s => {
+                const key = americanoFilterKey(s.status);
+                return key && americanoActiveFilters.has(key);
+            });
+
+            if (!filtered.length) {
+                const active = [...americanoActiveFilters].map(f =>
+                    f === 'upcoming' ? 'upcoming' : f
+                ).join(' / ') || 'selected';
+                listEl.innerHTML = `<p class="placeholder-text">No ${active} Americanos for your club.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(s => {
+                const playAt = formatAmericanoDateTime(s.play_at);
+                const guests = Array.isArray(s.guest_players) ? s.guest_players.length : 0;
+                let metaExtra = '';
+                if (s.status === 'open') {
+                    const signed = americanoSignupCounts[s.id] || 0;
+                    const total = signed + guests;
+                    const target = s.target_players ? ` / ${s.target_players}` : '';
+                    metaExtra = ` &nbsp;·&nbsp; ${total}${target} players`;
+                } else if (s.status === 'live') {
+                    metaExtra = ` &nbsp;·&nbsp; Round ${s.current_round || 1}`;
+                }
+                const statusClass = `a-status-${s.status === 'open' ? 'open' : s.status}`;
+                const tokenAttr = escapeHtml(s.share_token || '');
+                return `
+                <div class="americano-card" onclick="openAmericanoModal('${tokenAttr}')">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="a-name">${escapeHtml(s.session_name || 'Americano')}</div>
+                            <div class="a-meta">${playAt}${metaExtra}</div>
+                        </div>
+                        <span class="a-status-badge ${statusClass}">${americanoStatusLabel(s.status)}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function stopAmericanoPolling() {
+            if (americanoPollTimer) {
+                clearInterval(americanoPollTimer);
+                americanoPollTimer = null;
+            }
+        }
+
+        function maybeStartAmericanoPolling() {
+            stopAmericanoPolling();
+            const status = americanoDetailData?.session?.status;
+            if (status !== 'live') return;
+            americanoPollTimer = setInterval(() => {
+                if (document.hidden) return;
+                const modalEl = document.getElementById('americanoModal');
+                if (!modalEl?.classList.contains('show') && !document.getElementById('americanoFullscreenOverlay')?.classList.contains('active')) {
+                    return;
+                }
+                refreshAmericanoDetail(false);
+            }, AMERICANO_POLL_MS);
+        }
+
+        async function fetchAmericanoByToken(token) {
+            const client = getAmericanoSupabaseClient();
+            if (!client) throw new Error('Supabase client not ready');
+            const { data, error } = await client.rpc('get_americano_by_token', { token });
+            if (error) throw error;
+            return data;
+        }
+
+        async function openAmericanoModal(shareToken) {
+            if (!shareToken || !/^[A-Za-z0-9._-]+$/.test(shareToken)) return;
+            americanoDetailToken = shareToken;
+            const modalEl = document.getElementById('americanoModal');
+            document.getElementById('americanoModalBody').innerHTML = `<p class="text-center text-white-50 py-4">Loading…</p>`;
+            document.getElementById('americanoModalMeta').textContent = '';
+            document.getElementById('americanoFullscreenBtn').style.display = 'none';
+
+            if (!americanoModalInstance) {
+                americanoModalInstance = new bootstrap.Modal(modalEl);
+            }
+            americanoModalInstance.show();
+
+            await refreshAmericanoDetail(true);
+        }
+
+        async function refreshAmericanoDetail(isInitial) {
+            if (!americanoDetailToken) return;
+            try {
+                const data = await fetchAmericanoByToken(americanoDetailToken);
+                americanoDetailData = data;
+                americanoLastUpdatedAt = new Date();
+                renderAmericanoDetail();
+                maybeStartAmericanoPolling();
+                if (document.getElementById('americanoFullscreenOverlay')?.classList.contains('active')) {
+                    americanoFsRenderPage(true);
+                }
+            } catch (err) {
+                console.error('refreshAmericanoDetail', err);
+                if (isInitial) {
+                    document.getElementById('americanoModalBody').innerHTML =
+                        `<p class="text-center text-danger py-4">Could not load this Americano.</p>`;
+                }
+            }
+        }
+
+        function applyAmericanoModalBranding() {
+            const clubData = window.currentUserClubData;
+            const primary = clubData?.primary_color || clubData?.primaryColor || '#FF6B35';
+            const header = document.querySelector('#americanoModal .americano-modal-header-accent');
+            if (header) header.style.borderBottomColor = primary;
+            document.querySelectorAll('#americanoModal .a-pts, #americanoModal .a-score').forEach(el => {
+                el.style.color = primary;
+            });
+        }
+
+        function renderAmericanoDetail() {
+            const data = americanoDetailData;
+            const body = document.getElementById('americanoModalBody');
+            const titleEl = document.getElementById('americanoModalLabel');
+            const metaEl = document.getElementById('americanoModalMeta');
+            const fsBtn = document.getElementById('americanoFullscreenBtn');
+            if (!data?.session || !body) return;
+
+            const s = data.session;
+            const status = s.status || 'open';
+            titleEl.textContent = s.session_name || 'Americano';
+
+            const updatedStr = americanoLastUpdatedAt
+                ? americanoLastUpdatedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                : '';
+            const roundLabel = (status === 'live' || status === 'completed')
+                ? ` · Round ${s.current_round || s.payload?.current_round || 1}`
+                : '';
+            metaEl.innerHTML = `<span class="a-status-badge a-status-${status === 'open' ? 'open' : status}">${americanoStatusLabel(status)}</span>${roundLabel}${updatedStr ? ` · Updated ${updatedStr}` : ''}`;
+
+            fsBtn.style.display = (status === 'live' || status === 'completed') ? '' : 'none';
+
+            if (status === 'cancelled') {
+                body.innerHTML = `<p class="text-center text-white-50 py-4">This Americano was cancelled.</p>`;
+                applyAmericanoModalBranding();
+                return;
+            }
+
+            if (status === 'open' || status === 'draft') {
+                const guests = Array.isArray(s.guest_players) ? s.guest_players.length : 0;
+                const signed = data.signup_count || 0;
+                const total = signed + guests;
+                const target = s.target_players ? ` / ${s.target_players}` : '';
+                const shareUrl = AMERICANO_SHARE_BASE + encodeURIComponent(s.share_token || americanoDetailToken);
+                const deepLink = `padelpals://americano/${s.share_token || americanoDetailToken}`;
+                body.innerHTML = `
+                    <div class="mb-3">
+                        <div class="mb-2"><strong>Play at</strong><br>${escapeHtml(formatAmericanoDateTime(s.play_at))}</div>
+                        <div class="mb-2"><strong>Sign-up deadline</strong><br>${s.signup_deadline ? escapeHtml(formatAmericanoDateTime(s.signup_deadline)) : 'None'}</div>
+                        <div class="mb-2"><strong>Eligibility</strong><br>${escapeHtml(americanoEligibilitySummary(s))}</div>
+                        <div class="mb-3"><strong>Players</strong><br>${total}${target}${guests ? ` (incl. ${guests} guest${guests === 1 ? '' : 's'})` : ''}</div>
+                    </div>
+                    <div class="p-3 rounded" style="background:rgba(255,255,255,0.06);">
+                        <p class="mb-3">Join in the PadelPals app to sign up for this Americano.</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-warning btn-sm" href="${deepLink}">Open in PadelPals</a>
+                            <button type="button" class="btn btn-outline-light btn-sm" onclick="copyAmericanoShareLink('${escapeHtml(shareUrl)}')">
+                                <i class="fas fa-link me-1"></i>Copy share link
+                            </button>
+                        </div>
+                        <p class="americano-updated mt-2 mb-0">${escapeHtml(shareUrl)}</p>
+                    </div>`;
+                applyAmericanoModalBranding();
+                return;
+            }
+
+            // live / completed
+            const rows = standingsFromAmericanoPayload(data);
+            const live = s.payload || {};
+            const pointsToWin = live.points_to_win || s.points_to_win || 24;
+            const round = getAmericanoCurrentRound(live);
+            const heading = status === 'completed' ? 'Final standings' : 'Live standings';
+
+            let standingsHtml = rows.map((r, i) =>
+                `<tr><td>${i + 1}</td><td>${escapeHtml(r.name)}</td><td class="a-pts">${r.pts}</td><td>${r.wins}W</td></tr>`
+            ).join('');
+            if (!standingsHtml) {
+                standingsHtml = `<tr><td colspan="4" class="text-center text-white-50 py-3">No scored fixtures yet</td></tr>`;
+            }
+
+            let fixturesHtml = '';
+            if (round) {
+                fixturesHtml = (round.fixtures || []).map(f => {
+                    const t1 = (f.team1 || []).map(p => p.name).join(' & ');
+                    const t2 = (f.team2 || []).map(p => p.name).join(' & ');
+                    const score = f.team1_score == null ? '—' : `${f.team1_score} – ${pointsToWin - f.team1_score}`;
+                    const court = f.court != null ? `Court ${f.court}` : 'Court';
+                    return `<div class="americano-fixture-row">
+                        <div><div class="small text-white-50">${court}</div>
+                        <div>${escapeHtml(t1)}</div>
+                        <div class="text-white-50">${escapeHtml(t2)}</div></div>
+                        <div class="a-score">${score}</div>
+                    </div>`;
+                }).join('');
+                const sitting = (round.sitting_out || []).map(p => p.name).filter(Boolean);
+                if (sitting.length) {
+                    fixturesHtml += `<div class="americano-sitting-out">Sitting out: ${escapeHtml(sitting.join(', '))}</div>`;
+                }
+            }
+
+            body.innerHTML = `
+                <h6 class="text-white-50 text-uppercase mb-2" style="letter-spacing:0.06em;font-size:0.75rem;">${heading}</h6>
+                <table class="americano-standings-table">
+                    <thead><tr><th>#</th><th>Player</th><th>Pts</th><th>W</th></tr></thead>
+                    <tbody>${standingsHtml}</tbody>
+                </table>
+                ${fixturesHtml ? `<h6 class="text-white-50 text-uppercase mb-2 mt-3" style="letter-spacing:0.06em;font-size:0.75rem;">Current round</h6>${fixturesHtml}` : ''}`;
+            applyAmericanoModalBranding();
+        }
+
+        function copyAmericanoShareLink(url) {
+            if (!url) return;
+            navigator.clipboard?.writeText(url).then(() => {
+                // brief feedback via button text if possible
+            }).catch(() => {
+                window.prompt('Copy share link:', url);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tab = document.getElementById('americanos-tab');
+            if (tab) {
+                tab.addEventListener('shown.bs.tab', function() {
+                    loadAmericanoData();
+                });
+            }
+
+            document.getElementById('americanoStatusFilter')?.addEventListener('click', function(e) {
+                const btn = e.target.closest('.americano-status-btn');
+                if (!btn) return;
+                const key = btn.dataset.filter;
+                if (americanoActiveFilters.has(key)) {
+                    if (americanoActiveFilters.size === 1) return; // keep at least one
+                    americanoActiveFilters.delete(key);
+                    btn.classList.remove('active');
+                } else {
+                    americanoActiveFilters.add(key);
+                    btn.classList.add('active');
+                }
+                renderAmericanoList();
+            });
+
+            const modalEl = document.getElementById('americanoModal');
+            if (modalEl) {
+                modalEl.addEventListener('hidden.bs.modal', function() {
+                    if (!document.getElementById('americanoFullscreenOverlay')?.classList.contains('active')) {
+                        stopAmericanoPolling();
+                        americanoDetailToken = null;
+                    }
+                });
+            }
+
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden && americanoDetailData?.session?.status === 'live') {
+                    maybeStartAmericanoPolling();
+                }
+            });
+        });
+
+        // ── Americano Fullscreen ──────────────────────────────────────
+        const AFS_PAGE_SIZE = 20;
+        const AFS_ROTATE_MS = 8000;
+        const AFS_MAX_PLAYERS = 100;
+
+        let americanoFsPage = 1;
+        let americanoFsRotating = true;
+        let americanoFsTimer = null;
+        let americanoFsProgress = null;
+        let americanoFsRotateStart = null;
+        // pageMode: 'standings' | 'fixtures' — when many pages, fixtures can be a rotating page
+        let americanoFsShowFixturesPage = false;
+
+        function americanoFsApplyTheme() {
+            const clubData = window.currentUserClubData;
+            const primary = clubData?.primary_color || clubData?.primaryColor || '#FF6B35';
+            const secondary = clubData?.secondary_color || clubData?.secondaryColor || '#0d1b2e';
+            const overlay = document.getElementById('americanoFullscreenOverlay');
+            const header = overlay.querySelector('.rankings-fs-header');
+            const footer = overlay.querySelector('.rankings-fs-footer');
+            const bar = document.getElementById('americanoFsProgressBar');
+            const logoText = document.getElementById('americanoFsLogoText');
+
+            overlay.style.background = secondary;
+            if (header) {
+                header.style.background = primary;
+                header.style.borderBottomColor = primary;
+            }
+            if (footer) footer.style.background = secondary;
+            if (bar) bar.style.background = primary;
+            if (logoText) logoText.style.color = primary;
+            overlay.dataset.primaryColor = primary;
+        }
+
+        function openAmericanoFullscreen() {
+            if (!americanoDetailData?.session) return;
+            const status = americanoDetailData.session.status;
+            if (status !== 'live' && status !== 'completed') return;
+
+            const clubLogoEl = document.getElementById('americanoFsClubLogo');
+            const clubData = window.currentUserClubData;
+            if (clubData?.logo_url) {
+                clubLogoEl.src = clubData.logo_url;
+                clubLogoEl.alt = clubData.club_name ? `${clubData.club_name} logo` : 'Club logo';
+                clubLogoEl.style.display = 'block';
+                clubLogoEl.onerror = function() { this.style.display = 'none'; };
+            } else {
+                clubLogoEl.style.display = 'none';
+                clubLogoEl.src = '';
+            }
+
+            americanoFsApplyTheme();
+            americanoFsPage = 1;
+            americanoFsShowFixturesPage = false;
+            americanoFsRenderPage();
+
+            const overlay = document.getElementById('americanoFullscreenOverlay');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            document.addEventListener('keydown', americanoFsKeyHandler);
+
+            americanoFsRotating = true;
+            americanoFsStartRotate();
+            maybeStartAmericanoPolling();
+        }
+
+        function closeAmericanoFullscreen() {
+            americanoFsStopRotate();
+            document.getElementById('americanoFullscreenOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+            document.removeEventListener('keydown', americanoFsKeyHandler);
+            const modalEl = document.getElementById('americanoModal');
+            if (!modalEl?.classList.contains('show')) {
+                stopAmericanoPolling();
+            }
+        }
+
+        function americanoFsKeyHandler(e) {
+            if (e.key === 'Escape') closeAmericanoFullscreen();
+            if (e.key === 'ArrowRight') americanoFsManualPage(1);
+            if (e.key === 'ArrowLeft') americanoFsManualPage(-1);
+            if (e.key === ' ') { e.preventDefault(); americanoFsToggleRotate(); }
+        }
+
+        function americanoFsStartRotate() {
+            americanoFsStopRotate();
+            if (!americanoFsRotating) return;
+            document.getElementById('americanoFsRotateIcon').className = 'fas fa-pause';
+            americanoFsRotateStart = performance.now();
+            americanoFsAnimateBar();
+            americanoFsTimer = setTimeout(() => americanoFsAutoAdvance(), AFS_ROTATE_MS);
+        }
+
+        function americanoFsStopRotate() {
+            if (americanoFsTimer) { clearTimeout(americanoFsTimer); americanoFsTimer = null; }
+            if (americanoFsProgress) { cancelAnimationFrame(americanoFsProgress); americanoFsProgress = null; }
+            const bar = document.getElementById('americanoFsProgressBar');
+            if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; }
+        }
+
+        function americanoFsRestartRotate() {
+            if (americanoFsRotating) americanoFsStartRotate();
+        }
+
+        function americanoFsToggleRotate() {
+            americanoFsRotating = !americanoFsRotating;
+            const icon = document.getElementById('americanoFsRotateIcon');
+            if (americanoFsRotating) {
+                icon.className = 'fas fa-pause';
+                americanoFsStartRotate();
+            } else {
+                icon.className = 'fas fa-play';
+                americanoFsStopRotate();
+            }
+        }
+
+        function americanoFsAnimateBar() {
+            const bar = document.getElementById('americanoFsProgressBar');
+            if (!bar) return;
+            function frame(now) {
+                const elapsed = now - americanoFsRotateStart;
+                const pct = Math.min((elapsed / AFS_ROTATE_MS) * 100, 100);
+                bar.style.width = pct + '%';
+                if (pct < 100) americanoFsProgress = requestAnimationFrame(frame);
+            }
+            americanoFsProgress = requestAnimationFrame(frame);
+        }
+
+        function americanoFsTotalPages() {
+            const rows = standingsFromAmericanoPayload(americanoDetailData).slice(0, AFS_MAX_PLAYERS);
+            const standingsPages = Math.max(1, Math.ceil(rows.length / AFS_PAGE_SIZE));
+            // Extra page for fixtures when there is a current round
+            const live = americanoDetailData?.session?.payload;
+            const hasFixtures = !!(getAmericanoCurrentRound(live)?.fixtures?.length);
+            return standingsPages + (hasFixtures ? 1 : 0);
+        }
+
+        function americanoFsAutoAdvance() {
+            const maxPage = americanoFsTotalPages();
+            americanoFsPage = americanoFsPage >= maxPage ? 1 : americanoFsPage + 1;
+            americanoFsRenderPage();
+            americanoFsStartRotate();
+        }
+
+        function americanoFsManualPage(dir) {
+            const maxPage = americanoFsTotalPages();
+            const next = americanoFsPage + dir;
+            if (next >= 1 && next <= maxPage) {
+                americanoFsPage = next;
+                americanoFsRenderPage();
+                americanoFsRestartRotate();
+            }
+        }
+
+        function americanoFsRenderPage(keepPause) {
+            const data = americanoDetailData;
+            if (!data?.session) return;
+            const s = data.session;
+            const status = s.status;
+            const live = s.payload || {};
+            const pointsToWin = live.points_to_win || 24;
+            const rows = standingsFromAmericanoPayload(data).slice(0, AFS_MAX_PLAYERS);
+            const standingsPages = Math.max(1, Math.ceil(Math.max(rows.length, 1) / AFS_PAGE_SIZE));
+            const round = getAmericanoCurrentRound(live);
+            const hasFixtures = !!(round?.fixtures?.length);
+            const maxPage = standingsPages + (hasFixtures ? 1 : 0);
+            if (americanoFsPage > maxPage) americanoFsPage = 1;
+
+            const overlay = document.getElementById('americanoFullscreenOverlay');
+            const primaryColor = overlay.dataset.primaryColor || '#FF6B35';
+            const clubData = window.currentUserClubData;
+
+            const badgeEl = document.getElementById('americanoFsStatusBadge');
+            if (badgeEl) {
+                badgeEl.textContent = status === 'completed' ? 'Final' : 'Live';
+                badgeEl.className = 'americano-fs-badge ' + (status === 'completed' ? 'final' : 'live');
+            }
+
+            document.getElementById('americanoFsTitle').textContent = s.session_name || 'Americano';
+            const clubLabel = clubData?.club_name ? ` · ${clubData.club_name}` : '';
+            document.getElementById('americanoFsSubtitle').textContent =
+                `Round ${s.current_round || live.current_round || 1}${clubLabel}`;
+
+            const standingsWrap = document.getElementById('americanoFsStandingsWrap');
+            const fixturesWrap = document.getElementById('americanoFsFixturesWrap');
+            const tbody = document.getElementById('americanoFsList');
+
+            const onFixturesPage = hasFixtures && americanoFsPage > standingsPages;
+
+            if (onFixturesPage) {
+                standingsWrap.style.display = 'none';
+                fixturesWrap.style.display = '';
+                const fixturesHtml = (round.fixtures || []).map(f => {
+                    const t1 = (f.team1 || []).map(p => p.name).join(' & ');
+                    const t2 = (f.team2 || []).map(p => p.name).join(' & ');
+                    const score = f.team1_score == null ? '—' : `${f.team1_score} – ${pointsToWin - f.team1_score}`;
+                    const court = f.court != null ? `Court ${f.court}` : 'Court';
+                    return `<div class="americano-fs-fixture">
+                        <div class="small" style="opacity:0.55;">${escapeHtml(court)}</div>
+                        <div style="font-weight:600;">${escapeHtml(t1)}</div>
+                        <div style="opacity:0.7;">${escapeHtml(t2)}</div>
+                        <div class="a-fs-score" style="color:${primaryColor};">${score}</div>
+                    </div>`;
+                }).join('');
+                const sitting = (round.sitting_out || []).map(p => p.name).filter(Boolean);
+                fixturesWrap.innerHTML = `
+                    <h3 style="color:#fff;margin:0 0 12px;font-size:1.25rem;">Current round</h3>
+                    <div class="americano-fs-fixtures">${fixturesHtml}</div>
+                    ${sitting.length ? `<p class="americano-sitting-out" style="margin-top:16px;">Sitting out: ${escapeHtml(sitting.join(', '))}</p>` : ''}`;
+            } else {
+                standingsWrap.style.display = '';
+                fixturesWrap.style.display = 'none';
+                const pageIdx = americanoFsPage;
+                const startIdx = (pageIdx - 1) * AFS_PAGE_SIZE;
+                const pageData = rows.slice(startIdx, startIdx + AFS_PAGE_SIZE);
+                tbody.innerHTML = '';
+                if (!pageData.length) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);">No standings yet</td></tr>`;
+                } else {
+                    pageData.forEach((r, idx) => {
+                        const rank = startIdx + idx + 1;
+                        const tr = document.createElement('tr');
+                        if (rank === 1) tr.style.background = 'rgba(212,175,55,0.12)';
+                        tr.innerHTML = `
+                            <td class="fs-rank-cell" style="text-align:center;"><span class="fs-rank-num">${rank}</span></td>
+                            <td class="fs-player-name">${escapeHtml(r.name)}</td>
+                            <td class="fs-rating" style="color:${primaryColor};">${r.pts}</td>
+                            <td class="fs-updated">${r.wins}W</td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                // Secondary fixtures strip under standings when only one standings page
+                if (hasFixtures && standingsPages === 1) {
+                    fixturesWrap.style.display = '';
+                    const fixturesHtml = (round.fixtures || []).map(f => {
+                        const t1 = (f.team1 || []).map(p => p.name).join(' & ');
+                        const t2 = (f.team2 || []).map(p => p.name).join(' & ');
+                        const score = f.team1_score == null ? '—' : `${f.team1_score} – ${pointsToWin - f.team1_score}`;
+                        const court = f.court != null ? `Court ${f.court}` : 'Court';
+                        return `<div class="americano-fs-fixture">
+                            <div class="small" style="opacity:0.55;">${escapeHtml(court)}</div>
+                            <div style="font-weight:600;">${escapeHtml(t1)}</div>
+                            <div style="opacity:0.7;">${escapeHtml(t2)}</div>
+                            <div class="a-fs-score" style="color:${primaryColor};">${score}</div>
+                        </div>`;
+                    }).join('');
+                    const sitting = (round.sitting_out || []).map(p => p.name).filter(Boolean);
+                    fixturesWrap.innerHTML = `
+                        <h3 style="color:#fff;margin:16px 0 12px;font-size:1.1rem;">Current round</h3>
+                        <div class="americano-fs-fixtures">${fixturesHtml}</div>
+                        ${sitting.length ? `<p class="americano-sitting-out">Sitting out: ${escapeHtml(sitting.join(', '))}</p>` : ''}`;
+                }
+            }
+
+            const startLabel = onFixturesPage ? 'Fixtures' : `${(americanoFsPage - 1) * AFS_PAGE_SIZE + 1}–${Math.min(americanoFsPage * AFS_PAGE_SIZE, rows.length)}`;
+            document.getElementById('americanoFsPageBadge').textContent = onFixturesPage ? 'Courts' : startLabel;
+            document.getElementById('americanoFsPageInfo').textContent = onFixturesPage
+                ? 'Current round'
+                : `${rows.length} player${rows.length !== 1 ? 's' : ''}`;
+            document.getElementById('americanoFsPrevBtn').disabled = americanoFsPage <= 1;
+            document.getElementById('americanoFsNextBtn').disabled = americanoFsPage >= maxPage;
+
+            if (!keepPause && !americanoFsRotating) {
+                // preserve pause state on live data refresh
+            }
+        }
+
+        // ── end Americanos ────────────────────────────────────────────────────
 
         
         // Load Box League Data
@@ -6438,24 +7337,39 @@
         }
         window.ensureGenderDataForPlayers = ensureGenderDataForPlayers;
 
-        // Leaderboard: only players with a rating update in the last N months
-        function isRankingPlayerActive(player, months = 4) {
-            const dateField = player && (player.last_updated || player.date);
-            if (!dateField) return false;
-            const updatedAt = new Date(dateField);
-            if (Number.isNaN(updatedAt.getTime())) return false;
+        // Leaderboard activity = match play or coach rating within N months
+        // (player_search_view.last_activity_at = latest ratings.date; profile edits do not count)
+        const LEADERBOARD_ACTIVE_MONTHS = 4;
+        const LEADERBOARD_FETCH_LIMIT = 200;
+
+        function getLeaderboardActivityCutoffIso(months = LEADERBOARD_ACTIVE_MONTHS) {
             const cutoff = new Date();
             cutoff.setMonth(cutoff.getMonth() - months);
-            return updatedAt.getTime() >= cutoff.getTime();
+            return cutoff.toISOString();
         }
 
-        function filterActiveRankedPlayers(list, months = 4) {
-            return (list || []).filter(p => isRankingPlayerActive(p, months));
+        function normalizeLeaderboardPlayer(row) {
+            const rating = Number(row.current_rating ?? row.rating_0_10);
+            const activityAt = row.last_activity_at || row.rating_date || row.date || row.last_updated || null;
+            return {
+                id: row.id,
+                display_name: row.display_name || null,
+                gender: row.gender,
+                club_id: row.club_id || null,
+                current_rating: rating,
+                rating_0_10: rating,
+                rating_date: row.rating_date || activityAt,
+                last_activity_at: activityAt,
+                // Legacy aliases used by table / fullscreen / print renderers
+                date: activityAt,
+                last_updated: activityAt
+            };
         }
 
         async function applyFiltersAndPaginate() {
+            // allRankedPlayers is already activity-filtered via player_search_view
             const base = allRankedPlayers || [];
-            let list = filterActiveRankedPlayers(base, 4);
+            let list = base;
             if (clubMemberIdsSet && clubMemberIdsSet.size > 0) {
                 list = list.filter(p => clubMemberIdsSet.has(p.id));
             }
@@ -6557,15 +7471,20 @@
             
             players.forEach((player, index) => {
                 const actualRank = startIndex + index + 1;
-                let playerName = 'Loading...';
+                let playerName = player.display_name
+                    || (playerProfilesCache && playerProfilesCache.get(player.id))
+                    || 'Loading...';
                 
-                // Format date
-                const ratingDate = new Date(player.date);
-                const formattedDate = ratingDate.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
+                // Format last rating activity date
+                const dateField = player.last_activity_at || player.rating_date || player.date;
+                const ratingDate = dateField ? new Date(dateField) : null;
+                const formattedDate = (ratingDate && !Number.isNaN(ratingDate.getTime()))
+                    ? ratingDate.toLocaleDateString('en-GB', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    })
+                    : '—';
                 
                 // Add row to table with medal emojis and gold highlight for 1st place
                 const rankDisplay = getRankDisplay(actualRank);
@@ -6699,70 +7618,49 @@
                     'apikey': window.config.supabaseKey,
                     'Authorization': `Bearer ${session.access_token}`
                 };
-                
-                // Try to use a more efficient query with PostgreSQL window functions
-                // This gets the latest rating for each player in a single query
-                let endpoint = `${window.config.supabaseUrl}/rest/v1/rpc/get_latest_player_ratings`;
-                let useRPC = true;
-                
-                // First try the RPC function (if it exists)
-                let response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({})
-                });
-                
-                let data;
-                
-                if (!response.ok) {
-                    console.log('RPC function not available, falling back to manual processing');
-                    useRPC = false;
-                    
-                    // Fallback to the original method but with optimized query
-                    // Use a more targeted query - get more recent data first
-                    endpoint = `${window.config.supabaseUrl}/rest/v1/ratings?select=id,rating_0_10,date&order=date.desc&limit=1000`;
-                
-                    response = await fetch(endpoint, {
+
+                // Match iOS: active leaderboard players from player_search_view
+                // last_activity_at = latest rating date only (match or coach rating; not profile edits)
+                const activityCutoff = getLeaderboardActivityCutoffIso(LEADERBOARD_ACTIVE_MONTHS);
+                const endpoint = `${window.config.supabaseUrl}/rest/v1/player_search_view?select=*&last_activity_at=gte.${encodeURIComponent(activityCutoff)}&order=current_rating.desc&limit=${LEADERBOARD_FETCH_LIMIT}`;
+                console.log('Fetching leaderboard from player_search_view since', activityCutoff);
+
+                const response = await fetch(endpoint, {
                     method: 'GET',
                     headers: headers
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`Failed to fetch player rankings: ${response.status} - ${errorText}`);
                 }
-                
-                    data = await response.json();
-                console.log('Player rankings data retrieved:', data.length, 'records');
-                
-                // Process the data to get only the most recent rating for each player
-                const playerMap = new Map();
-                
-                // First pass - find the latest rating for each player
-                data.forEach(record => {
-                    const playerId = record.id;
-                    
-                    // Only add if this player hasn't been seen yet (we sorted by date desc)
-                    if (!playerMap.has(playerId)) {
-                        playerMap.set(playerId, record);
+
+                const rawRows = await response.json();
+                const data = (Array.isArray(rawRows) ? rawRows : [])
+                    .map(normalizeLeaderboardPlayer)
+                    .filter(p => p.id && Number.isFinite(p.rating_0_10) && p.rating_0_10 > 0)
+                    .sort((a, b) => b.rating_0_10 - a.rating_0_10);
+
+                // Seed name/gender caches from the view so we avoid extra profile lookups where possible
+                data.forEach(p => {
+                    if (typeof cacheProfileRow === 'function') {
+                        cacheProfileRow({
+                            id: p.id,
+                            display_name: p.display_name,
+                            gender: p.gender
+                        });
+                    } else if (p.id && p.display_name) {
+                        playerProfilesCache.set(p.id, p.display_name);
                     }
                 });
-                
-                // Convert map to array and sort by rating (highest first)
-                    data = Array.from(playerMap.values());
-                } else {
-                    data = await response.json();
-                    console.log('Player rankings retrieved via RPC:', data.length, 'records');
-                }
-                
-                // Sort by rating (highest first) and store all players for pagination
-                allRankedPlayers = data.sort((a, b) => b.rating_0_10 - a.rating_0_10);
-                
+
+                allRankedPlayers = data;
+
                 // Cache the results
                 rankingsDataCache = allRankedPlayers;
                 rankingsCacheTimestamp = now;
-                
-                console.log(`Found ${allRankedPlayers.length} unique players with their latest ratings (showing top 40 only)`);
+
+                console.log(`Found ${allRankedPlayers.length} active leaderboard players (rating activity within ${LEADERBOARD_ACTIVE_MONTHS} months; showing top 40)`);
                 
                 // Reset to first page when loading new data
                 currentRankingsPageNum = 1;
@@ -7684,7 +8582,7 @@
                         <th style="text-align:center; width:80px;">Rank</th>
                         <th>Player</th>
                         <th>Rating</th>
-                        <th>Last Updated</th>
+                        <th>Last rated</th>
                     </tr>
                 </thead>
                 <tbody id="rankingsFsList"></tbody>
@@ -7705,6 +8603,58 @@
                 </button>
             </div>
             <div class="fs-page-info" id="rankingsFsPageInfo"></div>
+        </div>
+    </div>
+
+    <!-- Americano Fullscreen Overlay -->
+    <div id="americanoFullscreenOverlay" role="dialog" aria-modal="true" aria-label="Americano Fullscreen">
+        <div id="americanoFsProgressBar" style="height:3px; width:0%; transition:none; flex-shrink:0;"></div>
+        <div class="rankings-fs-header">
+            <div class="d-flex align-items-center gap-3">
+                <img id="americanoFsClubLogo" src="" alt="Club logo" class="rankings-fs-club-logo" style="display:none;">
+                <div>
+                    <h2 id="americanoFsTitle">Americano</h2>
+                    <div class="fs-subtitle" id="americanoFsSubtitle">PadelPals</div>
+                </div>
+            </div>
+            <div class="rankings-fs-controls">
+                <span class="americano-fs-badge live" id="americanoFsStatusBadge">Live</span>
+                <button class="btn btn-outline-light btn-sm" onclick="closeAmericanoFullscreen()" title="Exit fullscreen">
+                    <i class="fas fa-compress me-1"></i>Exit
+                </button>
+            </div>
+        </div>
+        <div class="rankings-fs-body">
+            <div id="americanoFsStandingsWrap">
+                <table class="rankings-fs-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center; width:80px;">#</th>
+                            <th>Player</th>
+                            <th>Pts</th>
+                            <th>W</th>
+                        </tr>
+                    </thead>
+                    <tbody id="americanoFsList"></tbody>
+                </table>
+            </div>
+            <div id="americanoFsFixturesWrap" style="display:none;"></div>
+        </div>
+        <div class="rankings-fs-footer">
+            <div class="rankings-fs-logo" id="americanoFsLogoText">PadelPals</div>
+            <div class="fs-nav-btns">
+                <button class="btn btn-outline-light btn-sm" id="americanoFsPrevBtn" onclick="americanoFsManualPage(-1)" disabled>
+                    <i class="fas fa-chevron-left me-1"></i>Prev
+                </button>
+                <button class="btn btn-sm ms-1 me-1" id="americanoFsRotateBtn" onclick="americanoFsToggleRotate()" title="Pause/resume auto-rotate" style="border:1px solid rgba(255,255,255,0.3); color:#fff; background:rgba(255,255,255,0.1); min-width:36px;">
+                    <i class="fas fa-pause" id="americanoFsRotateIcon"></i>
+                </button>
+                <span class="badge px-3 py-2" id="americanoFsPageBadge" style="font-size:0.9rem; background:rgba(255,255,255,0.15);">1–20</span>
+                <button class="btn btn-outline-light btn-sm" id="americanoFsNextBtn" onclick="americanoFsManualPage(1)">
+                    Next<i class="fas fa-chevron-right ms-1"></i>
+                </button>
+            </div>
+            <div class="fs-page-info" id="americanoFsPageInfo"></div>
         </div>
     </div>
 
@@ -7911,10 +8861,8 @@
 
         // ── Build filtered player list ────────────────────────────────
         function rankingsFsGetFilteredPlayers() {
-            const all = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
-            let players = (typeof filterActiveRankedPlayers === 'function')
-                ? filterActiveRankedPlayers(all, 4)
-                : all;
+            // allRankedPlayers is already limited to rating activity within 4 months
+            let players = (typeof allRankedPlayers !== 'undefined' ? allRankedPlayers : []);
             if (typeof clubMemberIdsSet !== 'undefined' && clubMemberIdsSet && clubMemberIdsSet.size > 0) {
                 players = players.filter(p => clubMemberIdsSet.has(p.id));
             }
@@ -7952,8 +8900,8 @@
                         ? ['🥇','🥈','🥉'][rank - 1]
                         : `<span class="fs-rank-num">${rank}</span>`;
                     const rating      = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
-                    const name        = namesCache.get(player.id) || player.display_name || '—';
-                    const dateField   = player.last_updated || player.date;
+                    const name        = player.display_name || namesCache.get(player.id) || '—';
+                    const dateField   = player.last_activity_at || player.rating_date || player.last_updated || player.date;
                     const updated     = dateField
                         ? new Date(dateField).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                         : '—';
@@ -8007,8 +8955,8 @@
                 const rank        = idx + 1;
                 const rankDisplay = rank <= 3 ? ['🥇','🥈','🥉'][rank - 1] : rank;
                 const rating      = typeof player.rating_0_10 === 'number' ? player.rating_0_10.toFixed(2) : '—';
-                const name        = namesCache.get(player.id) || player.display_name || '—';
-                const dateField   = player.last_updated || player.date;
+                const name        = player.display_name || namesCache.get(player.id) || '—';
+                const dateField   = player.last_activity_at || player.rating_date || player.last_updated || player.date;
                 const updated     = dateField
                     ? new Date(dateField).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                     : '—';
@@ -8070,7 +9018,7 @@
   <table>
     <thead>
       <tr>
-        <th>Rank</th><th>Player</th><th>Rating</th><th>Last Updated</th>
+        <th>Rank</th><th>Player</th><th>Rating</th><th>Last rated</th>
       </tr>
     </thead>
     <tbody>${rowsHtml}</tbody>
