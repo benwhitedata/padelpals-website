@@ -1424,6 +1424,13 @@
     
     <!-- Shared Navigation -->
     <script src="js/shared-navigation.js" data-auto-nav="true"></script>
+    <!-- Live point-by-point scoring -->
+    <link rel="stylesheet" href="css/live-scoring.css">
+    <script src="js/live-scoring/live-score-engine.js"></script>
+    <script src="js/live-scoring/live-serve-rotation.js"></script>
+    <script src="js/live-scoring/live-scoring-analytics.js"></script>
+    <script src="js/live-scoring/live-scoring-service.js"></script>
+    <script src="js/live-scoring/live-scoring-ui.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -6411,6 +6418,7 @@
                         match_type,
                         match_status,
                         match_category,
+                        number_of_sets,
                         submission_date,
                         submitter_id
                     `)
@@ -6454,7 +6462,10 @@
                         matchType: match.match_type?.toLowerCase() || 'open',
                         submitterId: match.submitter_id,
                         clubId: match.location_id,
-                        matchCategory: match.match_category || 'regular'
+                        matchCategory: (window.LiveScoreEngine
+                            ? window.LiveScoreEngine.normalizeMatchCategory(match.match_category)
+                            : (match.match_category || 'Regular')),
+                        numberOfSets: match.number_of_sets === 5 ? 5 : 3
                     };
                 });
                 
@@ -6747,6 +6758,12 @@
                 month: 'short', 
                 day: 'numeric'
             });
+
+            // Live scoring / Live results actions
+            const liveActionsHost = document.querySelector('#matchDetailModal .match-detail-content');
+            if (window.LiveScoringUI && liveActionsHost) {
+                window.LiveScoringUI.refreshMatchDetailActions(match, liveActionsHost);
+            }
             
             // Show the modal
             modal.show();
@@ -7165,6 +7182,9 @@
                         <div class="match-detail-info">
                             <p class="text-muted" id="matchDetailSubmitter"></p>
                         </div>
+
+                        <!-- Live scoring entry (wired by LiveScoringUI) -->
+                        <div id="liveScoringActions" class="live-scoring-actions mt-3"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
