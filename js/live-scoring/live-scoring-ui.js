@@ -10,6 +10,7 @@
     'serve',
     'return',
     'smash',
+    'tap_out',
     'bandeja',
     'vibora',
     'volley',
@@ -27,6 +28,7 @@
     drop_volley: 'Drop volley',
     overhead: 'Overhead',
     smash: 'Smash',
+    tap_out: 'Tap-out',
     bandeja: 'Bandeja',
     vibora: 'Vibora',
     lob: 'Lob',
@@ -70,6 +72,25 @@
     return parts.join(' · ');
   }
 
+  const SHOT_MODE_KEY = 'liveScoring.shotTagMode';
+
+  function loadShotMode() {
+    try {
+      const raw = localStorage.getItem(SHOT_MODE_KEY);
+      return raw === 'detail' ? 'detail' : 'simple';
+    } catch (e) {
+      return 'simple';
+    }
+  }
+
+  function saveShotMode(mode) {
+    try {
+      localStorage.setItem(SHOT_MODE_KEY, mode);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   const state = {
     match: null,
     session: null,
@@ -82,17 +103,21 @@
     selectedDeuceMode: null,
     pendingDraft: null,
     isReadOnly: false,
-    isAbandonedRecovery: false,
-    showAlreadyCapturedGate: false,
+    /** 'completed' | 'abandoned' | null — checkpoint gate */
+    finishedRecoveryKind: null,
     timerId: null,
-    reasonMode: 'simple',
+    reasonMode: loadShotMode(),
     reasonShot: null,
     reasonSide: null,
     reasonGlass: false,
     reasonFinish: null,
     reasonNotes: '',
     resultsTab: 'summary',
-    overlayMode: 'scorer' // scorer | results
+    overlayMode: 'scorer', // scorer | results
+    editingPoint: null,
+    servePickerRequired: false,
+    reasonPatternTab: 'errors',
+    reasonPlayerFilterId: null
   };
 
   function el(id) {
@@ -115,6 +140,7 @@
         <div class="ls-body" id="lsBody"></div>
         <div class="ls-menu" id="lsMenu" hidden>
           <button type="button" data-action="results">Live results</button>
+          <button type="button" data-action="adjust-clock">Adjust clock</button>
           <button type="button" data-action="undo">Undo last point</button>
           <button type="button" data-action="end">End session</button>
           <button type="button" data-action="abandon" class="ls-danger">Abandon session</button>
@@ -164,12 +190,12 @@
       state.elapsedMs = 0;
       return;
     }
-    let pauseMs = state.session.accumulated_pause_ms || 0;
-    if (state.session.paused_at && state.session.status === 'paused') {
-      pauseMs += Date.now() - new Date(state.session.paused_at).getTime();
-    }
-    const raw = Date.now() - new Date(state.session.started_at).getTime();
-    state.elapsedMs = Math.max(0, raw - pauseMs);
+    state.elapsedMs = global.MatchLiveScoringService.elapsedMsFor(state.session);
+  }
+
+  function minimumAdjustableElapsedMs() {
+    const last = [...state.points].reverse().find((p) => !p.is_undone) || state.points[state.points.length - 1];
+    return last ? last.elapsed_ms || 0 : 0;
   }
 
   function startTimer() {
@@ -195,6 +221,10 @@
   function isActive() {
     const s = state.session?.status;
     return s === 'in_progress' || s === 'paused';
+  }
+
+  function isFinishedRecovery() {
+    return state.finishedRecoveryKind === 'abandoned' || state.finishedRecoveryKind === 'completed';
   }
 
   function needsDeuceChoice() {
@@ -293,21 +323,15 @@
     }
 
     title.textContent = 'Live scoring';
-    menuBtn.hidden = state.isReadOnly && !state.isAbandonedRecovery;
+    menuBtn.hidden = state.isReadOnly && !isFinishedRecovery();
 
     if (state.isLoading && !state.session) {
       body.innerHTML = `<div class="ls-loading"><div class="spinner-border text-light" role="status"></div><p>Starting live scoring…</p></div>`;
       return;
     }
 
-    if (state.isReadOnly && state.isAbandonedRecovery) {
-      body.innerHTML = renderAbandonedGate();
-      bindGate();
-      return;
-    }
-
-    if (state.isReadOnly && state.showAlreadyCapturedGate) {
-      body.innerHTML = renderCapturedGate();
+    if (state.isReadOnly && isFinishedRecovery()) {
+      body.innerHTML = renderFinishedGate();
       bindGate();
       return;
     }
@@ -316,28 +340,23 @@
     bindScorer();
   }
 
-  function renderAbandonedGate() {
+  function renderFinishedGate() {
+    const kind = state.finishedRecoveryKind;
+    const title = kind === 'abandoned' ? 'Session abandoned' : 'Live scoring checkpoint';
+    const blurb =
+      kind === 'abandoned'
+        ? 'Points already logged stay available. You can continue this session later or delete it.'
+        : 'A completed live scoring session exists for this match. Resume from the checkpoint, view results, or delete and start again.';
+    const resumeLabel = kind === 'abandoned' ? 'Continue session' : 'Resume session';
     return `
       <div class="ls-gate">
-        <h3>Session abandoned</h3>
-        <p>Points already logged stay available. You can continue this session later or delete it.</p>
+        <h3>${title}</h3>
+        <p>${blurb}</p>
         ${state.errorMessage ? `<p class="ls-error">${escapeHtml(state.errorMessage)}</p>` : ''}
         <div class="ls-gate-actions">
-          <button type="button" class="ls-btn ls-btn-primary" id="lsContinueAbandoned">Continue session</button>
+          <button type="button" class="ls-btn ls-btn-primary" id="lsContinueFinished">${resumeLabel}</button>
           <button type="button" class="ls-btn" id="lsViewResultsGate">View results</button>
-          <button type="button" class="ls-btn ls-btn-danger" id="lsDeleteAbandoned">Delete session</button>
-        </div>
-      </div>`;
-  }
-
-  function renderCapturedGate() {
-    return `
-      <div class="ls-gate">
-        <h3>Live scoring already captured</h3>
-        <p>Only one live scoring session is kept per match. Open Live results to review the point log.</p>
-        ${state.errorMessage ? `<p class="ls-error">${escapeHtml(state.errorMessage)}</p>` : ''}
-        <div class="ls-gate-actions">
-          <button type="button" class="ls-btn ls-btn-primary" id="lsViewResultsGate">View results</button>
+          <button type="button" class="ls-btn ls-btn-danger" id="lsDeleteFinished">Delete session</button>
           <button type="button" class="ls-btn" id="lsGateClose">Close</button>
         </div>
       </div>`;
@@ -357,7 +376,9 @@
     return `
       ${state.errorMessage ? `<div class="ls-error-banner">${escapeHtml(state.errorMessage)}</div>` : ''}
       <div class="ls-clock-row">
-        <div class="ls-clock" id="lsClock">${formatElapsed(state.elapsedMs)}</div>
+        <button type="button" class="ls-clock ls-clock-btn" id="lsClock" title="Adjust clock" ${
+          isActive() && !state.isReadOnly ? '' : 'disabled'
+        }>${formatElapsed(state.elapsedMs)}</button>
         ${
           isActive() && !state.isReadOnly
             ? isPaused()
@@ -439,24 +460,27 @@
   function bindGate() {
     el('lsViewResultsGate')?.addEventListener('click', () => openResults());
     el('lsGateClose')?.addEventListener('click', () => closeOverlay());
-    el('lsContinueAbandoned')?.addEventListener('click', async () => {
-      await continueAbandoned();
+    el('lsContinueFinished')?.addEventListener('click', async () => {
+      await continueFinished();
     });
-    el('lsDeleteAbandoned')?.addEventListener('click', () => {
+    el('lsDeleteFinished')?.addEventListener('click', () => {
       if (
         !confirm(
-          'Delete this live scoring session? Points already logged stay available only until you delete. This cannot be undone.'
+          'Delete this live scoring session? All logged points will be removed. This cannot be undone.'
         )
       ) {
         return;
       }
-      deleteAbandonedAndRestart();
+      deleteFinishedAndRestart();
     });
   }
 
   function bindScorer() {
     el('lsPauseBtn')?.addEventListener('click', () => pause());
     el('lsResumeBtn')?.addEventListener('click', () => resume());
+    el('lsClock')?.addEventListener('click', () => {
+      if (isActive() && !state.isReadOnly) openAdjustClock();
+    });
     el('lsChangeServe')?.addEventListener('click', () => openServePicker());
     el('lsPickServe')?.addEventListener('click', () => openServePicker());
     el('lsSkipBtn')?.addEventListener('click', () => openSkipSheet());
@@ -483,6 +507,7 @@
     el('lsMenu').hidden = true;
     const action = btn.getAttribute('data-action');
     if (action === 'results') openResults();
+    else if (action === 'adjust-clock') openAdjustClock();
     else if (action === 'undo') undoLast();
     else if (action === 'end') confirmEnd(false);
     else if (action === 'abandon') confirmEnd(true);
@@ -566,7 +591,15 @@
         </div>
         <button type="button" class="ls-btn" id="lsSheetCancel">Cancel</button>
       </div>`);
-    el('lsSheetCancel').addEventListener('click', hideSheet);
+    el('lsSheetCancel').addEventListener('click', () => {
+      hideSheet();
+      const noServer = !state.snapshot?.currentServer && !state.snapshot?.setFirstServer;
+      if ((!state.points || state.points.length === 0) && noServer) {
+        closeOverlay();
+        return;
+      }
+      render();
+    });
     document.querySelectorAll('[data-pick-serve]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const slot = btn.getAttribute('data-pick-serve');
@@ -579,6 +612,58 @@
         }
         render();
       });
+    });
+  }
+
+  function openAdjustClock() {
+    if (!isActive() || state.isReadOnly) return;
+    const minMs = minimumAdjustableElapsedMs();
+    const current = Math.max(state.elapsedMs, minMs);
+    const totalSec = Math.floor(current / 1000);
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    showSheet(`
+      <div class="ls-sheet-inner">
+        <h3>Adjust clock</h3>
+        <p class="ls-muted">Set the session clock. It can’t be earlier than the last saved point (${formatElapsed(minMs)}).</p>
+        <div class="ls-clock-adjust">
+          <label>Minutes <input type="number" id="lsAdjMin" min="0" max="599" value="${mins}"></label>
+          <label>Seconds <input type="number" id="lsAdjSec" min="0" max="59" value="${secs}"></label>
+        </div>
+        <p class="ls-error" id="lsAdjError" hidden></p>
+        <div class="ls-reason-actions">
+          <button type="button" class="ls-btn" id="lsSheetCancel">Cancel</button>
+          <button type="button" class="ls-btn ls-btn-primary" id="lsAdjSave">Set clock</button>
+        </div>
+      </div>`);
+    el('lsSheetCancel').addEventListener('click', hideSheet);
+    el('lsAdjSave').addEventListener('click', async () => {
+      const m = parseInt(el('lsAdjMin').value, 10) || 0;
+      const s = parseInt(el('lsAdjSec').value, 10) || 0;
+      const proposed = (m * 60 + s) * 1000;
+      const err = el('lsAdjError');
+      if (proposed < minMs) {
+        err.hidden = false;
+        err.textContent = 'Choose a time at or after ' + formatElapsed(minMs) + '.';
+        return;
+      }
+      state.isSaving = true;
+      try {
+        state.session = await global.MatchLiveScoringService.setElapsedMs(
+          proposed,
+          state.session,
+          minMs
+        );
+        recomputeElapsed();
+        hideSheet();
+        state.errorMessage = null;
+      } catch (e) {
+        err.hidden = false;
+        err.textContent = e.message;
+      } finally {
+        state.isSaving = false;
+        render();
+      }
     });
   }
 
@@ -656,12 +741,13 @@
   }
 
   function openReasonSheet() {
-    state.reasonMode = 'simple';
+    state.reasonMode = loadShotMode();
     state.reasonShot = null;
     state.reasonSide = null;
     state.reasonGlass = false;
     state.reasonFinish = null;
     state.reasonNotes = '';
+    state.editingPoint = null;
     renderReasonSheet();
   }
 
@@ -670,15 +756,16 @@
     const shots = state.reasonMode === 'simple' ? SHOTS_SIMPLE : SHOTS_DETAIL;
     const showSide = state.reasonShot && SIDE_ALLOWED.has(state.reasonShot);
     const showGlass = state.reasonShot && GLASS_ALLOWED.has(state.reasonShot);
+    const detailClass = state.reasonMode === 'detail' ? ' ls-sheet-detail' : '';
 
     showSheet(`
-      <div class="ls-sheet-inner ls-reason-sheet">
+      <div class="ls-sheet-inner ls-reason-sheet${detailClass}">
         <h3>${isError ? 'Error details' : 'Winner details'} <span class="ls-optional">(optional)</span></h3>
         <div class="ls-seg">
           <button type="button" class="ls-seg-btn ${state.reasonMode === 'simple' ? 'active' : ''}" data-mode="simple">Simple</button>
           <button type="button" class="ls-seg-btn ${state.reasonMode === 'detail' ? 'active' : ''}" data-mode="detail">Detail</button>
         </div>
-        <div class="ls-shot-grid">
+        <div class="ls-shot-grid ${state.reasonMode === 'detail' ? 'ls-shot-grid-detail' : ''}">
           ${shots
             .map(
               (s) =>
@@ -731,6 +818,7 @@
     document.querySelectorAll('[data-mode]').forEach((btn) => {
       btn.addEventListener('click', () => {
         state.reasonMode = btn.getAttribute('data-mode');
+        saveShotMode(state.reasonMode);
         state.reasonShot = null;
         renderReasonSheet();
       });
@@ -791,13 +879,11 @@
 
     try {
       recomputeElapsed();
-      const nextSequence = (state.points[state.points.length - 1]?.sequence || 0) + 1;
       const result = await global.MatchLiveScoringService.appendPoint(
         state.session,
         draft,
         outcome,
-        state.elapsedMs,
-        nextSequence
+        state.elapsedMs
       );
       state.session = result.session;
       state.snapshot = outcome.after;
@@ -871,15 +957,20 @@
     }
   }
 
-  async function continueAbandoned() {
-    if (!state.session || state.session.status !== 'abandoned') return;
+  async function continueFinished() {
+    if (
+      !state.session ||
+      (state.session.status !== 'abandoned' && state.session.status !== 'completed')
+    ) {
+      return;
+    }
     state.isSaving = true;
     try {
-      state.session = await global.MatchLiveScoringService.continueAbandonedSession(
+      state.session = await global.MatchLiveScoringService.continueFinishedSession(
         state.session
       );
       state.isReadOnly = false;
-      state.isAbandonedRecovery = false;
+      state.finishedRecoveryKind = null;
       state.snapshot = state.session.score_snapshot;
       global.LiveServeRotation.syncCurrentServer(state.snapshot);
       state.points = await global.MatchLiveScoringService.fetchPoints(state.session.id);
@@ -895,13 +986,18 @@
     }
   }
 
-  async function deleteAbandonedAndRestart() {
-    if (!state.session || state.session.status !== 'abandoned') return;
+  async function deleteFinishedAndRestart() {
+    if (
+      !state.session ||
+      (state.session.status !== 'abandoned' && state.session.status !== 'completed')
+    ) {
+      return;
+    }
     state.isSaving = true;
     try {
       await global.MatchLiveScoringService.deleteSession(state.session);
       state.isReadOnly = false;
-      state.isAbandonedRecovery = false;
+      state.finishedRecoveryKind = null;
       state.session = null;
       state.points = [];
       state.snapshot = global.LiveScoreEngine.initialSnapshot(
@@ -951,6 +1047,20 @@
   }
 
   function renderSummary(summary) {
+    const ranks = global.LiveScoringAnalytics.reasonRanks(
+      state.points,
+      state.reasonPlayerFilterId
+    );
+    const isErrors = state.reasonPatternTab !== 'winners';
+    const rows = isErrors ? ranks.topErrorReasons : ranks.topWinnerReasons;
+    const total = isErrors ? ranks.totalTaggedErrors : ranks.totalTaggedWinners;
+    const maxCount = rows.reduce(
+      (max, s) => Math.max(max, isErrors ? s.errors : s.winners),
+      0
+    );
+    const emptyCopy = isErrors ? 'No error notes yet' : 'No winner notes yet';
+    const barClass = isErrors ? 'ls-reason-bar-error' : 'ls-reason-bar-winner';
+
     return `
       <div class="ls-summary">
         <div class="ls-summary-head">
@@ -962,6 +1072,7 @@
         <p>Points won: ${summary.team1PointsWon} – ${summary.team2PointsWon} (${summary.totalPoints} total)${
           summary.goldenPointCount ? ' · ' + summary.goldenPointCount + ' golden' : ''
         }</p>
+        <h4 class="ls-section-title">Player breakdown</h4>
         <div class="ls-player-stats">
           ${summary.players
             .map(
@@ -976,6 +1087,48 @@
             </div>`
             )
             .join('')}
+        </div>
+        <div class="ls-reason-patterns">
+          <h4 class="ls-section-title">Reason patterns</h4>
+          <p class="ls-muted ls-reason-caption">Based on notes tagged when each point was saved.</p>
+          <label class="ls-reason-player">
+            <span>Player</span>
+            <select id="lsReasonPlayer">
+              <option value="" ${!state.reasonPlayerFilterId ? 'selected' : ''}>All players</option>
+              ${summary.players
+                .map(
+                  (p) =>
+                    `<option value="${escapeHtml(p.playerId)}" ${
+                      state.reasonPlayerFilterId === p.playerId ? 'selected' : ''
+                    }>${escapeHtml(p.displayName)}</option>`
+                )
+                .join('')}
+            </select>
+          </label>
+          <div class="ls-seg">
+            <button type="button" class="ls-seg-btn ${isErrors ? 'active' : ''}" data-reason-tab="errors">Errors</button>
+            <button type="button" class="ls-seg-btn ${!isErrors ? 'active' : ''}" data-reason-tab="winners">Winners</button>
+          </div>
+          ${
+            rows.length === 0
+              ? `<p class="ls-muted ls-reason-empty">${emptyCopy}</p>`
+              : `<div class="ls-reason-list">
+                  ${rows
+                    .map((stat, index) => {
+                      const count = isErrors ? stat.errors : stat.winners;
+                      const width = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
+                      return `<div class="ls-reason-row">
+                        <div class="ls-reason-meta">
+                          <span class="ls-reason-rank">${index + 1}</span>
+                          <span class="ls-reason-label">${escapeHtml(stat.label)}</span>
+                          <span class="ls-reason-count ${isErrors ? 'is-error' : 'is-winner'}">${count}</span>
+                        </div>
+                        <div class="ls-reason-track"><div class="ls-reason-bar ${barClass}" style="width:${width}%"></div></div>
+                      </div>`;
+                    })
+                    .join('')}
+                </div>`
+          }
         </div>
       </div>`;
   }
@@ -1008,13 +1161,13 @@
                     : p.attribution === 'error'
                       ? 'Error'
                       : 'Award';
-                return `<div class="ls-log-point ${attrClass}">
+                return `<button type="button" class="ls-log-point ${attrClass}" data-edit-point="${p.id}">
                   <span class="ls-log-seq">#${p.sequence}</span>
                   <span>${escapeHtml(label)} · ${escapeHtml(who)}</span>
                   <span class="ls-log-score">${p.team1_points_after}–${p.team2_points_after}</span>
                   ${p.is_golden_point ? '<span class="ls-golden">GP</span>' : ''}
                   ${p.reason ? `<div class="ls-log-reason">${escapeHtml(p.reason)}</div>` : ''}
-                </div>`;
+                </button>`;
               })
               .join('')}
           </div>`
@@ -1026,6 +1179,11 @@
   function bindResults() {
     el('lsResultsBack')?.addEventListener('click', () => {
       if (state.isReadOnly) {
+        if (isFinishedRecovery()) {
+          state.overlayMode = 'scorer';
+          render();
+          return;
+        }
         closeOverlay();
         return;
       }
@@ -1038,6 +1196,223 @@
         render();
       });
     });
+    document.querySelectorAll('[data-edit-point]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-edit-point');
+        const point = state.points.find((p) => String(p.id) === String(id));
+        if (point) openEditPoint(point);
+      });
+    });
+    el('lsReasonPlayer')?.addEventListener('change', (e) => {
+      state.reasonPlayerFilterId = e.target.value || null;
+      render();
+    });
+    document.querySelectorAll('[data-reason-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.reasonPatternTab = btn.getAttribute('data-reason-tab');
+        render();
+      });
+    });
+  }
+
+  function openEditPoint(point) {
+    state.editingPoint = point;
+    state.reasonMode = loadShotMode();
+    state.reasonShot = null;
+    state.reasonSide = null;
+    state.reasonGlass = false;
+    state.reasonFinish = null;
+    state.reasonNotes = point.reason || '';
+    let attribution = point.attribution;
+    let playerSlot = point.player_slot || null;
+    let awardingTeam = point.awarding_team;
+
+    const renderEdit = () => {
+      const shots = state.reasonMode === 'simple' ? SHOTS_SIMPLE : SHOTS_DETAIL;
+      const showSide = state.reasonShot && SIDE_ALLOWED.has(state.reasonShot);
+      const showGlass = state.reasonShot && GLASS_ALLOWED.has(state.reasonShot);
+      const detailClass = state.reasonMode === 'detail' ? ' ls-sheet-detail' : '';
+      showSheet(`
+        <div class="ls-sheet-inner ls-reason-sheet${detailClass}">
+          <h3>Edit point #${point.sequence}</h3>
+          <p class="ls-muted">${formatElapsed(point.elapsed_ms || 0)}</p>
+          <p class="ls-notes-label">Who?</p>
+          <div class="ls-edit-players">
+            ${global.LiveScoreEngine.SLOTS.map((slot) => {
+              const selected = playerSlot === slot && attribution !== 'team_award';
+              return `<div class="ls-edit-player ${selected ? 'selected' : ''}">
+                <div class="ls-player-name">${escapeHtml(displayName(slot))}</div>
+                <div class="ls-player-actions">
+                  <button type="button" class="ls-btn ls-btn-winner ${selected && attribution === 'winner' ? 'active' : ''}" data-edit-attr="winner" data-slot="${slot}">Winner</button>
+                  <button type="button" class="ls-btn ls-btn-error ${selected && attribution === 'error' ? 'active' : ''}" data-edit-attr="error" data-slot="${slot}">Error</button>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          <button type="button" class="ls-btn ls-btn-wide ${attribution === 'team_award' ? 'ls-btn-primary' : ''}" id="lsEditTeamAward">Point to pair (no player)</button>
+          ${
+            attribution === 'team_award'
+              ? `<div class="ls-seg">
+                  <button type="button" class="ls-seg-btn ${awardingTeam === 1 ? 'active' : ''}" data-edit-team="1">${escapeHtml(
+                    (state.session.team1_player_names || []).map(global.LiveScoreEngine.nameOnly).join(' & ')
+                  )}</button>
+                  <button type="button" class="ls-seg-btn ${awardingTeam === 2 ? 'active' : ''}" data-edit-team="2">${escapeHtml(
+                    (state.session.team2_player_names || []).map(global.LiveScoreEngine.nameOnly).join(' & ')
+                  )}</button>
+                </div>`
+              : ''
+          }
+          <p class="ls-notes-label">Detail (optional)</p>
+          <div class="ls-seg">
+            <button type="button" class="ls-seg-btn ${state.reasonMode === 'simple' ? 'active' : ''}" data-mode="simple">Simple</button>
+            <button type="button" class="ls-seg-btn ${state.reasonMode === 'detail' ? 'active' : ''}" data-mode="detail">Detail</button>
+          </div>
+          <div class="ls-shot-grid ${state.reasonMode === 'detail' ? 'ls-shot-grid-detail' : ''}">
+            ${shots
+              .map(
+                (s) =>
+                  `<button type="button" class="ls-shot ${state.reasonShot === s ? 'active' : ''}" data-shot="${s}">${SHOT_TITLES[s]}</button>`
+              )
+              .join('')}
+          </div>
+          ${
+            showSide
+              ? `<div class="ls-seg">
+                  <button type="button" class="ls-seg-btn ${state.reasonSide === 'forehand' ? 'active' : ''}" data-side="forehand">Forehand</button>
+                  <button type="button" class="ls-seg-btn ${state.reasonSide === 'backhand' ? 'active' : ''}" data-side="backhand">Backhand</button>
+                </div>`
+              : ''
+          }
+          ${
+            showGlass
+              ? `<label class="ls-toggle"><input type="checkbox" id="lsGlass" ${state.reasonGlass ? 'checked' : ''}> Off the glass</label>`
+              : ''
+          }
+          <label class="ls-notes-label">Notes</label>
+          <textarea id="lsReasonNotes" rows="2">${escapeHtml(state.reasonNotes)}</textarea>
+          <div class="ls-reason-actions">
+            <button type="button" class="ls-btn" id="lsReasonCancel">Cancel</button>
+            <button type="button" class="ls-btn ls-btn-primary" id="lsSaveEditPoint">Save point</button>
+          </div>
+        </div>`);
+
+      const syncNotes = () => {
+        const side = state.reasonSide
+          ? { title: state.reasonSide === 'forehand' ? 'Forehand' : 'Backhand' }
+          : null;
+        const composed = composeReason(state.reasonShot, side, state.reasonGlass, null);
+        if (composed) {
+          state.reasonNotes = composed;
+          const ta = el('lsReasonNotes');
+          if (ta) ta.value = composed;
+        }
+      };
+
+      document.querySelectorAll('[data-edit-attr]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          attribution = btn.getAttribute('data-edit-attr');
+          playerSlot = btn.getAttribute('data-slot');
+          awardingTeam =
+            attribution === 'error'
+              ? global.LiveScoreEngine.slotTeam(playerSlot) === 1
+                ? 2
+                : 1
+              : global.LiveScoreEngine.slotTeam(playerSlot);
+          renderEdit();
+        });
+      });
+      el('lsEditTeamAward')?.addEventListener('click', () => {
+        attribution = 'team_award';
+        playerSlot = null;
+        renderEdit();
+      });
+      document.querySelectorAll('[data-edit-team]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          awardingTeam = Number(btn.getAttribute('data-edit-team'));
+          renderEdit();
+        });
+      });
+      document.querySelectorAll('[data-mode]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.reasonMode = btn.getAttribute('data-mode');
+          saveShotMode(state.reasonMode);
+          state.reasonShot = null;
+          renderEdit();
+        });
+      });
+      document.querySelectorAll('[data-shot]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const shot = btn.getAttribute('data-shot');
+          state.reasonShot = state.reasonShot === shot ? null : shot;
+          if (!state.reasonShot || !SIDE_ALLOWED.has(state.reasonShot)) state.reasonSide = null;
+          if (!state.reasonShot || !GLASS_ALLOWED.has(state.reasonShot)) state.reasonGlass = false;
+          syncNotes();
+          renderEdit();
+        });
+      });
+      document.querySelectorAll('[data-side]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.reasonSide = btn.getAttribute('data-side');
+          syncNotes();
+          renderEdit();
+        });
+      });
+      el('lsGlass')?.addEventListener('change', (e) => {
+        state.reasonGlass = e.target.checked;
+        syncNotes();
+      });
+      el('lsReasonNotes')?.addEventListener('input', (e) => {
+        state.reasonNotes = e.target.value;
+      });
+      el('lsReasonCancel').addEventListener('click', () => {
+        state.editingPoint = null;
+        hideSheet();
+      });
+      el('lsSaveEditPoint').addEventListener('click', async () => {
+        const canSave =
+          (attribution === 'team_award' && (awardingTeam === 1 || awardingTeam === 2)) ||
+          ((attribution === 'winner' || attribution === 'error') && playerSlot);
+        if (!canSave) {
+          showToast('Choose a player or pair for this point.');
+          return;
+        }
+        state.isSaving = true;
+        try {
+          const draft = {
+            awardingTeam,
+            attribution,
+            playerId:
+              attribution === 'team_award' ? null : playerIdFor(playerSlot),
+            playerSlot: attribution === 'team_award' ? null : playerSlot,
+            serverSlot: point.server_slot || null,
+            isGoldenPoint: !!point.is_golden_point,
+            reason: (el('lsReasonNotes')?.value || state.reasonNotes || '').trim()
+          };
+          const result = await global.MatchLiveScoringService.replacePoint(
+            state.session,
+            point.id,
+            draft
+          );
+          state.session = result.session;
+          state.points = result.points;
+          state.snapshot = result.session.score_snapshot;
+          global.LiveServeRotation.syncCurrentServer(state.snapshot);
+          state.editingPoint = null;
+          hideSheet();
+          state.errorMessage = null;
+          state.overlayMode = 'results';
+          state.resultsTab = 'log';
+          render();
+        } catch (e) {
+          state.errorMessage = e.message;
+          showToast(e.message);
+        } finally {
+          state.isSaving = false;
+        }
+      });
+    };
+
+    renderEdit();
   }
 
   function escapeHtml(str) {
@@ -1052,8 +1427,7 @@
     state.isLoading = true;
     state.errorMessage = null;
     state.isReadOnly = false;
-    state.isAbandonedRecovery = false;
-    state.showAlreadyCapturedGate = false;
+    state.finishedRecoveryKind = null;
     state.overlayMode = 'scorer';
     render();
 
@@ -1072,13 +1446,13 @@
         return;
       }
 
-      if (existing && (await Svc.sessionHasCapturedData(existing))) {
+      if (
+        existing &&
+        (await Svc.sessionHasCapturedData(existing)) &&
+        (existing.status === 'abandoned' || existing.status === 'completed')
+      ) {
         await attachReadOnly(existing);
-        if (existing.status === 'abandoned') {
-          state.isAbandonedRecovery = true;
-        } else {
-          state.showAlreadyCapturedGate = true;
-        }
+        state.finishedRecoveryKind = existing.status;
         state.isLoading = false;
         render();
         return;
@@ -1094,20 +1468,16 @@
       render();
       openServePicker();
     } catch (e) {
-      if (e.code === 'sessionAbandoned') {
+      if (e.code === 'sessionAbandoned' || e.code === 'sessionAlreadyCaptured') {
         const latest = await Svc.fetchLatestSession(
           state.match.id,
           state.match.matchCategory
         ).catch(() => null);
-        if (latest) await attachReadOnly(latest);
-        state.isAbandonedRecovery = true;
-      } else if (e.code === 'sessionAlreadyCaptured') {
-        const latest = await Svc.fetchLatestSession(
-          state.match.id,
-          state.match.matchCategory
-        ).catch(() => null);
-        if (latest) await attachReadOnly(latest);
-        state.showAlreadyCapturedGate = true;
+        if (latest) {
+          await attachReadOnly(latest);
+          state.finishedRecoveryKind =
+            latest.status === 'abandoned' ? 'abandoned' : 'completed';
+        }
       } else {
         state.errorMessage = e.message || global.MatchLiveScoringService.ERRORS.invalidResponse;
       }
@@ -1193,14 +1563,16 @@
         state.isLoading = false;
         state.overlayMode = 'scorer';
         state.isReadOnly = true;
-        state.showAlreadyCapturedGate = false;
+        state.finishedRecoveryKind = null;
         render();
         showToast(state.errorMessage);
         return;
       }
       await attachReadOnly(existing);
-      state.showAlreadyCapturedGate = false;
-      state.isAbandonedRecovery = existing.status === 'abandoned';
+      state.finishedRecoveryKind =
+        existing.status === 'abandoned' || existing.status === 'completed'
+          ? existing.status
+          : null;
       state.isLoading = false;
       state.overlayMode = 'results';
       render();

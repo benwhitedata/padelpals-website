@@ -43,6 +43,53 @@
     return false;
   }
 
+  const NO_DETAIL_LABEL = 'No detail';
+  const REASON_RANK_LIMIT = 6;
+
+  function accumulateReason(point, map) {
+    const trimmed = (point.reason || '').trim();
+    const label = trimmed ? trimmed : NO_DETAIL_LABEL;
+    const key = label.toLowerCase();
+    const stat = map[key] || { id: key, label: label, winners: 0, errors: 0 };
+    if (point.attribution === 'winner') stat.winners += 1;
+    else if (point.attribution === 'error') stat.errors += 1;
+    map[key] = stat;
+  }
+
+  /** Rank reason notes for winner/error points. Pass playerId to focus on one player. */
+  function reasonRanks(points, playerId) {
+    const active = (points || []).filter((p) => !p.is_undone);
+    const reasonMap = {};
+    const filterId = playerId ? String(playerId).toLowerCase() : null;
+
+    active.forEach((point) => {
+      if (point.attribution !== 'winner' && point.attribution !== 'error') return;
+      if (filterId) {
+        const pid = point.player_id ? String(point.player_id).toLowerCase() : '';
+        if (pid !== filterId) return;
+      }
+      accumulateReason(point, reasonMap);
+    });
+
+    const reasonStats = Object.keys(reasonMap).map((k) => reasonMap[k]);
+    const byLabel = (a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' });
+    const topErrorReasons = reasonStats
+      .filter((s) => s.errors > 0)
+      .sort((a, b) => (a.errors !== b.errors ? b.errors - a.errors : byLabel(a, b)))
+      .slice(0, REASON_RANK_LIMIT);
+    const topWinnerReasons = reasonStats
+      .filter((s) => s.winners > 0)
+      .sort((a, b) => (a.winners !== b.winners ? b.winners - a.winners : byLabel(a, b)))
+      .slice(0, REASON_RANK_LIMIT);
+
+    return {
+      topErrorReasons,
+      topWinnerReasons,
+      totalTaggedErrors: reasonStats.reduce((sum, s) => sum + s.errors, 0),
+      totalTaggedWinners: reasonStats.reduce((sum, s) => sum + s.winners, 0)
+    };
+  }
+
   function build(session, points) {
     const Eng = global.LiveScoreEngine;
     const active = (points || [])
@@ -151,6 +198,8 @@
       durationMs = active[active.length - 1].elapsed_ms || 0;
     }
 
+    const ranks = reasonRanks(active);
+
     return {
       team1Names: (session.team1_player_names || []).map(Eng.nameOnly).join(' & '),
       team2Names: (session.team2_player_names || []).map(Eng.nameOnly).join(' & '),
@@ -163,9 +212,13 @@
       players: slots.map((s) => playerMap[s]).filter(Boolean),
       games: groups,
       goldenPointCount: golden,
-      statusLabel: statusText(session.status)
+      statusLabel: statusText(session.status),
+      topErrorReasons: ranks.topErrorReasons,
+      topWinnerReasons: ranks.topWinnerReasons,
+      totalTaggedErrors: ranks.totalTaggedErrors,
+      totalTaggedWinners: ranks.totalTaggedWinners
     };
   }
 
-  global.LiveScoringAnalytics = { build, formatDuration, statusText };
+  global.LiveScoringAnalytics = { build, reasonRanks, formatDuration, statusText };
 })(typeof window !== 'undefined' ? window : globalThis);

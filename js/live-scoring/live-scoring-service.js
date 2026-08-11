@@ -270,13 +270,82 @@
     return rows[0];
   }
 
+  /** Elapsed playing time for the session clock (finished sessions use ended_at). */
+  function elapsedMsFor(session, atDate) {
+    const at = atDate ? new Date(atDate).getTime() : Date.now();
+    const started = new Date(session.started_at).getTime();
+    switch (session.status) {
+      case 'completed':
+      case 'abandoned': {
+        const end = session.ended_at ? new Date(session.ended_at).getTime() : at;
+        return Math.max(0, end - started - (session.accumulated_pause_ms || 0));
+      }
+      case 'paused': {
+        let pauseMs = session.accumulated_pause_ms || 0;
+        if (session.paused_at) {
+          pauseMs += at - new Date(session.paused_at).getTime();
+        }
+        return Math.max(0, at - started - pauseMs);
+      }
+      case 'in_progress':
+      default:
+        return Math.max(0, at - started - (session.accumulated_pause_ms || 0));
+    }
+  }
+
+  /** PATCH fields so the session clock presents presentingElapsedMs at `at`. */
+  function clockFields(presentingElapsedMs, startedAt, atDate, status) {
+    const at = atDate ? new Date(atDate).getTime() : Date.now();
+    const sinceStart = at - new Date(startedAt).getTime();
+    const accumulated = Math.max(0, sinceStart - presentingElapsedMs);
+    const fields = {
+      status: status,
+      accumulated_pause_ms: accumulated
+    };
+    if (status === 'paused') {
+      fields.paused_at = isoString(new Date(at));
+    } else {
+      fields.paused_at = null;
+    }
+    return fields;
+  }
+
+  /**
+   * Resume an abandoned or completed session from its last checkpoint.
+   * Lands paused; clock restores elapsed at close (not wall time since then).
+   */
+  async function continueFinishedSession(session) {
+    if (session.status !== 'abandoned' && session.status !== 'completed') {
+      throw LiveScoringError('sessionNotActive');
+    }
+    const snapshot = global.LiveScoreEngine.cloneSnapshot(
+      session.score_snapshot ||
+        global.LiveScoreEngine.initialSnapshot(session.number_of_sets, session.match_category)
+    );
+    if (snapshot.matchDecided) snapshot.matchDecided = false;
+
+    const elapsedAtClose = elapsedMsFor(session, session.ended_at || new Date());
+    const now = new Date();
+    const fields = clockFields(elapsedAtClose, session.started_at, now, 'paused');
+    fields.ended_at = null;
+    fields.score_snapshot = snapshot;
+    return patchSession(session.id, fields);
+  }
+
+  /** @deprecated use continueFinishedSession */
   async function continueAbandonedSession(session) {
-    if (session.status !== 'abandoned') throw LiveScoringError('sessionNotActive');
-    return patchSession(session.id, {
-      status: 'paused',
-      ended_at: null,
-      paused_at: isoString(new Date())
-    });
+    return continueFinishedSession(session);
+  }
+
+  /** Set the live clock to elapsedMs. Must be ≥ last active point’s elapsed (or 0). */
+  async function setElapsedMs(elapsedMs, session, minimumMs) {
+    if (session.status !== 'in_progress' && session.status !== 'paused') {
+      throw LiveScoringError('sessionNotActive');
+    }
+    const target = Math.max(minimumMs || 0, elapsedMs);
+    const status = session.status === 'in_progress' ? 'in_progress' : 'paused';
+    const fields = clockFields(target, session.started_at, new Date(), status);
+    return patchSession(session.id, fields);
   }
 
   async function deleteSession(session) {
@@ -305,35 +374,51 @@
     });
   }
 
-  async function complete(session, snapshot) {
+  async function finishSession(session, snapshot, status) {
+    const now = new Date();
+    let accumulated = session.accumulated_pause_ms || 0;
+    if (session.paused_at && session.status === 'paused') {
+      accumulated += now.getTime() - new Date(session.paused_at).getTime();
+    }
     return patchSession(session.id, {
-      status: 'completed',
-      ended_at: isoString(new Date()),
+      status: status,
+      ended_at: isoString(now),
       paused_at: null,
+      accumulated_pause_ms: accumulated,
       score_snapshot: snapshot
     });
   }
 
+  async function complete(session, snapshot) {
+    return finishSession(session, snapshot, 'completed');
+  }
+
   async function abandon(session, snapshot) {
-    return patchSession(session.id, {
-      status: 'abandoned',
-      ended_at: isoString(new Date()),
-      paused_at: null,
-      score_snapshot: snapshot
-    });
+    return finishSession(session, snapshot, 'abandoned');
   }
 
   async function updateSnapshot(snapshot, sessionId) {
     await patchSession(sessionId, { score_snapshot: snapshot });
   }
 
+  async function nextSequenceNumber(sessionId) {
+    const all = await fetchPoints(sessionId, true);
+    let max = 0;
+    all.forEach((p) => {
+      if (p.sequence > max) max = p.sequence;
+    });
+    return max + 1;
+  }
+
   async function appendPoint(session, draft, outcome, elapsedMs, nextSequence) {
     if (session.status !== 'in_progress' && session.status !== 'paused') {
       throw LiveScoringError('sessionNotActive');
     }
+    const sequence =
+      nextSequence != null ? nextSequence : await nextSequenceNumber(session.id);
     const payload = {
       session_id: String(session.id).toLowerCase(),
-      sequence: nextSequence,
+      sequence: sequence,
       occurred_at: isoString(new Date()),
       elapsed_ms: elapsedMs,
       set_index: global.LiveScoreEngine.snapshotHelpers(outcome.before).currentSetIndex,
@@ -372,27 +457,26 @@
     return { point: rows[0], session: updated };
   }
 
-  async function undoLastPoint(session) {
-    const allActive = await fetchPoints(session.id, false);
-    const last = allActive[allActive.length - 1];
-    if (!last || !last.id) throw LiveScoringError('noActivePointToUndo');
-
+  async function deletePoint(id) {
     await request('match_live_points', {
-      method: 'PATCH',
-      query: 'id=eq.' + encodeURIComponent(String(last.id).toLowerCase()),
-      body: { is_undone: true },
-      preferReturn: true
+      method: 'DELETE',
+      query: 'id=eq.' + encodeURIComponent(String(id).toLowerCase())
     });
+  }
 
+  /** Replay active points to refresh before/after scores, win flags, and session snapshot. */
+  async function rebuildScores(session) {
     let snapshot = global.LiveScoreEngine.initialSnapshot(
       session.number_of_sets,
       session.match_category
     );
     const remaining = await fetchPoints(session.id, false);
-    remaining.forEach((point) => {
+    for (const point of remaining) {
+      if (!point.id) continue;
       if (point.server_slot) {
         global.LiveServeRotation.chooseServer(point.server_slot, snapshot);
       }
+      const before = global.LiveScoreEngine.cloneSnapshot(snapshot);
       const helpers = global.LiveScoreEngine.snapshotHelpers(snapshot);
       const mode = point.is_golden_point
         ? 'golden'
@@ -405,11 +489,62 @@
         mode || snapshot.deuceMode
       );
       snapshot = outcome.after;
-    });
-    global.LiveServeRotation.syncCurrentServer(snapshot);
 
+      await request('match_live_points', {
+        method: 'PATCH',
+        query: 'id=eq.' + encodeURIComponent(String(point.id).toLowerCase()),
+        body: {
+          set_index: global.LiveScoreEngine.snapshotHelpers(before).currentSetIndex,
+          game_index: global.LiveScoreEngine.snapshotHelpers(before).currentGameIndex,
+          team1_games_before: before.team1Games,
+          team2_games_before: before.team2Games,
+          team1_points_before: before.team1Points,
+          team2_points_before: before.team2Points,
+          team1_games_after: outcome.after.team1Games,
+          team2_games_after: outcome.after.team2Games,
+          team1_points_after: outcome.after.team1Points,
+          team2_points_after: outcome.after.team2Points,
+          is_golden_point: !!(outcome.isGoldenPoint || point.is_golden_point),
+          won_game: !!outcome.wonGame,
+          won_set: !!outcome.wonSet,
+          won_match: !!outcome.wonMatch
+        }
+      });
+    }
+    global.LiveServeRotation.syncCurrentServer(snapshot);
     const updated = await patchSession(session.id, { score_snapshot: snapshot });
-    return { session: updated, points: remaining };
+    const refreshed = await fetchPoints(session.id, false);
+    return { session: updated, points: refreshed };
+  }
+
+  /** Hard-delete the last active point, then rebuild snapshot (fixes sequence 409 on redo). */
+  async function undoLastPoint(session) {
+    const allActive = await fetchPoints(session.id, false);
+    const last = allActive[allActive.length - 1];
+    if (!last || !last.id) throw LiveScoringError('noActivePointToUndo');
+    await deletePoint(last.id);
+    return rebuildScores(session);
+  }
+
+  /** Replace attribution / detail on an existing point, then rebuild score fields. */
+  async function replacePoint(session, pointId, draft) {
+    const fields = {
+      awarding_team: draft.awardingTeam,
+      attribution: draft.attribution,
+      is_golden_point: !!draft.isGoldenPoint,
+      is_undone: false,
+      player_id: draft.playerId ? String(draft.playerId).toLowerCase() : null,
+      player_slot: draft.attribution === 'team_award' ? null : draft.playerSlot || null,
+      reason: (draft.reason || '').trim() || null
+    };
+    if (draft.serverSlot) fields.server_slot = draft.serverSlot;
+
+    await request('match_live_points', {
+      method: 'PATCH',
+      query: 'id=eq.' + encodeURIComponent(String(pointId).toLowerCase()),
+      body: fields
+    });
+    return rebuildScores(session);
   }
 
   global.MatchLiveScoringService = {
@@ -424,14 +559,20 @@
     fetchPoints,
     sessionHasCapturedData,
     startSession,
+    continueFinishedSession,
     continueAbandonedSession,
+    setElapsedMs,
+    elapsedMsFor,
     deleteSession,
     pause,
     resume,
     complete,
     abandon,
     updateSnapshot,
+    nextSequenceNumber,
     appendPoint,
-    undoLastPoint
+    undoLastPoint,
+    replacePoint,
+    rebuildScores
   };
 })(typeof window !== 'undefined' ? window : globalThis);

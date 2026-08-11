@@ -127,6 +127,52 @@ body.ls-open {
   font-variant-numeric: tabular-nums;
 }
 
+.ls-clock-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0.25rem 0.35rem;
+  border-radius: 8px;
+  min-height: 48px;
+  text-align: left;
+}
+
+.ls-clock-btn:not(:disabled):hover,
+.ls-clock-btn:not(:disabled):focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+.ls-clock-btn:disabled {
+  opacity: 1;
+  pointer-events: none;
+}
+
+.ls-clock-adjust {
+  display: flex;
+  gap: 1rem;
+  margin: 0.85rem 0 1rem;
+}
+
+.ls-clock-adjust label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.ls-clock-adjust input {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+  color: #f2f4f7;
+  padding: 0.65rem 0.75rem;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .ls-pause-banner,
 .ls-deuce-banner {
   background: rgba(212, 160, 23, 0.12);
@@ -339,6 +385,36 @@ body.ls-open {
   overflow-y: auto;
 }
 
+.ls-sheet-inner.ls-sheet-detail {
+  max-height: 94%;
+}
+
+.ls-shot-grid-detail {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.ls-edit-players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ls-edit-player {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
+}
+
+.ls-edit-player.selected {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ls-btn-winner.active,
+.ls-btn-error.active {
+  outline: 2px solid #d4a017;
+}
+
 .ls-sheet-inner h3 {
   font-size: 1.05rem;
   margin-bottom: 0.85rem;
@@ -503,6 +579,122 @@ body.ls-open {
   align-items: center;
 }
 
+.ls-section-title {
+  margin: 1.1rem 0 0.45rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.ls-reason-patterns {
+  margin-top: 0.35rem;
+}
+
+.ls-reason-caption {
+  margin-bottom: 0.65rem;
+  font-size: 0.8rem;
+}
+
+.ls-reason-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 44px;
+  margin-bottom: 0.65rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ls-reason-player select {
+  flex: 1;
+  max-width: 65%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+  color: #f2f4f7;
+  padding: 0.45rem 0.55rem;
+  min-height: 40px;
+}
+
+.ls-reason-empty {
+  padding: 0.85rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+}
+
+.ls-reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ls-reason-row {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+}
+
+.ls-reason-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.ls-reason-rank {
+  width: 1.1rem;
+  opacity: 0.45;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.ls-reason-label {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ls-reason-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ls-reason-count.is-error {
+  color: #ff9b90;
+}
+
+.ls-reason-count.is-winner {
+  color: #7dffa8;
+}
+
+.ls-reason-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.ls-reason-bar {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.ls-reason-bar-error {
+  background: rgba(231, 76, 60, 0.85);
+}
+
+.ls-reason-bar-winner {
+  background: rgba(46, 204, 113, 0.85);
+}
+
 .ls-log-group {
   margin-bottom: 1.1rem;
 }
@@ -514,10 +706,16 @@ body.ls-open {
 }
 
 .ls-log-point {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 8px;
   padding: 0.55rem 0.7rem;
   margin-bottom: 0.35rem;
+  border: none;
   border-left: 3px solid transparent;
   font-size: 0.88rem;
   display: grid;
