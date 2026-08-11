@@ -53,7 +53,8 @@ const SHARED_NAVIGATION_CSS = `
     display: flex;
     align-items: center;
     text-decoration: none;
-    margin-right: 40px;
+    margin-right: 28px;
+    flex-shrink: 0;
     transition: opacity 0.3s ease;
 }
 
@@ -81,31 +82,64 @@ const SHARED_NAVIGATION_CSS = `
     flex: 1;
     margin: 0;
     padding: 0;
+    gap: 4px;
 }
 
 .nav-item {
     position: relative;
-    margin: 0 30px 0 0;
+    margin: 0;
 }
 
 .nav-link {
     color: rgba(0, 0, 0, 0.87);
     text-decoration: none;
     font-weight: 600;
-    padding: 14px 0;
-    display: block;
+    padding: 14px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     transition: color 0.3s ease;
     line-height: 1.3;
+    white-space: nowrap;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
 }
 
-.nav-link:hover {
+.nav-link:hover,
+.nav-link:focus-visible,
+.nav-link.is-active {
     color: #4A90E2;
 }
 
-.nav-item.has-dropdown:hover .dropdown {
+.nav-link.is-active {
+    font-weight: 700;
+}
+
+.nav-chevron {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    opacity: 0.55;
+    transition: transform 0.2s ease;
+}
+
+.nav-item.has-dropdown.open .nav-chevron,
+.nav-item.has-dropdown:hover .nav-chevron {
+    transform: rotate(180deg);
+}
+
+.nav-item.has-dropdown:hover .dropdown,
+.nav-item.has-dropdown.open .dropdown,
+.nav-item.has-dropdown:focus-within .dropdown {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    pointer-events: auto;
 }
 
 .dropdown {
@@ -115,47 +149,41 @@ const SHARED_NAVIGATION_CSS = `
     background: #FFFFFF;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     border-radius: 8px;
-    padding: 16px 0;
-    min-width: 250px;
+    padding: 10px 0;
+    min-width: 220px;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s ease;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
     z-index: 1000;
-}
-
-.dropdown-section {
-    padding: 0 16px;
-}
-
-.dropdown-title {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #4A90E2;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    pointer-events: none;
 }
 
 .dropdown-link {
     color: rgba(0, 0, 0, 0.87);
     text-decoration: none;
-    padding: 8px 16px;
+    padding: 10px 18px;
     display: block;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
-    font-size: 0.9rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    font-size: 0.92rem;
+    font-weight: 500;
 }
 
-.dropdown-link:hover {
+.dropdown-link:hover,
+.dropdown-link:focus-visible,
+.dropdown-link.is-active {
     background-color: #E8F4F8;
     color: #4A90E2;
+}
+
+.dropdown-link.is-active {
+    font-weight: 700;
 }
 
 .dropdown-separator {
     height: 1px;
     background: #E8F4F8;
-    margin: 12px 0;
+    margin: 8px 0;
 }
 
 /* Mobile Menu Toggle */
@@ -212,9 +240,16 @@ const SHARED_NAVIGATION_CSS = `
     background: #c82333;
 }
 
+@media (max-width: 960px) {
+    .nav-link {
+        padding: 14px 8px;
+        font-size: 0.95rem;
+    }
+}
+
 @media (max-width: 768px) {
     .logo {
-        margin-right: 20px;
+        margin-right: 12px;
     }
     
     .logo-img {
@@ -233,9 +268,13 @@ const SHARED_NAVIGATION_CSS = `
         left: 0;
         right: 0;
         background: #FFFFFF;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
         flex-direction: column;
-        padding: 20px;
+        align-items: stretch;
+        padding: 12px 16px 20px;
+        gap: 0;
+        max-height: calc(100vh - 104px);
+        overflow-y: auto;
     }
 
     .nav-menu.mobile-active {
@@ -247,23 +286,54 @@ const SHARED_NAVIGATION_CSS = `
     }
 
     .nav-item {
-        margin: 0;
         width: 100%;
     }
 
     .nav-link {
-        padding: 12px 0;
+        width: 100%;
+        justify-content: space-between;
+        padding: 14px 4px;
         border-bottom: 1px solid #E8F4F8;
+        font-size: 1rem;
+    }
+
+    .nav-item.has-dropdown > .nav-link {
+        font-weight: 700;
+        color: #2a3990;
+    }
+
+    .nav-item.has-dropdown:hover .dropdown,
+    .nav-item.has-dropdown:focus-within .dropdown {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
     }
 
     .dropdown {
         position: static;
-        opacity: 1;
-        visibility: visible;
+        opacity: 0;
+        visibility: hidden;
         transform: none;
         box-shadow: none;
-        padding: 0;
-        margin-left: 20px;
+        padding: 0 0 8px;
+        margin: 0;
+        min-width: 0;
+        pointer-events: none;
+        max-height: 0;
+        overflow: hidden;
+        transition: none;
+    }
+
+    .nav-item.has-dropdown.open .dropdown {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        max-height: 320px;
+    }
+
+    .dropdown-link {
+        padding: 12px 12px 12px 16px;
+        border-bottom: 1px solid #F3F7FA;
     }
 }
 `;
@@ -283,42 +353,39 @@ const SHARED_NAVIGATION_HTML = `
             <span class="logo-text">Padel Pals</span>
         </a>
         <ul class="nav-menu" id="navMenu">
-            <li class="nav-item">
-                <a href="index.html" class="nav-link">Home</a>
-            </li>
-            
+            <!-- Primary: the three product pillars from the site banner -->
             <li class="nav-item">
                 <a href="stats.html" class="nav-link">Stats</a>
             </li>
-
             <li class="nav-item">
                 <a href="find-a-match.html" class="nav-link">Find a Match</a>
             </li>
-
             <li class="nav-item">
                 <a href="club-socials.html" class="nav-link">Club Socials</a>
             </li>
 
-            <li class="nav-item">
-                <a href="ratings.html" class="nav-link">Player Levels</a>
+            <!-- Secondary product pages -->
+            <li class="nav-item has-dropdown">
+                <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
+                    Features <span class="nav-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="dropdown" role="menu">
+                    <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
+                    <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
+                    <a href="boxleague.html" class="dropdown-link" role="menuitem">Box League</a>
+                </div>
             </li>
 
+            <!-- Help & utility (Privacy / Terms stay in the footer) -->
             <li class="nav-item has-dropdown">
-                <a href="#" class="nav-link">More</a>
-                <div class="dropdown">
-                    <div class="dropdown-section">
-                        <div class="dropdown-title">Product</div>
-                        <a href="badges.html" class="dropdown-link">Badges</a>
-                        <a href="boxleague.html" class="dropdown-link">Box League</a>
-                        <a href="guide.html" class="dropdown-link">App Guide</a>
-                        <a href="tip.html" class="dropdown-link">Support the app</a>
-                    </div>
-                    <div class="dropdown-section">
-                        <div class="dropdown-title">Information</div>
-                        <a href="support.html" class="dropdown-link">Help &amp; Contact</a>
-                        <a href="privacy.html" class="dropdown-link">Privacy Policy</a>
-                        <a href="terms.html" class="dropdown-link">Terms</a>
-                    </div>
+                <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
+                    Help <span class="nav-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="dropdown" role="menu">
+                    <a href="guide.html" class="dropdown-link" role="menuitem">App Guide</a>
+                    <a href="support.html" class="dropdown-link" role="menuitem">Help &amp; Contact</a>
+                    <div class="dropdown-separator" role="separator"></div>
+                    <a href="tip.html" class="dropdown-link" role="menuitem">Support the app</a>
                 </div>
             </li>
         </ul>
@@ -340,84 +407,108 @@ const SHARED_NAVIGATION_HTML = `
 `;
 
 // Shared JavaScript for navigation functionality
+// Runs immediately when injected — nav HTML is already in the DOM by then
+// (do not wait for DOMContentLoaded; that event has usually already fired).
 const SHARED_NAVIGATION_JS = `
-// Mobile Navigation Toggle
-document.addEventListener('DOMContentLoaded', function() {
+(function initNavBehaviour() {
     const mobileToggle = document.getElementById('mobileToggle');
     const navMenu = document.getElementById('navMenu');
-    
-    if (mobileToggle && navMenu) {
-        mobileToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('mobile-active');
-            this.textContent = navMenu.classList.contains('mobile-active') ? '✕' : '☰';
+    const dropdownItems = document.querySelectorAll('.nav-item.has-dropdown');
+
+    function closeAllDropdowns() {
+        dropdownItems.forEach(function(item) {
+            item.classList.remove('open');
+            const trigger = item.querySelector('[data-dropdown-trigger]');
+            if (trigger) trigger.setAttribute('aria-expanded', 'false');
         });
     }
-    
-    // Set active nav item based on current page
+
+    function closeMobileMenu() {
+        if (!navMenu || !mobileToggle) return;
+        navMenu.classList.remove('mobile-active');
+        mobileToggle.textContent = '☰';
+        closeAllDropdowns();
+    }
+
+    if (mobileToggle && navMenu) {
+        mobileToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const willOpen = !navMenu.classList.contains('mobile-active');
+            navMenu.classList.toggle('mobile-active');
+            this.textContent = willOpen ? '✕' : '☰';
+            if (!willOpen) closeAllDropdowns();
+        });
+    }
+
+    // Click/tap toggles for labelled dropdowns (needed on touch; useful on desktop)
+    dropdownItems.forEach(function(item) {
+        const trigger = item.querySelector('[data-dropdown-trigger]');
+        if (!trigger) return;
+
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpen = item.classList.contains('open');
+            closeAllDropdowns();
+            if (!isOpen) {
+                item.classList.add('open');
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+
+    // Highlight current page (and parent dropdown label when nested)
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
+    document.querySelectorAll('.nav-link[href], .dropdown-link[href]').forEach(function(link) {
         const linkPath = link.getAttribute('href');
-        if (linkPath === currentPage || (currentPage === '' && linkPath === 'index.html')) {
-            link.style.color = '#4A90E2';
-            link.style.fontWeight = '700';
+        if (!linkPath || linkPath === '#') return;
+
+        const isActive = linkPath === currentPage || (currentPage === '' && linkPath === 'index.html');
+        if (isActive) {
+            link.classList.add('is-active');
+            const parentDropdown = link.closest('.nav-item.has-dropdown');
+            if (parentDropdown) {
+                const parentTrigger = parentDropdown.querySelector('[data-dropdown-trigger]');
+                if (parentTrigger) parentTrigger.classList.add('is-active');
+            }
         }
-        
-        // Add protection to dashboard links
+
         if (linkPath === 'dashboard.html') {
             link.addEventListener('click', function(e) {
-                // Check if user is authenticated before allowing navigation
                 if (window.supabase && window.config) {
                     e.preventDefault();
-                    const supabaseClient = window.getOrCreateSupabaseClient ? window.getOrCreateSupabaseClient() : window.supabase.createClient(
-                        window.config.supabaseUrl,
-                        window.config.supabaseKey
-                    );
-                    
-                    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-                        if (session) {
-                            // User is authenticated, allow navigation
-                            window.location.href = 'dashboard.html';
-                        } else {
-                            // User is not authenticated, redirect to sign in
-                            window.location.href = 'auth.html';
-                        }
-                    }).catch(err => {
-                        console.log('Auth check error, redirecting to sign in:', err);
+                    const supabaseClient = window.getOrCreateSupabaseClient
+                        ? window.getOrCreateSupabaseClient()
+                        : window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
+
+                    supabaseClient.auth.getSession().then(function(result) {
+                        window.location.href = result.data.session ? 'dashboard.html' : 'auth.html';
+                    }).catch(function() {
                         window.location.href = 'auth.html';
                     });
                 }
             });
         }
     });
-});
 
-// Smooth scrolling for anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+    // Close menus when clicking outside
+    document.addEventListener('click', function(event) {
+        const insideNav = navMenu && navMenu.contains(event.target);
+        const onToggle = mobileToggle && mobileToggle.contains(event.target);
+
+        if (!insideNav && !onToggle) {
+            closeAllDropdowns();
+            if (window.innerWidth <= 768) closeMobileMenu();
         }
     });
-});
 
-// Close navigation when clicking outside on mobile
-document.addEventListener('click', function(event) {
-    const navMenu = document.getElementById('navMenu');
-    const mobileToggle = document.getElementById('mobileToggle');
-    
-    if (window.innerWidth <= 768 && navMenu && mobileToggle) {
-        if (!navMenu.contains(event.target) && !mobileToggle.contains(event.target)) {
-            navMenu.classList.remove('mobile-active');
-            mobileToggle.textContent = '☰';
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeAllDropdowns();
+            closeMobileMenu();
         }
-    }
-});
+    });
+})();
 
 // Update Auth UI function
 function updateAuthUI() {
@@ -574,26 +665,25 @@ const SHARED_FOOTER_HTML = `
     <div class="footer-content">
         <div class="footer-grid">
             <div class="footer-section">
-                <h4>Padel Pals</h4>
+                <h4>Play</h4>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
                     <li><a href="stats.html">Stats &amp; Profiles</a></li>
                     <li><a href="find-a-match.html">Find a Match</a></li>
                     <li><a href="club-socials.html">Club Socials</a></li>
+                    <li><a href="ratings.html">Player Levels</a></li>
                     <li><a href="badges.html">Badges</a></li>
-                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="boxleague.html">Box League</a></li>
                 </ul>
             </div>
             
             <div class="footer-section">
-                <h4>Information</h4>
+                <h4>Help &amp; legal</h4>
                 <ul>
-                    <li><a href="ratings.html">Player Levels</a></li>
-                    <li><a href="boxleague.html">Box League</a></li>
                     <li><a href="guide.html">App Guide</a></li>
-                    <li><a href="support.html">Support</a></li>
+                    <li><a href="support.html">Help &amp; Contact</a></li>
                     <li><a href="tip.html">Support the app</a></li>
                     <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms</a></li>
                     <li><a href="auth.html">Sign In</a></li>
                 </ul>
             </div>
@@ -624,17 +714,13 @@ function initSharedNavigation() {
     style.textContent = SHARED_NAVIGATION_CSS;
     document.head.appendChild(style);
     
-    // Add navigation HTML to page (insert after body opening tag)
+    // Add navigation HTML to page (banner, then main nav)
     const navContainer = document.createElement('div');
     navContainer.innerHTML = SHARED_NAVIGATION_HTML;
-    // Insert top-nav first, then main-nav
-    const firstChild = navContainer.firstElementChild;
-    const secondChild = firstChild ? firstChild.nextElementSibling : null;
-    if (firstChild) {
-        document.body.insertBefore(firstChild, document.body.firstChild);
-    }
-    if (secondChild) {
-        document.body.insertBefore(secondChild, document.body.firstChild);
+    const nodes = Array.from(navContainer.children);
+    // Insert in reverse so the first node ends up first in the document
+    for (let i = nodes.length - 1; i >= 0; i--) {
+        document.body.insertBefore(nodes[i], document.body.firstChild);
     }
     
     // Add JavaScript functionality
