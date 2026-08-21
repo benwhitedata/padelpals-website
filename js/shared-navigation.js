@@ -684,6 +684,7 @@ const SHARED_FOOTER_HTML = `
                     <li><a href="tip.html">Support the app</a></li>
                     <li><a href="privacy.html">Privacy Policy</a></li>
                     <li><a href="terms.html">Terms</a></li>
+                    <li><a href="delete-account.html">Delete account</a></li>
                     <li><a href="auth.html">Sign In</a></li>
                 </ul>
             </div>

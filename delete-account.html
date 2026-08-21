@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account - Padel Pals</title>
+    <link rel="icon" href="images/Icon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Load Supabase JS and config loader -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config-loader.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            background-color: #F6F5F5;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #1a2238 0%, #2a3990 100%);
+            color: #FFFFFF;
+            padding: 64px 0;
+            text-align: center;
+        }
+        .delete-account {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 64px 20px;
+        }
+        .delete-section {
+            margin-bottom: 40px;
+        }
+        .delete-section h2 {
+            color: #1a2238;
+            margin-bottom: 20px;
+        }
+        .delete-section ol,
+        .delete-section ul {
+            padding-left: 24px;
+        }
+        .delete-section li {
+            margin-bottom: 8px;
+        }
+        .delete-section p + p {
+            margin-top: 12px;
+        }
+    </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-L426ZMNKFK');
+    </script>
+    <!-- End Google Analytics -->
+    
+    <!-- Shared Navigation -->
+    <script src="js/shared-navigation.js" data-auto-nav="true"></script>
+</head>
+<body>
+
+    <section class="page-header">
+        <div class="container">
+            <h1>Delete Account</h1>
+            <p>How to delete your Padel Pals account and what happens to your data</p>
+        </div>
+    </section>
+
+    <section class="delete-account py-5">
+        <div class="container">
+            <div class="delete-section">
+                <h2>How to delete your Padel Pals account</h2>
+                <ol>
+                    <li>Open the Padel Pals app on your phone (iOS or Android).</li>
+                    <li>Sign in with the Google or Apple account you use for Padel Pals.</li>
+                    <li>Go to your profile.</li>
+                    <li>Tap Delete Account, then confirm Delete Account and All Data.</li>
+                </ol>
+                <p>If you cannot use the app, email <a href="mailto:support@padelpals.app?subject=Delete%20my%20Padel%20Pals%20account">support@padelpals.app</a> from the address on the account, with the subject <strong>Delete my Padel Pals account</strong>. We will process web/email requests within 30 days.</p>
+            </div>
+
+            <div class="delete-section">
+                <h2>Data we delete</h2>
+                <ul>
+                    <li>Account and sign-in identifiers</li>
+                    <li>Profile (name, photo, club, ratings)</li>
+                    <li>Match history, player ratings, and related gameplay data tied to you</li>
+                    <li>Push notification / device tokens</li>
+                    <li>In-app settings stored with your account</li>
+                </ul>
+            </div>
+
+            <div class="delete-section">
+                <h2>Data we keep (and for how long)</h2>
+                <ul>
+                    <li>Payment records (amount, status, Stripe PaymentIntent ID, purpose) for 6 years — HMRC</li>
+                    <li>Server logs for up to 90 days</li>
+                    <li>Shared match records other players still need (for example a fixture you played in). Your name and profile are removed; the match can remain for the other players</li>
+                    <li>Stripe may keep its own records under <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe’s privacy policy</a></li>
+                </ul>
+                <p><strong>Deletion cannot be undone.</strong></p>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
