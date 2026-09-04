@@ -23,7 +23,14 @@ const SHARED_NAVIGATION_CSS = `
     .top-nav { font-size: 0.8rem; }
 }
 @media (max-width: 480px) {
-    .top-nav { font-size: 0.7rem; }
+    .top-nav {
+        font-size: 0.7rem;
+        white-space: normal;
+        height: auto;
+        min-height: 40px;
+        line-height: 1.3;
+        padding: 8px 12px;
+    }
 }
 
 /* Main Navigation - fixed height for consistency across all pages */
@@ -342,7 +349,7 @@ const SHARED_NAVIGATION_CSS = `
 const SHARED_NAVIGATION_HTML = `
 <!-- Top Navigation Banner -->
 <div class="top-nav">
-    Know your game • Find the right match • Play with your club
+    Organise socials, Americano sessions and leagues in one place
 </div>
 
 <!-- Main Navigation -->
@@ -353,40 +360,32 @@ const SHARED_NAVIGATION_HTML = `
             <span class="logo-text">Padel Pals</span>
         </a>
         <ul class="nav-menu" id="navMenu">
-            <!-- Primary: the three product pillars from the site banner -->
-            <li class="nav-item">
-                <a href="stats.html" class="nav-link">Stats</a>
-            </li>
-            <li class="nav-item">
-                <a href="find-a-match.html" class="nav-link">Find a Match</a>
-            </li>
-            <li class="nav-item">
-                <a href="club-socials.html" class="nav-link">Club Socials</a>
-            </li>
-
-            <!-- Secondary product pages -->
             <li class="nav-item has-dropdown">
                 <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
-                    Features <span class="nav-chevron" aria-hidden="true"></span>
+                    For Clubs <span class="nav-chevron" aria-hidden="true"></span>
                 </button>
                 <div class="dropdown" role="menu">
-                    <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
-                    <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
+                    <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
+                    <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
                     <a href="boxleague.html" class="dropdown-link" role="menuitem">Box League</a>
                 </div>
             </li>
-
-            <!-- Help & utility (Privacy / Terms stay in the footer) -->
             <li class="nav-item has-dropdown">
                 <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
-                    Help <span class="nav-chevron" aria-hidden="true"></span>
+                    For Players <span class="nav-chevron" aria-hidden="true"></span>
                 </button>
                 <div class="dropdown" role="menu">
-                    <a href="guide.html" class="dropdown-link" role="menuitem">App Guide</a>
-                    <a href="support.html" class="dropdown-link" role="menuitem">Help &amp; Contact</a>
-                    <div class="dropdown-separator" role="separator"></div>
-                    <a href="tip.html" class="dropdown-link" role="menuitem">Support the app</a>
+                    <a href="find-a-match.html" class="dropdown-link" role="menuitem">Find a Match</a>
+                    <a href="stats.html" class="dropdown-link" role="menuitem">Stats &amp; Profiles</a>
+                    <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
+                    <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
                 </div>
+            </li>
+            <li class="nav-item">
+                <a href="guide.html" class="nav-link">App Guide</a>
+            </li>
+            <li class="nav-item">
+                <a href="support.html" class="nav-link">Help</a>
             </li>
         </ul>
         
@@ -508,6 +507,26 @@ const SHARED_NAVIGATION_JS = `
             closeMobileMenu();
         }
     });
+
+    document.addEventListener('click', function(event) {
+        var el = event.target.closest('[data-analytics]');
+        if (!el || typeof gtag !== 'function') return;
+        var kind = el.getAttribute('data-analytics');
+        var page = document.body.getAttribute('data-page') || (window.location.pathname.split('/').pop() || 'index.html');
+        if (kind === 'app_download') {
+            gtag('event', 'app_download_click', {
+                platform: el.getAttribute('data-platform') || '',
+                placement: el.getAttribute('data-placement') || ''
+            });
+        } else if (kind === 'club_enquiry') {
+            gtag('event', 'club_enquiry_click', {
+                page: page,
+                placement: el.getAttribute('data-placement') || ''
+            });
+        } else if (kind === 'demo_board') {
+            gtag('event', 'demo_board_click', { page: page });
+        }
+    });
 })();
 
 // Update Auth UI function
@@ -620,9 +639,15 @@ const SHARED_FOOTER_CSS = `
 
 .footer-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 32px;
     margin-bottom: 32px;
+}
+
+@media (max-width: 900px) {
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 .footer-section h4 {
@@ -665,14 +690,21 @@ const SHARED_FOOTER_HTML = `
     <div class="footer-content">
         <div class="footer-grid">
             <div class="footer-section">
-                <h4>Play</h4>
+                <h4>For Clubs</h4>
                 <ul>
-                    <li><a href="stats.html">Stats &amp; Profiles</a></li>
-                    <li><a href="find-a-match.html">Find a Match</a></li>
                     <li><a href="club-socials.html">Club Socials</a></li>
+                    <li><a href="americano.html">Americano</a></li>
+                    <li><a href="boxleague.html">Box League</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>For Players</h4>
+                <ul>
+                    <li><a href="find-a-match.html">Find a Match</a></li>
+                    <li><a href="stats.html">Stats &amp; Profiles</a></li>
                     <li><a href="ratings.html">Player Levels</a></li>
                     <li><a href="badges.html">Badges</a></li>
-                    <li><a href="boxleague.html">Box League</a></li>
                 </ul>
             </div>
             
@@ -681,7 +713,6 @@ const SHARED_FOOTER_HTML = `
                 <ul>
                     <li><a href="guide.html">App Guide</a></li>
                     <li><a href="support.html">Help &amp; Contact</a></li>
-                    <li><a href="tip.html">Support the app</a></li>
                     <li><a href="privacy.html">Privacy Policy</a></li>
                     <li><a href="terms.html">Terms</a></li>
                     <li><a href="delete-account.html">Delete account</a></li>
@@ -692,8 +723,8 @@ const SHARED_FOOTER_HTML = `
             <div class="footer-section">
                 <h4>Download</h4>
                 <ul>
-                    <li><a href="https://apps.apple.com/gb/app/padel-pals/id6742356382">App Store (iOS)</a></li>
-                    <li><a href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid">Google Play (Android)</a></li>
+                    <li><a href="https://apps.apple.com/app/id6742356382" data-analytics="app_download" data-platform="ios" data-placement="footer">App Store (iOS)</a></li>
+                    <li><a href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" data-analytics="app_download" data-platform="android" data-placement="footer">Google Play (Android)</a></li>
                 </ul>
             </div>
         </div>

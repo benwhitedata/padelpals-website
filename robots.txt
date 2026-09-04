@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /auth.html
+Disallow: /auth-callback.html
+Disallow: /dashboard.html
+Disallow: /apple-secret-validator.html
+Disallow: /tip.html
+
+Sitemap: https://www.padelpals.app/sitemap.xml

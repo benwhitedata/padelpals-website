@@ -1,22 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support - Padel Pals</title>
+    <title>Help and Contact | Padel Pals</title>
+    <meta name="description" content="Contact Padel Pals for club setup, account help and product questions. FAQs for organisers and players.">
+    <link rel="canonical" href="https://www.padelpals.app/support.html">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.padelpals.app/support.html">
+    <meta property="og:title" content="Help and Contact | Padel Pals">
+    <meta property="og:description" content="Contact Padel Pals for club setup, account help and product questions. FAQs for organisers and players.">
+    <meta property="og:image" content="https://www.padelpals.app/images/og_share.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Help and Contact | Padel Pals">
+    <meta name="twitter:description" content="Contact Padel Pals for club setup, account help and product questions. FAQs for organisers and players.">
+    <meta name="twitter:image" content="https://www.padelpals.app/images/og_share.png">
     <link rel="icon" href="images/Icon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Load Supabase JS and config loader -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config-loader.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Montserrat', Arial, sans-serif;
             color: #333;
@@ -29,314 +35,292 @@
             padding: 48px 0;
             text-align: center;
         }
-        .page-header h1 {
-            white-space: nowrap;
-        }
-        .page-header p {
-            margin: 0.35rem 0 0 0;
-        }
-        @media (max-width: 576px) {
-            .page-header h1 { font-size: 1.5rem; }
-        }
-        .contact-info {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 64px 20px;
-        }
+        .page-header p { margin: 0.35rem auto 0; max-width: 36rem; padding: 0 16px; }
+        .contact-info { max-width: 800px; margin: 0 auto; padding: 48px 20px 16px; }
         .contact-card {
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(26, 34, 56, 0.08);
             padding: 32px;
-            margin-bottom: 32px;
             background: #FFFFFF;
+            text-align: center;
         }
-        .contact-icon {
-            font-size: 2.5rem;
-            color: #4A90E2;
-            margin-bottom: 24px;
-        }
-        .accordion-button:not(.collapsed) {
-            background-color: #4A90E2;
-            color: #FFFFFF;
-        }
-        .accordion-button:focus {
-            box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
-        }
+        .contact-card i { font-size: 1.6rem; color: #4A90E2; margin-bottom: 16px; }
+        .contact-card h2 { font-size: 1.4rem; color: #1a2238; margin-bottom: 10px; }
+        .contact-card a { color: #4A90E2; font-weight: 700; }
+        .faq { padding: 24px 20px 72px; }
+        .faq h2 { color: #1a2238; }
+        .faq h3 { font-size: 1.15rem; color: #2a3990; margin: 28px 0 16px; }
+        .accordion-button:not(.collapsed) { background-color: #4A90E2; color: #FFFFFF; }
+        .accordion-button:focus { box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25); }
     </style>
-    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
       gtag('config', 'G-L426ZMNKFK');
     </script>
-    <!-- End Google Analytics -->
-    
-    <!-- Shared Navigation -->
     <script src="js/shared-navigation.js" data-auto-nav="true"></script>
 </head>
-<body>
+<body data-page="support.html">
     <section class="page-header">
         <div class="container">
-            <h1>Support & Contact</h1>
-            <p>We're here to help with any questions about Padel Pals</p>
+            <h1>Help and contact</h1>
+            <p>Club setup, account help, feedback and bugs — one address.</p>
         </div>
     </section>
 
-    <section class="contact-info py-5">
+    <section class="contact-info">
+        <div class="contact-card">
+            <i class="fas fa-envelope" aria-hidden="true"></i>
+            <h2>Contact Padel Pals</h2>
+            <p>Use this address for club setup, account questions, product feedback and bug reports.</p>
+            <p><a href="mailto:support@padelpals.app?subject=Padel%20Pals%20club%20setup" data-analytics="club_enquiry" data-placement="support">support@padelpals.app</a></p>
+        </div>
+    </section>
+
+    <section class="faq">
         <div class="container">
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="contact-card">
-                        <div class="contact-icon">📧</div>
-                        <h3>Email Support</h3>
-                        <p>For general inquiries and support requests:</p>
-                        <p><strong><a href="mailto:support@padelpals.app" style="color: #1a2238;">support@padelpals.app</a></strong></p>
-                        <p>We aim to respond to all inquiries within 24-48 hours.</p>
+            <h2 class="text-center mb-2">Frequently asked questions</h2>
+
+            <h3>For club organisers</h3>
+            <div class="accordion" id="faqClubs">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="qAddClub">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#aAddClub" aria-expanded="true" aria-controls="aAddClub">
+                            How do I add my club?
+                        </button>
+                    </h2>
+                    <div id="aAddClub" class="accordion-collapse collapse show" aria-labelledby="qAddClub" data-bs-parent="#faqClubs">
+                        <div class="accordion-body">
+                            <p>Download Padel Pals, open <strong>Profile</strong>, scroll to <strong>Your Club</strong> and tap Change. Search for the club or choose <strong>Add New</strong> if it is not listed. Members then pick the same club so socials, Americanos and leagues line up.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6 mb-4">
-                    <div class="contact-card">
-                        <div class="contact-icon">📱</div>
-                        <h3>App Feedback</h3>
-                        <p>Have suggestions or found a bug? We'd love to hear from you:</p>
-                        <p><strong><a href="mailto:support@padelpals.app" style="color: #1a2238;">support@padelpals.app</a></strong></p>
-                        <p>Your feedback helps us improve Padel Pals for everyone!</p>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="qPlatform">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#aPlatform" aria-expanded="false" aria-controls="aPlatform">
+                            Do members need iOS or Android?
+                        </button>
+                    </h2>
+                    <div id="aPlatform" class="accordion-collapse collapse" aria-labelledby="qPlatform" data-bs-parent="#faqClubs">
+                        <div class="accordion-body">
+                            <p>Either. Hosting Club Socials and Americano sessions, and playing as a member, works on iOS and Android.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="row justify-content-center">
-                    <div class="col-md-8 mb-4">
-                        <div class="contact-card text-center">
-                            <div class="contact-icon">☕</div>
-                            <h3>Support the app</h3>
-                            <p>If you would like to leave an optional tip to help cover running costs, you can do that on our website (sign in with the same account as the app).</p>
-                            <p><strong><a href="tip.html" style="color: #1a2238;">Open tip page →</a></strong></p>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="qBooking">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#aBooking" aria-expanded="false" aria-controls="aBooking">
+                            Does Padel Pals handle court bookings or memberships?
+                        </button>
+                    </h2>
+                    <div id="aBooking" class="accordion-collapse collapse" aria-labelledby="qBooking" data-bs-parent="#faqClubs">
+                        <div class="accordion-body">
+                            <p>No. Padel Pals organises who plays whom: availability, pairings, Americano sessions, box leagues, ratings and results. Court booking, membership fees and facility software stay with the club.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="qAmericano">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#aAmericano" aria-expanded="false" aria-controls="aAmericano">
+                            How do I run an Americano session?
+                        </button>
+                    </h2>
+                    <div id="aAmericano" class="accordion-collapse collapse" aria-labelledby="qAmericano" data-bs-parent="#faqClubs">
+                        <div class="accordion-body">
+                            <p>Open the <strong>Americano</strong> tab and create a session. Choose Play now or Sign-ups, how many players (adjustable), one or two courts, and Americano or Mexicano. You can set a rating band for who may sign up. Members join from the share link; guests are added by name and are not rated. Score in the app so the current round and standings stay live. Turn on <strong>Sync for share and live standings</strong> if you want a TV or club group to watch the board without signing in.</p>
+                            <p>More: <a href="americano.html">Americano for clubs</a>.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="qSocials">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#aSocials" aria-expanded="false" aria-controls="aSocials">
+                            What are Club Socials?
+                        </button>
+                    </h2>
+                    <div id="aSocials" class="accordion-collapse collapse" aria-labelledby="qSocials" data-bs-parent="#faqClubs">
+                        <div class="accordion-body">
+                            <p>Members mark availability for a club session. Organisers pack fair courts and publish — fixtures then appear in Upcoming like ordinary matches. This is availability and packing, not court booking.</p>
+                            <p>See <a href="club-socials.html">Club Socials</a>.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="qContactHelp">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#aContactHelp" aria-expanded="false" aria-controls="aContactHelp">
+                            Who do we contact for help?
+                        </button>
+                    </h2>
+                    <div id="aContactHelp" class="accordion-collapse collapse" aria-labelledby="qContactHelp" data-bs-parent="#faqClubs">
+                        <div class="accordion-body">
+                            <p>Email <a href="mailto:support@padelpals.app?subject=Padel%20Pals%20club%20setup" data-analytics="club_enquiry" data-placement="faq">support@padelpals.app</a> for club setup, account issues and product questions.</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <section class="faq bg-light py-5">
-        <div class="container">
-            <h2 class="text-center mb-5">Frequently Asked Questions</h2>
-            
-            <div class="accordion" id="faqAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingOne">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                            How do I set up an Americano tournament?
-                        </button>
-                    </h2>
-                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body">
-                            <p>Setting up an Americano tournament in Padel Pals is easy:</p>
-                            <ol>
-                                <li>Tap on the "New Tournament" button on the home screen</li>
-                                <li>Select "Americano" as the tournament type</li>
-                                <li>Enter the player names (currently fixed at 8 players)</li>
-                                <li>Configure the number of courts and points per match</li>
-                                <li>Tap "Start Tournament" to begin</li>
-                            </ol>
-                            <p>The app will automatically generate all fixtures and handle the scoring for you!</p>
-                        </div>
-                    </div>
-                </div>
-                
+            <h3>For players</h3>
+            <div class="accordion" id="faqPlayers">
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingTwo">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                             Can I edit match results after submission?
                         </button>
                     </h2>
-                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>Yes, match results can be directly edited by the player who submitted them. Simply navigate to the match in the app and make the necessary changes.</p>
+                            <p>Yes. The player who submitted a result can open that match in the app and edit it.</p>
                         </div>
                     </div>
                 </div>
-                
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingThree">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                            How is data backed up and synchronized?
+                            How is data backed up and synchronised?
                         </button>
                     </h2>
-                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>Padel Pals uses Supabase for secure cloud storage of your match data. When you sign in with your Apple ID, all your match results are automatically synchronized across your devices.</p>
-                            <p>Your data is backed up in real-time, so you never have to worry about losing your match history or player statistics.</p>
+                            <p>Match data is stored in secure cloud storage. Sign in with Apple or Google and your results stay synchronised across devices.</p>
                         </div>
                     </div>
                 </div>
-                
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingFour">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
                             Is there a limit to how many matches I can record?
                         </button>
                     </h2>
-                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>There is no practical limit to the number of matches you can record in Padel Pals. Our database is designed to handle large volumes of match data efficiently.</p>
-                            <p>You can record as many matches as you play, and the app will maintain detailed statistics for all players across your entire match history.</p>
+                            <p>There is no practical limit. Record the matches you play; statistics stay available across your history.</p>
                         </div>
                     </div>
                 </div>
-                
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingFive">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
                             How do I log out or switch accounts?
                         </button>
                     </h2>
-                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#faqAccordion">
+                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>To log out of Padel Pals:</p>
-                            <ol>
-                                <li>Click the logout icon on the top right corner of the home screen</li>
-                            </ol>
-                            <p>After signing out, you can sign back in with a different Apple ID if needed.</p>
+                            <p>Use the log out control in the app, then sign in again with Apple or Google if you need a different account.</p>
                         </div>
                     </div>
                 </div>
-                
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingLevels">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLevels" aria-expanded="false" aria-controls="collapseLevels">
                             How do player levels / ratings work?
                         </button>
                     </h2>
-                    <div id="collapseLevels" class="accordion-collapse collapse" aria-labelledby="headingLevels" data-bs-parent="#faqAccordion">
+                    <div id="collapseLevels" class="accordion-collapse collapse" aria-labelledby="headingLevels" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>Padel Pals uses a 9-tier player level system - from Newcomer to Elite - to group players fairly for matchmaking and Box Leagues.</p>
-                            <p>Each level describes what you can typically do, what still needs work, and a rough Playtomic equivalent if you already have a number from another app.</p>
+                            <p>Padel Pals uses a 9-tier player level system — from Newcomer to Elite — to group players for matchmaking and Box Leagues.</p>
                             <p>Match rating also shows confidence, can be seeded by a coach rating, and may move after each result. You can leave anonymous feedback on whether opponents’ ratings felt fair.</p>
-                            <p>See the full guide: <a href="ratings.html">Player Levels</a> · product tour: <a href="stats.html">Stats &amp; profiles</a>.</p>
+                            <p>See the full guide: <a href="ratings.html">Player Levels</a> · product tour: <a href="stats.html">Stats and profiles</a>.</p>
                         </div>
                     </div>
                 </div>
-
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingFollow">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFollow" aria-expanded="false" aria-controls="collapseFollow">
                             What does Follow do?
                         </button>
                     </h2>
-                    <div id="collapseFollow" class="accordion-collapse collapse" aria-labelledby="headingFollow" data-bs-parent="#faqAccordion">
+                    <div id="collapseFollow" class="accordion-collapse collapse" aria-labelledby="headingFollow" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>From another player’s public profile you can Follow them. That builds a personal network used in the club leaderboard’s Followed filter and when scheduling open matches marked “People I follow only”.</p>
+                            <p>From another player’s public profile you can Follow them. That network is used in the club leaderboard’s Followed filter and when scheduling open matches marked “People I follow only”.</p>
                             <p>There is no activity feed — Follow is for matching and visibility, not a social timeline.</p>
                         </div>
                     </div>
                 </div>
-
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingJoin">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseJoin" aria-expanded="false" aria-controls="collapseJoin">
                             How do I find an open match at my level?
                         </button>
                     </h2>
-                    <div id="collapseJoin" class="accordion-collapse collapse" aria-labelledby="headingJoin" data-bs-parent="#faqAccordion">
+                    <div id="collapseJoin" class="accordion-collapse collapse" aria-labelledby="headingJoin" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>Open Matches → Upcoming Matches. Use Mine / Club / Join and the filters for gender, format (Open / Competitive) and level range. When you schedule a match you can set Who can join — gender, rating band and optional follow-only.</p>
-                            <p>You may also get a notification when a suitable open match appears. More: <a href="find-a-match.html">Find a Match</a>.</p>
+                            <p>Open Matches → Upcoming Matches. Use Mine / Club / Join and the filters for gender, format (Open / Competitive) and level range. When you schedule a match you can set who can join — gender, rating band and optional follow-only.</p>
+                            <p>More: <a href="find-a-match.html">Find a Match</a>.</p>
                         </div>
                     </div>
                 </div>
-
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingSocials">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSocials" aria-expanded="false" aria-controls="collapseSocials">
-                            What are Club Socials?
-                        </button>
-                    </h2>
-                    <div id="collapseSocials" class="accordion-collapse collapse" aria-labelledby="headingSocials" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body">
-                            <p>Club Socials let members mark availability for a club session. Organisers pack fair courts and publish — fixtures then appear in Upcoming like normal matches. This is availability and packing, not court booking software.</p>
-                            <p>See <a href="club-socials.html">Club Socials</a>.</p>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingBadges">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBadges" aria-expanded="false" aria-controls="collapseBadges">
                             How do badges work?
                         </button>
                     </h2>
-                    <div id="collapseBadges" class="accordion-collapse collapse" aria-labelledby="headingBadges" data-bs-parent="#faqAccordion">
+                    <div id="collapseBadges" class="accordion-collapse collapse" aria-labelledby="headingBadges" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
                             <p>Badges unlock as you play — match volume, partnerships, rating milestones, Box League and tournament achievements, from bronze through platinum. Open Badges from Profile or Me Stats to see progress and share unlocks.</p>
                             <p>Overview: <a href="badges.html">Badges</a>.</p>
                         </div>
                     </div>
                 </div>
-
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingPreferredSide">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePreferredSide" aria-expanded="false" aria-controls="collapsePreferredSide">
                             What are preferred side and gender on my profile for?
                         </button>
                     </h2>
-                    <div id="collapsePreferredSide" class="accordion-collapse collapse" aria-labelledby="headingPreferredSide" data-bs-parent="#faqAccordion">
+                    <div id="collapsePreferredSide" class="accordion-collapse collapse" aria-labelledby="headingPreferredSide" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
                             <p>Preferred side (Left / Right / Either) helps partners know how you like to play. Gender on your profile is used for Men’s / Ladies’ / mixed matching on open matches, leaderboards and Club Socials eligibility where those rules apply.</p>
                         </div>
                     </div>
                 </div>
-
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingSix">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
                             How do I view my Box League standings?
                         </button>
                     </h2>
-                    <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#faqAccordion">
+                    <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>To view your Box League standings, open the Padel Pals app and navigate to the Box League section. Select your league to view the current standings and match results.</p>
+                            <p>Open Competitions → Leagues, then select your Box League to see standings and match results.</p>
                         </div>
                     </div>
                 </div>
-                
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingSeven">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
                             How do I submit Box League match results?
                         </button>
                     </h2>
-                    <div id="collapseSeven" class="accordion-collapse collapse" aria-labelledby="headingSeven" data-bs-parent="#faqAccordion">
+                    <div id="collapseSeven" class="accordion-collapse collapse" aria-labelledby="headingSeven" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>To submit Box League match results, go to the Box League section in the app, select the match you wish to submit results for, enter the set scores, and click Submit Result.</p>
+                            <p>Open the Box League, select the match, enter the set scores and submit the result. See also <a href="boxleague.html">Box League guidelines</a>.</p>
                         </div>
                     </div>
                 </div>
-                
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingEight">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEight" aria-expanded="false" aria-controls="collapseEight">
                             What should I do if my opponent is unresponsive?
                         </button>
                     </h2>
-                    <div id="collapseEight" class="accordion-collapse collapse" aria-labelledby="headingEight" data-bs-parent="#faqAccordion">
+                    <div id="collapseEight" class="accordion-collapse collapse" aria-labelledby="headingEight" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>If your opponent is unresponsive, try contacting them through the WhatsApp group or other communication methods. If there is no response for 7+ days, contact the league admin for assistance.</p>
+                            <p>Contact them through your club’s usual channel. If there is no response for seven days or more, speak to your Box League coordinator — Padel Pals does not hold each club’s coordinator details.</p>
                         </div>
                     </div>
                 </div>
-                
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingNine">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNine" aria-expanded="false" aria-controls="collapseNine">
                             How do I delete my account and matches?
                         </button>
                     </h2>
-                    <div id="collapseNine" class="accordion-collapse collapse" aria-labelledby="headingNine" data-bs-parent="#faqAccordion">
+                    <div id="collapseNine" class="accordion-collapse collapse" aria-labelledby="headingNine" data-bs-parent="#faqPlayers">
                         <div class="accordion-body">
-                            <p>To delete your account and matches, navigate to the Player Profile section in the app. There, you will find a "Delete Account" option. Follow the prompts to permanently delete your account and all associated match data.</p>
+                            <p>In the app, open Player Profile and use Delete Account. You can also follow the steps on our <a href="delete-account.html">delete account</a> page.</p>
                         </div>
                     </div>
                 </div>

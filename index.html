@@ -6,8 +6,18 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Padel Pals — Know your game. Find the right match.</title>
-    <meta name="description" content="Padel Pals tracks your form, levels, open matches, club socials and badges — built for clubs and competitive padel players.">
+    <title>Padel Club Socials, Americano &amp; Leagues | Padel Pals</title>
+    <meta name="description" content="Organise padel club socials, Americano sessions and box leagues with fair fixtures, live standings and clear updates for every member.">
+    <link rel="canonical" href="https://www.padelpals.app/">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.padelpals.app/">
+    <meta property="og:title" content="Padel Club Socials, Americano &amp; Leagues | Padel Pals">
+    <meta property="og:description" content="Organise padel club socials, Americano sessions and box leagues with fair fixtures, live standings and clear updates for every member.">
+    <meta property="og:image" content="https://www.padelpals.app/images/og_share.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Padel Club Socials, Americano &amp; Leagues | Padel Pals">
+    <meta name="twitter:description" content="Organise padel club socials, Americano sessions and box leagues with fair fixtures, live standings and clear updates for every member.">
+    <meta name="twitter:image" content="https://www.padelpals.app/images/og_share.png">
     <link rel="icon" href="images/Icon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -16,351 +26,12 @@
     <script src="config-loader.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Montserrat', Arial, sans-serif;
             background-color: #F6F5F5;
             line-height: 1.6;
             color: #333;
         }
-
-        /* Full-bleed hero: brand + one line + CTA + dominant phone */
-        .home-hero {
-            min-height: min(92vh, 860px);
-            background:
-                radial-gradient(ellipse 70% 60% at 75% 40%, rgba(74, 144, 226, 0.35), transparent 55%),
-                linear-gradient(145deg, #0f1424 0%, #1a2238 40%, #2a3990 100%);
-            color: #fff;
-            display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
-            gap: 32px;
-            align-items: center;
-            padding: 48px clamp(20px, 5vw, 72px) 56px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .home-hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.06)"/></svg>');
-            pointer-events: none;
-            opacity: 0.9;
-        }
-
-        .home-hero-copy,
-        .home-hero-visual {
-            position: relative;
-            z-index: 1;
-        }
-
-        .home-brand {
-            font-size: clamp(2.4rem, 5.5vw, 3.6rem);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 14px;
-            line-height: 1.1;
-        }
-
-        .home-brand span {
-            color: #7eb6f5;
-        }
-
-        .home-headline {
-            font-size: clamp(1.15rem, 2.2vw, 1.45rem);
-            font-weight: 600;
-            margin-bottom: 12px;
-            max-width: 28ch;
-            line-height: 1.35;
-        }
-
-        .home-support {
-            font-size: 1.05rem;
-            opacity: 0.92;
-            max-width: 38ch;
-            margin-bottom: 28px;
-        }
-
-        .store-badges {
-            display: flex;
-            gap: 14px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .store-badge img {
-            height: 56px;
-            width: auto;
-            transition: transform 0.3s ease;
-        }
-
-        .store-badge.store-badge-play img {
-            height: 82px;
-            margin: -13px 0;
-        }
-
-        .store-badge:hover img { transform: scale(1.04); }
-
-        .home-hero-visual {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-        }
-
-        .home-hero-phone {
-            width: min(300px, 72vw);
-            height: auto;
-            border-radius: 32px;
-            box-shadow:
-                0 40px 80px rgba(0, 0, 0, 0.45),
-                0 0 0 1px rgba(255, 255, 255, 0.08);
-            animation: hero-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        @keyframes hero-rise {
-            from { opacity: 0; transform: translateY(28px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .pillar {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: clamp(28px, 5vw, 56px);
-            align-items: center;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 72px 20px;
-        }
-
-        .pillar.reverse { direction: rtl; }
-        .pillar.reverse > * { direction: ltr; }
-
-        .pillar-copy h2 {
-            font-size: clamp(1.5rem, 2.5vw, 1.9rem);
-            font-weight: 700;
-            color: #1a2238;
-            margin-bottom: 10px;
-        }
-
-        .pillar-copy p {
-            color: #555;
-            font-size: 1.05rem;
-            margin-bottom: 16px;
-            max-width: 42ch;
-        }
-
-        .pillar-copy a {
-            color: #4A90E2;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .pillar-copy a:hover {
-            color: #2a3990;
-            text-decoration: underline;
-        }
-
-        .pillar-phone {
-            display: flex;
-            justify-content: center;
-        }
-
-        .pillar-phone img {
-            width: min(260px, 68vw);
-            border-radius: 28px;
-            box-shadow: 0 24px 48px rgba(26, 34, 56, 0.22);
-            transition: transform 0.35s ease;
-        }
-
-        .pillar:hover .pillar-phone img {
-            transform: translateY(-6px);
-        }
-
-        .pillar-alt {
-            background: linear-gradient(180deg, rgba(74, 144, 226, 0.06) 0%, transparent 100%);
-        }
-
-        .support-strip {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 0 20px 48px;
-            text-align: center;
-            color: #555;
-            font-size: 1rem;
-        }
-
-        .support-strip a {
-            color: #4A90E2;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .how-it-works-section {
-            padding: 64px 20px;
-            background: linear-gradient(135deg, rgba(74, 144, 226, 0.05) 0%, rgba(107, 182, 255, 0.05) 100%);
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #1a2238;
-            margin-bottom: 10px;
-        }
-
-        .section-subtitle {
-            font-size: 1.1rem;
-            color: #555;
-            max-width: 560px;
-            margin: 0 auto;
-        }
-
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 28px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .step-card {
-            text-align: center;
-            padding: 8px 12px;
-        }
-
-        .step-number {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, #4A90E2, #6BB6FF);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin: 0 auto 14px;
-        }
-
-        .step-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #1a2238;
-            margin-bottom: 8px;
-        }
-
-        .step-description { color: #555; }
-
-        .secondary-band {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 56px 20px 24px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 32px;
-        }
-
-        .secondary-band article h3 {
-            font-size: 1.25rem;
-            color: #1a2238;
-            margin-bottom: 8px;
-        }
-
-        .secondary-band article p {
-            color: #555;
-            margin-bottom: 10px;
-        }
-
-        .secondary-band a {
-            color: #4A90E2;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .support-section { padding: 40px 20px 72px; max-width: 1100px; margin: 0 auto; }
-
-        .support-card {
-            background: linear-gradient(135deg, #FFF8EC 0%, #FFEFD5 100%);
-            border-radius: 20px;
-            padding: 36px;
-            box-shadow: 0 8px 30px rgba(196, 142, 60, 0.12);
-            border: 1px solid #F4E2BE;
-            display: flex;
-            align-items: center;
-            gap: 28px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .support-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; bottom: 0;
-            width: 6px;
-            background: linear-gradient(180deg, #F2A65A 0%, #E08540 100%);
-        }
-
-        .support-emoji {
-            font-size: 3rem;
-            flex-shrink: 0;
-            animation: support-bob 3.2s ease-in-out infinite;
-        }
-
-        @keyframes support-bob {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .home-hero-phone,
-            .pillar-phone img,
-            .support-emoji { animation: none; }
-            .pillar:hover .pillar-phone img { transform: none; }
-        }
-
-        .support-eyebrow {
-            display: inline-block;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: #B05A1A;
-            background: rgba(242, 166, 90, 0.18);
-            padding: 3px 10px;
-            border-radius: 999px;
-            margin-bottom: 8px;
-        }
-
-        .support-text h3 {
-            font-size: 1.45rem;
-            font-weight: 700;
-            color: #1a2238;
-            margin-bottom: 6px;
-        }
-
-        .support-text p { color: #5a4a32; margin: 0; }
-
-        .support-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: linear-gradient(135deg, #F2A65A 0%, #E08540 100%);
-            color: #fff;
-            padding: 14px 26px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 700;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .support-cta:hover { color: #fff; transform: translateY(-2px); }
-
         #auth-processing {
             position: fixed;
             inset: 0;
@@ -370,7 +41,6 @@
             align-items: center;
             z-index: 9999;
         }
-
         .auth-processing-content {
             background: white;
             padding: 32px;
@@ -378,7 +48,6 @@
             text-align: center;
             max-width: 400px;
         }
-
         .auth-spinner {
             border: 5px solid #f3f3f3;
             border-radius: 50%;
@@ -388,47 +57,9 @@
             animation: spin 1s linear infinite;
             margin: 20px auto;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 900px) {
-            .home-hero {
-                grid-template-columns: 1fr;
-                min-height: auto;
-                text-align: center;
-                padding-top: 40px;
-                padding-bottom: 40px;
-            }
-
-            .home-headline,
-            .home-support { margin-left: auto; margin-right: auto; }
-
-            .store-badges { justify-content: center; }
-
-            .pillar,
-            .pillar.reverse {
-                grid-template-columns: 1fr;
-                direction: ltr;
-                padding: 48px 20px;
-                text-align: center;
-            }
-
-            .pillar-copy p { margin-left: auto; margin-right: auto; }
-
-            .steps-grid,
-            .secondary-band { grid-template-columns: 1fr; }
-
-            .support-card {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .store-badge img { height: 48px; }
-            .store-badge.store-badge-play img { height: 70px; margin: -11px 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) {
+            .auth-spinner { animation: none; }
         }
     </style>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -499,7 +130,7 @@
         }
     </script>
 </head>
-<body>
+<body data-page="index.html">
     <div id="auth-processing">
         <div class="auth-processing-content">
             <h3>Processing Your Login</h3>
@@ -510,140 +141,147 @@
 
     <section class="home-hero" aria-label="Padel Pals">
         <div class="home-hero-copy">
-            <h1 class="home-brand">Padel <span>Pals</span></h1>
-            <p class="home-headline">Know your game. Find the right match. Play with your club.</p>
-            <p class="home-support">Track form and levels, join open matches that fit you, and run club socials — all in one app for iOS and Android.</p>
-            <div class="store-badges">
-                <a href="https://apps.apple.com/gb/app/padel-pals/id6742356382" class="store-badge" aria-label="Download Padel Pals on the App Store">
-                    <img src="images/app-store-badge.svg" alt="Download on the App Store">
-                </a>
-                <a href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" class="store-badge store-badge-play" aria-label="Get Padel Pals on Google Play">
-                    <img src="https://play.google.com/intl/en_gb/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
-                </a>
+            <p class="mkt-eyebrow">For padel clubs</p>
+            <h1>Organise better play at your padel club</h1>
+            <p class="home-support">Run club socials, Americano sessions and box leagues with fair fixtures, live standings and clear updates for every member.</p>
+            <div class="home-hero-actions">
+                <a class="mkt-btn mkt-btn-light" href="#club-formats">Explore club features</a>
+                <div class="store-badges">
+                    <a href="https://apps.apple.com/app/id6742356382" data-analytics="app_download" data-platform="ios" data-placement="hero" aria-label="Download Padel Pals on the App Store">
+                        <img src="images/app-store-badge.svg" alt="Download on the App Store">
+                    </a>
+                    <a class="play" href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" data-analytics="app_download" data-platform="android" data-placement="hero" aria-label="Get Padel Pals on Google Play">
+                        <img src="https://play.google.com/intl/en_gb/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
+                    </a>
+                </div>
             </div>
         </div>
         <div class="home-hero-visual">
-            <img class="home-hero-phone" src="images/mkt_stats_me.png" width="300" height="650" alt="Padel Pals Me Stats screen showing form, streaks and badge progress">
+            <img class="home-hero-phone" src="images/mkt_club_socials_fixtures.png" width="300" height="650" alt="Club Socials fixtures with court pairings ready to publish" fetchpriority="high">
         </div>
     </section>
 
-    <section class="pillar" id="stats">
-        <div class="pillar-copy">
-            <h2>Stats that matter</h2>
-            <p>See your form, streaks, bagels and comebacks, plus best partners and toughest opponents. Climb your club leaderboard with Men, Ladies and Followed views.</p>
-            <a href="stats.html">Explore stats &amp; profiles →</a>
+    <div class="home-wrap">
+        <div class="mkt-section-head">
+            <h2>Why clubs use Padel Pals</h2>
+            <p>Less chasing, fairer pairings, and a schedule members can actually follow.</p>
         </div>
-        <div class="pillar-phone">
-            <img src="images/mkt_stats_me.png" alt="Me Stats with form strip and streaks" loading="lazy">
+        <div class="mkt-outcome-grid">
+            <article class="mkt-outcome-card">
+                <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                <h3>Less weekly admin</h3>
+                <p>Members mark availability. Organisers arrange courts and publish fixtures in one place, instead of rebuilding a spreadsheet each week.</p>
+            </article>
+            <article class="mkt-outcome-card">
+                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
+                <h3>Fairer organised play</h3>
+                <p>Levels and visible balance deltas help you pack courts that feel even — for socials, Americanos and leagues.</p>
+            </article>
+            <article class="mkt-outcome-card">
+                <i class="fas fa-bell" aria-hidden="true"></i>
+                <h3>Members know what is happening</h3>
+                <p>Published fixtures land in Upcoming with notifications, so the club calendar is on every phone.</p>
+            </article>
         </div>
-    </section>
 
-    <div class="pillar-alt">
-        <section class="pillar reverse" id="profiles">
-            <div class="pillar-copy">
-                <h2>Player profiles that mean something</h2>
-                <p>Public profiles show match rating, confidence, head-to-head and rating trend. Follow players you trust — and use that network when you schedule open matches.</p>
-                <a href="stats.html#profiles">See how profiles work →</a>
+        <div class="mkt-section-head" id="club-formats">
+            <h2>Club formats in one app</h2>
+            <p>The sessions most clubs already run, without a separate tool for each.</p>
+        </div>
+        <div class="mkt-format-grid">
+            <article class="mkt-format-card">
+                <i class="fas fa-people-group" aria-hidden="true"></i>
+                <h3>Club Socials</h3>
+                <p>Collect who can play, pack fair courts and publish. Fixtures appear in everyone’s schedule.</p>
+                <a href="club-socials.html">How Club Socials work</a>
+            </article>
+            <article class="mkt-format-card">
+                <i class="fas fa-rotate" aria-hidden="true"></i>
+                <h3>Americano sessions</h3>
+                <p>Rotating partners, live standings and a shareable board members can watch without an account.</p>
+                <a href="americano.html">How Americano works</a>
+            </article>
+            <article class="mkt-format-card">
+                <i class="fas fa-trophy" aria-hidden="true"></i>
+                <h3>Box leagues and knockouts</h3>
+                <p>Ability-based boxes or seeded draws. Results feed ratings, history and the club ladder.</p>
+                <a href="boxleague.html">Box League guidelines</a>
+            </article>
+        </div>
+
+        <section class="mkt-spotlight mkt-spotlight-split" aria-labelledby="americano-spotlight">
+            <div>
+                <p class="mkt-eyebrow">Americano</p>
+                <h2 id="americano-spotlight">A session format clubs rely on</h2>
+                <p>Set courts, player count and format — Americano or Mexicano. Members sign up; guests are added by name and are not rated. During play, standings and the current round update live, and you can share a padelpals.app board for a TV or club group.</p>
+                <p>How a session runs is on the website before anyone downloads the app.</p>
+                <a class="mkt-link" href="americano.html">See how Americano works</a>
             </div>
-            <div class="pillar-phone">
-                <img src="images/mkt_profile_public.png" alt="Public player profile with Follow and head-to-head" loading="lazy">
+            <div class="mkt-phone">
+                <img src="images/mkt_americano_tab.png" alt="Open Sessions list in the Americano tab, with in-progress and upcoming club sessions" width="280" height="608">
             </div>
         </section>
+
+        <div class="mkt-section-head">
+            <h2>What members get</h2>
+            <p>Once the club is in the app, players have a clearer way to join games and follow form.</p>
+        </div>
+        <div class="mkt-members">
+            <article>
+                <h3>Open matches</h3>
+                <p>Level bands, gender and optional follow-only gates so empty seats fill with the right people.</p>
+                <a href="find-a-match.html">Find a match</a>
+            </article>
+            <article>
+                <h3>Player levels</h3>
+                <p>A shared Newcomer to Elite scale used for matching, socials and leagues.</p>
+                <a href="ratings.html">Player levels</a>
+            </article>
+            <article>
+                <h3>Stats and profiles</h3>
+                <p>Form, partners and a club leaderboard members can actually compare.</p>
+                <a href="stats.html">Stats and profiles</a>
+            </article>
+            <article>
+                <h3>Badges</h3>
+                <p>Milestones across matches, box leagues and tournaments that keep a season visible.</p>
+                <a href="badges.html">Badges</a>
+            </article>
+        </div>
+
+        <div class="mkt-section-head">
+            <h2>How to get started</h2>
+            <p>Three steps from download to this week’s sessions.</p>
+        </div>
+        <div class="mkt-steps">
+            <article>
+                <div class="mkt-step-num">1</div>
+                <h3>Add your club</h3>
+                <p>Get Padel Pals on iOS or Android. Open Profile, choose Your Club, then pick it from the list or add it if it is not listed yet.</p>
+            </article>
+            <article>
+                <div class="mkt-step-num">2</div>
+                <h3>Invite members</h3>
+                <p>Players join the same club and mark when they can play. Socials, Americanos and leagues then share one membership list.</p>
+            </article>
+            <article>
+                <div class="mkt-step-num">3</div>
+                <h3>Run this week’s play</h3>
+                <p>Publish socials, host Americano sessions and keep boxes moving — with fixtures, standings and member activity in one place.</p>
+            </article>
+        </div>
+
+        <div class="mkt-cta-band">
+            <h2>Bring Padel Pals to your club</h2>
+            <p>Download the app, select your club or add it, then invite members to join. Need help getting started? Contact us.</p>
+            <div class="mkt-store-row">
+                <a href="https://apps.apple.com/app/id6742356382" data-analytics="app_download" data-platform="ios" data-placement="cta"><img src="images/app-store-badge.svg" alt="Download on the App Store"></a>
+                <a class="play" href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" data-analytics="app_download" data-platform="android" data-placement="cta"><img src="https://play.google.com/intl/en_gb/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play"></a>
+            </div>
+            <div class="mkt-enquiry">
+                <a class="mkt-btn mkt-btn-light" href="mailto:support@padelpals.app?subject=Padel%20Pals%20club%20setup" data-analytics="club_enquiry" data-placement="cta">Contact us</a>
+            </div>
+        </div>
     </div>
-
-    <section class="pillar" id="find-a-match">
-        <div class="pillar-copy">
-            <h2>Find a match at your level</h2>
-            <p>Schedule open or competitive games with rating bands, Men’s, Ladies’ or mixed, and an optional “people I follow only” gate. Filter upcoming fixtures until you find the right slot.</p>
-            <a href="find-a-match.html">How finding a match works →</a>
-        </div>
-        <div class="pillar-phone">
-            <img src="images/mkt_schedule_gates.png" alt="Schedule match Who can join controls" loading="lazy">
-        </div>
-    </section>
-
-    <div class="pillar-alt">
-        <section class="pillar reverse" id="club-socials">
-            <div class="pillar-copy">
-                <h2>Club Socials, sorted</h2>
-                <p>Members mark availability. Organisers pack fair courts and publish in one tap — fixtures land in everyone’s schedule with notifications.</p>
-                <a href="club-socials.html">For players and clubs →</a>
-            </div>
-            <div class="pillar-phone">
-                <img src="images/mkt_club_socials_fixtures.png" alt="Club Socials fixtures with court pairings ready to publish" loading="lazy">
-            </div>
-        </section>
-    </div>
-
-    <section class="pillar" id="badges">
-        <div class="pillar-copy">
-            <h2>Badges worth unlocking</h2>
-            <p>From Court Debut to Box Champion — bronze through platinum milestones across matches, leagues and tournaments. Share the ones you earn.</p>
-            <a href="badges.html">Browse badge families →</a>
-        </div>
-        <div class="pillar-phone">
-            <img src="images/mkt_badges_unlock.png" alt="Gold Box Champion badge detail" loading="lazy">
-        </div>
-    </section>
-
-    <p class="support-strip">
-        Levels are community-checked after matches —
-        <a href="ratings.html">read the Newcomer → Elite scale</a>
-        and see how each result can move your rating.
-    </p>
-
-    <section class="how-it-works-section" id="how-it-works">
-        <div class="section-header">
-            <h2 class="section-title">How it works</h2>
-            <p class="section-subtitle">Three steps to a clearer padel season</p>
-        </div>
-        <div class="steps-grid">
-            <div class="step-card">
-                <div class="step-number">1</div>
-                <h3 class="step-title">Download the app</h3>
-                <p class="step-description">Get Padel Pals on the App Store or Google Play and sign in.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-number">2</div>
-                <h3 class="step-title">Join your club</h3>
-                <p class="step-description">Pick your club so colours, socials, leagues and leaderboards line up.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-number">3</div>
-                <h3 class="step-title">Play, track, improve</h3>
-                <p class="step-description">Log matches, join open slots, follow form — and unlock badges along the way.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="secondary-band" aria-label="More from Padel Pals">
-        <article>
-            <h3>Box League &amp; knockout tournaments</h3>
-            <p>Run ability-based boxes or seeded knockout draws — results feed your rating and history.</p>
-            <a href="boxleague.html">Box League guidelines →</a>
-            &nbsp;·&nbsp;
-            <a href="guide.html">App guide →</a>
-        </article>
-        <article>
-            <h3>Book a coach</h3>
-            <p>Browse coaches in the app, book a lesson, and pay securely. Optional tips for the developer live on the web.</p>
-            <a href="tip.html">Support the app →</a>
-        </article>
-    </section>
-
-    <section id="support" class="support-section">
-        <div class="support-card">
-            <div class="support-emoji" aria-hidden="true">☕</div>
-            <div class="support-text">
-                <span class="support-eyebrow">Built solo</span>
-                <h3>Buy the developer a coffee</h3>
-                <p>Padel Pals is built and maintained by one developer in their spare time. If the app has been useful, a small tip helps cover hosting and keeps new features coming.</p>
-            </div>
-            <a href="tip.html" class="support-cta">
-                <i class="fas fa-heart" aria-hidden="true"></i>
-                Leave a tip
-            </a>
-        </div>
-    </section>
 </body>
 </html>
