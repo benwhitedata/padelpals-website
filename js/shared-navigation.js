@@ -254,7 +254,7 @@ const SHARED_NAVIGATION_CSS = `
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 960px) {
     .logo {
         margin-right: 12px;
     }
@@ -335,7 +335,7 @@ const SHARED_NAVIGATION_CSS = `
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
-        max-height: 320px;
+        max-height: 420px;
     }
 
     .dropdown-link {
@@ -377,6 +377,18 @@ const SHARED_NAVIGATION_HTML = `
                 <div class="dropdown" role="menu">
                     <a href="find-a-match.html" class="dropdown-link" role="menuitem">Find a Match</a>
                     <a href="stats.html" class="dropdown-link" role="menuitem">Stats &amp; Profiles</a>
+                    <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
+                    <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
+                </div>
+            </li>
+            <li class="nav-item has-dropdown">
+                <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
+                    Features <span class="nav-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="dropdown" role="menu">
+                    <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
+                    <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
+                    <a href="boxleague.html" class="dropdown-link" role="menuitem">Box League</a>
                     <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
                     <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
                 </div>
