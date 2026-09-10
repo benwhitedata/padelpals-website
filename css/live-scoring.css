@@ -695,6 +695,59 @@ body.ls-open {
   background: rgba(46, 204, 113, 0.85);
 }
 
+.ls-log-filters {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+}
+
+.ls-log-filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
+}
+
+.ls-log-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #c8ced6;
+  min-width: 0;
+}
+
+.ls-log-filter select {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+  color: #f2f4f7;
+  padding: 0.45rem 0.55rem;
+  min-height: 40px;
+}
+
+.ls-log-attr-seg {
+  margin-bottom: 0.55rem;
+}
+
+.ls-log-filter-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 28px;
+}
+
+.ls-log-empty {
+  padding: 1rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  text-align: center;
+}
+
 .ls-log-group {
   margin-bottom: 1.1rem;
 }

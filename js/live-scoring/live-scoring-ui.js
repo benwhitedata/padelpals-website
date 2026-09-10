@@ -117,8 +117,76 @@
     editingPoint: null,
     servePickerRequired: false,
     reasonPatternTab: 'errors',
-    reasonPlayerFilterId: null
+    reasonPlayerFilterId: null,
+    logPlayerFilterId: null,
+    logAttributionFilter: 'all',
+    logShotFilter: 'all'
   };
+
+  const SHOT_KEYS_BY_TITLE_LEN = Object.keys(SHOT_TITLES).sort(
+    (a, b) => SHOT_TITLES[b].length - SHOT_TITLES[a].length
+  );
+
+  function resetLogFilters() {
+    state.logPlayerFilterId = null;
+    state.logAttributionFilter = 'all';
+    state.logShotFilter = 'all';
+  }
+
+  /** Infer shot key from a composed reason string (longest title first). */
+  function detectShotKey(reason) {
+    const text = String(reason || '').toLowerCase();
+    if (!text.trim()) return null;
+    for (let i = 0; i < SHOT_KEYS_BY_TITLE_LEN.length; i++) {
+      const key = SHOT_KEYS_BY_TITLE_LEN[i];
+      if (text.indexOf(SHOT_TITLES[key].toLowerCase()) !== -1) return key;
+    }
+    return null;
+  }
+
+  function pointMatchesLogFilters(point) {
+    if (state.logAttributionFilter !== 'all' && point.attribution !== state.logAttributionFilter) {
+      return false;
+    }
+    if (state.logPlayerFilterId) {
+      const pid = point.player_id ? String(point.player_id).toLowerCase() : '';
+      if (pid !== state.logPlayerFilterId) return false;
+    }
+    if (state.logShotFilter !== 'all') {
+      const shot = detectShotKey(point.reason);
+      if (state.logShotFilter === 'none') {
+        if (shot) return false;
+      } else if (shot !== state.logShotFilter) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function collectLogShotOptions(games) {
+    const seen = {};
+    let hasNone = false;
+    (games || []).forEach((g) => {
+      (g.points || []).forEach((p) => {
+        const shot = detectShotKey(p.reason);
+        if (shot) seen[shot] = true;
+        else hasNone = true;
+      });
+    });
+    const options = Object.keys(seen)
+      .map((key) => ({ value: key, label: SHOT_TITLES[key] }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+    if (hasNone) options.push({ value: 'none', label: 'No detail' });
+    return options;
+  }
+
+  function logFiltersActive() {
+    return (
+      !!state.logPlayerFilterId ||
+      state.logAttributionFilter !== 'all' ||
+      state.logShotFilter !== 'all'
+    );
+  }
 
   function el(id) {
     return document.getElementById(id);
@@ -1137,11 +1205,87 @@
     if (!summary.games.length) {
       return `<p class="ls-muted">No points logged yet.</p>`;
     }
+
+    const shotOptions = collectLogShotOptions(summary.games);
+    if (
+      state.logShotFilter !== 'all' &&
+      !shotOptions.some((opt) => opt.value === state.logShotFilter)
+    ) {
+      const label =
+        state.logShotFilter === 'none'
+          ? 'No detail'
+          : SHOT_TITLES[state.logShotFilter] || state.logShotFilter;
+      shotOptions.push({ value: state.logShotFilter, label });
+    }
+    const totalPoints = summary.totalPoints;
+    const filteredGames = summary.games
+      .map((g) => ({
+        ...g,
+        points: g.points.filter(pointMatchesLogFilters)
+      }))
+      .filter((g) => g.points.length > 0);
+    const shownPoints = filteredGames.reduce((n, g) => n + g.points.length, 0);
+    const filtersOn = logFiltersActive();
+    const attr = state.logAttributionFilter;
+
     return `
       <div class="ls-log">
-        ${summary.games
-          .map(
-            (g) => `
+        <div class="ls-log-filters" role="search" aria-label="Filter match log">
+          <div class="ls-log-filter-row">
+            <label class="ls-log-filter">
+              <span>Player</span>
+              <select id="lsLogPlayer">
+                <option value="" ${!state.logPlayerFilterId ? 'selected' : ''}>All players</option>
+                ${summary.players
+                  .map(
+                    (p) =>
+                      `<option value="${escapeHtml(p.playerId)}" ${
+                        state.logPlayerFilterId === p.playerId ? 'selected' : ''
+                      }>${escapeHtml(p.displayName)}</option>`
+                  )
+                  .join('')}
+              </select>
+            </label>
+            <label class="ls-log-filter">
+              <span>Shot</span>
+              <select id="lsLogShot">
+                <option value="all" ${state.logShotFilter === 'all' ? 'selected' : ''}>All shots</option>
+                ${shotOptions
+                  .map(
+                    (opt) =>
+                      `<option value="${escapeHtml(opt.value)}" ${
+                        state.logShotFilter === opt.value ? 'selected' : ''
+                      }>${escapeHtml(opt.label)}</option>`
+                  )
+                  .join('')}
+              </select>
+            </label>
+          </div>
+          <div class="ls-seg ls-log-attr-seg" role="group" aria-label="Point type">
+            <button type="button" class="ls-seg-btn ${attr === 'all' ? 'active' : ''}" data-log-attr="all">All</button>
+            <button type="button" class="ls-seg-btn ${attr === 'winner' ? 'active' : ''}" data-log-attr="winner">Winner</button>
+            <button type="button" class="ls-seg-btn ${attr === 'error' ? 'active' : ''}" data-log-attr="error">Error</button>
+            <button type="button" class="ls-seg-btn ${attr === 'team_award' ? 'active' : ''}" data-log-attr="team_award">Pair</button>
+          </div>
+          <div class="ls-log-filter-meta">
+            <span class="ls-muted">${
+              filtersOn
+                ? `Showing ${shownPoints} of ${totalPoints} points`
+                : `${totalPoints} points`
+            }</span>
+            ${
+              filtersOn
+                ? '<button type="button" class="ls-btn-text" id="lsLogClearFilters">Clear filters</button>'
+                : ''
+            }
+          </div>
+        </div>
+        ${
+          filteredGames.length === 0
+            ? `<p class="ls-muted ls-log-empty">No points match these filters.</p>`
+            : filteredGames
+                .map(
+                  (g) => `
           <div class="ls-log-group">
             <h4>${escapeHtml(g.title)}${g.wonByTeam ? ' · Pair ' + g.wonByTeam : ''}</h4>
             ${g.points
@@ -1171,8 +1315,9 @@
               })
               .join('')}
           </div>`
-          )
-          .join('')}
+                )
+                .join('')
+        }
       </div>`;
   }
 
@@ -1212,6 +1357,24 @@
         state.reasonPatternTab = btn.getAttribute('data-reason-tab');
         render();
       });
+    });
+    el('lsLogPlayer')?.addEventListener('change', (e) => {
+      state.logPlayerFilterId = e.target.value || null;
+      render();
+    });
+    el('lsLogShot')?.addEventListener('change', (e) => {
+      state.logShotFilter = e.target.value || 'all';
+      render();
+    });
+    document.querySelectorAll('[data-log-attr]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.logAttributionFilter = btn.getAttribute('data-log-attr') || 'all';
+        render();
+      });
+    });
+    el('lsLogClearFilters')?.addEventListener('click', () => {
+      resetLogFilters();
+      render();
     });
   }
 
@@ -1532,6 +1695,8 @@
     state.selectedDeuceMode = null;
     state.pendingDraft = null;
     state.overlayMode = 'scorer';
+    resetLogFilters();
+    state.reasonPlayerFilterId = null;
 
     const overlay = el('liveScoringOverlay');
     overlay.hidden = false;
@@ -1547,6 +1712,8 @@
       matchCategory: global.LiveScoreEngine.normalizeMatchCategory(match.matchCategory),
       numberOfSets: match.numberOfSets === 5 ? 5 : 3
     };
+    resetLogFilters();
+    state.reasonPlayerFilterId = null;
     const overlay = el('liveScoringOverlay');
     overlay.hidden = false;
     document.body.classList.add('ls-open');
