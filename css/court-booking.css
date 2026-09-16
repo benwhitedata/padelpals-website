@@ -18,27 +18,16 @@ body.cb-page {
 
 body.cb-page {
   margin: 0;
-  background: var(--cb-secondary);
+  background: #f6f5f5;
   color: var(--cb-ink);
   font-family: 'Montserrat', 'Segoe UI', sans-serif;
 }
 
-body.cb-page .footer {
-  display: none;
-}
-
 .cb-app {
-  min-height: calc(100vh - 120px);
   display: flex;
   flex-direction: column;
   background: var(--cb-secondary);
-}
-
-@media (min-width: 961px) {
-  .cb-app {
-    height: calc(100dvh - 104px);
-    min-height: 0;
-  }
+  min-height: 70vh;
 }
 
 .cb-status,
@@ -71,9 +60,6 @@ body.cb-page .footer {
   padding: 16px 20px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   background: var(--cb-secondary);
-  position: sticky;
-  top: 0;
-  z-index: 6;
 }
 
 .cb-club {
@@ -109,11 +95,33 @@ body.cb-page .footer {
   gap: 6px;
 }
 
-.cb-date-nav h2 {
-  margin: 0;
-  min-width: 210px;
-  text-align: center;
+.cb-date-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 200px;
+  min-height: 40px;
+  max-height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cb-date-picker:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cb-date-picker span {
   font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.cb-date-nav .cb-btn {
+  min-height: 40px;
+  padding: 8px 12px;
 }
 
 .cb-toolbar-actions {
@@ -148,6 +156,12 @@ body.cb-page .footer {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.cb-btn-ghost.is-on {
+  background: var(--cb-primary);
+  color: #0d1b2e;
+  border-color: var(--cb-primary);
 }
 
 .cb-btn-danger {
@@ -443,23 +457,17 @@ body.cb-page .footer {
   font-size: 0.88rem;
 }
 
-.cb-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(6, 12, 20, 0.72);
-  z-index: 40;
-  display: flex;
-  justify-content: flex-end;
+.cb-view {
+  padding: 8px 20px 48px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .cb-panel {
-  width: min(920px, 100%);
-  height: 100%;
-  background: var(--cb-secondary);
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
   color: #fff;
-  overflow: auto;
-  padding: 20px 24px 48px;
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.35);
 }
 
 .cb-panel-head {
@@ -569,7 +577,7 @@ body.cb-page .footer {
   position: fixed;
   inset: 0;
   background: rgba(6, 12, 20, 0.7);
-  z-index: 50;
+  z-index: 120;
   display: flex;
   align-items: center;
   justify-content: center;

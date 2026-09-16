@@ -365,6 +365,7 @@ const SHARED_NAVIGATION_HTML = `
                     For Clubs <span class="nav-chevron" aria-hidden="true"></span>
                 </button>
                 <div class="dropdown" role="menu">
+                    <a href="courts.html" class="dropdown-link" role="menuitem">Open Courts</a>
                     <a href="court-bookings.html" class="dropdown-link" role="menuitem">Court Bookings</a>
                     <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
                     <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
@@ -385,11 +386,15 @@ const SHARED_NAVIGATION_HTML = `
             <li class="nav-item">
                 <a href="coaches.html" class="nav-link">For Coaches</a>
             </li>
+            <li class="nav-item">
+                <a href="courts.html" class="nav-link">Courts</a>
+            </li>
             <li class="nav-item has-dropdown">
                 <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
                     Features <span class="nav-chevron" aria-hidden="true"></span>
                 </button>
                 <div class="dropdown" role="menu">
+                    <a href="courts.html" class="dropdown-link" role="menuitem">Open Courts</a>
                     <a href="court-bookings.html" class="dropdown-link" role="menuitem">Court Bookings</a>
                     <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
                     <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
@@ -410,9 +415,6 @@ const SHARED_NAVIGATION_HTML = `
         <!-- Authentication UI -->
         <div class="auth-container">
             <span class="user-info" id="userInfo"></span>
-            <a href="courts.html" class="auth-button" id="courtsButton" style="display: none; text-decoration: none;">
-                <i class="fas fa-border-all" style="margin-right: 6px;"></i>Courts
-            </a>
             <a href="dashboard.html" class="auth-button" id="dashboardButton" style="display: none; text-decoration: none;">
                 <i class="fas fa-tachometer-alt" style="margin-right: 6px;"></i>Dashboard
             </a>
@@ -719,6 +721,7 @@ const SHARED_FOOTER_HTML = `
             <div class="footer-section">
                 <h4>For Clubs</h4>
                 <ul>
+                    <li><a href="courts.html">Open Courts</a></li>
                     <li><a href="court-bookings.html">Court Bookings</a></li>
                     <li><a href="club-socials.html">Club Socials</a></li>
                     <li><a href="americano.html">Americano</a></li>
@@ -836,9 +839,7 @@ if (typeof window !== 'undefined' && window.document) {
     if (scriptTag && scriptTag.getAttribute('data-auto-nav') === 'true') {
         document.addEventListener('DOMContentLoaded', function() {
             initSharedNavigation();
-            if (!document.body.classList.contains('cb-page')) {
-                initSharedFooter();
-            }
+            initSharedFooter();
         });
     }
 }

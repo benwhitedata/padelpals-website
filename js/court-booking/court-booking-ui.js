@@ -338,15 +338,16 @@
 
     var sheet = state.sheet;
     var closed = !!sheet.is_closed;
-    app.innerHTML =
-      toolbarHtml() +
-      '<p class="cb-caption' + (!sheet.enabled && actingAsStaff() ? ' warn' : '') + '" id="cbCaption">' + escapeHtml(captionText()) + '</p>' +
-      '<div class="cb-workspace">' +
-        '<div class="cb-board-wrap" id="cbBoardWrap">' + boardHtml(closed) + '</div>' +
-        '<aside class="cb-inspector" id="cbInspector">' + inspectorHtml() + '</aside>' +
-      '</div>' +
-      panelHtml() +
-      confirmHtml();
+    var caption = state.panel
+      ? ''
+      : '<p class="cb-caption' + (!sheet.enabled && actingAsStaff() ? ' warn' : '') + '" id="cbCaption">' + escapeHtml(captionText()) + '</p>';
+    var main = state.panel
+      ? panelHtml()
+      : '<div class="cb-workspace">' +
+          '<div class="cb-board-wrap" id="cbBoardWrap">' + boardHtml(closed) + '</div>' +
+          '<aside class="cb-inspector" id="cbInspector">' + inspectorHtml() + '</aside>' +
+        '</div>';
+    app.innerHTML = toolbarHtml() + caption + main + confirmHtml();
     bindChrome();
   }
 
@@ -388,11 +389,11 @@
         '</div>'
       : '';
     var staffButtons = actingAsStaff()
-      ? '<button type="button" class="cb-btn cb-btn-ghost" id="cbHold">Hold</button>'
+      ? '<button type="button" class="cb-btn cb-btn-ghost' + (state.panel === 'hold' ? ' is-on' : '') + '" id="cbHold">Hold</button>'
       : '';
     var adminButtons = canManageSettings()
-      ? '<button type="button" class="cb-btn cb-btn-ghost" id="cbSettings">Settings</button>' +
-        '<button type="button" class="cb-btn cb-btn-ghost" id="cbPlayers">Players</button>'
+      ? '<button type="button" class="cb-btn cb-btn-ghost' + (state.panel === 'settings' ? ' is-on' : '') + '" id="cbSettings">Settings</button>' +
+        '<button type="button" class="cb-btn cb-btn-ghost' + (state.panel === 'players' ? ' is-on' : '') + '" id="cbPlayers">Players</button>'
       : '';
     return (
       '<div class="cb-toolbar">' +
@@ -401,14 +402,16 @@
         '</div>' + clubSelect +
         '<div class="cb-date-nav">' +
           '<button type="button" class="cb-btn cb-btn-ghost" id="cbPrev" aria-label="Previous day"><i class="fas fa-chevron-left"></i></button>' +
-          '<h2>' + escapeHtml(formatDayTitle(state.playDate)) + '</h2>' +
-          '<input type="date" class="cb-input" id="cbDate" value="' + escapeHtml(state.playDate) + '" aria-label="Booking date" style="width:auto">' +
+          '<label class="cb-date-picker">' +
+            '<span>' + escapeHtml(formatDayTitle(state.playDate)) + '</span>' +
+            '<input type="date" id="cbDate" value="' + escapeHtml(state.playDate) + '" aria-label="Booking date">' +
+          '</label>' +
           (state.playDate !== todayYmd() ? '<button type="button" class="cb-btn cb-btn-text" id="cbToday">Today</button>' : '') +
           '<button type="button" class="cb-btn cb-btn-ghost" id="cbNext" aria-label="Next day"><i class="fas fa-chevron-right"></i></button>' +
         '</div>' +
         '<div class="cb-toolbar-actions">' +
           staffToggle + staffButtons + adminButtons +
-          '<button type="button" class="cb-btn cb-btn-ghost" id="cbMine">My bookings</button>' +
+          '<button type="button" class="cb-btn cb-btn-ghost' + (state.panel === 'mine' ? ' is-on' : '') + '" id="cbMine">My bookings</button>' +
         '</div>' +
       '</div>'
     );
@@ -630,10 +633,11 @@
     if (state.panel === 'players') inner = playersHtml();
     if (state.panel === 'mine') inner = mineHtml();
     if (state.panel === 'hold') inner = holdEditorHtml();
-    return '<div class="cb-overlay" id="cbOverlay"><div class="cb-panel">' +
+    return '<section class="cb-view" id="cbView">' +
+      '<div class="cb-panel">' +
       '<div class="cb-panel-head"><h2>' + escapeHtml(panelTitle()) + '</h2>' +
-      '<button type="button" class="cb-btn cb-btn-ghost" id="cbClosePanel">Close</button></div>' +
-      inner + '</div></div>';
+      '<button type="button" class="cb-btn cb-btn-ghost" id="cbClosePanel">Back to board</button></div>' +
+      inner + '</div></section>';
   }
 
   function panelTitle() {
@@ -846,12 +850,39 @@
         render();
       });
     });
-    onClick('cbHold', openHold);
-    onClick('cbSettings', openSettings);
-    onClick('cbPlayers', openPlayers);
-    onClick('cbMine', openMine);
+    onClick('cbHold', function () {
+      if (state.panel === 'hold') {
+        state.panel = null;
+        render();
+      } else {
+        openHold();
+      }
+    });
+    onClick('cbSettings', function () {
+      if (state.panel === 'settings') {
+        state.panel = null;
+        render();
+      } else {
+        openSettings();
+      }
+    });
+    onClick('cbPlayers', function () {
+      if (state.panel === 'players') {
+        state.panel = null;
+        render();
+      } else {
+        openPlayers();
+      }
+    });
+    onClick('cbMine', function () {
+      if (state.panel === 'mine') {
+        state.panel = null;
+        render();
+      } else {
+        openMine();
+      }
+    });
     onClick('cbClosePanel', function () { state.panel = null; render(); });
-    onClick('cbOverlay', function (e) { if (e.target.id === 'cbOverlay') { state.panel = null; render(); } });
     bindInspector();
     bindPanel();
     bindConfirm();
