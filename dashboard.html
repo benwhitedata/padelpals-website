@@ -2907,7 +2907,7 @@
                 if (!session?.user?.id) return null;
                 const { data: me } = await client
                     .from('user_profiles')
-                    .select('club_id, clubs(id, club_name, primary_color, secondary_color, logo_url)')
+                    .select('club_id, clubs!user_profiles_club_id_fkey(id, club_name, primary_color, secondary_color, logo_url)')
                     .eq('id', session.user.id)
                     .maybeSingle();
                 const clubId = me?.clubs?.id || me?.club_id || null;
@@ -4936,7 +4936,7 @@
                 try {
                     // Create the combined profile endpoint that includes clubs and ratings
                     // Disambiguate ratings_coach: table has FKs for both player (user_id) and assessing coach (coach_id)
-                    const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach!ratings_coach_user_id_fkey(*)`;
+                    const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs!user_profiles_club_id_fkey(*),ratings_coach!ratings_coach_user_id_fkey(*)`;
                     
                     console.log("Fetching profile from endpoint:", profileEndpoint);
                     
@@ -5605,7 +5605,7 @@
                 };
                 
                 // Disambiguate ratings_coach: table has FKs for both player (user_id) and assessing coach (coach_id)
-                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*),ratings_coach!ratings_coach_user_id_fkey(*)`;
+                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs!user_profiles_club_id_fkey(*),ratings_coach!ratings_coach_user_id_fkey(*)`;
                 console.log("Refreshing profile from endpoint:", profileEndpoint);
                 
                 const response = await fetch(profileEndpoint, {
@@ -6254,7 +6254,7 @@
                 // First get the user's profile to have access to their club ID
                 try {
                     // Create the combined profile endpoint that includes clubs and ratings
-                    const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*)`;
+                    const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs!user_profiles_club_id_fkey(*)`;
                     
                     // Set up headers for the request
                     const headers = {
@@ -7165,7 +7165,7 @@
                     'Authorization': `Bearer ${session.access_token}`
                 };
 
-                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*)`;
+                const profileEndpoint = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs!user_profiles_club_id_fkey(*)`;
                 const profileRes = await fetch(profileEndpoint, { method: 'GET', headers });
                 if (profileRes.ok) {
                     const profiles = await profileRes.json();
@@ -7490,7 +7490,7 @@
                                 'apikey': window.config.supabaseKey,
                                 'Authorization': `Bearer ${session.access_token}`
                             };
-                            const profileEndpointLocal = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs(*)`;
+                            const profileEndpointLocal = `${window.config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}&select=*,clubs!user_profiles_club_id_fkey(*)`;
                             const pr = await fetch(profileEndpointLocal, { method: 'GET', headers: headersLocal });
                             if (pr.ok) {
                                 const profiles = await pr.json();
