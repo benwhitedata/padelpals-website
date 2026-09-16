@@ -210,6 +210,205 @@
             cursor: not-allowed;
             transform: none;
         }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .loading-spinner.dark {
+            border-color: rgba(26, 34, 56, 0.2);
+            border-top-color: #1a2238;
+        }
+
+        .email-sign-in {
+            margin-top: 8px;
+        }
+
+        .email-sign-in-toggle {
+            width: 100%;
+            padding: 12px 16px;
+            background: transparent;
+            border: 1px solid #E8F4F8;
+            border-radius: 8px;
+            color: #1a2238;
+            cursor: pointer;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .email-sign-in-toggle:hover:not(:disabled) {
+            border-color: #4A90E2;
+            background: #F8F8F8;
+        }
+
+        .email-sign-in-toggle:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .email-otp-panel {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .email-otp-panel.is-open {
+            display: block;
+        }
+
+        .email-otp-caption {
+            color: #555555;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .email-otp-field {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border: 1px solid #E8F4F8;
+            border-radius: 8px;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 1rem;
+            color: #1a2238;
+            background: #FFFFFF;
+        }
+
+        .email-otp-field:focus {
+            outline: none;
+            border-color: #4A90E2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+        }
+
+        .email-otp-field:disabled {
+            background: #F6F5F5;
+            cursor: not-allowed;
+        }
+
+        .email-otp-button {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .email-otp-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .email-otp-send {
+            background: #E8F4F8;
+            color: #1a2238;
+        }
+
+        .email-otp-send:hover:not(:disabled) {
+            background: #d5eaf4;
+        }
+
+        .email-otp-verify {
+            background: #1a2238;
+            color: #FFFFFF;
+        }
+
+        .email-otp-verify:hover:not(:disabled) {
+            background: #2a3990;
+        }
+
+        .email-otp-verify-block {
+            display: none;
+            margin-top: 4px;
+        }
+
+        .email-otp-verify-block.is-open {
+            display: block;
+        }
+
+        .email-otp-hint {
+            color: #555555;
+            font-size: 0.85rem;
+            min-height: 1.2em;
+        }
+
+        .desk-name-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(26, 34, 56, 0.45);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .desk-name-overlay.is-open {
+            display: flex;
+        }
+
+        .desk-name-dialog {
+            width: 100%;
+            max-width: 400px;
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 28px 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+            border: 1px solid #E8F4F8;
+        }
+
+        .desk-name-dialog h3 {
+            color: #1a2238;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        .desk-name-dialog p {
+            color: #555555;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .desk-name-error {
+            color: #721c24;
+            font-size: 0.85rem;
+            margin: -4px 0 12px;
+        }
+
+        .desk-name-save {
+            background: #1a2238;
+            color: #FFFFFF;
+        }
+
+        .desk-name-save:hover:not(:disabled) {
+            background: #2a3990;
+        }
+
+        .desk-name-skip {
+            background: transparent;
+            color: #1a2238;
+            border: 1px solid #E8F4F8;
+        }
+
+        .desk-name-skip:hover:not(:disabled) {
+            border-color: #4A90E2;
+            background: #F8F8F8;
+        }
         
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -268,6 +467,24 @@
                     <span id="googleButtonText" class="sign-in-button-text">Sign in with Google</span>
                 </button>
             </div>
+
+            <div id="emailSignIn" class="email-sign-in">
+                <button type="button" id="emailSignInToggle" class="email-sign-in-toggle" disabled>
+                    Sign in with email
+                </button>
+                <div id="emailOtpPanel" class="email-otp-panel">
+                    <p class="email-otp-caption">Club desk: use the club mailbox. A 6-digit code is emailed to that address.</p>
+                    <label for="emailOtpEmail" class="visually-hidden">Email address</label>
+                    <input id="emailOtpEmail" class="email-otp-field" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="info@theclub.com">
+                    <button type="button" id="emailOtpSend" class="email-otp-button email-otp-send">Send code</button>
+                    <div id="emailOtpVerifyBlock" class="email-otp-verify-block">
+                        <label for="emailOtpCode" class="visually-hidden">6-digit code</label>
+                        <input id="emailOtpCode" class="email-otp-field" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code" aria-label="Sign-in code">
+                        <button type="button" id="emailOtpVerify" class="email-otp-button email-otp-verify">Verify code</button>
+                    </div>
+                    <p id="emailOtpHint" class="email-otp-hint"></p>
+                </div>
+            </div>
             
             <div id="statusMessages" style="display: none;">
                 <div class="status-message info-message"></div>
@@ -277,6 +494,18 @@
                 <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>
                 Sign Out
             </button>
+        </div>
+    </div>
+
+    <div id="deskNameOverlay" class="desk-name-overlay" role="dialog" aria-modal="true" aria-labelledby="deskNameTitle">
+        <div class="desk-name-dialog">
+            <h3 id="deskNameTitle">Name this club desk</h3>
+            <p>Choose a display name, for example Riverside desk.</p>
+            <label for="deskNameInput" class="visually-hidden">Display name</label>
+            <input id="deskNameInput" class="email-otp-field" type="text" autocomplete="name" placeholder="Riverside desk">
+            <p id="deskNameError" class="desk-name-error" hidden></p>
+            <button type="button" id="deskNameSave" class="email-otp-button desk-name-save">Save name</button>
+            <button type="button" id="deskNameSkip" class="email-otp-button desk-name-skip">Not now</button>
         </div>
     </div>
 
@@ -308,6 +537,9 @@
             }
         });
         
+        const EMAIL_OTP_REDIRECT = 'https://www.padelpals.app/auth-callback.html';
+        const OTP_VERIFY_TYPES = ['email', 'magiclink', 'signup'];
+
         // Show a status message to the user
         function showStatusMessage(message, type = 'info') {
             const statusMessages = document.getElementById('statusMessages');
@@ -319,6 +551,51 @@
                     statusMessages.style.display = 'block';
                 }
             }
+        }
+
+        function normalisedEmail(email) {
+            return (email || '').trim().toLowerCase();
+        }
+
+        function normalisedOtpCode(code) {
+            return (code || '').replace(/\s+/g, '');
+        }
+
+        function isPlaceholderDisplayName(name) {
+            const trimmed = (name || '').trim();
+            return !trimmed || trimmed.toLowerCase() === 'player';
+        }
+
+        function humanAuthError(error, fallback) {
+            const raw = [error && error.message, error && error.code, error && error.status]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase();
+            if (raw.includes('rate') || raw.includes('429') || raw.includes('security purposes')) {
+                return 'Please wait a moment before requesting another code.';
+            }
+            if (
+                raw.includes('otp_expired') ||
+                raw.includes('token has expired') ||
+                (raw.includes('expired') && raw.includes('otp'))
+            ) {
+                return 'That code has expired. Request a new one.';
+            }
+            if (raw.includes('invalid') && (raw.includes('otp') || raw.includes('token') || raw.includes('code'))) {
+                return 'That code is incorrect. Check the email and try again.';
+            }
+            if (
+                raw.includes('unable to validate') ||
+                raw.includes('invalid email') ||
+                raw.includes('email_address_invalid')
+            ) {
+                return 'Enter a valid email address.';
+            }
+            return fallback;
+        }
+
+        function goToDashboard() {
+            window.location.href = '/dashboard.html';
         }
 
         // Initialize Supabase client and authentication
@@ -339,9 +616,28 @@
                 // Enable the sign in buttons now that config is loaded
                 const appleSignInButton = document.getElementById('appleSignIn');
                 const googleSignInButton = document.getElementById('googleSignIn');
+                const emailSignIn = document.getElementById('emailSignIn');
+                const emailSignInToggle = document.getElementById('emailSignInToggle');
+                const emailOtpPanel = document.getElementById('emailOtpPanel');
+                const emailOtpEmail = document.getElementById('emailOtpEmail');
+                const emailOtpSend = document.getElementById('emailOtpSend');
+                const emailOtpVerifyBlock = document.getElementById('emailOtpVerifyBlock');
+                const emailOtpCode = document.getElementById('emailOtpCode');
+                const emailOtpVerify = document.getElementById('emailOtpVerify');
+                const emailOtpHint = document.getElementById('emailOtpHint');
+                const deskNameOverlay = document.getElementById('deskNameOverlay');
+                const deskNameInput = document.getElementById('deskNameInput');
+                const deskNameError = document.getElementById('deskNameError');
+                const deskNameSave = document.getElementById('deskNameSave');
+                const deskNameSkip = document.getElementById('deskNameSkip');
+
+                let emailOtpExpanded = false;
+                let emailOtpCodeSent = false;
+                let emailOtpBusy = false;
                 
                 appleSignInButton.disabled = false;
                 googleSignInButton.disabled = false;
+                if (emailSignInToggle) emailSignInToggle.disabled = false;
                 
                 // Handle Apple Sign In
                 appleSignInButton.addEventListener('click', async () => {
@@ -464,6 +760,264 @@
                         showStatusMessage(errorMsg, 'error');
                     }
                 });
+
+                function setEmailOtpBusy(isBusy) {
+                    emailOtpBusy = isBusy;
+                    if (emailSignInToggle) emailSignInToggle.disabled = isBusy;
+                    if (emailOtpEmail) emailOtpEmail.disabled = isBusy;
+                    if (emailOtpCode) emailOtpCode.disabled = isBusy;
+                    if (emailOtpSend) {
+                        emailOtpSend.disabled = isBusy || !normalisedEmail(emailOtpEmail.value);
+                    }
+                    if (emailOtpVerify) {
+                        emailOtpVerify.disabled = isBusy || normalisedOtpCode(emailOtpCode.value).length < 6;
+                    }
+                }
+
+                function setEmailOtpHint(message) {
+                    if (!emailOtpHint) return;
+                    emailOtpHint.textContent = message || '';
+                }
+
+                async function verifyOtpWithFallback(email, token) {
+                    let lastError = null;
+                    for (const type of OTP_VERIFY_TYPES) {
+                        try {
+                            const { data, error } = await supabase.auth.verifyOtp({
+                                email,
+                                token,
+                                type
+                            });
+                            if (!error && data && data.session) {
+                                return data.session;
+                            }
+                            lastError = error || lastError;
+                        } catch (error) {
+                            lastError = error;
+                        }
+                    }
+                    throw lastError || new Error('Could not start a session. Request a new code.');
+                }
+
+                async function loadDisplayName(userId) {
+                    try {
+                        const { data, error } = await supabase
+                            .from('user_profiles')
+                            .select('display_name')
+                            .eq('id', userId)
+                            .maybeSingle();
+                        if (error) {
+                            console.warn('Email OTP signed in but profile load failed:', error.message);
+                            return null;
+                        }
+                        return data ? data.display_name : null;
+                    } catch (error) {
+                        console.warn('Email OTP signed in but profile load failed:', error);
+                        return null;
+                    }
+                }
+
+                async function saveDeskDisplayName(userId, newName) {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) {
+                        throw new Error('No active session found');
+                    }
+
+                    const url = `${config.supabaseUrl}/rest/v1/user_profiles?id=eq.${userId}`;
+                    const response = await fetch(url, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': config.supabaseKey,
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ display_name: newName })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Failed to update name: HTTP ${response.status} - ${errorText}`);
+                    }
+
+                    localStorage.setItem('currentUserFullName', newName);
+                }
+
+                function promptForDeskName(userId) {
+                    if (!deskNameOverlay) {
+                        goToDashboard();
+                        return;
+                    }
+                    deskNameError.hidden = true;
+                    deskNameError.textContent = '';
+                    deskNameInput.value = '';
+                    deskNameOverlay.classList.add('is-open');
+                    deskNameInput.focus();
+
+                    const finish = () => {
+                        deskNameOverlay.classList.remove('is-open');
+                        goToDashboard();
+                    };
+
+                    deskNameSave.onclick = async () => {
+                        const newName = deskNameInput.value.trim();
+                        if (!newName) {
+                            deskNameError.hidden = false;
+                            deskNameError.textContent = 'Enter a display name.';
+                            deskNameInput.focus();
+                            return;
+                        }
+                        deskNameSave.disabled = true;
+                        deskNameSkip.disabled = true;
+                        deskNameSave.innerHTML = '<span class="loading-spinner"></span> Saving...';
+                        try {
+                            await saveDeskDisplayName(userId, newName);
+                            finish();
+                        } catch (error) {
+                            console.error('Error saving desk name:', error);
+                            deskNameError.hidden = false;
+                            deskNameError.textContent = 'Could not save that name. Try again, or continue without it.';
+                            deskNameSave.disabled = false;
+                            deskNameSkip.disabled = false;
+                            deskNameSave.textContent = 'Save name';
+                        }
+                    };
+
+                    deskNameSkip.onclick = finish;
+                    deskNameInput.onkeydown = (event) => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            deskNameSave.click();
+                        }
+                    };
+                }
+
+                async function finishEmailSignIn(session) {
+                    const userId = session.user.id;
+                    const metadataName = session.user.user_metadata && session.user.user_metadata.full_name;
+                    let needsName = isPlaceholderDisplayName(metadataName);
+                    const displayName = await loadDisplayName(userId);
+                    if (displayName !== null) {
+                        needsName = isPlaceholderDisplayName(displayName);
+                    } else {
+                        needsName = true;
+                    }
+
+                    if (needsName) {
+                        promptForDeskName(userId);
+                        return;
+                    }
+                    goToDashboard();
+                }
+
+                if (emailSignInToggle && emailOtpPanel) {
+                    emailSignInToggle.addEventListener('click', () => {
+                        if (emailOtpBusy) return;
+                        emailOtpExpanded = !emailOtpExpanded;
+                        emailOtpPanel.classList.toggle('is-open', emailOtpExpanded);
+                        emailSignInToggle.textContent = emailOtpExpanded
+                            ? 'Hide email sign-in'
+                            : 'Sign in with email';
+                        if (emailOtpExpanded) {
+                            emailOtpEmail.focus();
+                        }
+                    });
+                }
+
+                if (emailOtpEmail) {
+                    emailOtpEmail.addEventListener('input', () => {
+                        if (emailOtpSend) {
+                            emailOtpSend.disabled = emailOtpBusy || !normalisedEmail(emailOtpEmail.value);
+                        }
+                    });
+                    emailOtpEmail.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            emailOtpSend.click();
+                        }
+                    });
+                    emailOtpSend.disabled = true;
+                }
+
+                if (emailOtpCode) {
+                    emailOtpCode.addEventListener('input', () => {
+                        emailOtpCode.value = emailOtpCode.value.replace(/[^\d\s]/g, '');
+                        if (emailOtpVerify) {
+                            emailOtpVerify.disabled = emailOtpBusy || normalisedOtpCode(emailOtpCode.value).length < 6;
+                        }
+                    });
+                    emailOtpCode.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            emailOtpVerify.click();
+                        }
+                    });
+                }
+
+                if (emailOtpSend) {
+                    emailOtpSend.addEventListener('click', async () => {
+                        if (emailOtpBusy) return;
+                        const email = normalisedEmail(emailOtpEmail.value);
+                        if (!email.includes('@') || !email.includes('.')) {
+                            showStatusMessage('Enter a valid email address.', 'error');
+                            return;
+                        }
+
+                        setEmailOtpBusy(true);
+                        emailOtpSend.innerHTML = '<span class="loading-spinner dark"></span>';
+                        try {
+                            const { error } = await supabase.auth.signInWithOtp({
+                                email,
+                                options: {
+                                    shouldCreateUser: true,
+                                    emailRedirectTo: EMAIL_OTP_REDIRECT
+                                }
+                            });
+                            if (error) throw error;
+                            emailOtpCodeSent = true;
+                            emailOtpVerifyBlock.classList.add('is-open');
+                            setEmailOtpHint('Check the inbox for a 6-digit code.');
+                            emailOtpSend.textContent = 'Resend code';
+                            emailOtpCode.focus();
+                        } catch (error) {
+                            console.error('Error requesting email OTP:', error);
+                            showStatusMessage(
+                                humanAuthError(error, 'Could not send a sign-in code. Please try again.'),
+                                'error'
+                            );
+                            emailOtpSend.textContent = emailOtpCodeSent ? 'Resend code' : 'Send code';
+                        } finally {
+                            setEmailOtpBusy(false);
+                        }
+                    });
+                }
+
+                if (emailOtpVerify) {
+                    emailOtpVerify.disabled = true;
+                    emailOtpVerify.addEventListener('click', async () => {
+                        if (emailOtpBusy) return;
+                        const email = normalisedEmail(emailOtpEmail.value);
+                        const token = normalisedOtpCode(emailOtpCode.value);
+                        if (token.length < 6) {
+                            showStatusMessage('Enter the 6-digit code from your email.', 'error');
+                            return;
+                        }
+
+                        setEmailOtpBusy(true);
+                        emailOtpVerify.innerHTML = '<span class="loading-spinner"></span>';
+                        try {
+                            const session = await verifyOtpWithFallback(email, token);
+                            await finishEmailSignIn(session);
+                        } catch (error) {
+                            console.error('Error verifying email OTP:', error);
+                            showStatusMessage(
+                                humanAuthError(error, 'Could not verify that code. Request a new one.'),
+                                'error'
+                            );
+                            emailOtpVerify.textContent = 'Verify code';
+                            setEmailOtpBusy(false);
+                        }
+                    });
+                }
         
                 // Setup logout button handler
                 const logoutButton = document.getElementById('logoutButton');
@@ -525,6 +1079,12 @@
                             // Hide sign in buttons
                             appleSignInButton.style.display = 'none';
                             googleSignInButton.style.display = 'none';
+                            if (appleSignInButton.parentElement) {
+                                appleSignInButton.parentElement.style.display = 'none';
+                            }
+                            if (emailSignIn) {
+                                emailSignIn.style.display = 'none';
+                            }
                             // Update title
                             const authTitle = document.querySelector('.auth-title');
                             const authSubtitle = document.querySelector('.auth-subtitle');
@@ -552,10 +1112,15 @@
                 // Reset buttons with error state
                 const appleSignInButton = document.getElementById('appleSignIn');
                 const googleSignInButton = document.getElementById('googleSignIn');
+                const emailSignInToggle = document.getElementById('emailSignInToggle');
                 appleSignInButton.disabled = true;
                 googleSignInButton.disabled = true;
                 appleSignInButton.style.opacity = '0.5';
                 googleSignInButton.style.opacity = '0.5';
+                if (emailSignInToggle) {
+                    emailSignInToggle.disabled = true;
+                    emailSignInToggle.style.opacity = '0.5';
+                }
             }
         }
 
