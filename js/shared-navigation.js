@@ -247,10 +247,10 @@ const SHARED_NAVIGATION_CSS = `
     background: #c82333;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1180px) {
     .nav-link {
         padding: 14px 8px;
-        font-size: 0.95rem;
+        font-size: 0.92rem;
     }
 }
 
@@ -349,7 +349,7 @@ const SHARED_NAVIGATION_CSS = `
 const SHARED_NAVIGATION_HTML = `
 <!-- Top Navigation Banner -->
 <div class="top-nav">
-    Organise socials, Americano sessions and leagues in one place
+    Organise socials, Americano sessions, leagues and Group Lessons in one place
 </div>
 
 <!-- Main Navigation -->
@@ -381,6 +381,9 @@ const SHARED_NAVIGATION_HTML = `
                     <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
                 </div>
             </li>
+            <li class="nav-item">
+                <a href="coaches.html" class="nav-link">For Coaches</a>
+            </li>
             <li class="nav-item has-dropdown">
                 <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
                     Features <span class="nav-chevron" aria-hidden="true"></span>
@@ -389,6 +392,7 @@ const SHARED_NAVIGATION_HTML = `
                     <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
                     <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
                     <a href="boxleague.html" class="dropdown-link" role="menuitem">Box League</a>
+                    <a href="coaches.html" class="dropdown-link" role="menuitem">Group Lessons</a>
                     <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
                     <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
                 </div>
@@ -535,6 +539,11 @@ const SHARED_NAVIGATION_JS = `
                 page: page,
                 placement: el.getAttribute('data-placement') || ''
             });
+        } else if (kind === 'coach_enquiry') {
+            gtag('event', 'coach_enquiry_click', {
+                page: page,
+                placement: el.getAttribute('data-placement') || ''
+            });
         } else if (kind === 'demo_board') {
             gtag('event', 'demo_board_click', { page: page });
         }
@@ -651,7 +660,7 @@ const SHARED_FOOTER_CSS = `
 
 .footer-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 32px;
     margin-bottom: 32px;
 }
@@ -717,6 +726,14 @@ const SHARED_FOOTER_HTML = `
                     <li><a href="stats.html">Stats &amp; Profiles</a></li>
                     <li><a href="ratings.html">Player Levels</a></li>
                     <li><a href="badges.html">Badges</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>For Coaches</h4>
+                <ul>
+                    <li><a href="coaches.html">Group Lessons</a></li>
+                    <li><a href="ratings.html">Player Levels</a></li>
                 </ul>
             </div>
             

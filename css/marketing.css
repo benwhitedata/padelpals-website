@@ -275,6 +275,16 @@
   margin: 0 0 56px;
 }
 
+.mkt-format-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 1100px) {
+  .mkt-format-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .mkt-outcome-card,
 .mkt-format-card,
 .mkt-process-card {
@@ -370,7 +380,7 @@
 
 .mkt-members {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin: 0 0 56px;
 }
