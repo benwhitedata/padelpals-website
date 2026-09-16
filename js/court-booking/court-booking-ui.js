@@ -347,7 +347,7 @@
           '<div class="cb-board-wrap" id="cbBoardWrap">' + boardHtml(closed) + '</div>' +
           '<aside class="cb-inspector" id="cbInspector">' + inspectorHtml() + '</aside>' +
         '</div>';
-    app.innerHTML = toolbarHtml() + caption + main + confirmHtml();
+    app.innerHTML = chromeHtml() + caption + main + confirmHtml();
     bindChrome();
   }
 
@@ -367,6 +367,12 @@
     if (!sheet.enabled && isStaff() && state.boardView === 'member') return 'Member booking is off. Members cannot open this board yet.';
     if (!actingAsStaff() && state.playDate > sheet.max_bookable_date) return 'Opens at ' + hhmm(sheet.new_day_unlock) + '.';
     return quotaText(sheet);
+  }
+
+  function chromeHtml() {
+    return '<div class="cb-chrome">' + toolbarHtml() +
+      (state.panel ? '<div class="cb-panel-head"><h2>' + escapeHtml(panelTitle()) + '</h2></div>' : '') +
+      '</div>';
   }
 
   function toolbarHtml() {
@@ -395,12 +401,9 @@
       ? '<button type="button" class="cb-btn cb-btn-ghost' + (state.panel === 'settings' ? ' is-on' : '') + '" id="cbSettings">Settings</button>' +
         '<button type="button" class="cb-btn cb-btn-ghost' + (state.panel === 'players' ? ' is-on' : '') + '" id="cbPlayers">Players</button>'
       : '';
-    return (
-      '<div class="cb-toolbar">' +
-        '<div class="cb-club">' + logo +
-          '<div><h1>' + escapeHtml(clubName(club)) + '</h1><p>Court bookings</p></div>' +
-        '</div>' + clubSelect +
-        '<div class="cb-date-nav">' +
+    var showDate = state.panel !== 'settings' && state.panel !== 'players';
+    var dateNav = showDate
+      ? '<div class="cb-date-nav">' +
           '<button type="button" class="cb-btn cb-btn-ghost" id="cbPrev" aria-label="Previous day"><i class="fas fa-chevron-left"></i></button>' +
           '<label class="cb-date-picker">' +
             '<span>' + escapeHtml(formatDayTitle(state.playDate)) + '</span>' +
@@ -408,10 +411,21 @@
           '</label>' +
           (state.playDate !== todayYmd() ? '<button type="button" class="cb-btn cb-btn-text" id="cbToday">Today</button>' : '') +
           '<button type="button" class="cb-btn cb-btn-ghost" id="cbNext" aria-label="Next day"><i class="fas fa-chevron-right"></i></button>' +
-        '</div>' +
+        '</div>'
+      : '';
+    var backBtn = state.panel
+      ? '<button type="button" class="cb-btn cb-btn-ghost" id="cbClosePanel">Back to board</button>'
+      : '';
+    return (
+      '<div class="cb-toolbar">' +
+        '<div class="cb-club">' + logo +
+          '<div><h1>' + escapeHtml(clubName(club)) + '</h1><p>Court bookings</p></div>' +
+        '</div>' + clubSelect +
+        dateNav +
         '<div class="cb-toolbar-actions">' +
           staffToggle + staffButtons + adminButtons +
           '<button type="button" class="cb-btn cb-btn-ghost' + (state.panel === 'mine' ? ' is-on' : '') + '" id="cbMine">My bookings</button>' +
+          backBtn +
         '</div>' +
       '</div>'
     );
@@ -634,10 +648,7 @@
     if (state.panel === 'mine') inner = mineHtml();
     if (state.panel === 'hold') inner = holdEditorHtml();
     return '<section class="cb-view" id="cbView">' +
-      '<div class="cb-panel">' +
-      '<div class="cb-panel-head"><h2>' + escapeHtml(panelTitle()) + '</h2>' +
-      '<button type="button" class="cb-btn cb-btn-ghost" id="cbClosePanel">Back to board</button></div>' +
-      inner + '</div></section>';
+      '<div class="cb-panel">' + inner + '</div></section>';
   }
 
   function panelTitle() {
