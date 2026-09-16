@@ -1,231 +1,154 @@
-<!-- FULL HTML CONTENT START -->
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Padel Club Box League Guidelines | Padel Pals</title>
-  <meta name="description" content="Run ability-based padel box leagues with promotion, relegation and a shared rating scale. Clubs can also host Americano sessions in the same app." />
+  <title>Box Leagues for Padel Clubs | Padel Pals</title>
+  <meta name="description" content="Run ability-based padel box leagues in the club app — standings, results, play times and promotion between boxes, next to knockouts and Americanos." />
   <link rel="canonical" href="https://www.padelpals.app/boxleague.html">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.padelpals.app/boxleague.html">
-  <meta property="og:title" content="Padel Club Box League Guidelines | Padel Pals">
-  <meta property="og:description" content="Run ability-based padel box leagues with promotion, relegation and a shared rating scale.">
+  <meta property="og:title" content="Box Leagues for Padel Clubs | Padel Pals">
+  <meta property="og:description" content="Run ability-based padel box leagues in the club app — standings, results, play times and promotion between boxes.">
   <meta property="og:image" content="https://www.padelpals.app/images/og_share.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Padel Club Box League Guidelines | Padel Pals">
-  <meta name="twitter:description" content="Run ability-based padel box leagues with promotion, relegation and a shared rating scale.">
+  <meta name="twitter:title" content="Box Leagues for Padel Clubs | Padel Pals">
+  <meta name="twitter:description" content="Run ability-based padel box leagues in the club app — standings, results, play times and promotion between boxes.">
   <meta name="twitter:image" content="https://www.padelpals.app/images/og_share.png">
   <link rel="icon" href="images/Icon.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Load Supabase JS and config loader -->
+  <link rel="stylesheet" href="css/marketing.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config-loader.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Montserrat', Arial, sans-serif;
-      color: #333;
-      line-height: 1.6;
-      background-color: #F6F5F5;
-    }
-    h1, h2, h3 {
-      color: #1a2238;
-    }
-    section {
-      padding: 20px 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    hr {
-      border: none;
-      border-top: 1px solid #ccc;
-      margin: 2rem 0;
-    }
-    blockquote {
-      background: #E8F4F8;
-      padding: 1rem;
-      border-left: 5px solid #4A90E2;
-    }
-    .page-header {
-      background: linear-gradient(135deg, #1a2238 0%, #2a3990 100%);
-      color: #FFFFFF;
-      padding: 64px 0;
-      text-align: center;
-      margin-top: 0;
-    }
-    .page-header h1 {
-      color: #FFFFFF;
-    }
-  </style>
-  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-L426ZMNKFK');
   </script>
-  <!-- End Google Analytics -->
-    
-  <!-- Shared Navigation -->
   <script src="js/shared-navigation.js" data-auto-nav="true"></script>
 </head>
-<body>
-  <section class="page-header">
-    <div class="container">
-      <h1>Padel Club Box League Guidelines</h1>
+<body class="mkt-page" data-page="boxleague.html">
+  <section class="mkt-hero">
+    <div class="mkt-hero-inner">
+      <p class="mkt-eyebrow">For padel clubs</p>
+      <h1>Box Leagues</h1>
+      <p>Ability-based doubles boxes, a live table and results in the same app — with play times on the club court board when you want them.</p>
     </div>
   </section>
 
-  <section>
-    <h2>1. Overview</h2>
-    <p>The Box League is a friendly, competitive doubles league designed to give players regular matches and encourage variety in opponents and partners. Leagues are split into <strong>Men's</strong>, <strong>Ladies'</strong>, and <strong>Mixed</strong> categories. Players are grouped into "boxes," and matches are played over a <strong>4-month round</strong>.</p>
-    <p>For rotating-partner social nights, clubs can also run <a href="americano.html">Americano sessions</a> in the same app.</p>
-  </section>
+  <div class="mkt-wrap">
+    <div class="mkt-intro">
+      <p>Box League lives under <strong>Competitions → Leagues</strong>. Players open <strong>My Leagues</strong>, tap <strong>View League</strong> for the standings grid, and submit set scores in the match sheet. Staff create the round in-app. Courts for fixtures sit on <a href="court-bookings.html">Court Bookings</a> via <strong>Play times</strong>. Grouping uses the same <a href="ratings.html">player levels</a> as the rest of the club. Rotating-partner nights stay on <a href="americano.html">Americano</a>.</p>
+    </div>
 
-  <section>
-    <h2>2. League Format</h2>
-    <ul>
-      <li>The league is <strong>doubles only</strong>.</li>
-      <li>Players are grouped by ability and category.
-      <br />
-      <a class="btn btn-link p-0" data-bs-toggle="collapse" href="#abilityLevels" role="button" aria-expanded="false" aria-controls="abilityLevels">
-        View ability level descriptions
-      </a>
-      <div class="collapse mt-2" id="abilityLevels">
-        <div class="card card-body">
-          <ol class="mb-3">
-            <li><strong>Newcomer</strong> – Has never played, or has played only once or twice. Still learning the rules, scoring, and which side of the court to stand on.</li>
-            <li><strong>Beginner</strong> – Can get the ball over the net and into play some of the time, but rallies are short and often end on an unforced error rather than a deliberate shot.</li>
-            <li><strong>Improver</strong> – Sustaining longer rallies with more consistent shots, and starting to grasp why the walls and basic positioning matter, even if execution is still shaky under pressure.</li>
-            <li><strong>Lower Intermediate</strong> – Rallies are sustained comfortably at a normal pace, and there's growing control over shot direction and depth. Walls are used deliberately rather than by accident.</li>
-            <li><strong>Intermediate</strong> – Solid shot control and a real understanding of court positioning. Starting to dictate the shape of points rather than just responding to the opponent.</li>
-            <li><strong>Upper Intermediate</strong> – Plays with real confidence - lobs, angles, and net play are used with intent, and teamwork with a partner is well established rather than improvised point to point.</li>
-            <li><strong>Advanced</strong> – Strong tactical awareness and composure under pressure. Adapts game plan to the opponent rather than playing the same way every match, and rarely breaks down a rally with an unforced error.</li>
-            <li><strong>Competitive</strong> – Plays structured, deliberate points rather than reactive padel. Effective in both attack and defence, and comfortable competing in organised tournaments or leagues.</li>
-            <li><strong>Elite</strong> – Excels in every aspect of the game - technique, tactics, physicality, and precision - and competes at national or professional tournament level.</li>
-          </ol>
-          <p class="mb-0"><a href="ratings.html">Full player level guide</a> - detailed descriptions, Playtomic equivalents, and what unlocks the next level. Track form and Box League badges in the app’s <a href="stats.html">Stats</a> and <a href="badges.html">Badges</a> sections.</p>
-        </div>
+    <div class="mkt-section-head">
+      <h2>From Competitions to the grid</h2>
+      <p>The tab, the list and the table members already look for — without a spreadsheet round-robin.</p>
+    </div>
+    <div class="mkt-outcome-grid">
+      <article class="mkt-outcome-card">
+        <i class="fas fa-trophy" aria-hidden="true"></i>
+        <h3>My Leagues</h3>
+        <p>Open the <strong>Competitions</strong> tab and choose <strong>Leagues</strong>. Filter Active, Upcoming or Completed, and Box versus Americano. Staff tap <strong>+</strong> to create a league.</p>
+      </article>
+      <article class="mkt-outcome-card">
+        <i class="fas fa-table" aria-hidden="true"></i>
+        <h3>View League</h3>
+        <p>The box grid shows Team, <strong>Pts</strong> and every pairing. Switch division when the round has more than one box. <strong>Upcoming Matches</strong> and <strong>Match Results</strong> sit under the table.</p>
+      </article>
+      <article class="mkt-outcome-card">
+        <i class="fas fa-pen-to-square" aria-hidden="true"></i>
+        <h3>Submit Result</h3>
+        <p>Open a pending cell or upcoming row. Enter <strong>Set Scores</strong> — or <strong>Award Walkover</strong> — then <strong>Submit Result</strong>. Scores feed ratings and match history.</p>
+      </article>
+    </div>
+
+    <section class="mkt-feature">
+      <div class="mkt-feature-copy">
+        <h2>Play times on the court board</h2>
+        <p>Staff open shared <strong>Play times</strong> so box matches have a court window. Members say Available or Not available; confirmed windows become bookings on the same board. League playing rules stay on the <a class="mkt-link" href="boxleague-rules.html">Box League rules</a> page — the court is no longer a side conversation.</p>
       </div>
-      </li>
-      <li>Each round lasts <strong>4 months</strong>.</li>
-      <li>Each pair plays every other pair in their box.</li>
-      <li>Top pairs may be promoted, bottom pairs relegated.</li>
-    </ul>
-  </section>
+      <div class="mkt-phone">
+        <img src="images/mkt_court_bookings_play_times.png" alt="Box league play times with open, confirmed and not-available windows" width="280" height="608">
+      </div>
+    </section>
 
-  <section>
-    <h2>3. Box League Points</h2>
-    <h3>Match Format</h3>
-    <ul>
-      <li>Matches consist of <strong>3 sets</strong>.</li>
-      <li>If the score is 1-1 after two sets, a <strong>10-point match tiebreak</strong> is played instead of a full third set.</li>
-      <li>The match tiebreak is won by the first team to reach 10 points with at least a 2-point lead.</li>
-    </ul>
-    <h3>Points Scoring</h3>
-    <ul>
-      <li><strong>2–0 win</strong> (winning in straight sets): <strong>5–1</strong> league points</li>
-      <li><strong>2–1 win</strong> (winning with match tiebreak): <strong>4–2</strong> league points</li>
-      <li><strong>Friendly walkover</strong>: <strong>4–0</strong> league points</li>
-    </ul>
-  </section>
+    <section class="mkt-feature reverse">
+      <div class="mkt-feature-copy">
+        <h2>Knockouts in the same tab</h2>
+        <p>Competitions also holds <strong>Tournament</strong> — seeded knockout draws with team average ratings. Results from boxes and brackets both land in history. This page is the box-league side of that hub.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_competitions_box_or_bracket.png" alt="Knockout tournament detail with seeded draw, teams and ratings" width="280" height="608" loading="lazy">
+      </div>
+    </section>
 
-  <section>
-    <h2>4. Match Scheduling</h2>
-    <ul>
-      <li>Use the WhatsApp group(s) to coordinate.</li>
-      <li>Suggest multiple time options and provide at least 7 days' notice.</li>
-      <li>Contact the league admin if opponents are unresponsive.</li>
-    </ul>
-  </section>
+    <div class="mkt-section-head">
+      <h2>Clubs set the round once</h2>
+      <p>Create Box League, add pairs, then let the grid and play times run the season.</p>
+    </div>
+    <div class="mkt-outcome-grid">
+      <article class="mkt-outcome-card">
+        <i class="fas fa-plus" aria-hidden="true"></i>
+        <h3>Create Box League</h3>
+        <p>Name, host club and duration. Set <strong>Number of Boxes</strong>, <strong>Teams Per Box</strong> (3–8) and <strong>Teams to Move</strong> between boxes. Private leagues take a password.</p>
+      </article>
+      <article class="mkt-outcome-card">
+        <i class="fas fa-user-group" aria-hidden="true"></i>
+        <h3>Manage Teams</h3>
+        <p>Staff open <strong>Manage Teams</strong> and <strong>Edit League Settings</strong> from the league detail. Members still only need View League and Play times.</p>
+      </article>
+      <article class="mkt-outcome-card">
+        <i class="fas fa-arrow-up-right-dots" aria-hidden="true"></i>
+        <h3>Promotion and relegation</h3>
+        <p>When there is more than one box, the league shows how many teams move. Tie-breakers and walkovers are in the <a href="boxleague-rules.html">playing rules</a>.</p>
+      </article>
+    </div>
 
-  <section>
-    <h2>4a. Friendly Walkovers</h2>
-    <h3>When is a walkover awarded?</h3>
-    <ul>
-      <li>Opponent doesn't show up without prior notice</li>
-      <li>Last-minute cancellation with no option to reschedule</li>
-      <li>No replies to match messages for 7+ days</li>
-      <li>Player withdraws without informing the coordinator</li>
-    </ul>
-    <h3>How to request a walkover:</h3>
-    <ol>
-      <li>Take screenshots of WhatsApp communication</li>
-      <li>Contact the League Coordinator</li>
-      <li>The coordinator will review the situation and decide fairly</li>
-    </ol>
-    <blockquote>Walkovers are a last resort – we encourage flexibility, good communication, and community spirit wherever possible.</blockquote>
-  </section>
+    <div class="mkt-section-head">
+      <h2>What members already expect</h2>
+      <p>The same club, ratings and badges — Men’s, Ladies’ or Mixed.</p>
+    </div>
+    <div class="mkt-outcome-grid">
+      <article class="mkt-outcome-card">
+        <i class="fas fa-chart-line" aria-hidden="true"></i>
+        <h3>Ratings and history</h3>
+        <p>Submitted results feed <a href="stats.html">Stats</a> and the shared <a href="ratings.html">player level</a> scale used for grouping.</p>
+      </article>
+      <article class="mkt-outcome-card">
+        <i class="fas fa-medal" aria-hidden="true"></i>
+        <h3>Box League badges</h3>
+        <p>Rookie, Regular, Breakthrough and Champion sit with the rest of the <a href="badges.html">badge</a> families.</p>
+      </article>
+      <article class="mkt-outcome-card">
+        <i class="fas fa-venus-mars" aria-hidden="true"></i>
+        <h3>Men’s, Ladies’ and Mixed</h3>
+        <p>Leagues are split by category. Scoring is 5–1 for a straight-sets win, 4–2 after a match tiebreak, 4–0 for a walkover.</p>
+      </article>
+    </div>
 
-  <section>
-    <h2>5. Promotion and Relegation</h2>
-    <ul>
-      <li>Top 1–2 pairs may be promoted</li>
-      <li>Bottom 1–2 pairs may be relegated</li>
-    </ul>
-    <h3>Tiebreakers:</h3>
-    <ol>
-      <li>Head-to-head result</li>
-      <li>Set difference</li>
-      <li>Total games won</li>
-    </ol>
-  </section>
+    <section class="mkt-spotlight" aria-labelledby="rules-heading">
+      <h2 id="rules-heading">Playing rules for the round</h2>
+      <p>Format, points, walkovers, promotion and how to submit a result are written up for players and coordinators. Share that page with the club group; this page is how the app runs it.</p>
+      <a class="mkt-link" href="boxleague-rules.html">Box League rules</a>
+    </section>
 
-  <section>
-    <h2>6. Player Commitment</h2>
-    <ul>
-      <li>Join only if committed to playing during the round</li>
-      <li>Notify the coordinator if unavailable</li>
-      <li>Pairs with zero matches and no contact may be removed</li>
-    </ul>
-  </section>
+    <p class="mkt-note" style="text-align:center;margin:-24px 0 56px;">Step-by-step stills: <a class="mkt-link" href="guide.html">App Guide</a> — View Box League and Submit Result.</p>
 
-  <section>
-    <h2>7. Substitutes and Absences</h2>
-    <ul>
-      <li>Subs allowed only with admin approval</li>
-      <li>Subs must be similar level and gender</li>
-      <li>If a pair withdraws, walkovers may be awarded</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>8. Results Submission</h2>
-    <ul>
-      <li>All results must be submitted via the <strong>PadelPals app</strong> by one of the players.</li>
-      <li>Include the following details:
-        <ul>
-          <li>Set scores (e.g., 6–3, 4–6, 10–7)</li>
-          <li>Final result (2–0, 2–1, or walkover)</li>
-          <li>Date played</li>
-        </ul>
-      </li>
-      <li>If the match reaches 1 set all, a <strong>10-point match tiebreak</strong> should be played in place of a third set.</li>
-      <li>For walkovers, select the appropriate option and provide a short note in the app.</li>
-      <li>Matches not played or submitted by the deadline will not count unless awarded as walkovers by the coordinator.</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>9. Fair Play</h2>
-    <p>All matches should be played in good spirit. Respect your opponents and the rules. Disputes should be resolved in good faith – the league coordinator's decision is final.</p>
-  </section>
-
-  <section>
-    <h2>10. Contact</h2>
-    <p>For any issues, substitutions, or disputes, contact your club’s <strong>Box League Coordinator</strong> through the channel your club already uses. Padel Pals does not hold each club’s coordinator details.</p>
-  </section>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="mkt-cta-band">
+      <h2>Bring Box Leagues to your club</h2>
+      <p>Download the app, select your club or add it, then create a league from Competitions. Need help getting started? Contact us.</p>
+      <div class="mkt-store-row">
+        <a href="https://apps.apple.com/app/id6742356382" data-analytics="app_download" data-platform="ios" data-placement="cta"><img src="images/app-store-badge.svg" alt="Download on the App Store"></a>
+        <a class="play" href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" data-analytics="app_download" data-platform="android" data-placement="cta"><img src="https://play.google.com/intl/en_gb/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play"></a>
+      </div>
+      <div class="mkt-enquiry">
+        <a class="mkt-btn mkt-btn-light" href="mailto:support@padelpals.app?subject=Padel%20Pals%20club%20setup" data-analytics="club_enquiry" data-placement="cta">Contact us</a>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
-<!-- FULL HTML CONTENT END -->

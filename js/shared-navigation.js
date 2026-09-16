@@ -744,6 +744,7 @@ const SHARED_FOOTER_HTML = `
                 <h4>Help &amp; legal</h4>
                 <ul>
                     <li><a href="guide.html">App Guide</a></li>
+                    <li><a href="boxleague-rules.html">Box League rules</a></li>
                     <li><a href="support.html">Help &amp; Contact</a></li>
                     <li><a href="privacy.html">Privacy Policy</a></li>
                     <li><a href="terms.html">Terms</a></li>

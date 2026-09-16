@@ -612,6 +612,82 @@
 
 
 
+.mkt-doc {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.mkt-doc > section {
+  margin-bottom: 40px;
+}
+
+.mkt-doc h2 {
+  font-size: 1.35rem;
+  margin-bottom: 12px;
+}
+
+.mkt-doc h3 {
+  font-size: 1.05rem;
+  margin: 20px 0 8px;
+}
+
+.mkt-doc p,
+.mkt-doc li {
+  color: var(--pp-muted);
+}
+
+.mkt-doc ul,
+.mkt-doc ol {
+  padding-left: 1.25rem;
+  margin: 0 0 12px;
+}
+
+.mkt-doc li {
+  margin-bottom: 6px;
+}
+
+.mkt-doc a {
+  color: var(--pp-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mkt-doc a:hover {
+  color: var(--pp-blue);
+  text-decoration: underline;
+}
+
+.mkt-doc blockquote {
+  background: #E8F4F8;
+  padding: 1rem 1.1rem;
+  border-left: 5px solid var(--pp-accent);
+  margin: 16px 0 0;
+  color: var(--pp-navy);
+}
+
+.mkt-doc details {
+  margin: 10px 0 12px;
+  background: #fff;
+  border: 1px solid rgba(26, 34, 56, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.mkt-doc summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--pp-accent);
+}
+
+.mkt-doc summary:hover {
+  color: var(--pp-blue);
+}
+
+.mkt-doc details ol {
+  margin-top: 12px;
+}
+
 @media (max-width: 768px) {
   .mkt-feature,
   .mkt-feature.reverse {

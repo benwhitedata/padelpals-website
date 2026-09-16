@@ -54,7 +54,8 @@ If authentication is not working:
 - **Dashboard**: User dashboard after authentication
 - **Support**: Support information
 - **Privacy Policy**: Privacy policy information
-- **Box League**: Box league rules
+- **Box League**: Product page for club box leagues
+- **Box League rules**: Playing rules (format, points, walkovers)
 - **App Guide**: Guide for using the app
 
 ## Project Structure
