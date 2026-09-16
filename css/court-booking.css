@@ -645,11 +645,17 @@ body.cb-page {
   outline-offset: 2px;
 }
 
+.cb-players-table {
+  width: auto;
+  max-width: 100%;
+}
+
 .cb-players-table th:last-child,
 .cb-players-table td:last-child {
-  text-align: right;
-  width: 1%;
+  text-align: left;
+  width: auto;
   white-space: nowrap;
+  padding-left: 20px;
 }
 
 .cb-confirm {
