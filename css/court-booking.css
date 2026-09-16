@@ -589,22 +589,33 @@ body.cb-page {
 
 .cb-toggle {
   position: relative;
+  display: inline-block;
+  box-sizing: border-box;
   width: 48px;
   height: 28px;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .cb-toggle input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
-  width: 0;
-  height: 0;
+  cursor: pointer;
 }
 
 .cb-toggle span {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  cursor: pointer;
+  pointer-events: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .cb-toggle span::after {
@@ -612,19 +623,33 @@ body.cb-page {
   position: absolute;
   width: 22px;
   height: 22px;
-  left: 3px;
-  top: 3px;
+  left: 2px;
+  top: 2px;
   background: #fff;
   border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   transition: transform 0.15s ease;
 }
 
 .cb-toggle input:checked + span {
   background: var(--cb-primary);
+  border-color: var(--cb-primary);
 }
 
 .cb-toggle input:checked + span::after {
   transform: translateX(20px);
+}
+
+.cb-toggle input:focus-visible + span {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.cb-players-table th:last-child,
+.cb-players-table td:last-child {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
 }
 
 .cb-confirm {

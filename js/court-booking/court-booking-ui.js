@@ -771,7 +771,7 @@
         '</div>' +
         '<input class="cb-input" id="cbPlayerSearch" placeholder="Search players" value="' + escapeHtml(state.playerQuery) + '" style="max-width:280px">' +
       '</div>' +
-      '<table class="cb-table"><thead><tr><th>Player</th><th>Court booking</th></tr></thead><tbody>' +
+      '<table class="cb-table cb-players-table"><thead><tr><th>Player</th><th>Court booking</th></tr></thead><tbody>' +
       (rows || '<tr><td colspan="2">No matching players.</td></tr>') + '</tbody></table>';
   }
 
