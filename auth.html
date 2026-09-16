@@ -594,8 +594,17 @@
             return fallback;
         }
 
+        function afterAuthPath() {
+            try {
+                var next = sessionStorage.getItem('pp_after_auth') || '';
+                sessionStorage.removeItem('pp_after_auth');
+                if (next === 'courts.html' || next === '/courts.html') return '/courts.html';
+            } catch (e) {}
+            return '/dashboard.html';
+        }
+
         function goToDashboard() {
-            window.location.href = '/dashboard.html';
+            window.location.href = afterAuthPath();
         }
 
         // Initialize Supabase client and authentication

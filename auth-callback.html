@@ -174,10 +174,14 @@
                 }
                 
                 console.log('✓ Session verified! User ID:', data.session.user.id);
-                console.log('➡️ Redirecting to dashboard...');
-                
-                // Redirect to dashboard
-                window.location.href = "/dashboard.html";
+                var next = '/dashboard.html';
+                try {
+                    var stored = sessionStorage.getItem('pp_after_auth') || '';
+                    sessionStorage.removeItem('pp_after_auth');
+                    if (stored === 'courts.html' || stored === '/courts.html') next = '/courts.html';
+                } catch (e) {}
+                console.log('➡️ Redirecting to', next);
+                window.location.href = next;
                 
             } catch (error) {
                 console.error("❌ Authentication error:", error);

@@ -129,6 +129,9 @@
     <div class="mkt-cta-band">
       <h2>Bring Court Bookings to your club</h2>
       <p>Download the app, select your club or add it, then turn on Courts and booking when you are ready. Need help getting started? Contact us.</p>
+      <div id="mktCourtsWebCta" class="mkt-enquiry" style="display: none; margin-bottom: 18px;">
+        <a class="mkt-btn mkt-btn-light" href="courts.html">Open court bookings</a>
+      </div>
       <div class="mkt-store-row">
         <a href="https://apps.apple.com/app/id6742356382" data-analytics="app_download" data-platform="ios" data-placement="cta"><img src="images/app-store-badge.svg" alt="Download on the App Store"></a>
         <a class="play" href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" data-analytics="app_download" data-platform="android" data-placement="cta"><img src="https://play.google.com/intl/en_gb/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play"></a>
@@ -138,5 +141,17 @@
       </div>
     </div>
   </div>
+  <script>
+    document.addEventListener('configLoaded', function () {
+      var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
+      if (!client || !client.auth) return;
+      client.auth.getSession().then(function (result) {
+        if (result.data && result.data.session) {
+          var el = document.getElementById('mktCourtsWebCta');
+          if (el) el.style.display = 'block';
+        }
+      }).catch(function () {});
+    });
+  </script>
 </body>
 </html>

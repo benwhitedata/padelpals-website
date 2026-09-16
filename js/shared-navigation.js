@@ -410,6 +410,9 @@ const SHARED_NAVIGATION_HTML = `
         <!-- Authentication UI -->
         <div class="auth-container">
             <span class="user-info" id="userInfo"></span>
+            <a href="courts.html" class="auth-button" id="courtsButton" style="display: none; text-decoration: none;">
+                <i class="fas fa-border-all" style="margin-right: 6px;"></i>Courts
+            </a>
             <a href="dashboard.html" class="auth-button" id="dashboardButton" style="display: none; text-decoration: none;">
                 <i class="fas fa-tachometer-alt" style="margin-right: 6px;"></i>Dashboard
             </a>
@@ -490,16 +493,17 @@ const SHARED_NAVIGATION_JS = `
             }
         }
 
-        if (linkPath === 'dashboard.html') {
+        if (linkPath === 'dashboard.html' || linkPath === 'courts.html') {
             link.addEventListener('click', function(e) {
                 if (window.supabase && window.config) {
                     e.preventDefault();
+                    const dest = linkPath;
                     const supabaseClient = window.getOrCreateSupabaseClient
                         ? window.getOrCreateSupabaseClient()
                         : window.supabase.createClient(window.config.supabaseUrl, window.config.supabaseKey);
 
                     supabaseClient.auth.getSession().then(function(result) {
-                        window.location.href = result.data.session ? 'dashboard.html' : 'auth.html';
+                        window.location.href = result.data.session ? dest : 'auth.html';
                     }).catch(function() {
                         window.location.href = 'auth.html';
                     });
@@ -556,23 +560,33 @@ const SHARED_NAVIGATION_JS = `
 function updateAuthUI() {
     const loginButton = document.getElementById('loginButton');
     const dashboardButton = document.getElementById('dashboardButton');
+    const courtsButton = document.getElementById('courtsButton');
     const userInfo = document.getElementById('userInfo');
+
+    function showSignedOut() {
+        if (loginButton) loginButton.style.display = 'inline-block';
+        if (dashboardButton) dashboardButton.style.display = 'none';
+        if (courtsButton) courtsButton.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
+    }
+
+    function showSignedIn() {
+        if (loginButton) loginButton.style.display = 'none';
+        if (dashboardButton) dashboardButton.style.display = 'inline-block';
+        if (courtsButton) courtsButton.style.display = 'inline-block';
+        if (userInfo) userInfo.style.display = 'none';
+    }
     
     // Check if config is properly loaded
     if (!window.config || !window.config.supabaseUrl || !window.config.supabaseKey) {
-        // Config not loaded yet, show login button as default
-        if (loginButton) loginButton.style.display = 'inline-block';
-        if (dashboardButton) dashboardButton.style.display = 'none';
-        if (userInfo) userInfo.style.display = 'none';
+        showSignedOut();
         return;
     }
     
     // Check if Supabase library is available
     if (!window.supabase) {
         console.log('Supabase library not loaded yet');
-        if (loginButton) loginButton.style.display = 'inline-block';
-        if (dashboardButton) dashboardButton.style.display = 'none';
-        if (userInfo) userInfo.style.display = 'none';
+        showSignedOut();
         return;
     }
     
@@ -590,27 +604,17 @@ function updateAuthUI() {
         
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
             if (session) {
-                if (loginButton) loginButton.style.display = 'none';
-                if (dashboardButton) dashboardButton.style.display = 'inline-block';
-                if (userInfo) userInfo.style.display = 'none';
+                showSignedIn();
             } else {
-                if (loginButton) loginButton.style.display = 'inline-block';
-                if (dashboardButton) dashboardButton.style.display = 'none';
-                if (userInfo) userInfo.style.display = 'none';
+                showSignedOut();
             }
         }).catch(err => {
             console.log('Auth check error:', err);
-            // Show login button if there's an error
-            if (loginButton) loginButton.style.display = 'inline-block';
-            if (dashboardButton) dashboardButton.style.display = 'none';
-            if (userInfo) userInfo.style.display = 'none';
+            showSignedOut();
         });
     } catch (err) {
         console.error('Error creating Supabase client:', err);
-        // Show login button as fallback
-        if (loginButton) loginButton.style.display = 'inline-block';
-        if (dashboardButton) dashboardButton.style.display = 'none';
-        if (userInfo) userInfo.style.display = 'none';
+        showSignedOut();
     }
 }
 
@@ -832,7 +836,9 @@ if (typeof window !== 'undefined' && window.document) {
     if (scriptTag && scriptTag.getAttribute('data-auto-nav') === 'true') {
         document.addEventListener('DOMContentLoaded', function() {
             initSharedNavigation();
-            initSharedFooter();
+            if (!document.body.classList.contains('cb-page')) {
+                initSharedFooter();
+            }
         });
     }
 }
