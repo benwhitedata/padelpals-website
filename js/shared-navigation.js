@@ -386,9 +386,6 @@ const SHARED_NAVIGATION_HTML = `
             <li class="nav-item">
                 <a href="coaches.html" class="nav-link">For Coaches</a>
             </li>
-            <li class="nav-item">
-                <a href="courts.html" class="nav-link">Courts</a>
-            </li>
             <li class="nav-item has-dropdown">
                 <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
                     Features <span class="nav-chevron" aria-hidden="true"></span>
