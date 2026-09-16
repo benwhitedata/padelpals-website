@@ -5,6 +5,13 @@
 
 // Shared CSS for navigation (to be included in page head)
 const SHARED_NAVIGATION_CSS = `
+html, body {
+    margin: 0;
+}
+html {
+    background: #F6F5F5;
+}
+
 /* Top Navigation Banner - fixed height for consistency across all pages */
 .top-nav {
     background: linear-gradient(90deg, #4A90E2 0%, #2a3990 100%);

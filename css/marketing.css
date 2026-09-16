@@ -9,7 +9,13 @@
   --pp-muted: #555555;
 }
 
+html {
+  margin: 0;
+  background: var(--pp-bg);
+}
+
 .mkt-page {
+  margin: 0;
   font-family: 'Montserrat', Arial, sans-serif;
   background: var(--pp-bg);
   color: var(--pp-ink);
