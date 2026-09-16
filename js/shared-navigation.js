@@ -349,7 +349,7 @@ const SHARED_NAVIGATION_CSS = `
 const SHARED_NAVIGATION_HTML = `
 <!-- Top Navigation Banner -->
 <div class="top-nav">
-    Organise socials, Americano sessions, leagues and Group Lessons in one place
+    Organise court bookings, socials, Americano sessions, leagues and Group Lessons in one place
 </div>
 
 <!-- Main Navigation -->
@@ -365,6 +365,7 @@ const SHARED_NAVIGATION_HTML = `
                     For Clubs <span class="nav-chevron" aria-hidden="true"></span>
                 </button>
                 <div class="dropdown" role="menu">
+                    <a href="court-bookings.html" class="dropdown-link" role="menuitem">Court Bookings</a>
                     <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
                     <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
                     <a href="boxleague.html" class="dropdown-link" role="menuitem">Box League</a>
@@ -389,6 +390,7 @@ const SHARED_NAVIGATION_HTML = `
                     Features <span class="nav-chevron" aria-hidden="true"></span>
                 </button>
                 <div class="dropdown" role="menu">
+                    <a href="court-bookings.html" class="dropdown-link" role="menuitem">Court Bookings</a>
                     <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
                     <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
                     <a href="boxleague.html" class="dropdown-link" role="menuitem">Box League</a>
@@ -713,6 +715,7 @@ const SHARED_FOOTER_HTML = `
             <div class="footer-section">
                 <h4>For Clubs</h4>
                 <ul>
+                    <li><a href="court-bookings.html">Court Bookings</a></li>
                     <li><a href="club-socials.html">Club Socials</a></li>
                     <li><a href="americano.html">Americano</a></li>
                     <li><a href="boxleague.html">Box League</a></li>

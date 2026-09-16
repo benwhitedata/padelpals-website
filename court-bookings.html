@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Court Bookings for Padel Clubs | Padel Pals</title>
+  <meta name="description" content="Simple padel court bookings in the club app. Set hours, slot length and who can book — the same courts feed socials, box leagues and Group Lessons." />
+  <link rel="canonical" href="https://www.padelpals.app/court-bookings.html">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.padelpals.app/court-bookings.html">
+  <meta property="og:title" content="Court Bookings for Padel Clubs | Padel Pals">
+  <meta property="og:description" content="Simple padel court bookings in the club app. Set hours, slot length and who can book — the same courts feed socials, box leagues and Group Lessons.">
+  <meta property="og:image" content="https://www.padelpals.app/images/og_share.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Court Bookings for Padel Clubs | Padel Pals">
+  <meta name="twitter:description" content="Simple padel court bookings in the club app. Set hours, slot length and who can book — the same courts feed socials, box leagues and Group Lessons.">
+  <meta name="twitter:image" content="https://www.padelpals.app/images/og_share.png">
+  <link rel="icon" href="images/Icon.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="css/marketing.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config-loader.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-L426ZMNKFK');
+  </script>
+  <script src="js/shared-navigation.js" data-auto-nav="true"></script>
+</head>
+<body class="mkt-page" data-page="court-bookings.html">
+  <section class="mkt-hero">
+    <div class="mkt-hero-inner">
+      <p class="mkt-eyebrow">For padel clubs</p>
+      <h1>Court Bookings</h1>
+      <p>Tap a free slot. Clubs set hours, slot length and who can book — the same courts then feed socials, box leagues and Group Lessons.</p>
+    </div>
+  </section>
+
+  <div class="mkt-wrap">
+    <div class="mkt-intro">
+      <p>Court Bookings is the club day board, not a separate booking vendor. Clubs turn it on when they are ready, choose who may self-serve, and keep membership fees where they already are. Organised play still lives on <a href="club-socials.html">Club Socials</a>, <a href="americano.html">Americano</a>, <a href="boxleague.html">Box League</a> and <a href="coaches.html">Group Lessons</a> — those sessions now sit on booked courts. Member court booking is unpaid.</p>
+    </div>
+
+    <section class="mkt-feature">
+      <div class="mkt-feature-copy">
+        <h2>Tap a free slot</h2>
+        <p>Open <strong>Book a court</strong> from Club Home, Matches or Profile. The day board shows each court by hour: Free, Booked, Held or Lesson. Pick a start time, choose how long, and the slot is yours. No extra app, no spreadsheet of who has the court.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_court_bookings_board.png" alt="Book a court day board with free, booked and held slots across club courts" width="280" height="608">
+      </div>
+    </section>
+
+    <section class="mkt-feature reverse">
+      <div class="mkt-feature-copy">
+        <h2>Set the rules once</h2>
+        <p>Club Admin → <strong>Courts and booking</strong>. Set opening hours per weekday, when new days unlock, and slot length (30, 60 or 90 minutes). Everyone rules cover how far ahead members can book, a quota, shortest and longest duration, the cancel window, and optional group booking. Add booking types and holds when the club needs them.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_court_bookings_settings.png" alt="Courts and booking settings with member booking live, hours and everyone rules" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <section class="mkt-feature">
+      <div class="mkt-feature-copy">
+        <h2>Choose who can book</h2>
+        <p>Self-serve is deny-by-default. Tick <strong>Court booking</strong> on the <strong>Players</strong> list, then turn on <strong>Member booking is live</strong>. Only those members see Book a court. Staff can still test the board and book as any home-club player, including people who are not on the list.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_court_bookings_players.png" alt="Players list with Court booking switches for who may self-serve" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <section class="mkt-feature reverse">
+      <div class="mkt-feature-copy">
+        <h2>Hold courts for Club Socials</h2>
+        <p>A social cannot open until its courts are booked. Organisers book them as <strong>Club social</strong> — once or every week for standing nights — then collect availability and publish fixtures as usual. Who plays whom stays on <a href="club-socials.html">Club Socials</a>; who has the court is already on the board.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_court_bookings_social.png" alt="Book these courts first before opening a Club Social for sign-ups" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <section class="mkt-feature">
+      <div class="mkt-feature-copy">
+        <h2>Group Lessons on a court</h2>
+        <p>Coaches pick a court when they publish a class. Leave it listed until someone joins, or turn on <strong>Keep court even if empty</strong> so the lesson stays reserved. Empty listings can be booked by a member; a live lesson keeps the court. Coaching still lives on <a href="coaches.html">Group Lessons</a> — the board just shows the court is taken.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_court_bookings_lesson.png" alt="Add Group Lesson court picker with keep court even if empty" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <section class="mkt-feature reverse">
+      <div class="mkt-feature-copy">
+        <h2>Box league play times</h2>
+        <p>Staff open shared <strong>Play times</strong> so box matches have a court window. Those assignments become bookings on the same board, and the booking can link through to the play window or to enter a score. League rules stay on <a href="boxleague.html">Box League</a>; the court is no longer a side conversation.</p>
+      </div>
+      <div class="mkt-phone">
+        <img src="images/mkt_court_bookings_play_times.png" alt="Box league play times reserving courts on the club booking board" width="280" height="608" loading="lazy">
+      </div>
+    </section>
+
+    <div class="mkt-section-head">
+      <h2>Quiet extras members already expect</h2>
+      <p>The board stays simple. A few rules keep gaps fair and phones in sync.</p>
+    </div>
+    <div class="mkt-outcome-grid">
+      <article class="mkt-outcome-card">
+        <i class="fas fa-bell" aria-hidden="true"></i>
+        <h3>Waitlist</h3>
+        <p>Join the waitlist on someone else’s booking. You get a push if the court frees — you still book it from the day board.</p>
+      </article>
+      <article class="mkt-outcome-card">
+        <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+        <h3>Add to Calendar</h3>
+        <p>Open a booking and add it to the phone calendar. My court bookings lists everything coming up.</p>
+      </article>
+      <article class="mkt-outcome-card">
+        <i class="fas fa-clock" aria-hidden="true"></i>
+        <h3>No leftover gaps</h3>
+        <p>A slot that would leave a gap too short to book is blocked, so hours stay usable for the next member.</p>
+      </article>
+    </div>
+
+    <div class="mkt-cta-band">
+      <h2>Bring Court Bookings to your club</h2>
+      <p>Download the app, select your club or add it, then turn on Courts and booking when you are ready. Need help getting started? Contact us.</p>
+      <div class="mkt-store-row">
+        <a href="https://apps.apple.com/app/id6742356382" data-analytics="app_download" data-platform="ios" data-placement="cta"><img src="images/app-store-badge.svg" alt="Download on the App Store"></a>
+        <a class="play" href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" data-analytics="app_download" data-platform="android" data-placement="cta"><img src="https://play.google.com/intl/en_gb/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play"></a>
+      </div>
+      <div class="mkt-enquiry">
+        <a class="mkt-btn mkt-btn-light" href="mailto:support@padelpals.app?subject=Padel%20Pals%20club%20setup" data-analytics="club_enquiry" data-placement="cta">Contact us</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
