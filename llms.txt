@@ -1,0 +1,26 @@
+# Padel Pals
+
+> Padel Pals is a free padel club app for iOS and Android that helps clubs organise court bookings, socials, Americano sessions, box leagues and Group Lessons with fair fixtures, live standings and clear updates for every member.
+
+Padel Pals is built for padel clubs and their members. Clubs run organised play in one place; players book courts, join sessions, track levels and follow form. Contact: support@padelpals.app
+
+## Key pages
+
+- [Home](https://www.padelpals.app/): Overview of the padel club app and how clubs get started
+- [Court Bookings](https://www.padelpals.app/court-bookings.html): Member court bookings with club hours, slots and shared courts for organised play
+- [Club Socials](https://www.padelpals.app/club-socials.html): Availability sign-up, fair court packing and published fixtures
+- [Americano](https://www.padelpals.app/americano.html): Americano and Mexicano sessions with rotating partners, live standings and a shareable board
+- [Box Leagues](https://www.padelpals.app/boxleague.html): Ability-based box leagues, results, play times and knockouts
+- [Box League Rules](https://www.padelpals.app/boxleague-rules.html): Playing rules for format, points, walkovers and promotion
+- [Group Lessons](https://www.padelpals.app/coaches.html): Coaching classes by player level or skill, with optional 1-to-1s
+- [Find a Match](https://www.padelpals.app/find-a-match.html): Open padel matches filtered by level, gender and format
+- [Player Levels](https://www.padelpals.app/ratings.html): Nine-tier rating scale from Newcomer to Elite
+- [Stats & Profiles](https://www.padelpals.app/stats.html): Form, partners, club leaderboards and public profiles
+- [Badges](https://www.padelpals.app/badges.html): Achievements across matches, leagues and tournaments
+- [App Guide](https://www.padelpals.app/guide.html): Screenshot walkthrough of Matches, Competitions, Stats and Profile
+- [Help & Contact](https://www.padelpals.app/support.html): FAQs for club organisers and players, plus support email
+
+## Downloads
+
+- [App Store (iOS)](https://apps.apple.com/app/id6742356382)
+- [Google Play (Android)](https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid)

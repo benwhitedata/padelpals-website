@@ -11,12 +11,23 @@
   <meta property="og:title" content="How to Use Padel Pals | App Guide">
   <meta property="og:description" content="Walk through Matches, Competitions, Stats and Profile in Padel Pals with screenshots from the current app.">
   <meta property="og:image" content="https://www.padelpals.app/images/og_share.png">
+    <meta property="og:site_name" content="Padel Pals">
+    <meta property="og:locale" content="en_GB">
+    <meta property="og:image:alt" content="Padel Pals — organise padel club socials, leagues and court bookings">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="How to Use Padel Pals | App Guide">
   <meta name="twitter:description" content="Walk through Matches, Competitions, Stats and Profile in Padel Pals with screenshots from the current app.">
   <meta name="twitter:image" content="https://www.padelpals.app/images/og_share.png">
   <link rel="icon" href="images/Icon.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" href="images/Icon.png">
+    <meta name="theme-color" content="#4A90E2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Load Supabase JS and config loader -->
@@ -78,6 +89,28 @@
       border-color: #FF6B35;
     }
 
+    .guide-static-topics {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      padding: 20px 24px;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .guide-static-topics a {
+      color: #9ec9f5;
+      text-decoration: underline;
+    }
+
+    .guide-static-topics ul {
+      margin: 12px 0 0;
+      padding-left: 1.2rem;
+    }
+
+    .guide-static-topics li {
+      margin-bottom: 8px;
+    }
+
     @media (max-width: 768px) {
       .guide-section .col-md-6 {
         text-align: center;
@@ -97,12 +130,70 @@
     
   <!-- Shared Navigation -->
   <script src="js/shared-navigation.js?v=20260916g" data-auto-nav="true"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": "https://www.padelpals.app/guide.html#webpage",
+        "url": "https://www.padelpals.app/guide.html",
+        "name": "App Guide | Padel Pals",
+        "isPartOf": {
+          "@type": "WebSite",
+          "@id": "https://www.padelpals.app/#website",
+          "name": "Padel Pals",
+          "url": "https://www.padelpals.app/"
+        },
+        "about": {
+          "@type": "MobileApplication",
+          "name": "Padel Pals",
+          "url": "https://www.padelpals.app/"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.padelpals.app/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "App Guide",
+            "item": "https://www.padelpals.app/guide.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <section class="hero-section">
     <div class="container">
       <h1>How to Use the Padel Pals App</h1>
       <p class="mt-3">Walk through Matches, Competitions, Americano, Stats and Profile with screenshots from the current app.</p>
+      <div class="guide-static-topics text-start mx-auto mt-4" style="max-width: 720px;">
+        <p>Padel Pals is a free padel club app for iOS and Android. This guide covers the main tasks clubs and players use every week. Choose a topic below, or open the matching product page for a fuller overview.</p>
+        <ul>
+          <li><strong>Choose Club</strong> — join or add your club from Profile so socials, leagues and lessons line up. See <a href="index.html">how clubs get started</a>.</li>
+          <li><strong>Schedule a Match</strong> — set up a fixture from the Matches tab with players, time and format.</li>
+          <li><strong>Record Match Result</strong> — enter set scores so ratings, history and stats stay up to date.</li>
+          <li><strong>View Box League</strong> — open standings and the grid in Competitions. More: <a href="boxleague.html">Box Leagues</a>.</li>
+          <li><strong>Submit Box League Result</strong> — enter set scores or a walkover from the match sheet. Playing rules: <a href="boxleague-rules.html">Box League rules</a>.</li>
+          <li><strong>Complete Your Profile</strong> — name, level, preferred side and club membership.</li>
+          <li><strong>Me Stats &amp; Leaderboard</strong> — form, partners and club rankings. More: <a href="stats.html">Stats &amp; profiles</a>.</li>
+          <li><strong>Find / Join a Match</strong> — open matches filtered by level, gender and format. More: <a href="find-a-match.html">Find a Match</a>.</li>
+          <li><strong>Club Socials</strong> — mark availability and follow published fixtures. More: <a href="club-socials.html">Club Socials</a>.</li>
+          <li><strong>Run Americano Session</strong> — create Americano or Mexicano sessions with live standings. More: <a href="americano.html">Americano</a>.</li>
+          <li><strong>Badges</strong> — track milestones across matches and competitions. More: <a href="badges.html">Badges</a>.</li>
+          <li><strong>Competitions</strong> — leagues and knockouts in one hub. More: <a href="boxleague.html">Box Leagues</a> · <a href="coaches.html">Group Lessons</a> · <a href="court-bookings.html">Court Bookings</a>.</li>
+        </ul>
+      </div>
       <div class="row mt-4">
         <div class="col-6 col-md-4 mb-2">
           <button type="button" class="btn btn-guide w-100" onclick="showGuide('chooseClub')">Choose Club</button>

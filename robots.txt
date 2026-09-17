@@ -5,5 +5,8 @@ Disallow: /auth-callback.html
 Disallow: /dashboard.html
 Disallow: /apple-secret-validator.html
 Disallow: /tip.html
+Disallow: /docs/
+Disallow: /components/
+Disallow: /*.md$
 
 Sitemap: https://www.padelpals.app/sitemap.xml
