@@ -767,7 +767,7 @@ const SHARED_FOOTER_HTML = `
             <div class="footer-section">
                 <h4>Download</h4>
                 <ul>
-                    <li><a href="https://apps.apple.com/app/id6742356382" data-analytics="app_download" data-platform="ios" data-placement="footer">App Store (iOS)</a></li>
+                    <li><a href="https://apps.apple.com/gb/app/padel-pals/id6742356382" data-analytics="app_download" data-platform="ios" data-placement="footer">App Store (iOS)</a></li>
                     <li><a href="https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid" data-analytics="app_download" data-platform="android" data-placement="footer">Google Play (Android)</a></li>
                 </ul>
             </div>

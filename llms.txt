@@ -22,5 +22,5 @@ Padel Pals is built for padel clubs and their members. Clubs run organised play 
 
 ## Downloads
 
-- [App Store (iOS)](https://apps.apple.com/app/id6742356382)
+- [App Store (iOS)](https://apps.apple.com/gb/app/padel-pals/id6742356382)
 - [Google Play (Android)](https://play.google.com/store/apps/details?id=com.playpadelpals.padelpalsandroid)
