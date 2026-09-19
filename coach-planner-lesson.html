@@ -217,12 +217,20 @@
       window.CoachPlannerPrint.printCourtSheet(pack);
     });
 
-    document.addEventListener('configLoaded', function () {
+    var lessonBooted = false;
+    var lessonTries = 0;
+    function bootLesson() {
+      if (lessonBooted) return;
       var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
       if (!client) {
-        showState('lsnUnavailable');
+        if (lessonTries++ > 50) {
+          showState('lsnUnavailable');
+          return;
+        }
+        setTimeout(bootLesson, 80);
         return;
       }
+      lessonBooted = true;
 
       var params = new URLSearchParams(window.location.search);
       var slug = params.get('slug');
@@ -277,7 +285,10 @@
       }).catch(function () {
         showState('lsnUnavailable');
       });
-    });
+    }
+
+    document.addEventListener('configLoaded', bootLesson);
+    if (window.config && window.config.supabaseKey) bootLesson();
   </script>
 </body>
 </html>
