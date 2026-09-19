@@ -390,8 +390,15 @@ const SHARED_NAVIGATION_HTML = `
                     <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
                 </div>
             </li>
-            <li class="nav-item">
-                <a href="coaches.html" class="nav-link">For Coaches</a>
+            <li class="nav-item has-dropdown">
+                <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
+                    For Coaches <span class="nav-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="dropdown" role="menu">
+                    <a href="coaches.html" class="dropdown-link" role="menuitem">Group Lessons</a>
+                    <a href="coach-planner.html" class="dropdown-link" role="menuitem">Coach Planner</a>
+                    <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
+                </div>
             </li>
             <li class="nav-item has-dropdown">
                 <button type="button" class="nav-link" aria-expanded="false" aria-haspopup="true" data-dropdown-trigger>
@@ -747,6 +754,7 @@ const SHARED_FOOTER_HTML = `
                 <h4>For Coaches</h4>
                 <ul>
                     <li><a href="coaches.html">Group Lessons</a></li>
+                    <li><a href="coach-planner.html">Coach Planner</a></li>
                     <li><a href="ratings.html">Player Levels</a></li>
                 </ul>
             </div>
