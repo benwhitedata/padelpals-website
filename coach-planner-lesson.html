@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lesson Plan | Coach Planner | Padel Pals</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="images/Icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="images/Icon.png">
+  <meta name="theme-color" content="#4A90E2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="css/marketing.css?v=20260916g">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config-loader.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-L426ZMNKFK');
+  </script>
+  <script src="js/shared-navigation.js?v=20260916g" data-auto-nav="true"></script>
+  <style>
+    .lsn-wrap{max-width:760px;margin:0 auto;padding:48px 20px 80px;font-family:'Montserrat',Arial,sans-serif;color:#1a2238}
+    .lsn-state{text-align:center;padding:64px 20px;color:#555}
+    .lsn-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
+    .lsn-state h2{margin-bottom:10px}
+    .lsn-state .mkt-btn{margin-top:20px}
+    .lsn-tags{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 28px}
+    .lsn-tag{display:inline-block;padding:5px 11px;background:#EEF0F7;border-radius:6px;font-size:.8rem;font-weight:600;color:#2A3990}
+    .lsn-tag.sample{background:#F6C915;color:#1a2238}
+    .lsn-section{margin:32px 0}
+    .lsn-section h3{font-size:1.1rem;margin-bottom:10px;color:#1a2238}
+    .lsn-run{border:1px solid #d0d5dd;border-radius:12px;overflow:hidden}
+    .lsn-run-row{display:grid;grid-template-columns:90px 1fr;gap:14px;padding:14px 16px;border-bottom:1px solid #eee}
+    .lsn-run-row:last-child{border-bottom:0}
+    .lsn-run-time{font-weight:700;color:#2A3990;font-size:.85rem}
+    .lsn-run-label{font-weight:700;margin-bottom:2px}
+    .lsn-run-detail{color:#555;font-size:.92rem}
+    .lsn-note{border-left:3px solid #F6C915;background:#FFF8EC;padding:16px 20px;border-radius:0 12px 12px 0}
+    .lsn-note h3{color:#E08540;margin-bottom:8px}
+    .lsn-equip{display:flex;flex-wrap:wrap;gap:8px}
+    .lsn-equip span{background:#F6F5F5;border:1px solid #d0d5dd;border-radius:6px;padding:4px 10px;font-size:.85rem}
+  </style>
+</head>
+<body class="mkt-page" data-page="coach-planner-lesson.html">
+  <div class="lsn-wrap">
+    <div id="lsnLoading" class="lsn-state">
+      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+      <p>Loading plan…</p>
+    </div>
+
+    <div id="lsnUnavailable" class="lsn-state" hidden>
+      <i class="fas fa-lock" aria-hidden="true"></i>
+      <h2>This plan isn't available to you right now</h2>
+      <p>That's either because it doesn't exist, or because it's part of the subscriber library. If you're not signed in, sign in first — otherwise this is what a non-subscriber sees.</p>
+      <a class="mkt-btn mkt-btn-light" href="coach-planner-lesson.html?sample=1">See the free sample</a>
+      <br>
+      <a class="mkt-btn mkt-btn-light" style="margin-top:10px" href="coach-planner.html">About Coach Planner</a>
+    </div>
+
+    <article id="lsnContent" hidden>
+      <p class="mkt-eyebrow">Coach Planner</p>
+      <h1 id="lsnTitle"></h1>
+      <div class="lsn-tags" id="lsnTags"></div>
+
+      <div class="lsn-section">
+        <h3>Objective</h3>
+        <p id="lsnObjective"></p>
+      </div>
+
+      <div class="lsn-section">
+        <h3>Run sheet</h3>
+        <div class="lsn-run" id="lsnRunSheet"></div>
+      </div>
+
+      <div class="lsn-section">
+        <h3>Differentiation</h3>
+        <p id="lsnDifferentiation"></p>
+      </div>
+
+      <div class="lsn-section">
+        <h3>What good looks like</h3>
+        <p id="lsnSuccessCheck"></p>
+      </div>
+
+      <div class="lsn-section">
+        <h3>Equipment</h3>
+        <div class="lsn-equip" id="lsnEquipment"></div>
+      </div>
+
+      <div class="lsn-section lsn-note">
+        <h3>Coach note</h3>
+        <p id="lsnCoachNote"></p>
+      </div>
+
+      <div class="lsn-section" id="lsnLibraryLink" hidden>
+        <a class="mkt-btn mkt-btn-light" href="coach-planner-library.html">Back to your library</a>
+      </div>
+    </article>
+  </div>
+
+  <script>
+    function esc(s) {
+      var d = document.createElement('div');
+      d.textContent = (s === null || s === undefined) ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    function showState(id) {
+      ['lsnLoading', 'lsnUnavailable', 'lsnContent'].forEach(function (x) {
+        document.getElementById(x).hidden = (x !== id);
+      });
+    }
+
+    function renderLesson(lesson) {
+      document.title = lesson.title + ' | Coach Planner | Padel Pals';
+      document.getElementById('lsnTitle').textContent = lesson.title || '';
+
+      var tags = [];
+      if (lesson.is_sample) tags.push({ label: 'Free sample', cls: 'sample' });
+      if (lesson.sport) tags.push({ label: lesson.sport });
+      if (lesson.min_rating != null && lesson.max_rating != null) tags.push({ label: lesson.min_rating + '–' + lesson.max_rating });
+      if (lesson.duration_min) tags.push({ label: lesson.duration_min + ' min' });
+      if (lesson.group_size_max) tags.push({ label: 'Up to ' + lesson.group_size_max });
+      if (lesson.game_situation) tags.push({ label: lesson.game_situation });
+      if (lesson.phase) tags.push({ label: lesson.phase });
+      if (lesson.tactic) tags.push({ label: lesson.tactic });
+
+      var tagsEl = document.getElementById('lsnTags');
+      tagsEl.innerHTML = tags.map(function (t) {
+        return '<span class="lsn-tag' + (t.cls ? ' ' + t.cls : '') + '">' + esc(t.label) + '</span>';
+      }).join('');
+
+      document.getElementById('lsnObjective').textContent = lesson.objective || '';
+      document.getElementById('lsnDifferentiation').textContent = lesson.differentiation || '';
+      document.getElementById('lsnSuccessCheck').textContent = lesson.success_check || '';
+      document.getElementById('lsnCoachNote').textContent = lesson.coach_note || '';
+
+      var runEl = document.getElementById('lsnRunSheet');
+      var runSheet = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
+      runEl.innerHTML = runSheet.length ? runSheet.map(function (step) {
+        return '<div class="lsn-run-row">' +
+          '<div class="lsn-run-time">' + esc(step.from) + '–' + esc(step.to) + '</div>' +
+          '<div><div class="lsn-run-label">' + esc(step.label) + '</div>' +
+          (step.detail ? '<div class="lsn-run-detail">' + esc(step.detail) + '</div>' : '') +
+          '</div></div>';
+      }).join('') : '<div class="lsn-run-row"><div class="lsn-run-detail">No run sheet on this plan yet.</div></div>';
+
+      var equip = Array.isArray(lesson.equipment) ? lesson.equipment : [];
+      document.getElementById('lsnEquipment').innerHTML = equip.length
+        ? equip.map(function (e) { return '<span>' + esc(e) + '</span>'; }).join('')
+        : '<span>Nothing beyond balls and cones</span>';
+
+      showState('lsnContent');
+    }
+
+    document.addEventListener('configLoaded', function () {
+      var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
+      if (!client) {
+        showState('lsnUnavailable');
+        return;
+      }
+
+      var params = new URLSearchParams(window.location.search);
+      var slug = params.get('slug');
+      var isSample = params.get('sample') === '1';
+
+      if (!slug && !isSample) {
+        showState('lsnUnavailable');
+        return;
+      }
+
+      client.auth.getSession().then(function (result) {
+        var signedIn = !!(result.data && result.data.session);
+        if (signedIn) {
+          document.getElementById('lsnLibraryLink').hidden = false;
+        }
+
+        var query = client.schema('coaching').from('lessons').select('*');
+        query = isSample ? query.eq('is_sample', true) : query.eq('slug', slug);
+
+        query.maybeSingle().then(function (res) {
+          if (res.error || !res.data) {
+            showState('lsnUnavailable');
+            return;
+          }
+          renderLesson(res.data);
+        }).catch(function () {
+          showState('lsnUnavailable');
+        });
+      }).catch(function () {
+        showState('lsnUnavailable');
+      });
+    });
+  </script>
+</body>
+</html>

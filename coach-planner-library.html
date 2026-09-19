@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Library | Coach Planner | Padel Pals</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="images/Icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="images/Icon.png">
+  <meta name="theme-color" content="#4A90E2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="css/marketing.css?v=20260916g">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config-loader.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-L426ZMNKFK');
+  </script>
+  <script src="js/shared-navigation.js?v=20260916g" data-auto-nav="true"></script>
+  <style>
+    .lib-wrap{max-width:900px;margin:0 auto;padding:48px 20px 80px;font-family:'Montserrat',Arial,sans-serif;color:#1a2238}
+    .lib-header{margin-bottom:32px}
+    .lib-header h1{margin-bottom:8px}
+    .lib-header p{color:#555}
+    .lib-state{text-align:center;padding:64px 20px;color:#555}
+    .lib-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
+    .lib-state h2{color:#1a2238;margin-bottom:10px}
+    .lib-state .mkt-btn{margin-top:20px}
+    .lib-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .lib-card{display:block;background:#fff;border:1px solid rgba(26,34,56,0.08);border-radius:12px;padding:20px;text-decoration:none;color:inherit;box-shadow:0 4px 14px rgba(26,34,56,0.06);transition:transform .15s ease}
+    .lib-card:hover{transform:translateY(-2px)}
+    .lib-card h3{font-size:1.05rem;margin-bottom:8px;color:#1a2238}
+    .lib-card .lib-meta{font-size:.82rem;color:#666}
+    .lib-card .lib-sample-badge{display:inline-block;background:#F6C915;color:#1a2238;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:5px;margin-bottom:8px}
+  </style>
+</head>
+<body class="mkt-page" data-page="coach-planner-library.html">
+  <div class="lib-wrap">
+    <div class="lib-header">
+      <h1>Your library</h1>
+      <p>Every plan you're entitled to, newest first.</p>
+    </div>
+
+    <div id="libLoading" class="lib-state">
+      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+      <p>Loading your library…</p>
+    </div>
+
+    <div id="libSignedOut" class="lib-state" hidden>
+      <i class="fas fa-user-lock" aria-hidden="true"></i>
+      <h2>Sign in to see your library</h2>
+      <p>Coach Planner uses the same account as the rest of Padel Pals.</p>
+      <a class="mkt-btn mkt-btn-light" href="auth.html">Sign in</a>
+    </div>
+
+    <div id="libEmpty" class="lib-state" hidden>
+      <i class="fas fa-box-open" aria-hidden="true"></i>
+      <h2>Nothing here yet</h2>
+      <p>Either nothing's been published yet, or this account isn't subscribed. Read the free sample, or find out more about subscribing.</p>
+      <a class="mkt-btn mkt-btn-light" href="coach-planner-lesson.html?sample=1">See the free sample</a>
+      <br>
+      <a class="mkt-btn mkt-btn-light" style="margin-top:10px" href="coach-planner.html">About Coach Planner</a>
+    </div>
+
+    <div id="libGrid" class="lib-grid" hidden></div>
+  </div>
+
+  <script>
+    function esc(s) {
+      var d = document.createElement('div');
+      d.textContent = (s === null || s === undefined) ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    function showState(id) {
+      ['libLoading', 'libSignedOut', 'libEmpty', 'libGrid'].forEach(function (x) {
+        document.getElementById(x).hidden = (x !== id);
+      });
+    }
+
+    function renderLessons(lessons) {
+      var grid = document.getElementById('libGrid');
+      grid.innerHTML = lessons.map(function (l) {
+        var meta = [l.sport, l.duration_min ? (l.duration_min + ' min') : null, (l.min_rating != null && l.max_rating != null) ? (l.min_rating + '–' + l.max_rating) : null]
+          .filter(Boolean).join(' · ');
+        return '<a class="lib-card" href="coach-planner-lesson.html?slug=' + encodeURIComponent(l.slug) + '">' +
+          (l.is_sample ? '<span class="lib-sample-badge">Free sample</span><br>' : '') +
+          '<h3>' + esc(l.title) + '</h3>' +
+          '<div class="lib-meta">' + esc(meta) + '</div>' +
+          '</a>';
+      }).join('');
+      showState('libGrid');
+    }
+
+    document.addEventListener('configLoaded', function () {
+      var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
+      if (!client) {
+        showState('libEmpty');
+        return;
+      }
+
+      client.auth.getSession().then(function (result) {
+        if (!result.data || !result.data.session) {
+          showState('libSignedOut');
+          return;
+        }
+
+        client.schema('coaching').from('lessons')
+          .select('slug,title,sport,min_rating,max_rating,duration_min,is_sample,published_at')
+          .order('published_at', { ascending: false })
+          .then(function (res) {
+            if (res.error || !res.data || res.data.length === 0) {
+              showState('libEmpty');
+              return;
+            }
+            renderLessons(res.data);
+          }).catch(function () {
+            showState('libEmpty');
+          });
+      }).catch(function () {
+        showState('libSignedOut');
+      });
+    });
+  </script>
+</body>
+</html>
