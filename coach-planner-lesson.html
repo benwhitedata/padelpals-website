@@ -25,87 +25,119 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
+  <script src="js/coach-planner-print.js?v=20260919a"></script>
   <style>
-    .lsn-wrap{max-width:760px;margin:0 auto;padding:48px 20px 80px;font-family:'Montserrat',Arial,sans-serif;color:#1a2238}
+    .lsn-hero.mkt-hero{padding:40px 20px 48px;text-align:left}
+    .lsn-hero .mkt-hero-inner{max-width:900px;text-align:left}
+    .lsn-hero h1{margin-bottom:8px}
+    .lsn-hero-meta{opacity:.9;margin:0 0 8px}
+    .lsn-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+    .lsn-actions .mkt-btn{padding:12px 18px;font-size:.92rem}
+    .lsn-wrap{max-width:900px;margin:0 auto;padding:36px 20px 80px}
     .lsn-state{text-align:center;padding:64px 20px;color:#555}
     .lsn-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
     .lsn-state h2{margin-bottom:10px}
     .lsn-state .mkt-btn{margin-top:20px}
-    .lsn-tags{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 28px}
-    .lsn-tag{display:inline-block;padding:5px 11px;background:#EEF0F7;border-radius:6px;font-size:.8rem;font-weight:600;color:#2A3990}
-    .lsn-tag.sample{background:#F6C915;color:#1a2238}
-    .lsn-section{margin:32px 0}
-    .lsn-section h3{font-size:1.1rem;margin-bottom:10px;color:#1a2238}
-    .lsn-run{border:1px solid #d0d5dd;border-radius:12px;overflow:hidden}
-    .lsn-run-row{display:grid;grid-template-columns:90px 1fr;gap:14px;padding:14px 16px;border-bottom:1px solid #eee}
+    .lsn-kicker{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:-28px 0 32px}
+    .lsn-kick{background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 8px 24px rgba(26,34,56,.08);border:1px solid rgba(26,34,56,.06)}
+    .lsn-kick span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
+    .lsn-kick strong{display:block;font-size:1.05rem;color:#1a2238}
+    .lsn-section{margin:0 0 28px}
+    .lsn-section h2{font-size:1.35rem;margin-bottom:12px}
+    .lsn-run{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(26,34,56,.08)}
+    .lsn-run-row{display:grid;grid-template-columns:96px 1fr;gap:16px;padding:16px 20px;border-bottom:1px solid #eee;position:relative}
     .lsn-run-row:last-child{border-bottom:0}
-    .lsn-run-time{font-weight:700;color:#2A3990;font-size:.85rem}
-    .lsn-run-label{font-weight:700;margin-bottom:2px}
-    .lsn-run-detail{color:#555;font-size:.92rem}
-    .lsn-note{border-left:3px solid #F6C915;background:#FFF8EC;padding:16px 20px;border-radius:0 12px 12px 0}
-    .lsn-note h3{color:#E08540;margin-bottom:8px}
+    .lsn-run-row:nth-child(odd){background:#fafbfe}
+    .lsn-run-time{font-weight:800;color:#2A3990;font-size:.9rem;font-variant-numeric:tabular-nums}
+    .lsn-run-label{font-weight:700;margin-bottom:4px;color:#1a2238}
+    .lsn-run-detail{color:#555;font-size:.95rem}
+    .lsn-note{border-left:4px solid #F6C915;background:#FFF8EC;padding:20px 24px;border-radius:0 16px 16px 0}
+    .lsn-note h2{color:#E08540;font-size:1.1rem}
     .lsn-equip{display:flex;flex-wrap:wrap;gap:8px}
-    .lsn-equip span{background:#F6F5F5;border:1px solid #d0d5dd;border-radius:6px;padding:4px 10px;font-size:.85rem}
+    .lsn-equip span{background:#EEF0F7;border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600;color:#1a2238}
+    .lsn-library{margin-top:8px}
+    @media (max-width:720px){
+      .lsn-kicker{grid-template-columns:1fr}
+      .lsn-run-row{grid-template-columns:1fr;gap:6px}
+    }
+    @media print{
+      .top-nav,.navbar,footer,.lsn-actions,.lsn-library{display:none!important}
+      .lsn-hero{padding:20px!important;border-radius:0}
+      .lsn-kicker{margin-top:16px}
+    }
   </style>
 </head>
 <body class="mkt-page" data-page="coach-planner-lesson.html">
-  <div class="lsn-wrap">
-    <div id="lsnLoading" class="lsn-state">
-      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-      <p>Loading plan…</p>
-    </div>
+  <div id="lsnLoading" class="lsn-state">
+    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+    <p>Loading plan…</p>
+  </div>
 
-    <div id="lsnUnavailable" class="lsn-state" hidden>
-      <i class="fas fa-lock" aria-hidden="true"></i>
-      <h2>This plan isn't available to you right now</h2>
-      <p>That's either because it doesn't exist, or because you are not signed in.</p>
-      <a class="mkt-btn mkt-btn-light" id="lsnSignIn" href="auth.html">Sign in</a>
-      <br>
-      <a class="mkt-btn mkt-btn-light" style="margin-top:10px" href="coach-planner.html">About Coach Planner</a>
-    </div>
+  <div id="lsnUnavailable" class="lsn-state" hidden>
+    <i class="fas fa-lock" aria-hidden="true"></i>
+    <h2>This plan isn't available to you right now</h2>
+    <p>That's either because it doesn't exist, or because you are not signed in.</p>
+    <a class="mkt-btn mkt-btn-light" id="lsnSignIn" href="auth.html">Sign in</a>
+    <br>
+    <a class="mkt-btn mkt-btn-light" style="margin-top:10px" href="coach-planner.html">About Coach Planner</a>
+  </div>
 
-    <article id="lsnContent" hidden>
-      <p class="mkt-eyebrow">Coach Planner</p>
-      <h1 id="lsnTitle"></h1>
-      <div class="lsn-tags" id="lsnTags"></div>
+  <article id="lsnContent" hidden>
+    <section class="mkt-hero lsn-hero">
+      <div class="mkt-hero-inner">
+        <p class="mkt-eyebrow">Coach Planner</p>
+        <h1 id="lsnTitle"></h1>
+        <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
+        <div class="mkt-pill-row" id="lsnTags"></div>
+        <div class="lsn-actions">
+          <button type="button" class="mkt-btn mkt-btn-light" id="lsnPrintFull">
+            <i class="fas fa-file-pdf" aria-hidden="true"></i> Print lesson
+          </button>
+          <button type="button" class="mkt-btn mkt-btn-light" id="lsnPrintSheet">
+            <i class="fas fa-print" aria-hidden="true"></i> Court sheet
+          </button>
+        </div>
+      </div>
+    </section>
 
-      <div class="lsn-section">
-        <h3>Objective</h3>
-        <p id="lsnObjective"></p>
+    <div class="lsn-wrap">
+      <div class="lsn-kicker">
+        <div class="lsn-kick"><span>Situation</span><strong id="lsnSit">—</strong></div>
+        <div class="lsn-kick"><span>Phase</span><strong id="lsnPhase">—</strong></div>
+        <div class="lsn-kick"><span>Tactic</span><strong id="lsnTactic">—</strong></div>
+      </div>
+
+      <div class="lsn-kicker">
+        <div class="lsn-kick"><span>Objective</span><strong id="lsnObjective" style="font-weight:500;font-size:1rem"></strong></div>
+        <div class="lsn-kick"><span>What good looks like</span><strong id="lsnSuccessCheck" style="font-weight:500;font-size:1rem"></strong></div>
+        <div class="lsn-kick"><span>Differentiation</span><strong id="lsnDifferentiation" style="font-weight:500;font-size:1rem"></strong></div>
       </div>
 
       <div class="lsn-section">
-        <h3>Run sheet</h3>
+        <h2>Run sheet</h2>
         <div class="lsn-run" id="lsnRunSheet"></div>
       </div>
 
       <div class="lsn-section">
-        <h3>Differentiation</h3>
-        <p id="lsnDifferentiation"></p>
-      </div>
-
-      <div class="lsn-section">
-        <h3>What good looks like</h3>
-        <p id="lsnSuccessCheck"></p>
-      </div>
-
-      <div class="lsn-section">
-        <h3>Equipment</h3>
+        <h2>Equipment</h2>
         <div class="lsn-equip" id="lsnEquipment"></div>
       </div>
 
       <div class="lsn-section lsn-note" id="lsnNoteWrap" hidden>
-        <h3>Coach note</h3>
+        <h2>Coach note</h2>
         <p id="lsnCoachNote"></p>
       </div>
 
-      <div class="lsn-section" id="lsnLibraryLink" hidden>
+      <div class="lsn-section lsn-library" id="lsnLibraryLink" hidden>
         <a class="mkt-btn mkt-btn-light" href="coach-planner-library.html">Back to your library</a>
       </div>
-    </article>
-  </div>
+    </div>
+  </article>
 
   <script>
+    var currentLesson = null;
+    var sheetLessons = [];
+
     function esc(s) {
       var d = document.createElement('div');
       d.textContent = (s === null || s === undefined) ? '' : String(s);
@@ -119,25 +151,32 @@
     }
 
     function renderLesson(lesson) {
+      currentLesson = lesson;
       document.title = lesson.title + ' | Coach Planner | Padel Pals';
       document.getElementById('lsnTitle').textContent = lesson.title || '';
 
-      var tags = [];
-      if (lesson.audience) tags.push({ label: lesson.audience });
-      if (lesson.duration_min) tags.push({ label: lesson.duration_min + ' min' });
-      if (lesson.group_size_max) tags.push({ label: 'Up to ' + lesson.group_size_max });
-      if (lesson.game_situation) tags.push({ label: lesson.game_situation });
-      if (lesson.phase) tags.push({ label: lesson.phase });
-      if (lesson.tactic) tags.push({ label: lesson.tactic });
+      var dateLabel = window.CoachPlannerPrint.formatDate(lesson.session_date);
+      var slot = window.CoachPlannerPrint.slotFor(lesson.audience);
+      document.getElementById('lsnHeroMeta').textContent = [lesson.audience, slot, dateLabel]
+        .filter(Boolean).join(' · ');
 
-      var tagsEl = document.getElementById('lsnTags');
-      tagsEl.innerHTML = tags.map(function (t) {
-        return '<span class="lsn-tag' + (t.cls ? ' ' + t.cls : '') + '">' + esc(t.label) + '</span>';
+      var tags = [];
+      if (lesson.duration_min) tags.push(lesson.duration_min + ' min');
+      if (lesson.group_size_max) tags.push('Up to ' + lesson.group_size_max);
+      if (lesson.game_situation) tags.push(lesson.game_situation);
+      if (lesson.phase) tags.push(lesson.phase);
+      if (lesson.tactic) tags.push(lesson.tactic);
+      document.getElementById('lsnTags').innerHTML = tags.map(function (t) {
+        return '<span class="mkt-pill">' + esc(t) + '</span>';
       }).join('');
 
+      document.getElementById('lsnSit').textContent = lesson.game_situation || '—';
+      document.getElementById('lsnPhase').textContent = lesson.phase || '—';
+      document.getElementById('lsnTactic').textContent = lesson.tactic || '—';
       document.getElementById('lsnObjective').textContent = lesson.objective || '';
       document.getElementById('lsnDifferentiation').textContent = lesson.differentiation || '';
       document.getElementById('lsnSuccessCheck').textContent = lesson.success_check || '';
+
       var note = (lesson.coach_note || '').trim();
       document.getElementById('lsnNoteWrap').hidden = !note;
       document.getElementById('lsnCoachNote').textContent = note;
@@ -155,10 +194,19 @@
       var equip = Array.isArray(lesson.equipment) ? lesson.equipment : [];
       document.getElementById('lsnEquipment').innerHTML = equip.length
         ? equip.map(function (e) { return '<span>' + esc(e) + '</span>'; }).join('')
-        : '<span>Nothing beyond balls and cones</span>';
+        : '<span>Balls and cones</span>';
 
       showState('lsnContent');
     }
+
+    document.getElementById('lsnPrintFull').addEventListener('click', function () {
+      if (currentLesson && window.CoachPlannerPrint) window.CoachPlannerPrint.printFull(currentLesson);
+    });
+    document.getElementById('lsnPrintSheet').addEventListener('click', function () {
+      if (!window.CoachPlannerPrint) return;
+      var pack = sheetLessons.length ? sheetLessons : (currentLesson ? [currentLesson] : []);
+      window.CoachPlannerPrint.printCourtSheet(pack);
+    });
 
     document.addEventListener('configLoaded', function () {
       var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
@@ -191,6 +239,16 @@
             return;
           }
           renderLesson(res.data);
+          var date = res.data.session_date;
+          if (!date) {
+            sheetLessons = [res.data];
+            return;
+          }
+          client.schema('coaching').from('lessons').select('*').eq('session_date', date).then(function (pair) {
+            sheetLessons = (pair.data && pair.data.length) ? pair.data : [res.data];
+          }).catch(function () {
+            sheetLessons = [res.data];
+          });
         }).catch(function () {
           showState('lsnUnavailable');
         });

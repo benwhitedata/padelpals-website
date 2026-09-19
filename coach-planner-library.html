@@ -25,30 +25,37 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
+  <script src="js/coach-planner-print.js?v=20260919a"></script>
   <style>
-    .lib-wrap{max-width:900px;margin:0 auto;padding:48px 20px 80px;font-family:'Montserrat',Arial,sans-serif;color:#1a2238}
-    .lib-header{margin-bottom:32px}
-    .lib-header h1{margin-bottom:8px}
-    .lib-header p{color:#555}
+    .lib-hero.mkt-hero{padding:40px 20px 48px;text-align:left}
+    .lib-hero .mkt-hero-inner{max-width:960px;text-align:left}
+    .lib-wrap{max-width:960px;margin:0 auto;padding:36px 20px 80px}
     .lib-state{text-align:center;padding:64px 20px;color:#555}
     .lib-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
     .lib-state h2{color:#1a2238;margin-bottom:10px}
     .lib-state .mkt-btn{margin-top:20px}
+    .lib-day{margin-bottom:36px}
+    .lib-day-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .lib-day-head h2{font-size:1.15rem;margin:0}
     .lib-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-    .lib-card{display:block;background:#fff;border:1px solid rgba(26,34,56,0.08);border-radius:12px;padding:20px;text-decoration:none;color:inherit;box-shadow:0 4px 14px rgba(26,34,56,0.06);transition:transform .15s ease}
+    .lib-card{display:block;background:#fff;border:1px solid rgba(26,34,56,0.06);border-radius:16px;padding:22px;text-decoration:none;color:inherit;box-shadow:0 8px 24px rgba(26,34,56,0.08);transition:transform .15s ease}
     .lib-card:hover{transform:translateY(-2px)}
-    .lib-card h3{font-size:1.05rem;margin-bottom:8px;color:#1a2238}
-    .lib-card .lib-meta{font-size:.82rem;color:#666}
-    .lib-card .lib-sample-badge{display:inline-block;background:#F6C915;color:#1a2238;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:5px;margin-bottom:8px}
+    .lib-card h3{font-size:1.1rem;margin:0 0 8px;color:#1a2238}
+    .lib-card .lib-meta{font-size:.85rem;color:#555;font-weight:600}
+    .lib-card .lib-slot{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2A3990;margin-bottom:8px}
+    .lib-day-head .mkt-btn{padding:10px 16px;font-size:.85rem}
   </style>
 </head>
 <body class="mkt-page" data-page="coach-planner-library.html">
-  <div class="lib-wrap">
-    <div class="lib-header">
+  <section class="mkt-hero lib-hero">
+    <div class="mkt-hero-inner">
+      <p class="mkt-eyebrow">Coach Planner</p>
       <h1>Your library</h1>
-      <p>Every published plan, newest first.</p>
+      <p>Every published plan, newest first. Open a lesson to print the full plan, or print a court sheet when two sessions share a date.</p>
     </div>
+  </section>
 
+  <div class="lib-wrap">
     <div id="libLoading" class="lib-state">
       <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
       <p>Loading your library…</p>
@@ -68,10 +75,12 @@
       <a class="mkt-btn mkt-btn-light" href="coach-planner.html">About Coach Planner</a>
     </div>
 
-    <div id="libGrid" class="lib-grid" hidden></div>
+    <div id="libList" hidden></div>
   </div>
 
   <script>
+    var allLessons = [];
+
     function esc(s) {
       var d = document.createElement('div');
       d.textContent = (s === null || s === undefined) ? '' : String(s);
@@ -79,23 +88,60 @@
     }
 
     function showState(id) {
-      ['libLoading', 'libSignedOut', 'libEmpty', 'libGrid'].forEach(function (x) {
+      ['libLoading', 'libSignedOut', 'libEmpty', 'libList'].forEach(function (x) {
         document.getElementById(x).hidden = (x !== id);
       });
     }
 
-    function renderLessons(lessons) {
-      var grid = document.getElementById('libGrid');
-      grid.innerHTML = lessons.map(function (l) {
-        var meta = [l.audience, l.duration_min ? (l.duration_min + ' min') : null]
-          .filter(Boolean).join(' · ');
-        return '<a class="lib-card" href="coach-planner-lesson.html?slug=' + encodeURIComponent(l.slug) + '">' +
-          '<h3>' + esc(l.title) + '</h3>' +
-          '<div class="lib-meta">' + esc(meta) + '</div>' +
-          '</a>';
-      }).join('');
-      showState('libGrid');
+    function groupByDate(lessons) {
+      var groups = [];
+      var map = {};
+      lessons.forEach(function (l) {
+        var key = l.session_date || 'undated';
+        if (!map[key]) {
+          map[key] = { date: l.session_date, lessons: [] };
+          groups.push(map[key]);
+        }
+        map[key].lessons.push(l);
+      });
+      return groups;
     }
+
+    function renderLessons(lessons) {
+      allLessons = lessons;
+      var list = document.getElementById('libList');
+      var groups = groupByDate(lessons);
+      list.innerHTML = groups.map(function (g, gi) {
+        var sorted = window.CoachPlannerPrint.sortLessons(g.lessons);
+        var heading = g.date ? window.CoachPlannerPrint.formatDate(g.date) : 'Undated';
+        var sheetBtn = sorted.length > 1
+          ? '<button type="button" class="mkt-btn mkt-btn-light" data-print-date="' + esc(g.date) + '">' +
+            '<i class="fas fa-print" aria-hidden="true"></i> Court sheet</button>'
+          : '';
+        var cards = sorted.map(function (l) {
+          var slot = window.CoachPlannerPrint.slotFor(l.audience);
+          var meta = [l.audience, l.duration_min ? (l.duration_min + ' min') : null]
+            .filter(Boolean).join(' · ');
+          return '<a class="lib-card" href="coach-planner-lesson.html?slug=' + encodeURIComponent(l.slug) + '">' +
+            (slot ? '<div class="lib-slot">' + esc(slot) + '</div>' : '') +
+            '<h3>' + esc(l.title) + '</h3>' +
+            '<div class="lib-meta">' + esc(meta) + '</div></a>';
+        }).join('');
+        return '<section class="lib-day">' +
+          '<div class="lib-day-head"><h2>' + esc(heading) + '</h2>' + sheetBtn + '</div>' +
+          '<div class="lib-grid">' + cards + '</div></section>';
+      }).join('');
+      showState('libList');
+    }
+
+    document.getElementById('libList').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-print-date]');
+      if (!btn) return;
+      e.preventDefault();
+      var date = btn.getAttribute('data-print-date');
+      var pack = allLessons.filter(function (l) { return l.session_date === date; });
+      if (pack.length && window.CoachPlannerPrint) window.CoachPlannerPrint.printCourtSheet(pack);
+    });
 
     document.addEventListener('configLoaded', function () {
       var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
@@ -112,7 +158,7 @@
         }
 
         client.schema('coaching').from('lessons')
-          .select('slug,title,audience,skill_id,duration_min,session_date,published_at')
+          .select('*')
           .order('session_date', { ascending: false })
           .then(function (res) {
             if (res.error || !res.data || res.data.length === 0) {
