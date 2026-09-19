@@ -8,6 +8,8 @@ Static site, no build step. Flat HTML files at repo root, deployed via GitHub Pa
 
 `components/navbar.html`, `components/footer.html`, `components/auth-script.html`, `js/components.js`, and `convert-to-components.sh` were an abandoned component-migration attempt. Nothing in the repo includes `js/components.js`, so none of it renders. Do not edit these files expecting them to affect the live site — they should not exist (see repo history for their removal).
 
+**Whenever `js/shared-navigation.js` content changes, bump its `?v=` query string on every page that loads it** (`grep -rl 'shared-navigation.js?v=' *.html`, then bump the suffix, e.g. `20260916g` → `20260916h`). This site has no build step, so that query string is the only cache-buster — GitHub Pages and browsers will keep serving the old cached script forever otherwise. Every prior nav edit in git history bumped it; missing this once already shipped a dropdown that silently didn't appear for anyone with a cached copy. The same applies to `css/marketing.css?v=...` if you ever edit that file.
+
 ## Config / Supabase
 
 - `config.js` (gitignored) holds `supabaseUrl` + the anon/publishable key for local dev. Never put the service role key here.
