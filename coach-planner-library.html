@@ -105,6 +105,8 @@
     .lib-game span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
     .lib-game h3{margin:0 0 8px;font-size:1.15rem;color:#1a2238}
     .lib-game p{margin:0;color:#555;font-size:.95rem}
+    .lib-game a{display:inline-block;margin-top:12px;font-size:.85rem;font-weight:700;color:#2A3990}
+    .lib-month .lib-lead{margin:0 0 14px;color:#555;max-width:640px}
     @media (max-width:720px){
       .lib-toolbar-top{grid-template-columns:1fr}
       .lib-card{grid-template-columns:64px 1fr}
@@ -117,7 +119,7 @@
     <div class="mkt-hero-inner">
       <p class="mkt-eyebrow">Coach Planner</p>
       <h1>Lesson Library</h1>
-      <p>Weekly plans, plus the warm-up and mini games you reuse every hour.</p>
+      <p>Weekly plans, warm-ups, mini games, and short overhead extras.</p>
       <div class="mkt-pill-row" id="libHeroStats" hidden></div>
     </div>
   </section>
@@ -398,25 +400,42 @@
       }).join('');
     }
 
+    function kindLabel(kind) {
+      if (kind === 'warmup') return 'Warm-up';
+      if (kind === 'overhead') return 'Overhead';
+      return 'Mini game';
+    }
+
     function renderGames() {
       var list = document.getElementById('libList');
       var warm = allGames.filter(function (g) { return g.kind === 'warmup'; });
       var mini = allGames.filter(function (g) { return g.kind === 'mini'; });
+      var overhead = allGames.filter(function (g) { return g.kind === 'overhead'; });
       document.getElementById('libCount').textContent = allGames.length + ' Game' + (allGames.length === 1 ? '' : 's');
       document.getElementById('libReset').hidden = true;
       function cards(items) {
         return '<div class="lib-game-grid">' + items.map(function (g) {
-          return '<article class="lib-game"><span>' + esc(g.kind === 'warmup' ? 'Warm-up' : 'Mini game') + '</span>' +
-            '<h3>' + esc(g.title) + '</h3><p>' + esc(g.setup) + '</p></article>';
+          var watch = g.video_url
+            ? '<a href="' + esc(g.video_url) + '" target="_blank" rel="noopener noreferrer">Watch clip</a>'
+            : '';
+          return '<article class="lib-game"><span>' + esc(kindLabel(g.kind)) + '</span>' +
+            '<h3>' + esc(g.title) + '</h3><p>' + esc(g.blurb) + '</p>' +
+            (g.setup ? '<p style="margin-top:8px">' + esc(g.setup) + '</p>' : '') +
+            watch + '</article>';
         }).join('') + '</div>';
       }
       if (!allGames.length) {
-        list.innerHTML = '<div class="lib-none"><h3>No Games Yet</h3><p>Warm-ups and mini games land here as they are written.</p></div>';
+        list.innerHTML = '<div class="lib-none"><h3>No Games Yet</h3><p>Warm-ups, mini games and extras land here as they are written.</p></div>';
         return;
       }
       list.innerHTML =
         (warm.length ? '<section class="lib-month"><h2>Warm-up</h2>' + cards(warm) + '</section>' : '') +
-        (mini.length ? '<section class="lib-month"><h2>Mini games</h2>' + cards(mini) + '</section>' : '');
+        (mini.length ? '<section class="lib-month"><h2>Mini games</h2>' + cards(mini) + '</section>' : '') +
+        (overhead.length
+          ? '<section class="lib-month"><h2>Overheads</h2>' +
+            '<p class="lib-lead">Short extras for one overhead problem. Pick one in the teaching block. Nobody queues. The clip is a reminder, not the lesson.</p>' +
+            cards(overhead) + '</section>'
+          : '');
     }
 
     function setView(next) {
@@ -502,7 +521,7 @@
           .order('session_date', { ascending: false });
         var gameReq = client.schema('coaching').from('games')
           .select('*')
-          .order('kind', { ascending: true })
+          .order('sort_index', { ascending: true })
           .order('title', { ascending: true });
 
         Promise.all([lessonReq, gameReq]).then(function (results) {

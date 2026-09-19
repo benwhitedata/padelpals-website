@@ -33,7 +33,7 @@ Free signed-in library for now. Subscription / Stripe later.
 
 **Pages**
 - `coach-planner.html` — public sales page, nav target.
-- `coach-planner-library.html` — signed-in index. **Sessions** is one card per week. **Games** is the reusable warm-up and mini-game library (`coaching.games`).
+- `coach-planner-library.html` — signed-in index. **Sessions** is one card per week. **Games** is warm-ups, mini games, and extra overhead resources (`coaching.games`).
 - `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`. Joins the overlay to its spine and games, then composes the hour in `js/coach-planner-print.js`.
 
 **Publish a week (overlay only)**
@@ -41,7 +41,7 @@ Free signed-in library for now. Subscription / Stripe later.
 - Point `warmup_game_id` and `conditioned_game_id` at `coaching.games` rather than rewriting the 5–12 and 48–58 slots.
 - Write theme fields: `title`, `audience`, `session_date`, `skill_id`, `game_situation` / `phase` / `tactic`, `objective`, `success_check`, `differentiation`, `equipment`, `coach_note`.
 - Put only the lines that differ from the spine in `step_details`, keyed by label (`Demo`, `Closed`, Intro `Flavour`). Omit `Name the focus` (uses `objective`), omit `Open` (uses `differentiation` / STEP), omit `Close` to fill from the next published week of the same audience.
-- Do not paste the seven-step hour again. Do not add HTML or static lesson files. Do not flatten LTA PDFs into game rows; add original courtside wording, even when the game name is one Ben already uses (Dead Zone Padel, Glass Galore, Goalkeeper).
+- Do not paste the seven-step hour again. Do not add HTML or static lesson files. Do not flatten LTA PDFs or transcribe LTA clips into game rows. Overhead extras (Up or Down, Jumper Off, Elbow Push, Hide the Logo, Momentum, Clocks, Open Racket, Scarf, Beat the Bounce) are original one-line problem notes plus a Vimeo link.
 
 **Stripe Edge Functions** in `supabase/functions/` are written but **not deployed**. Live `stripe-webhook` is the PaymentIntent webhook for tips, lessons and tournament entries — never overwrite it with the Coach Planner file of the same name.
 
