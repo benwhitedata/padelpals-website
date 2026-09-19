@@ -27,16 +27,46 @@
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
   <script src="js/coach-planner-print.js?v=20260919c"></script>
   <style>
-    .lib-hero .mkt-hero-inner{max-width:720px}
+    .lib-hero.mkt-hero{padding:28px 20px 52px;text-align:left}
+    .lib-hero .mkt-hero-inner{max-width:1040px;margin:0 auto;text-align:left}
+    .lib-hero .mkt-eyebrow{margin-bottom:6px}
+    .lib-hero h1{margin:0;font-size:clamp(1.45rem,2.6vw,1.9rem);font-weight:800}
+    .lib-hero .mkt-hero-inner p{display:none}
     .lib-wrap{max-width:1040px;margin:0 auto;padding:0 20px 80px}
     .lib-state{text-align:center;padding:64px 20px;color:#555}
     .lib-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
     .lib-state h2{color:#1a2238;margin-bottom:10px}
     .lib-state .mkt-btn{margin-top:20px}
+    .lib-switch{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+      margin:-36px 0 22px;position:relative;z-index:2;
+    }
+    .lib-switch button{
+      appearance:none;border:1px solid rgba(26,34,56,.08);background:#fff;color:#1a2238;
+      border-radius:16px;padding:14px 16px;cursor:pointer;font:inherit;text-align:left;
+      box-shadow:0 8px 24px rgba(26,34,56,.08);
+      display:grid;grid-template-columns:40px 1fr auto;grid-template-rows:auto auto;
+      column-gap:12px;row-gap:2px;align-items:center;
+    }
+    .lib-switch button:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(26,34,56,.12)}
+    .lib-switch button:focus-visible{outline:3px solid #7eb6f5;outline-offset:2px}
+    .lib-switch i{
+      grid-row:1 / span 2;width:40px;height:40px;border-radius:12px;
+      background:#EEF0F7;color:#2A3990;display:flex;align-items:center;justify-content:center;font-size:1rem;
+    }
+    .lib-switch .lib-switch-label{font-weight:800;font-size:.98rem;line-height:1.2}
+    .lib-switch .lib-switch-hint{grid-column:2;color:#555;font-size:.78rem;font-weight:600}
+    .lib-switch .lib-switch-count{
+      grid-row:1 / span 2;grid-column:3;font-weight:800;font-variant-numeric:tabular-nums;
+      color:#4A90E2;font-size:1.05rem;
+    }
+    .lib-switch button[aria-selected="true"]{border-color:#2A3990;box-shadow:0 8px 24px rgba(42,57,144,.16)}
+    .lib-switch button[aria-selected="true"] i{background:#2A3990;color:#fff}
+    .lib-switch button[aria-selected="true"] .lib-switch-count{color:#1A2238}
     .lib-toolbar{
-      background:#fff;border-radius:16px;padding:20px 22px 18px;
+      background:#fff;border-radius:16px;padding:16px 18px;
       box-shadow:0 8px 24px rgba(26,34,56,.08);border:1px solid rgba(26,34,56,.06);
-      margin:-28px 0 28px;position:relative;z-index:2;
+      margin:0 0 20px;position:relative;z-index:1;
     }
     .lib-toolbar-top{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-bottom:16px}
     .lib-search{position:relative}
@@ -97,9 +127,6 @@
     .lib-card .mkt-pill-row{margin:0}
     .lib-card .mkt-pill{font-size:.72rem;padding:4px 8px}
     .lib-none{text-align:center;padding:40px 16px;background:#fff;border-radius:16px;border:1px dashed #d0d5dd;color:#555}
-    .lib-view{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
-    .lib-view button{border:1px solid #d0d5dd;background:#fff;border-radius:6px;padding:6px 12px;font:inherit;font-size:.85rem;font-weight:600;color:#1a2238;cursor:pointer}
-    .lib-view button[aria-pressed="true"]{background:#2A3990;color:#fff;border-color:#2A3990}
     .lib-game-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
     .lib-game{background:#fff;border:1px solid rgba(26,34,56,.08);border-radius:16px;padding:20px 22px;box-shadow:0 8px 24px rgba(26,34,56,.06)}
     .lib-game span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
@@ -124,15 +151,25 @@
     .lib-funnel-list li:nth-child(5){max-width:54%}
     .lib-funnel-list .band-label{display:block;font-weight:800;font-size:.92rem;line-height:1.3}
     .lib-funnel-list .band-tag{display:block;margin-top:4px;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
-    .lib-funnel-list li[data-seat="coaching"]{background:#1a2238;color:#fff}
-    .lib-funnel-list li[data-seat="drill"]{background:#2A3990;color:#fff}
-    .lib-funnel-list li[data-seat="shared"]{background:#E8F4F8;color:#1a2238}
-    .lib-funnel-list li.is-dim{opacity:.55}
-    .lib-funnel-list li.is-here{outline:3px solid #7eb6f5;outline-offset:2px;opacity:1}
+    .lib-funnel-list li[data-seat="coaching"]{background:#1A2238;color:#fff}
+    .lib-funnel-list li[data-seat="drill"]{background:#4A90E2;color:#fff}
+    .lib-funnel-list li[data-seat="shared"]{background:#EEF0F7;color:#1A2238}
+    .lib-funnel-list li.is-dim{opacity:.42}
+    .lib-funnel-list li.is-here{box-shadow:inset 0 0 0 3px #E08540;opacity:1}
+    .lib-funnel-list li[data-seat="coaching"] .band-tag,
+    .lib-funnel-list li[data-seat="drill"] .band-tag{color:#FFF8EC}
+    .lib-funnel-key{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-size:.78rem;font-weight:700;color:#555}
+    .lib-funnel-key span{display:inline-flex;align-items:center;gap:8px}
+    .lib-funnel-key i{width:14px;height:14px;border-radius:4px;display:inline-block}
+    .lib-funnel-key i.k-coach{background:#1A2238}
+    .lib-funnel-key i.k-drill{background:#4A90E2}
+    .lib-funnel-key i.k-shared{background:#EEF0F7;border:1px solid #d0d5dd}
     @media (max-width:720px){
       .lib-toolbar-top{grid-template-columns:1fr}
       .lib-card{grid-template-columns:64px 1fr}
       .lib-game-grid{grid-template-columns:1fr}
+      .lib-switch{grid-template-columns:1fr;margin-top:-28px}
+      .lib-switch .lib-switch-hint{display:none}
     }
   </style>
 </head>
@@ -141,8 +178,6 @@
     <div class="mkt-hero-inner">
       <p class="mkt-eyebrow">Coach Planner</p>
       <h1>Lesson Library</h1>
-      <p>Drills, coaching, warm-ups, mini games, and short overhead extras.</p>
-      <div class="mkt-pill-row" id="libHeroStats" hidden></div>
     </div>
   </section>
 
@@ -167,10 +202,25 @@
     </div>
 
     <div id="libBrowse" hidden>
-      <div class="lib-view" role="group" aria-label="Library section">
-        <button type="button" id="libViewDrills" aria-pressed="true">Drills</button>
-        <button type="button" id="libViewCoaching" aria-pressed="false">Coaching</button>
-        <button type="button" id="libViewGames" aria-pressed="false">Games</button>
+      <div class="lib-switch" role="tablist" aria-label="Library section">
+        <button type="button" role="tab" id="libViewDrills" aria-selected="true">
+          <i class="fas fa-layer-group" aria-hidden="true"></i>
+          <span class="lib-switch-label">Drills</span>
+          <span class="lib-switch-hint">Weekly plans</span>
+          <span class="lib-switch-count" id="libTabDrillsN">0</span>
+        </button>
+        <button type="button" role="tab" id="libViewCoaching" aria-selected="false">
+          <i class="fas fa-user-check" aria-hidden="true"></i>
+          <span class="lib-switch-label">Coaching</span>
+          <span class="lib-switch-hint">3 or 4 players</span>
+          <span class="lib-switch-count" id="libTabCoachN">0</span>
+        </button>
+        <button type="button" role="tab" id="libViewGames" aria-selected="false">
+          <i class="fas fa-shapes" aria-hidden="true"></i>
+          <span class="lib-switch-label">Games</span>
+          <span class="lib-switch-hint">Warm-ups and extras</span>
+          <span class="lib-switch-count" id="libTabGamesN">0</span>
+        </button>
       </div>
       <div class="lib-toolbar" id="libSessionToolbar">
         <div class="lib-toolbar-top">
@@ -364,18 +414,11 @@
       document.getElementById('libQuery').value = filters.query;
       document.getElementById('libSort').value = filters.sort;
 
-      var audiences = unique(allLessons.map(function (l) { return l.audience; }));
-      var dates = unique(allLessons.map(function (l) { return l.session_date; })).filter(Boolean);
       var drillN = allLessons.filter(function (l) { return sessionKind(l) === 'drill'; }).length;
       var coachN = allLessons.filter(function (l) { return sessionKind(l) === 'coaching'; }).length;
-      var stats = document.getElementById('libHeroStats');
-      stats.hidden = false;
-      stats.innerHTML =
-        '<span class="mkt-pill">' + drillN + ' Drill' + (drillN === 1 ? '' : 's') + '</span>' +
-        (coachN ? '<span class="mkt-pill">' + coachN + ' Coached</span>' : '') +
-        '<span class="mkt-pill">' + allGames.length + ' Game' + (allGames.length === 1 ? '' : 's') + '</span>' +
-        '<span class="mkt-pill">' + audiences.length + ' Group' + (audiences.length === 1 ? '' : 's') + '</span>' +
-        (dates.length ? '<span class="mkt-pill">' + dates.length + ' Session Date' + (dates.length === 1 ? '' : 's') + '</span>' : '');
+      document.getElementById('libTabDrillsN').textContent = String(drillN);
+      document.getElementById('libTabCoachN').textContent = String(coachN);
+      document.getElementById('libTabGamesN').textContent = String(allGames.length);
     }
 
     function funnelHtml(highlight) {
@@ -392,7 +435,12 @@
       return '<div class="lib-funnel">' +
         (funnel.title ? '<h3>' + esc(funnel.title) + '</h3>' : '') +
         (funnel.intro ? '<p class="lib-lead">' + esc(funnel.intro) + '</p>' : '') +
-        '<ol class="lib-funnel-list" aria-label="Lesson structure">' + bands + '</ol></div>';
+        '<ol class="lib-funnel-list" aria-label="Lesson structure">' + bands + '</ol>' +
+        '<div class="lib-funnel-key">' +
+          '<span><i class="k-coach" aria-hidden="true"></i> Coaching</span>' +
+          '<span><i class="k-drill" aria-hidden="true"></i> Drill</span>' +
+          '<span><i class="k-shared" aria-hidden="true"></i> Both</span>' +
+        '</div></div>';
     }
 
     function explainHtml(kind) {
@@ -405,7 +453,6 @@
       return '<section class="lib-explain">' +
         (block.kicker ? '<span>' + esc(block.kicker) + '</span>' : '') +
         '<h2>' + esc(block.title || typeGuide.title || '') + '</h2>' +
-        (typeGuide.lead ? '<p class="lib-lead">' + esc(typeGuide.lead) + '</p>' : '') +
         (block.body ? '<p class="lib-lead">' + esc(block.body) + '</p>' : '') +
         bullets +
         funnelHtml(kind) +
@@ -528,9 +575,9 @@
       else params.set('view', view);
       var q = params.toString();
       history.replaceState(null, '', window.location.pathname + (q ? '?' + q : '') + window.location.hash);
-      document.getElementById('libViewDrills').setAttribute('aria-pressed', view === 'drills' ? 'true' : 'false');
-      document.getElementById('libViewCoaching').setAttribute('aria-pressed', view === 'coaching' ? 'true' : 'false');
-      document.getElementById('libViewGames').setAttribute('aria-pressed', view === 'games' ? 'true' : 'false');
+      document.getElementById('libViewDrills').setAttribute('aria-selected', view === 'drills' ? 'true' : 'false');
+      document.getElementById('libViewCoaching').setAttribute('aria-selected', view === 'coaching' ? 'true' : 'false');
+      document.getElementById('libViewGames').setAttribute('aria-selected', view === 'games' ? 'true' : 'false');
       document.getElementById('libSessionToolbar').hidden = view === 'games' || !lessonsForView().length;
       apply();
     }
