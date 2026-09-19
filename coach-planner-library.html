@@ -107,6 +107,28 @@
     .lib-game p{margin:0;color:#555;font-size:.95rem}
     .lib-game a{display:inline-block;margin-top:12px;font-size:.85rem;font-weight:700;color:#2A3990}
     .lib-month .lib-lead{margin:0 0 14px;color:#555;max-width:640px}
+    .lib-explain{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;padding:24px 26px;box-shadow:0 8px 24px rgba(26,34,56,.08);margin:0 0 28px}
+    .lib-explain > span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
+    .lib-explain h2{margin:0 0 10px;font-size:1.35rem;color:#1a2238}
+    .lib-explain .lib-lead{margin:0 0 14px}
+    .lib-explain ul{margin:0;padding:0 0 0 18px;color:#555}
+    .lib-explain li{margin:0 0 6px}
+    .lib-funnel{margin:22px 0 0;padding-top:20px;border-top:1px solid rgba(26,34,56,.08)}
+    .lib-funnel h3{margin:0 0 8px;font-size:1.05rem;color:#1a2238}
+    .lib-funnel-list{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+    .lib-funnel-list li{border-radius:12px;padding:12px 16px;text-align:center;width:100%;box-sizing:border-box}
+    .lib-funnel-list li:nth-child(1){max-width:100%}
+    .lib-funnel-list li:nth-child(2){max-width:90%}
+    .lib-funnel-list li:nth-child(3){max-width:78%}
+    .lib-funnel-list li:nth-child(4){max-width:66%}
+    .lib-funnel-list li:nth-child(5){max-width:54%}
+    .lib-funnel-list .band-label{display:block;font-weight:800;font-size:.92rem;line-height:1.3}
+    .lib-funnel-list .band-tag{display:block;margin-top:4px;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+    .lib-funnel-list li[data-seat="coaching"]{background:#1a2238;color:#fff}
+    .lib-funnel-list li[data-seat="drill"]{background:#2A3990;color:#fff}
+    .lib-funnel-list li[data-seat="shared"]{background:#E8F4F8;color:#1a2238}
+    .lib-funnel-list li.is-dim{opacity:.55}
+    .lib-funnel-list li.is-here{outline:3px solid #F6C915;outline-offset:2px;opacity:1}
     @media (max-width:720px){
       .lib-toolbar-top{grid-template-columns:1fr}
       .lib-card{grid-template-columns:64px 1fr}
@@ -119,7 +141,7 @@
     <div class="mkt-hero-inner">
       <p class="mkt-eyebrow">Coach Planner</p>
       <h1>Lesson Library</h1>
-      <p>Weekly plans, warm-ups, mini games, and short overhead extras.</p>
+      <p>Drills, coaching, warm-ups, mini games, and short overhead extras.</p>
       <div class="mkt-pill-row" id="libHeroStats" hidden></div>
     </div>
   </section>
@@ -146,7 +168,8 @@
 
     <div id="libBrowse" hidden>
       <div class="lib-view" role="group" aria-label="Library section">
-        <button type="button" id="libViewSessions" aria-pressed="true">Sessions</button>
+        <button type="button" id="libViewDrills" aria-pressed="true">Drills</button>
+        <button type="button" id="libViewCoaching" aria-pressed="false">Coaching</button>
         <button type="button" id="libViewGames" aria-pressed="false">Games</button>
       </div>
       <div class="lib-toolbar" id="libSessionToolbar">
@@ -190,7 +213,9 @@
   <script>
     var allLessons = [];
     var allGames = [];
-    var view = (new URLSearchParams(window.location.search).get('view') === 'games') ? 'games' : 'sessions';
+    var typeGuide = null;
+    var viewParam = new URLSearchParams(window.location.search).get('view');
+    var view = (viewParam === 'games' || viewParam === 'coaching' || viewParam === 'drills') ? viewParam : 'drills';
     var filters = { query: '', audience: '', when: 'all', situation: '', sort: 'newest' };
     var KNOWN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate'];
     var SMALL = /^(a|an|and|at|for|in|of|on|or|the|to|vs)$/i;
@@ -254,6 +279,16 @@
       return out;
     }
 
+    function sessionKind(lesson) {
+      return (lesson && lesson.session_kind === 'coaching') ? 'coaching' : 'drill';
+    }
+
+    function lessonsForView() {
+      if (view === 'coaching') return allLessons.filter(function (l) { return sessionKind(l) === 'coaching'; });
+      if (view === 'games') return [];
+      return allLessons.filter(function (l) { return sessionKind(l) === 'drill'; });
+    }
+
     function matches(lesson) {
       if (filters.audience && lesson.audience !== filters.audience) return false;
       if (filters.situation && lesson.game_situation !== filters.situation) return false;
@@ -270,7 +305,7 @@
     }
 
     function filteredLessons() {
-      var list = allLessons.filter(matches);
+      var list = lessonsForView().filter(matches);
       if (filters.sort === 'oldest') {
         list = list.slice().sort(function (a, b) {
           var d = String(a.session_date || '').localeCompare(String(b.session_date || ''));
@@ -331,13 +366,50 @@
 
       var audiences = unique(allLessons.map(function (l) { return l.audience; }));
       var dates = unique(allLessons.map(function (l) { return l.session_date; })).filter(Boolean);
+      var drillN = allLessons.filter(function (l) { return sessionKind(l) === 'drill'; }).length;
+      var coachN = allLessons.filter(function (l) { return sessionKind(l) === 'coaching'; }).length;
       var stats = document.getElementById('libHeroStats');
       stats.hidden = false;
       stats.innerHTML =
-        '<span class="mkt-pill">' + allLessons.length + ' Plan' + (allLessons.length === 1 ? '' : 's') + '</span>' +
+        '<span class="mkt-pill">' + drillN + ' Drill' + (drillN === 1 ? '' : 's') + '</span>' +
+        '<span class="mkt-pill">' + coachN + ' Coached' + '</span>' +
         '<span class="mkt-pill">' + allGames.length + ' Game' + (allGames.length === 1 ? '' : 's') + '</span>' +
         '<span class="mkt-pill">' + audiences.length + ' Group' + (audiences.length === 1 ? '' : 's') + '</span>' +
         (dates.length ? '<span class="mkt-pill">' + dates.length + ' Session Date' + (dates.length === 1 ? '' : 's') + '</span>' : '');
+    }
+
+    function funnelHtml(highlight) {
+      var funnel = typeGuide && typeGuide.funnel;
+      if (!funnel || !Array.isArray(funnel.bands)) return '';
+      var bands = funnel.bands.map(function (b) {
+        var seat = b.seat || 'shared';
+        var here = highlight && seat === highlight ? ' is-here' : (highlight && seat !== 'shared' && seat !== highlight ? ' is-dim' : '');
+        return '<li data-seat="' + esc(seat) + '" class="' + here.trim() + '">' +
+          '<span class="band-label">' + esc(b.label || '') + '</span>' +
+          (b.tag ? '<span class="band-tag">' + esc(b.tag) + '</span>' : '') +
+          '</li>';
+      }).join('');
+      return '<div class="lib-funnel">' +
+        (funnel.title ? '<h3>' + esc(funnel.title) + '</h3>' : '') +
+        (funnel.intro ? '<p class="lib-lead">' + esc(funnel.intro) + '</p>' : '') +
+        '<ol class="lib-funnel-list" aria-label="Lesson structure">' + bands + '</ol></div>';
+    }
+
+    function explainHtml(kind) {
+      if (!typeGuide) return '';
+      var block = typeGuide[kind];
+      if (!block) return '';
+      var bullets = Array.isArray(block.bullets)
+        ? '<ul>' + block.bullets.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join('') + '</ul>'
+        : '';
+      return '<section class="lib-explain">' +
+        (block.kicker ? '<span>' + esc(block.kicker) + '</span>' : '') +
+        '<h2>' + esc(block.title || typeGuide.title || '') + '</h2>' +
+        (typeGuide.lead ? '<p class="lib-lead">' + esc(typeGuide.lead) + '</p>' : '') +
+        (block.body ? '<p class="lib-lead">' + esc(block.body) + '</p>' : '') +
+        bullets +
+        funnelHtml(kind) +
+        '</section>';
     }
 
     function cardHtml(lesson) {
@@ -357,15 +429,26 @@
     }
 
     function renderList() {
+      var pool = lessonsForView();
       var lessons = filteredLessons();
       var list = document.getElementById('libList');
-      document.getElementById('libCount').textContent = lessons.length === allLessons.length
-        ? (lessons.length + ' Plan' + (lessons.length === 1 ? '' : 's'))
-        : ('Showing ' + lessons.length + ' of ' + allLessons.length + ' Plans');
+      var noun = view === 'coaching' ? 'Coached session' : 'Drill';
+      document.getElementById('libCount').textContent = lessons.length === pool.length
+        ? (lessons.length + ' ' + noun + (lessons.length === 1 ? '' : 's'))
+        : ('Showing ' + lessons.length + ' of ' + pool.length + ' ' + noun + 's');
       document.getElementById('libReset').hidden = !filtersActive();
 
+      var intro = explainHtml(view === 'coaching' ? 'coaching' : 'drill');
+      if (!pool.length) {
+        var empty = view === 'coaching'
+          ? '<div class="lib-none"><h3>No coached sessions yet</h3><p>Those land here when they are run: 3 or 4 players, a tight band, the whole funnel.</p></div>'
+          : '<div class="lib-none"><h3>No drills yet</h3><p>Weekly themed sessions land here as they are run.</p></div>';
+        list.innerHTML = intro + empty;
+        return;
+      }
+
       if (!lessons.length) {
-        list.innerHTML = '<div class="lib-none"><h3>No Plans Match These Filters</h3><p>Try another group, date, or search term.</p></div>';
+        list.innerHTML = intro + '<div class="lib-none"><h3>No Plans Match These Filters</h3><p>Try another group, date, or search term.</p></div>';
         return;
       }
 
@@ -386,7 +469,7 @@
         month.dayMap[dayKey].lessons.push(l);
       });
 
-      list.innerHTML = months.map(function (month) {
+      list.innerHTML = intro + months.map(function (month) {
         var days = month.days.map(function (day) {
           var sorted = filters.sort === 'group' ? window.CoachPlannerPrint.sortLessons(day.lessons) : day.lessons;
           var sheetBtn = day.lessons.length > 1 && day.date
@@ -441,13 +524,14 @@
     function setView(next) {
       view = next;
       var params = new URLSearchParams(window.location.search);
-      if (view === 'games') params.set('view', 'games');
-      else params.delete('view');
+      if (view === 'drills') params.delete('view');
+      else params.set('view', view);
       var q = params.toString();
       history.replaceState(null, '', window.location.pathname + (q ? '?' + q : '') + window.location.hash);
-      document.getElementById('libViewSessions').setAttribute('aria-pressed', view === 'sessions' ? 'true' : 'false');
+      document.getElementById('libViewDrills').setAttribute('aria-pressed', view === 'drills' ? 'true' : 'false');
+      document.getElementById('libViewCoaching').setAttribute('aria-pressed', view === 'coaching' ? 'true' : 'false');
       document.getElementById('libViewGames').setAttribute('aria-pressed', view === 'games' ? 'true' : 'false');
-      document.getElementById('libSessionToolbar').hidden = view !== 'sessions';
+      document.getElementById('libSessionToolbar').hidden = view === 'games' || !lessonsForView().length;
       apply();
     }
 
@@ -499,7 +583,8 @@
       if (pack.length && window.CoachPlannerPrint) window.CoachPlannerPrint.printCourtSheet(pack);
     });
 
-    document.getElementById('libViewSessions').addEventListener('click', function () { setView('sessions'); });
+    document.getElementById('libViewDrills').addEventListener('click', function () { setView('drills'); });
+    document.getElementById('libViewCoaching').addEventListener('click', function () { setView('coaching'); });
     document.getElementById('libViewGames').addEventListener('click', function () { setView('games'); });
 
     document.addEventListener('configLoaded', function () {
@@ -523,10 +608,16 @@
           .select('*')
           .order('sort_index', { ascending: true })
           .order('title', { ascending: true });
+        var guideReq = client.schema('coaching').from('guides')
+          .select('title, body')
+          .eq('slug', 'drills-v-coaching')
+          .maybeSingle();
 
-        Promise.all([lessonReq, gameReq]).then(function (results) {
+        Promise.all([lessonReq, gameReq, guideReq]).then(function (results) {
           allLessons = (results[0].data && !results[0].error) ? results[0].data : [];
           allGames = (results[1].data && !results[1].error) ? results[1].data : [];
+          typeGuide = (results[2].data && !results[2].error && results[2].data.body) ? results[2].data.body : null;
+          if (results[2].data && results[2].data.title && typeGuide) typeGuide.title = results[2].data.title;
           if (!allLessons.length && !allGames.length) {
             showState('libEmpty');
             return;

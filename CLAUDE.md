@@ -33,7 +33,7 @@ Free signed-in library for now. Subscription / Stripe later.
 
 **Pages**
 - `coach-planner.html` — public sales page, nav target.
-- `coach-planner-library.html` — signed-in index. **Sessions** is one card per week. **Games** is warm-ups, mini games, and extra overhead resources (`coaching.games`).
+- `coach-planner-library.html` — signed-in index. **Drills** and **Coaching** are separate sections (`lessons.session_kind`). Current weekly plans are drills. **Games** is warm-ups, mini games, and extra overhead resources (`coaching.games`). The drills-versus-coaching wording and funnel live in `coaching.guides` (`drills-v-coaching`), not in this repo.
 - `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`. Joins the overlay to its spine and games, then composes the hour in `js/coach-planner-print.js`.
 
 **Publish a week (overlay only)**

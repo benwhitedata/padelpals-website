@@ -94,7 +94,7 @@
       <div class="mkt-hero-inner">
         <div class="lsn-hero-row">
           <div class="lsn-hero-copy">
-            <p class="mkt-eyebrow">Coach Planner</p>
+            <p class="mkt-eyebrow" id="lsnEyebrow">Coach Planner</p>
             <h1 id="lsnTitle"></h1>
             <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
           </div>
@@ -135,7 +135,7 @@
       </div>
 
       <div class="lsn-section lsn-library" id="lsnLibraryLink" hidden>
-        <a class="mkt-btn mkt-btn-light" href="coach-planner-library.html">Back to your library</a>
+        <a class="mkt-btn mkt-btn-light" id="lsnBackLibrary" href="coach-planner-library.html">Back to your library</a>
       </div>
     </div>
   </article>
@@ -168,6 +168,7 @@
     function renderLesson(lesson) {
       currentLesson = lesson;
       document.title = lesson.title + ' | Coach Planner | Padel Pals';
+      document.getElementById('lsnEyebrow').textContent = lesson.session_kind === 'coaching' ? 'Coaching' : 'Drill';
       document.getElementById('lsnTitle').textContent = lesson.title || '';
       document.getElementById('lsnHeroMeta').textContent = lesson.audience || '';
       document.getElementById('lsnHeroMeta').hidden = !lesson.audience;
@@ -197,6 +198,10 @@
       document.getElementById('lsnEquipment').innerHTML = equip.length
         ? equip.map(function (e) { return '<span>' + esc(e) + '</span>'; }).join('')
         : '<span>Balls and cones</span>';
+
+      document.getElementById('lsnBackLibrary').href = lesson.session_kind === 'coaching'
+        ? 'coach-planner-library.html?view=coaching'
+        : 'coach-planner-library.html';
 
       showState('lsnContent');
     }
