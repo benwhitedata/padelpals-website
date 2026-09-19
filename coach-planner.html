@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Coach Planner — Padel Lesson Plans for Coaches | Padel Pals</title>
-  <meta name="description" content="Padel lesson plans written for named groups — Intro, Beginner / Improver, Improver / Intermediate — with an objective, run sheet, differentiation and a coach note from the session that was actually run. Sign in with your Padel Pals account." />
+  <meta name="description" content="A signed-in padel lesson library: weekly drills for named groups, coached hours for 3 or 4, and reusable warm-ups and mini games. Published as the sessions are run." />
   <link rel="canonical" href="https://www.padelpals.app/coach-planner.html">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.padelpals.app/coach-planner.html">
   <meta property="og:title" content="Coach Planner — Padel Lesson Plans for Coaches | Padel Pals">
-  <meta property="og:description" content="Padel lesson plans written for named groups, published as they are actually run — objective, run sheet, differentiation and a coach note.">
+  <meta property="og:description" content="Weekly drills, coached hours, and the games that fill the hour — published as they are run. Sign in with your Padel Pals account.">
   <meta property="og:image" content="https://www.padelpals.app/images/og_share.png">
     <meta property="og:site_name" content="Padel Pals">
     <meta property="og:locale" content="en_GB">
@@ -18,7 +18,7 @@
     <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Coach Planner — Padel Lesson Plans for Coaches | Padel Pals">
-  <meta name="twitter:description" content="Padel lesson plans written for named groups, published as they are actually run — objective, run sheet, differentiation and a coach note.">
+  <meta name="twitter:description" content="Weekly drills, coached hours, and the games that fill the hour — published as they are run.">
   <meta name="twitter:image" content="https://www.padelpals.app/images/og_share.png">
   <link rel="icon" href="images/Icon.png" type="image/png" />
     <link rel="apple-touch-icon" href="images/Icon.png">
@@ -87,80 +87,136 @@
     ]
   }
   </script>
+  <style>
+    .cp-funnel{max-width:520px;margin:0 auto 48px}
+    .cp-funnel ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+    .cp-funnel li{border-radius:12px;padding:12px 16px;text-align:center;width:100%;box-sizing:border-box}
+    .cp-funnel li:nth-child(1){max-width:100%}
+    .cp-funnel li:nth-child(2){max-width:90%}
+    .cp-funnel li:nth-child(3){max-width:78%}
+    .cp-funnel li:nth-child(4){max-width:66%}
+    .cp-funnel li:nth-child(5){max-width:54%}
+    .cp-funnel .band{display:block;font-weight:800;font-size:.92rem;color:#fff}
+    .cp-funnel .tag{display:block;margin-top:4px;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#FFF8EC}
+    .cp-funnel li.coach{background:#1A2238}
+    .cp-funnel li.drill{background:#4A90E2}
+    .cp-funnel li.both{background:#EEF0F7}
+    .cp-funnel li.both .band,.cp-funnel li.both .tag{color:#1A2238}
+    .cp-funnel-key{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:16px;font-size:.78rem;font-weight:700;color:#555}
+    .cp-funnel-key span{display:inline-flex;align-items:center;gap:8px}
+    .cp-funnel-key i{width:14px;height:14px;border-radius:4px;display:inline-block}
+    .cp-funnel-key .k-coach{background:#1A2238}
+    .cp-funnel-key .k-drill{background:#4A90E2}
+    .cp-funnel-key .k-both{background:#EEF0F7;border:1px solid #d0d5dd}
+  </style>
 </head>
 <body class="mkt-page" data-page="coach-planner.html">
   <section class="mkt-hero">
     <div class="mkt-hero-inner">
       <p class="mkt-eyebrow">For coaches</p>
-      <h1>Lesson plans that were actually run</h1>
-      <p>Plans written for named groups — Intro to Padel, Beginner / Improver, Improver / Intermediate — published as I run them. Objective, run sheet, how to step it up or down, and a coach note on what actually happened. Usable at any venue. Not a generic PDF pack.</p>
-      <div class="mkt-pill-row">
-        <span class="mkt-pill">Named groups, not ratings</span>
-        <span class="mkt-pill">Timed run sheet</span>
-        <span class="mkt-pill">Coach note from the session</span>
-      </div>
+      <h1>The hour, written as it is run</h1>
+      <p>Weekly drills for named groups, a place for coached sessions of three or four, and the warm-ups and mini games that fill the hour. Published as I run them. Sign in with the same Padel Pals account.</p>
     </div>
   </section>
 
   <div class="mkt-wrap">
     <div class="mkt-intro">
-      <p>Every other lesson plan product is written in the abstract. These are plans that were run with a specific group — including the coach note on what worked and what didn't. That's the part you can't get from a generic pack, and it's written the same day the session happens.</p>
+      <p>This is not a booking product — that sits on <a href="coaches.html">Group Lessons</a>. Coach Planner is the session library: what the hour is for, how it is timed, and which game you put in the warm-up or the conditioned block. Bookings stay in the club app. These pages are for the coach standing on court.</p>
     </div>
+
+    <section id="two-kinds">
+      <div class="mkt-section-head">
+        <h2>Two kinds of hour</h2>
+        <p>They can look alike from the fence. They are not the same job. The library keeps them in separate sections so you do not mix them by accident.</p>
+      </div>
+      <div class="mkt-outcome-grid">
+        <article class="mkt-outcome-card">
+          <i class="fas fa-layer-group" aria-hidden="true"></i>
+          <h3>A drill</h3>
+          <p>Repetition of something they can already do. You set it up and you feed. One focus, announced at the start, then volume. Tight rotations, corrections to the group, nobody waiting. They leave having hit a lot of balls and worked on one thing. Up to eight. These are the weekly sessions.</p>
+        </article>
+        <article class="mkt-outcome-card">
+          <i class="fas fa-user-check" aria-hidden="true"></i>
+          <h3>Coaching</h3>
+          <p>A change they can name afterwards. You watch before you teach, demo one point, teach it fed, open it up, then finish in the game with feedback on what that player needs to change. Three or four, tight band. The hour is spent on them, not on the group.</p>
+        </article>
+        <article class="mkt-outcome-card">
+          <i class="fas fa-shapes" aria-hidden="true"></i>
+          <h3>Games</h3>
+          <p>Reusable warm-ups, mini games and short overhead extras. A week points at these instead of rewriting the 5–12 and 48–58 slots. Catch the glass, Dead Zone, Glass Galore, a Mini Americano — pick one and run it.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="funnel">
+      <div class="mkt-section-head">
+        <h2>Where each one sits</h2>
+        <p>The lesson structure funnels from wide to narrow. A drill lives in the middle: closed, then open. Watching first, and coaching inside the game, is what the smaller session adds.</p>
+      </div>
+      <div class="cp-funnel" aria-label="Lesson structure">
+        <ol>
+          <li class="coach"><span class="band">Observation and analysis</span><span class="tag">Coached only</span></li>
+          <li class="both"><span class="band">Demo — one point, hit three balls</span><span class="tag">Both</span></li>
+          <li class="drill"><span class="band">Teaching, closed — fed, predictable</span><span class="tag">A drill sits here</span></li>
+          <li class="drill"><span class="band">Progressing, open — live, unpredictable</span><span class="tag">A drill sits here</span></li>
+          <li class="coach"><span class="band">Game</span><span class="tag">Coached only</span></li>
+        </ol>
+        <div class="cp-funnel-key">
+          <span><i class="k-coach" aria-hidden="true"></i> Coaching</span>
+          <span><i class="k-drill" aria-hidden="true"></i> Drill</span>
+          <span><i class="k-both" aria-hidden="true"></i> Both</span>
+        </div>
+      </div>
+    </section>
 
     <section id="whats-inside">
       <div class="mkt-section-head">
-        <h2>What's in a plan</h2>
+        <h2>What's on a weekly drill</h2>
+        <p>One named group, one focus, a shared 60-minute spine. The week only writes what is different: the demo, the closed block, the mini game, and a coach note after it has been run.</p>
       </div>
       <div class="mkt-outcome-grid">
         <article class="mkt-outcome-card">
           <i class="fas fa-bullseye" aria-hidden="true"></i>
-          <h3>Objective &amp; run sheet</h3>
-          <p>One sentence announced in the first minute, then a timed run sheet for the whole session.</p>
+          <h3>The sentence you announce</h3>
+          <p>One objective in the first minute, plus what good looks like. Situation, phase and tactic tagged so you can find the same problem next block.</p>
         </article>
         <article class="mkt-outcome-card">
           <i class="fas fa-sliders-h" aria-hidden="true"></i>
-          <h3>Differentiation</h3>
-          <p>How to step it up or down so the plan still works for a stronger or weaker group.</p>
+          <h3>STEP, not a split</h3>
+          <p>How to step it up or down without splitting the group. Space, task, equipment, people — so a mixed eight still hits.</p>
         </article>
         <article class="mkt-outcome-card">
-          <i class="fas fa-comment-dots" aria-hidden="true"></i>
-          <h3>The coach note</h3>
-          <p>What actually happened when this was run, written the same day. The part a generic pack can't give you.</p>
+          <i class="fas fa-print" aria-hidden="true"></i>
+          <h3>Plan and court sheet</h3>
+          <p>Print the full hour, or a one-page sheet for the fence. Same-day coach note when something actually happened on court.</p>
         </article>
       </div>
     </section>
 
-    <section id="cadence">
+    <section id="groups">
       <div class="mkt-section-head">
-        <h2>Written for the group in front of you</h2>
-        <p>Each plan is aimed at a named group, not a rating number, so another coach can run it without sharing a club's rating scale. Sign in with your Padel Pals account to open the library.</p>
+        <h2>Named groups, not a rating scale</h2>
+        <p>Another coach can run the hour without sharing your club's numbers. Pick the group in front of you, then STEP it.</p>
+      </div>
+      <div class="mkt-members">
+        <article>
+          <h3>Intro to Padel</h3>
+          <p>New faces most weeks. Fixed spine, one rotating flavour — walls, volley, lob, positioning, rules, Mini Americano.</p>
+        </article>
+        <article>
+          <h3>Beginner / Improver</h3>
+          <p>Sunday hour. Back glass, serve and return, getting to the net, holding it, the lob, then all of it under score.</p>
+        </article>
+        <article>
+          <h3>Improver / Intermediate</h3>
+          <p>The hour after. Net battle, bandeja, the corner, chiquita, serve patterns, then constrained match play.</p>
+        </article>
       </div>
     </section>
 
-    <div class="mkt-section-head" style="margin-top:48px">
-      <h2>The Lesson Library</h2>
-    </div>
-    <div class="mkt-outcome-grid">
-      <article class="mkt-outcome-card">
-        <i class="fas fa-users" aria-hidden="true"></i>
-        <h3>Named groups</h3>
-        <p>Intro to Padel, Beginner / Improver, and Improver / Intermediate. Pick the plan that matches the group you have, then use the differentiation to step it.</p>
-      </article>
-      <article class="mkt-outcome-card">
-        <i class="fas fa-layer-group" aria-hidden="true"></i>
-        <h3>Drills and coaching</h3>
-        <p>Weekly plans sit under drills: one focus, volume, closed then open. Coaching is the full funnel for 3 or 4 in a tight band. Same library, two sections.</p>
-      </article>
-      <article class="mkt-outcome-card">
-        <i class="fas fa-book-open" aria-hidden="true"></i>
-        <h3>Sign in to read them</h3>
-        <p>Same account as the rest of Padel Pals. No extra subscription for now — if you can sign in, you can read every published plan.</p>
-      </article>
-    </div>
-
     <div class="mkt-cta-band">
-      <h2>Open the Lesson Library</h2>
-      <p>Sign in with your Padel Pals account to read the plans.</p>
+      <h2>Open the library</h2>
+      <p>Same account as the rest of Padel Pals. No extra subscription for now. Drills, coaching and games are separate sections once you are in.</p>
       <div class="mkt-enquiry">
         <a class="mkt-btn mkt-btn-light" href="coach-planner-library.html" data-analytics="coach_planner_library" data-placement="cta">Lesson Library</a>
       </div>
