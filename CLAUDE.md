@@ -20,31 +20,24 @@ Static site, no build step. Flat HTML files at repo root, deployed via GitHub Pa
 
 ## Coach Planner (in progress)
 
-Design doc: https://claude.ai/artifact/FAwcHoAiRsKBVaSsBBDYoX — a monthly subscription product for coaches, read it before touching anything below.
+Free signed-in library for now. Subscription / Stripe later.
 
-**Hard rule, non-negotiable:** lesson content, PDFs, video, and entitlement decisions never live in this repo, in any form. Content lives in Supabase (`coaching` schema, separate from `matches`/`ratings`) as data; a template page renders whatever the database is willing to return under row-level security. The Stripe secret key and Supabase service role key never appear here either — only the publishable/anon key does.
+**Hard rule, non-negotiable:** lesson content, PDFs, video, and entitlement decisions never live in this repo. Content lives in Supabase (`coaching.lessons`) as data; the template pages render whatever RLS returns. Stripe secrets and the service role key never appear here.
 
-**Build order:**
-1. Schema + RLS policies — done elsewhere (Cowork/Supabase connector), not in this repo. **Not done yet as of the last check** (`coaching` schema has zero tables) — the site/function code below was written against the artifact's data model ahead of that, so verify column names (`coaching.subscribers`, `coaching.lessons`, `coaching.stripe_events`) match whatever migration actually lands.
-2. **This repo (Claude Code):** the renderer/library pages (done — `coach-planner*.html`), Stripe Checkout + Customer Portal links + the webhook Edge Function (code written in `supabase/functions/`, not yet deployed or wired into the site pages — see below), tested in Stripe test mode.
-3. Sales page design — separate design pass.
-4. Ongoing: monthly content batches, inserted as data, not files.
+**Current product**
+- Signed-in Padel Pals accounts can read every published plan. No paywall.
+- Targeting is by **group name** (`audience`: Intro to Padel, Beginner / Improver, Improver / Intermediate), not numeric ratings.
+- One table: `coaching.lessons`. Do not add `subscribers` / `stripe_events` until we actually charge.
+- Local generation catalogue: `~/Documents/Padel Training/INDEX.md` (refresh with `refresh-index.py` there). LTA PDFs stay on disk.
 
-**Pages (done, flat, at root):**
-- `coach-planner.html` — public sales page, no sign-in. This is what the nav links to.
-- `coach-planner-library.html` — index of plans the signed-in user is entitled to.
-- `coach-planner-lesson.html` — single-plan renderer; the free sample is just this page opened on the one row flagged `is_sample`.
+**Pages**
+- `coach-planner.html` — public sales page, nav target.
+- `coach-planner-library.html` — signed-in index.
+- `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`.
 
-Nav: the For Coaches dropdown (`js/shared-navigation.js`) and footer link are done.
+**Stripe Edge Functions** in `supabase/functions/` are written but **not deployed**. Live `stripe-webhook` is the PaymentIntent webhook for tips, lessons and tournament entries — never overwrite it with the Coach Planner file of the same name.
 
-A subscription grants no role — it never touches the existing roles/permissions tables, only `coaching.subscribers`.
-
-**Stripe Edge Functions (`supabase/functions/`, code written, not yet deployed):**
-- `stripe-webhook` — handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`. Idempotent via `coaching.stripe_events`.
-- `create-checkout-session` — called by a signed-in coach; returns 501 until `STRIPE_COACH_PLANNER_PRICE_ID` is set (pricing isn't decided yet).
-- `create-portal-session` — called by a signed-in coach with an existing `stripe_customer_id`.
-- Required secrets are listed in `supabase/functions/.env.example`. Set them with `supabase secrets set --env-file supabase/functions/.env` (create that file locally first, gitignored) — never paste real Stripe keys into a chat session.
-- **Not deployed yet** — `supabase functions deploy` is a production action this session's auto-mode classifier blocks without explicit user approval. Nothing on the live site calls these yet either.
+Nav: For Coaches dropdown in `js/shared-navigation.js`.
 
 ## Stale docs at root
 

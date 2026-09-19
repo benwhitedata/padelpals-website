@@ -598,7 +598,10 @@
             try {
                 var next = sessionStorage.getItem('pp_after_auth') || '';
                 sessionStorage.removeItem('pp_after_auth');
-                if (next === 'courts.html' || next === '/courts.html') return '/courts.html';
+                var path = String(next).replace(/^\//, '').split('?')[0];
+                if (path === 'courts.html') return '/courts.html';
+                if (path === 'coach-planner-library.html') return '/coach-planner-library.html';
+                if (path === 'coach-planner-lesson.html') return '/coach-planner-lesson.html';
             } catch (e) {}
             return '/dashboard.html';
         }

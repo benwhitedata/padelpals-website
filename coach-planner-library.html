@@ -46,7 +46,7 @@
   <div class="lib-wrap">
     <div class="lib-header">
       <h1>Your library</h1>
-      <p>Every plan you're entitled to, newest first.</p>
+      <p>Every published plan, newest first.</p>
     </div>
 
     <div id="libLoading" class="lib-state">
@@ -58,16 +58,14 @@
       <i class="fas fa-user-lock" aria-hidden="true"></i>
       <h2>Sign in to see your library</h2>
       <p>Coach Planner uses the same account as the rest of Padel Pals.</p>
-      <a class="mkt-btn mkt-btn-light" href="auth.html">Sign in</a>
+      <a class="mkt-btn mkt-btn-light" id="libSignIn" href="auth.html">Sign in</a>
     </div>
 
     <div id="libEmpty" class="lib-state" hidden>
       <i class="fas fa-box-open" aria-hidden="true"></i>
-      <h2>Nothing here yet</h2>
-      <p>Either nothing's been published yet, or this account isn't subscribed. Read the free sample, or find out more about subscribing.</p>
-      <a class="mkt-btn mkt-btn-light" href="coach-planner-lesson.html?sample=1">See the free sample</a>
-      <br>
-      <a class="mkt-btn mkt-btn-light" style="margin-top:10px" href="coach-planner.html">About Coach Planner</a>
+      <h2>Nothing published yet</h2>
+      <p>Plans land here as they are run. Come back after the next session.</p>
+      <a class="mkt-btn mkt-btn-light" href="coach-planner.html">About Coach Planner</a>
     </div>
 
     <div id="libGrid" class="lib-grid" hidden></div>
@@ -89,10 +87,9 @@
     function renderLessons(lessons) {
       var grid = document.getElementById('libGrid');
       grid.innerHTML = lessons.map(function (l) {
-        var meta = [l.sport, l.duration_min ? (l.duration_min + ' min') : null, (l.min_rating != null && l.max_rating != null) ? (l.min_rating + '–' + l.max_rating) : null]
+        var meta = [l.audience, l.duration_min ? (l.duration_min + ' min') : null]
           .filter(Boolean).join(' · ');
         return '<a class="lib-card" href="coach-planner-lesson.html?slug=' + encodeURIComponent(l.slug) + '">' +
-          (l.is_sample ? '<span class="lib-sample-badge">Free sample</span><br>' : '') +
           '<h3>' + esc(l.title) + '</h3>' +
           '<div class="lib-meta">' + esc(meta) + '</div>' +
           '</a>';
@@ -109,13 +106,14 @@
 
       client.auth.getSession().then(function (result) {
         if (!result.data || !result.data.session) {
+          try { sessionStorage.setItem('pp_after_auth', 'coach-planner-library.html'); } catch (e) {}
           showState('libSignedOut');
           return;
         }
 
         client.schema('coaching').from('lessons')
-          .select('slug,title,sport,min_rating,max_rating,duration_min,is_sample,published_at')
-          .order('published_at', { ascending: false })
+          .select('slug,title,audience,skill_id,duration_min,session_date,published_at')
+          .order('session_date', { ascending: false })
           .then(function (res) {
             if (res.error || !res.data || res.data.length === 0) {
               showState('libEmpty');

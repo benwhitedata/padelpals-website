@@ -178,7 +178,10 @@
                 try {
                     var stored = sessionStorage.getItem('pp_after_auth') || '';
                     sessionStorage.removeItem('pp_after_auth');
-                    if (stored === 'courts.html' || stored === '/courts.html') next = '/courts.html';
+                    var path = String(stored).replace(/^\//, '').split('?')[0];
+                    if (path === 'courts.html') next = '/courts.html';
+                    if (path === 'coach-planner-library.html') next = '/coach-planner-library.html';
+                    if (path === 'coach-planner-lesson.html') next = '/coach-planner-lesson.html';
                 } catch (e) {}
                 console.log('➡️ Redirecting to', next);
                 window.location.href = next;

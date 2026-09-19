@@ -58,8 +58,8 @@
     <div id="lsnUnavailable" class="lsn-state" hidden>
       <i class="fas fa-lock" aria-hidden="true"></i>
       <h2>This plan isn't available to you right now</h2>
-      <p>That's either because it doesn't exist, or because it's part of the subscriber library. If you're not signed in, sign in first — otherwise this is what a non-subscriber sees.</p>
-      <a class="mkt-btn mkt-btn-light" href="coach-planner-lesson.html?sample=1">See the free sample</a>
+      <p>That's either because it doesn't exist, or because you are not signed in.</p>
+      <a class="mkt-btn mkt-btn-light" id="lsnSignIn" href="auth.html">Sign in</a>
       <br>
       <a class="mkt-btn mkt-btn-light" style="margin-top:10px" href="coach-planner.html">About Coach Planner</a>
     </div>
@@ -94,7 +94,7 @@
         <div class="lsn-equip" id="lsnEquipment"></div>
       </div>
 
-      <div class="lsn-section lsn-note">
+      <div class="lsn-section lsn-note" id="lsnNoteWrap" hidden>
         <h3>Coach note</h3>
         <p id="lsnCoachNote"></p>
       </div>
@@ -123,9 +123,7 @@
       document.getElementById('lsnTitle').textContent = lesson.title || '';
 
       var tags = [];
-      if (lesson.is_sample) tags.push({ label: 'Free sample', cls: 'sample' });
-      if (lesson.sport) tags.push({ label: lesson.sport });
-      if (lesson.min_rating != null && lesson.max_rating != null) tags.push({ label: lesson.min_rating + '–' + lesson.max_rating });
+      if (lesson.audience) tags.push({ label: lesson.audience });
       if (lesson.duration_min) tags.push({ label: lesson.duration_min + ' min' });
       if (lesson.group_size_max) tags.push({ label: 'Up to ' + lesson.group_size_max });
       if (lesson.game_situation) tags.push({ label: lesson.game_situation });
@@ -140,7 +138,9 @@
       document.getElementById('lsnObjective').textContent = lesson.objective || '';
       document.getElementById('lsnDifferentiation').textContent = lesson.differentiation || '';
       document.getElementById('lsnSuccessCheck').textContent = lesson.success_check || '';
-      document.getElementById('lsnCoachNote').textContent = lesson.coach_note || '';
+      var note = (lesson.coach_note || '').trim();
+      document.getElementById('lsnNoteWrap').hidden = !note;
+      document.getElementById('lsnCoachNote').textContent = note;
 
       var runEl = document.getElementById('lsnRunSheet');
       var runSheet = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
@@ -169,9 +169,8 @@
 
       var params = new URLSearchParams(window.location.search);
       var slug = params.get('slug');
-      var isSample = params.get('sample') === '1';
 
-      if (!slug && !isSample) {
+      if (!slug) {
         showState('lsnUnavailable');
         return;
       }
@@ -180,12 +179,13 @@
         var signedIn = !!(result.data && result.data.session);
         if (signedIn) {
           document.getElementById('lsnLibraryLink').hidden = false;
+        } else {
+          try { sessionStorage.setItem('pp_after_auth', 'coach-planner-library.html'); } catch (e) {}
+          showState('lsnUnavailable');
+          return;
         }
 
-        var query = client.schema('coaching').from('lessons').select('*');
-        query = isSample ? query.eq('is_sample', true) : query.eq('slug', slug);
-
-        query.maybeSingle().then(function (res) {
+        client.schema('coaching').from('lessons').select('*').eq('slug', slug).maybeSingle().then(function (res) {
           if (res.error || !res.data) {
             showState('lsnUnavailable');
             return;
