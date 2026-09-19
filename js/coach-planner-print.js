@@ -165,6 +165,14 @@
     return title || body;
   }
 
+  function gameShort(game) {
+    if (!game) return '';
+    var title = game.title || '';
+    var body = game.blurb || '';
+    if (title && body) return title + '. ' + body;
+    return title || body;
+  }
+
   function composeRunSheet(lesson, options) {
     options = options || {};
     var nextTitle = options.nextTitle || null;
@@ -281,6 +289,8 @@
   }
 
   function halfHtml(lesson) {
+    var warmup = gameShort(nestedRow(lesson.warmup_game));
+    var conditioned = gameShort(nestedRow(lesson.conditioned_game));
     return '<section class="half">' +
       '<div class="half-head"><div><div class="eyebrow">Coach Planner</div>' +
       '<h2>' + esc(lesson.title) + '</h2>' +
@@ -296,9 +306,11 @@
       '</p>' +
       '<h3>Good is</h3><p class="good">' + esc(lesson.success_check || '') + '</p>' +
       (lesson.differentiation ? '<h3>STEP</h3><p>' + esc(lesson.differentiation) + '</p>' : '') +
+      (warmup ? '<h3>Warm up</h3><p>' + esc(warmup) + '</p>' : '') +
       overlayRows(lesson).map(function (step) {
         return '<h3>' + esc(step.label) + '</h3><p>' + esc(step.detail) + '</p>';
       }).join('') +
+      (conditioned ? '<h3>Conditioned game</h3><p>' + esc(conditioned) + '</p>' : '') +
       '</div></div></section>';
   }
 
