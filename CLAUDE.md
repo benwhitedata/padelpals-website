@@ -27,13 +27,20 @@ Free signed-in library for now. Subscription / Stripe later.
 **Current product**
 - Signed-in Padel Pals accounts can read every published plan. No paywall.
 - Targeting is by **group name** (`audience`: Intro to Padel, Beginner / Improver, Improver / Intermediate), not numeric ratings.
-- One table: `coaching.lessons`. Do not add `subscribers` / `stripe_events` until we actually charge.
-- Local generation catalogue: `~/Documents/Padel Training/INDEX.md` (refresh with `refresh-index.py` there). LTA PDFs stay on disk.
+- Spines in `coaching.spines` (`sunday-drill`, `intro-padel`). Each week is one `coaching.lessons` overlay (`spine_id` + `step_details`), not a copied seven-step `run_sheet`.
+- Do not add `subscribers` / `stripe_events` until we actually charge.
+- Local generation catalogue: `~/Documents/Padel Training/INDEX.md` (refresh with `refresh-index.py` there). LTA PDFs stay on disk. Do not flatten LTA PDFs into rows.
 
 **Pages**
 - `coach-planner.html` — public sales page, nav target.
-- `coach-planner-library.html` — signed-in index.
-- `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`.
+- `coach-planner-library.html` — signed-in index; one card per week. Merge is not needed on the card.
+- `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`. Joins the overlay to its spine and composes the hour in `js/coach-planner-print.js` (screen, full print, court sheet).
+
+**Publish a week (overlay only)**
+- Point `spine_id` at `sunday-drill` or `intro-padel`. Leave `run_sheet` null.
+- Write theme fields: `title`, `audience`, `session_date`, `skill_id`, `game_situation` / `phase` / `tactic`, `objective`, `success_check`, `differentiation`, `equipment`, `coach_note`.
+- Put only the lines that differ from the spine in `step_details`, keyed by label (`Demo`, `Closed`, `Conditioned game`, Intro `Flavour`). Omit `Name the focus` (uses `objective`), omit `Open` (uses `differentiation` / STEP), omit `Close` to fill from the next published week of the same audience.
+- Do not paste the seven-step hour again. Do not add HTML or static lesson files.
 
 **Stripe Edge Functions** in `supabase/functions/` are written but **not deployed**. Live `stripe-webhook` is the PaymentIntent webhook for tips, lessons and tournament entries — never overwrite it with the Coach Planner file of the same name.
 

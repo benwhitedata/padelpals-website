@@ -127,6 +127,79 @@
       '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script></body></html>';
   }
 
+  function spineOf(lesson) {
+    if (!lesson) return null;
+    var nested = lesson.spines;
+    if (Array.isArray(nested)) return nested[0] || null;
+    if (nested && typeof nested === 'object') return nested;
+    if (Array.isArray(lesson.spine_steps)) {
+      return { slug: lesson.spine_slug || null, steps: lesson.spine_steps };
+    }
+    return null;
+  }
+
+  function nextTitleFor(lesson, pool) {
+    if (!lesson || !lesson.audience || !lesson.session_date) return null;
+    var later = (pool || []).filter(function (other) {
+      return other
+        && other.audience === lesson.audience
+        && other.session_date
+        && other.session_date > lesson.session_date
+        && other.slug !== lesson.slug;
+    }).sort(function (a, b) {
+      return String(a.session_date).localeCompare(String(b.session_date));
+    });
+    return later.length ? later[0].title : null;
+  }
+
+  function composeRunSheet(lesson, options) {
+    options = options || {};
+    var nextTitle = options.nextTitle || null;
+    var spine = options.spine || spineOf(lesson);
+    var details = lesson.step_details || {};
+    var steps = spine && Array.isArray(spine.steps) ? spine.steps : [];
+    if (steps.length) {
+      return steps.map(function (step) {
+        var label = step.label;
+        var overlay = details[label];
+        var detail;
+        if (overlay != null && String(overlay).trim() !== '') {
+          detail = overlay;
+        } else if (label === 'Name the focus' && lesson.objective) {
+          detail = 'One sentence, out loud, twice: ' + lesson.objective;
+        } else if (label === 'Open' && lesson.differentiation) {
+          detail = [step.default_detail, lesson.differentiation].filter(Boolean).join(' ');
+        } else if (label === 'Close' && nextTitle) {
+          detail = 'Restate the focus. Next week is ' + nextTitle + '. One paid session and where to book.';
+        } else {
+          detail = step.default_detail || '';
+        }
+        return { from: step.from, to: step.to, label: label, detail: detail };
+      });
+    }
+    if (Array.isArray(lesson.run_sheet) && lesson.run_sheet.length) return lesson.run_sheet;
+    return [];
+  }
+
+  function withComposedRunSheet(lesson, pool) {
+    var copy = Object.assign({}, lesson);
+    var spine = spineOf(lesson);
+    copy.run_sheet = composeRunSheet(lesson, {
+      spine: spine,
+      nextTitle: nextTitleFor(lesson, pool)
+    });
+    if (!copy.duration_min && spine && spine.duration_min) copy.duration_min = spine.duration_min;
+    if (!copy.group_size_max && spine && spine.group_size_max) copy.group_size_max = spine.group_size_max;
+    return copy;
+  }
+
+  function applyComposedRunSheets(lessons) {
+    var list = lessons || [];
+    return list.map(function (lesson) {
+      return withComposedRunSheet(lesson, list);
+    });
+  }
+
   function pills(lesson) {
     var items = [
       lesson.audience,
@@ -137,6 +210,14 @@
       lesson.tactic
     ].filter(Boolean);
     return items.map(function (t) { return '<span class="pill">' + esc(t) + '</span>'; }).join('');
+  }
+
+  function overlayRows(lesson) {
+    var want = { Flavour: true, Demo: true, Closed: true, 'Conditioned game': true };
+    var details = lesson.step_details || {};
+    return (Array.isArray(lesson.run_sheet) ? lesson.run_sheet : []).filter(function (step) {
+      return want[step.label] && details[step.label];
+    });
   }
 
   function runRows(lesson, withDetail) {
@@ -196,6 +277,9 @@
       '</p>' +
       '<h3>Good is</h3><p class="good">' + esc(lesson.success_check || '') + '</p>' +
       (lesson.differentiation ? '<h3>STEP</h3><p>' + esc(lesson.differentiation) + '</p>' : '') +
+      overlayRows(lesson).map(function (step) {
+        return '<h3>' + esc(step.label) + '</h3><p>' + esc(step.detail) + '</p>';
+      }).join('') +
       '</div></div></section>';
   }
 
@@ -232,7 +316,15 @@
     formatDate: formatDate,
     slotFor: slotFor,
     sortLessons: sortLessons,
-    printFull: function (lesson) { openPrint(fullPlanHtml(lesson)); },
-    printCourtSheet: function (lessons) { openPrint(courtSheetHtml(lessons)); }
+    spineOf: spineOf,
+    composeRunSheet: composeRunSheet,
+    withComposedRunSheet: withComposedRunSheet,
+    applyComposedRunSheets: applyComposedRunSheets,
+    printFull: function (lesson, pool) {
+      openPrint(fullPlanHtml(withComposedRunSheet(lesson, pool || [lesson])));
+    },
+    printCourtSheet: function (lessons) {
+      openPrint(courtSheetHtml(applyComposedRunSheets(lessons)));
+    }
   };
 })(window);

@@ -25,14 +25,20 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260919a"></script>
+  <script src="js/coach-planner-print.js?v=20260919b"></script>
   <style>
     .lsn-hero.mkt-hero{padding:40px 20px 48px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;text-align:left}
     .lsn-hero h1{margin-bottom:8px}
-    .lsn-hero-meta{opacity:.9;margin:0 0 8px}
-    .lsn-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
-    .lsn-actions .mkt-btn{padding:12px 18px;font-size:.92rem}
+    .lsn-hero-meta{opacity:.92;margin:0;font-weight:600;font-size:1.05rem}
+    .lsn-print{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px;max-width:640px}
+    .lsn-print-card{display:flex;align-items:center;gap:14px;text-align:left;background:#fff;color:#1a2238;border:0;border-radius:14px;padding:16px 18px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18);transition:transform .2s ease,box-shadow .2s ease}
+    .lsn-print-card:hover,.lsn-print-card:focus-visible{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.24);outline:none}
+    .lsn-print-card:focus-visible{outline:3px solid #7eb6f5;outline-offset:3px}
+    .lsn-print-icon{flex:0 0 44px;height:44px;border-radius:12px;background:#2A3990;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+    .lsn-print-copy{display:block}
+    .lsn-print-copy strong{display:block;font-size:1.02rem;font-weight:800;letter-spacing:.01em}
+    .lsn-print-copy small{display:block;margin-top:2px;font-size:.85rem;color:#555;font-weight:600}
     .lsn-wrap{max-width:900px;margin:0 auto;padding:36px 20px 80px}
     .lsn-state{text-align:center;padding:64px 20px;color:#555}
     .lsn-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
@@ -59,9 +65,10 @@
     @media (max-width:720px){
       .lsn-kicker{grid-template-columns:1fr}
       .lsn-run-row{grid-template-columns:1fr;gap:6px}
+      .lsn-print{grid-template-columns:1fr}
     }
     @media print{
-      .top-nav,.navbar,footer,.lsn-actions,.lsn-library{display:none!important}
+      .top-nav,.navbar,footer,.lsn-print,.lsn-library{display:none!important}
       .lsn-hero{padding:20px!important;border-radius:0}
       .lsn-kicker{margin-top:16px}
     }
@@ -88,13 +95,20 @@
         <p class="mkt-eyebrow">Coach Planner</p>
         <h1 id="lsnTitle"></h1>
         <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
-        <div class="mkt-pill-row" id="lsnTags"></div>
-        <div class="lsn-actions">
-          <button type="button" class="mkt-btn mkt-btn-light" id="lsnPrintFull">
-            <i class="fas fa-file-pdf" aria-hidden="true"></i> Print lesson
+        <div class="lsn-print">
+          <button type="button" class="lsn-print-card" id="lsnPrintFull">
+            <span class="lsn-print-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+            <span class="lsn-print-copy">
+              <strong>Print full plan</strong>
+              <small>The hour on one page</small>
+            </span>
           </button>
-          <button type="button" class="mkt-btn mkt-btn-light" id="lsnPrintSheet">
-            <i class="fas fa-print" aria-hidden="true"></i> Court sheet
+          <button type="button" class="lsn-print-card" id="lsnPrintSheet">
+            <span class="lsn-print-icon" aria-hidden="true"><i class="fas fa-table-cells-large"></i></span>
+            <span class="lsn-print-copy">
+              <strong>Print court sheet</strong>
+              <small>Two-up for the fence</small>
+            </span>
           </button>
         </div>
       </div>
@@ -137,6 +151,15 @@
   <script>
     var currentLesson = null;
     var sheetLessons = [];
+    var lessonPool = [];
+    var LESSON_SELECT = '*, spines(*)';
+
+    function composeLesson(lesson, pool) {
+      if (window.CoachPlannerPrint && window.CoachPlannerPrint.withComposedRunSheet) {
+        return window.CoachPlannerPrint.withComposedRunSheet(lesson, pool || [lesson]);
+      }
+      return lesson;
+    }
 
     function esc(s) {
       var d = document.createElement('div');
@@ -154,21 +177,8 @@
       currentLesson = lesson;
       document.title = lesson.title + ' | Coach Planner | Padel Pals';
       document.getElementById('lsnTitle').textContent = lesson.title || '';
-
-      var dateLabel = window.CoachPlannerPrint.formatDate(lesson.session_date);
-      var slot = window.CoachPlannerPrint.slotFor(lesson.audience);
-      document.getElementById('lsnHeroMeta').textContent = [lesson.audience, slot, dateLabel]
-        .filter(Boolean).join(' · ');
-
-      var tags = [];
-      if (lesson.duration_min) tags.push(lesson.duration_min + ' min');
-      if (lesson.group_size_max) tags.push('Up to ' + lesson.group_size_max);
-      if (lesson.game_situation) tags.push(lesson.game_situation);
-      if (lesson.phase) tags.push(lesson.phase);
-      if (lesson.tactic) tags.push(lesson.tactic);
-      document.getElementById('lsnTags').innerHTML = tags.map(function (t) {
-        return '<span class="mkt-pill">' + esc(t) + '</span>';
-      }).join('');
+      document.getElementById('lsnHeroMeta').textContent = lesson.audience || '';
+      document.getElementById('lsnHeroMeta').hidden = !lesson.audience;
 
       document.getElementById('lsnSit').textContent = lesson.game_situation || '—';
       document.getElementById('lsnPhase').textContent = lesson.phase || '—';
@@ -200,7 +210,9 @@
     }
 
     document.getElementById('lsnPrintFull').addEventListener('click', function () {
-      if (currentLesson && window.CoachPlannerPrint) window.CoachPlannerPrint.printFull(currentLesson);
+      if (currentLesson && window.CoachPlannerPrint) {
+        window.CoachPlannerPrint.printFull(currentLesson, lessonPool);
+      }
     });
     document.getElementById('lsnPrintSheet').addEventListener('click', function () {
       if (!window.CoachPlannerPrint) return;
@@ -233,21 +245,34 @@
           return;
         }
 
-        client.schema('coaching').from('lessons').select('*').eq('slug', slug).maybeSingle().then(function (res) {
+        client.schema('coaching').from('lessons').select(LESSON_SELECT).eq('slug', slug).maybeSingle().then(function (res) {
           if (res.error || !res.data) {
             showState('lsnUnavailable');
             return;
           }
-          renderLesson(res.data);
-          var date = res.data.session_date;
-          if (!date) {
-            sheetLessons = [res.data];
-            return;
-          }
-          client.schema('coaching').from('lessons').select('*').eq('session_date', date).then(function (pair) {
-            sheetLessons = (pair.data && pair.data.length) ? pair.data : [res.data];
+          var lesson = res.data;
+          var date = lesson.session_date;
+          var pairReq = date
+            ? client.schema('coaching').from('lessons').select(LESSON_SELECT).eq('session_date', date)
+            : Promise.resolve({ data: [lesson] });
+          var nextReq = (date && lesson.audience)
+            ? client.schema('coaching').from('lessons').select(LESSON_SELECT)
+              .eq('audience', lesson.audience)
+              .gt('session_date', date)
+              .order('session_date', { ascending: true })
+              .limit(1)
+            : Promise.resolve({ data: [] });
+
+          Promise.all([pairReq, nextReq]).then(function (results) {
+            var pair = (results[0].data && results[0].data.length) ? results[0].data : [lesson];
+            var nextRows = results[1].data || [];
+            lessonPool = pair.concat(nextRows);
+            sheetLessons = pair;
+            renderLesson(composeLesson(lesson, lessonPool));
           }).catch(function () {
-            sheetLessons = [res.data];
+            lessonPool = [lesson];
+            sheetLessons = [lesson];
+            renderLesson(composeLesson(lesson, lessonPool));
           });
         }).catch(function () {
           showState('lsnUnavailable');
