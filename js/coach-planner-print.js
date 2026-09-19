@@ -152,6 +152,19 @@
     return later.length ? later[0].title : null;
   }
 
+  function nestedRow(value) {
+    if (Array.isArray(value)) return value[0] || null;
+    return value || null;
+  }
+
+  function gameLine(game) {
+    if (!game) return '';
+    var title = game.title || '';
+    var body = game.setup || game.blurb || '';
+    if (title && body) return title + '. ' + body;
+    return title || body;
+  }
+
   function composeRunSheet(lesson, options) {
     options = options || {};
     var nextTitle = options.nextTitle || null;
@@ -167,8 +180,12 @@
           detail = overlay;
         } else if (label === 'Name the focus' && lesson.objective) {
           detail = 'One sentence, out loud, twice: ' + lesson.objective;
+        } else if (label === 'Warm up with a ball' && lesson.warmup_game) {
+          detail = gameLine(lesson.warmup_game);
         } else if (label === 'Open' && lesson.differentiation) {
           detail = [step.default_detail, lesson.differentiation].filter(Boolean).join(' ');
+        } else if (label === 'Conditioned game' && lesson.conditioned_game) {
+          detail = gameLine(lesson.conditioned_game);
         } else if (label === 'Close' && nextTitle) {
           detail = 'Restate the focus. Next week is ' + nextTitle + '. One paid session and where to book.';
         } else {
@@ -183,10 +200,12 @@
 
   function withComposedRunSheet(lesson, pool) {
     var copy = Object.assign({}, lesson);
-    var spine = spineOf(lesson);
-    copy.run_sheet = composeRunSheet(lesson, {
+    copy.warmup_game = nestedRow(lesson.warmup_game);
+    copy.conditioned_game = nestedRow(lesson.conditioned_game);
+    var spine = spineOf(copy);
+    copy.run_sheet = composeRunSheet(copy, {
       spine: spine,
-      nextTitle: nextTitleFor(lesson, pool)
+      nextTitle: nextTitleFor(copy, pool)
     });
     if (!copy.duration_min && spine && spine.duration_min) copy.duration_min = spine.duration_min;
     if (!copy.group_size_max && spine && spine.group_size_max) copy.group_size_max = spine.group_size_max;
