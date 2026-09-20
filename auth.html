@@ -698,11 +698,10 @@
                             error.message.includes('invalid_client') ||
                             error.message.includes('unauthorized_client')
                         )) {
-                            errorMsg += '<br><br><strong>💡 This suggests OAuth credentials may need updating.</strong><br>';
-                            errorMsg += 'Visit <a href="/oauth-diagnostic.html" style="color: #4A90E2;">/oauth-diagnostic.html</a> for detailed diagnostics,<br>';
-                            errorMsg += 'or see <a href="/WEBSITE_AUTH_FIX.md" style="color: #4A90E2;">WEBSITE_AUTH_FIX.md</a> for fix instructions.';
+                            errorMsg += '<br><br><strong>This suggests OAuth credentials may need updating.</strong><br>';
+                            errorMsg += 'Email <a href="mailto:support@padelpals.app" style="color: #4A90E2;">support@padelpals.app</a> if this keeps happening.';
                         } else if (error.message && error.message.includes('redirect_uri')) {
-                            errorMsg += '<br><br><strong>💡 Redirect URI mismatch detected.</strong><br>';
+                            errorMsg += '<br><br><strong>Redirect URI mismatch detected.</strong><br>';
                             errorMsg += 'Ensure the redirect URI in Apple Developer Portal matches:<br>';
                             errorMsg += '<code>https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback</code>';
                         }
@@ -759,11 +758,10 @@
                             error.message.includes('invalid_client') ||
                             error.message.includes('unauthorized_client')
                         )) {
-                            errorMsg += '<br><br><strong>💡 This suggests OAuth credentials may need updating.</strong><br>';
-                            errorMsg += 'Visit <a href="/oauth-diagnostic.html" style="color: #4A90E2;">/oauth-diagnostic.html</a> for detailed diagnostics,<br>';
-                            errorMsg += 'or see <a href="/WEBSITE_AUTH_FIX.md" style="color: #4A90E2;">WEBSITE_AUTH_FIX.md</a> for fix instructions.';
+                            errorMsg += '<br><br><strong>This suggests OAuth credentials may need updating.</strong><br>';
+                            errorMsg += 'Email <a href="mailto:support@padelpals.app" style="color: #4A90E2;">support@padelpals.app</a> if this keeps happening.';
                         } else if (error.message && error.message.includes('redirect_uri')) {
-                            errorMsg += '<br><br><strong>💡 Redirect URI mismatch detected.</strong><br>';
+                            errorMsg += '<br><br><strong>Redirect URI mismatch detected.</strong><br>';
                             errorMsg += 'Ensure the redirect URI in Google Cloud Console matches:<br>';
                             errorMsg += '<code>https://peaphqbxdmknxzsfdxuh.supabase.co/auth/v1/callback</code>';
                         }
