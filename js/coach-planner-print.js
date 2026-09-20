@@ -2,12 +2,6 @@
 (function (global) {
   'use strict';
 
-  var AUDIENCE_SLOT = {
-    'Intro to Padel': 'Tue 17:30',
-    'Beginner / Improver': 'Sun 11:00',
-    'Improver / Intermediate': 'Sun 12:00'
-  };
-
   var AUDIENCE_ORDER = [
     'Intro to Padel',
     'Beginner / Improver',
@@ -40,8 +34,12 @@
     });
   }
 
-  function slotFor(audience) {
-    return AUDIENCE_SLOT[audience] || '';
+  function programmeLabel(lesson) {
+    if (!lesson) return '';
+    if (lesson.programme_index && lesson.programme_count) {
+      return lesson.programme_index + ' of ' + lesson.programme_count;
+    }
+    return lesson.programme_title || '';
   }
 
   function sortLessons(lessons) {
@@ -139,17 +137,31 @@
   }
 
   function nextTitleFor(lesson, pool) {
-    if (!lesson || !lesson.audience || !lesson.session_date) return null;
-    var later = (pool || []).filter(function (other) {
-      return other
-        && other.audience === lesson.audience
-        && other.session_date
-        && other.session_date > lesson.session_date
-        && other.slug !== lesson.slug;
-    }).sort(function (a, b) {
-      return String(a.session_date).localeCompare(String(b.session_date));
-    });
-    return later.length ? later[0].title : null;
+    if (lesson && lesson.programme_next_title) return lesson.programme_next_title;
+    if (lesson && lesson.programme_wrap_title) return lesson.programme_wrap_title;
+    return null;
+  }
+
+  function defaultCuePack(lesson) {
+    var packs = lesson && Array.isArray(lesson.cue_packs) ? lesson.cue_packs : [];
+    var i;
+    for (i = 0; i < packs.length; i++) {
+      if (packs[i] && packs[i].is_default) return packs[i];
+    }
+    return packs[0] || null;
+  }
+
+  function applyCuePack(lesson, pack) {
+    var copy = Object.assign({}, lesson);
+    if (pack) {
+      if (pack.objective) copy.objective = pack.objective;
+      if (pack.success_check) copy.success_check = pack.success_check;
+      if (Array.isArray(pack.cues) && pack.cues.length) {
+        copy.step_details = Object.assign({}, copy.step_details || {}, { Cues: pack.cues.join('\n') });
+      }
+      copy._cuePack = pack;
+    }
+    return copy;
   }
 
   function nestedRow(value) {
@@ -195,7 +207,11 @@
         } else if (label === 'Conditioned game' && lesson.conditioned_game) {
           detail = gameLine(lesson.conditioned_game);
         } else if (label === 'Close' && nextTitle) {
-          detail = 'Restate the focus. Next week is ' + nextTitle + '. One paid session and where to book.';
+          if (lesson.programme_wrap_title && nextTitle === lesson.programme_wrap_title) {
+            detail = 'Restate the focus. Back to the start of this programme: ' + nextTitle + '.';
+          } else {
+            detail = 'Restate the focus. Next in this programme is ' + nextTitle + '.';
+          }
         } else {
           detail = step.default_detail || '';
         }
@@ -207,9 +223,9 @@
   }
 
   function withComposedRunSheet(lesson, pool) {
-    var copy = Object.assign({}, lesson);
-    copy.warmup_game = nestedRow(lesson.warmup_game);
-    copy.conditioned_game = nestedRow(lesson.conditioned_game);
+    var copy = applyCuePack(lesson, lesson._cuePack || defaultCuePack(lesson));
+    copy.warmup_game = nestedRow(copy.warmup_game);
+    copy.conditioned_game = nestedRow(copy.conditioned_game);
     var spine = spineOf(copy);
     copy.run_sheet = composeRunSheet(copy, {
       spine: spine,
@@ -240,6 +256,12 @@
   }
 
   function cueItems(lesson) {
+    var pack = lesson._cuePack || defaultCuePack(lesson);
+    if (pack && Array.isArray(pack.cues) && pack.cues.length) {
+      return pack.cues.map(function (line) {
+        return String(line).replace(/^[-•\u2022]\s*/, '').trim();
+      }).filter(Boolean).slice(0, 3);
+    }
     var raw = lesson.step_details && lesson.step_details.Cues;
     if (!raw) return [];
     return String(raw).split(/\n+/).map(function (line) {
@@ -287,7 +309,7 @@
 
   function fullPlanHtml(lesson) {
     var logo = assetUrl('images/Icon.png');
-    var dateLabel = formatDate(lesson.session_date);
+    var dateLabel = programmeLabel(lesson);
     var equip = Array.isArray(lesson.equipment) ? lesson.equipment : [];
     var note = (lesson.coach_note || '').trim();
     var body =
@@ -295,7 +317,7 @@
       '<div><div class="brand-name">Padel Pals</div><div class="eyebrow" style="margin:0">Coach Planner</div></div></div>' +
       '<div class="brand-meta">' + esc(dateLabel) + '<br>padelpals.app</div></div>' +
       '<div class="hero"><h1>' + esc(lesson.title) + '</h1>' +
-      (lesson.audience ? '<p>' + esc(lesson.audience) + (slotFor(lesson.audience) ? ' · ' + esc(slotFor(lesson.audience)) : '') + '</p>' : '') +
+      (lesson.audience ? '<p>' + esc(lesson.audience) + (programmeLabel(lesson) ? ' · ' + esc(programmeLabel(lesson)) : '') + '</p>' : '') +
       '<div class="pills">' + pills(lesson) + '</div></div>' +
       '<div class="grid-3">' +
       '<div class="card"><h3>Objective</h3><p>' + esc(lesson.objective || '') + '</p></div>' +
@@ -322,7 +344,7 @@
       '<div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:2px">' +
       esc(lesson.audience || '') +
       (lesson.group_size_max ? ' · max ' + esc(lesson.group_size_max) : '') +
-      '</div></div><div class="slot">' + esc(slotFor(lesson.audience)) + '</div></div>' +
+      '</div></div><div class="slot">' + esc(programmeLabel(lesson)) + '</div></div>' +
       '<div class="half-grid"><div>' + runRows(lesson, false) + '</div>' +
       '<div class="right">' +
       '<h3>Announce</h3><p>' + esc(lesson.objective || '') + '</p>' +
@@ -344,10 +366,8 @@
     var list = sortLessons(lessons).slice(0, 2);
     if (!list.length) return '';
     var logo = assetUrl('images/Icon.png');
-    var dateLabel = formatDate(list[0].session_date);
-    var title = list.length === 2
-      ? 'Court sheet · ' + dateLabel
-      : (list[0].title || 'Court sheet');
+    var dateLabel = programmeLabel(list[0]) || (list[0].audience || '');
+    var title = list[0].title || 'Court sheet';
     var body =
       '<div class="sheet"><div class="brand"><div class="brand-left"><img src="' + esc(logo) + '" alt="">' +
       '<div><div class="brand-name">Padel Pals</div><div class="eyebrow" style="margin:0">Court sheet</div></div></div>' +
@@ -371,7 +391,9 @@
 
   global.CoachPlannerPrint = {
     formatDate: formatDate,
-    slotFor: slotFor,
+    programmeLabel: programmeLabel,
+    defaultCuePack: defaultCuePack,
+    applyCuePack: applyCuePack,
     sortLessons: sortLessons,
     spineOf: spineOf,
     composeRunSheet: composeRunSheet,

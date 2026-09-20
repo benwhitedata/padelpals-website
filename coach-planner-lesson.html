@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260920a"></script>
+  <script src="js/coach-planner-print.js?v=20260920c"></script>
   <style>
     .lsn-hero.mkt-hero{padding:28px 20px 40px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
@@ -60,7 +60,22 @@
     .lsn-note h2{color:#E08540;font-size:1.1rem}
     .lsn-equip{display:flex;flex-wrap:wrap;gap:8px}
     .lsn-equip span{background:#EEF0F7;border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600;color:#1a2238}
-    .lsn-library{margin-top:8px}
+    .lsn-chips{display:flex;flex-wrap:wrap;gap:8px}
+    .lsn-chip{
+      appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
+      border-radius:999px;padding:8px 14px;font:inherit;font-size:.85rem;font-weight:700;cursor:pointer;
+    }
+    .lsn-chip[aria-pressed="true"]{background:#2A3990;border-color:#2A3990;color:#fff}
+    .lsn-tool{display:grid;gap:10px;margin-top:10px}
+    .lsn-tool button{
+      text-align:left;appearance:none;border:1px solid rgba(26,34,56,.08);background:#fff;
+      border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer;
+    }
+    .lsn-tool button[aria-pressed="true"]{border-color:#2A3990;box-shadow:inset 0 0 0 2px #2A3990}
+    .lsn-tool strong{display:block;color:#1a2238;margin-bottom:4px}
+    .lsn-tool span{color:#555;font-size:.9rem}
+    .lsn-next{margin-top:8px}
+    .lsn-clip a{font-weight:700;color:#2A3990}
     @media (max-width:720px){
       .lsn-kicker{grid-template-columns:1fr}
       .lsn-run-row{grid-template-columns:1fr;gap:6px}
@@ -119,9 +134,32 @@
         <div class="lsn-kick"><span>Differentiation</span><strong id="lsnDifferentiation" style="font-weight:500;font-size:1rem"></strong></div>
       </div>
 
+      <div class="lsn-section" id="lsnCueWrap" hidden>
+        <h2>Cue pack</h2>
+        <p class="lsn-run-detail">Same hour, one teaching point. Pick the pack that matches who turned up.</p>
+        <div class="lsn-chips" id="lsnCuePacks"></div>
+      </div>
+
       <div class="lsn-section">
         <h2>Run sheet</h2>
         <div class="lsn-run" id="lsnRunSheet"></div>
+      </div>
+
+      <div class="lsn-section" id="lsnWarmToolkitWrap" hidden>
+        <h2>Warm-up toolkit</h2>
+        <p class="lsn-run-detail">Default is already in the hour. Swap live from who is on court.</p>
+        <div class="lsn-tool" id="lsnWarmToolkit"></div>
+      </div>
+
+      <div class="lsn-section" id="lsnMiniToolkitWrap" hidden>
+        <h2>Conditioned-game toolkit</h2>
+        <p class="lsn-run-detail">Pick the mini that makes the focus score. Pre-planning is accepting the default.</p>
+        <div class="lsn-tool" id="lsnMiniToolkit"></div>
+      </div>
+
+      <div class="lsn-section" id="lsnOwnedClipWrap" hidden>
+        <h2>Clip</h2>
+        <p class="lsn-clip" id="lsnOwnedClip"></p>
       </div>
 
       <div class="lsn-section">
@@ -135,15 +173,20 @@
       </div>
 
       <div class="lsn-section lsn-library" id="lsnLibraryLink" hidden>
-        <a class="mkt-btn mkt-btn-light" id="lsnBackLibrary" href="coach-planner-library.html">Back to your library</a>
+        <p class="lsn-next" id="lsnNextLine" hidden></p>
+        <a class="mkt-btn mkt-btn-light" id="lsnNextLink" hidden href="coach-planner-library.html">Next in this programme</a>
+        <a class="mkt-btn mkt-btn-light" id="lsnBackLibrary" href="coach-planner-library.html">Back to the library</a>
       </div>
     </div>
   </article>
 
   <script>
     var currentLesson = null;
+    var baseLesson = null;
     var sheetLessons = [];
     var lessonPool = [];
+    var allGames = [];
+    var programmeSlug = new URLSearchParams(window.location.search).get('programme') || '';
     var LESSON_SELECT = '*, spines(*), warmup_game:games!warmup_game_id(*), conditioned_game:games!conditioned_game_id(*)';
 
     function composeLesson(lesson, pool) {
@@ -151,6 +194,31 @@
         return window.CoachPlannerPrint.withComposedRunSheet(lesson, pool || [lesson]);
       }
       return lesson;
+    }
+
+    function nestedRow(value) {
+      if (Array.isArray(value)) return value[0] || null;
+      return value || null;
+    }
+
+    function gameById(id) {
+      if (!id) return null;
+      for (var i = 0; i < allGames.length; i++) {
+        if (allGames[i].id === id || allGames[i].slug === id) return allGames[i];
+      }
+      return null;
+    }
+
+    function toolkitGames(ids, kind) {
+      var list = [];
+      (ids || []).forEach(function (id) {
+        var g = gameById(id);
+        if (g) list.push(g);
+      });
+      if (!list.length) {
+        list = allGames.filter(function (g) { return g.kind === kind; });
+      }
+      return list;
     }
 
     function esc(s) {
@@ -165,13 +233,93 @@
       });
     }
 
-    function renderLesson(lesson) {
+    function heroMeta(lesson) {
+      var bits = [lesson.audience];
+      if (lesson.programme_title && lesson.programme_index && lesson.programme_count) {
+        bits.push(lesson.programme_title + ' · ' + lesson.programme_index + ' of ' + lesson.programme_count);
+      }
+      return bits.filter(Boolean).join(' · ');
+    }
+
+    function renderCuePacks(lesson) {
+      var packs = Array.isArray(lesson.cue_packs) ? lesson.cue_packs : [];
+      var wrap = document.getElementById('lsnCueWrap');
+      var el = document.getElementById('lsnCuePacks');
+      wrap.hidden = packs.length < 2;
+      if (packs.length < 2) return;
+      var current = (lesson._cuePack && (lesson._cuePack.slug || lesson._cuePack.title)) ||
+        (packs.filter(function (p) { return p.is_default; })[0] || packs[0]).slug ||
+        (packs[0].title);
+      el.innerHTML = packs.map(function (p) {
+        var key = p.slug || p.title;
+        return '<button type="button" class="lsn-chip" data-cue="' + esc(key) + '" aria-pressed="' +
+          (key === current ? 'true' : 'false') + '">' + esc(p.title || 'Cue pack') + '</button>';
+      }).join('');
+    }
+
+    function renderToolkit(kind, selected, ids) {
+      var wrapId = kind === 'warmup' ? 'lsnWarmToolkitWrap' : 'lsnMiniToolkitWrap';
+      var listId = kind === 'warmup' ? 'lsnWarmToolkit' : 'lsnMiniToolkit';
+      var games = toolkitGames(ids, kind === 'warmup' ? 'warmup' : 'mini');
+      var wrap = document.getElementById(wrapId);
+      wrap.hidden = games.length < 2;
+      if (games.length < 2) return;
+      var selectedId = selected && (selected.id || selected.slug);
+      document.getElementById(listId).innerHTML = games.map(function (g) {
+        var pressed = (g.id === selectedId || g.slug === selectedId) ? 'true' : 'false';
+        var when = g.when_to_pick ? esc(g.when_to_pick) : esc(g.blurb || '');
+        return '<button type="button" data-game="' + esc(g.id) + '" data-kind="' + kind + '" aria-pressed="' + pressed + '">' +
+          '<strong>' + esc(g.title) + '</strong><span>' + when + '</span></button>';
+      }).join('');
+    }
+
+    function renderOwnedClip(lesson) {
+      var games = [nestedRow(lesson.warmup_game), nestedRow(lesson.conditioned_game)].filter(Boolean);
+      var owned = games.filter(function (g) { return g.kind === 'overhead' && g.video_url; })[0];
+      var wrap = document.getElementById('lsnOwnedClipWrap');
+      if (!owned) {
+        wrap.hidden = true;
+        return;
+      }
+      wrap.hidden = false;
+      document.getElementById('lsnOwnedClip').innerHTML =
+        '<a href="' + esc(owned.video_url) + '" target="_blank" rel="noopener noreferrer">Watch ' + esc(owned.title) + '</a>' +
+        (owned.blurb ? ' — ' + esc(owned.blurb) : '');
+    }
+
+    function renderNext(lesson) {
+      var line = document.getElementById('lsnNextLine');
+      var link = document.getElementById('lsnNextLink');
+      if (lesson.programme_next_slug) {
+        line.hidden = false;
+        line.textContent = 'Next in this programme: ' + (lesson.programme_next_title || '');
+        link.hidden = false;
+        link.textContent = 'Open next hour';
+        link.href = 'coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.programme_next_slug) +
+          (lesson.programme_slug ? '&programme=' + encodeURIComponent(lesson.programme_slug) : '');
+      } else if (lesson.programme_wrap_slug) {
+        line.hidden = false;
+        line.textContent = 'Last published item in this programme. Back to the start: ' + (lesson.programme_wrap_title || '');
+        link.hidden = false;
+        link.textContent = 'Back to the start of this programme';
+        link.href = 'coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.programme_wrap_slug) +
+          (lesson.programme_slug ? '&programme=' + encodeURIComponent(lesson.programme_slug) : '');
+      } else {
+        line.hidden = true;
+        link.hidden = true;
+      }
+    }
+
+    function paint() {
+      if (!baseLesson) return;
+      var lesson = composeLesson(baseLesson, lessonPool);
       currentLesson = lesson;
       document.title = lesson.title + ' | Coach Planner | Padel Pals';
       document.getElementById('lsnEyebrow').textContent = lesson.session_kind === 'coaching' ? 'Coaching' : 'Drill';
       document.getElementById('lsnTitle').textContent = lesson.title || '';
-      document.getElementById('lsnHeroMeta').textContent = lesson.audience || '';
-      document.getElementById('lsnHeroMeta').hidden = !lesson.audience;
+      var meta = heroMeta(lesson);
+      document.getElementById('lsnHeroMeta').textContent = meta;
+      document.getElementById('lsnHeroMeta').hidden = !meta;
 
       document.getElementById('lsnSit').textContent = lesson.game_situation || '—';
       document.getElementById('lsnPhase').textContent = lesson.phase || '—';
@@ -203,8 +351,38 @@
         ? 'coach-planner-library.html?view=coaching'
         : 'coach-planner-library.html';
 
+      renderCuePacks(lesson);
+      renderToolkit('warmup', nestedRow(lesson.warmup_game), lesson.warmup_game_ids);
+      renderToolkit('mini', nestedRow(lesson.conditioned_game), lesson.conditioned_game_ids);
+      renderOwnedClip(lesson);
+      renderNext(lesson);
       showState('lsnContent');
     }
+
+    document.getElementById('lsnCuePacks').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-cue]');
+      if (!btn || !baseLesson || !window.CoachPlannerPrint) return;
+      var key = btn.getAttribute('data-cue');
+      var packs = baseLesson.cue_packs || [];
+      var pack = packs.filter(function (p) { return (p.slug || p.title) === key; })[0];
+      if (!pack) return;
+      baseLesson = window.CoachPlannerPrint.applyCuePack(baseLesson, pack);
+      paint();
+    });
+
+    function bindToolkit(listId) {
+      document.getElementById(listId).addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-game]');
+        if (!btn || !baseLesson) return;
+        var game = gameById(btn.getAttribute('data-game'));
+        if (!game) return;
+        if (btn.getAttribute('data-kind') === 'warmup') baseLesson.warmup_game = game;
+        else baseLesson.conditioned_game = game;
+        paint();
+      });
+    }
+    bindToolkit('lsnWarmToolkit');
+    bindToolkit('lsnMiniToolkit');
 
     document.getElementById('lsnPrintFull').addEventListener('click', function () {
       if (currentLesson && window.CoachPlannerPrint) {
@@ -213,9 +391,46 @@
     });
     document.getElementById('lsnPrintSheet').addEventListener('click', function () {
       if (!window.CoachPlannerPrint) return;
-      var pack = sheetLessons.length ? sheetLessons : (currentLesson ? [currentLesson] : []);
-      window.CoachPlannerPrint.printCourtSheet(pack);
+      window.CoachPlannerPrint.printCourtSheet(currentLesson ? [currentLesson] : []);
     });
+
+    function attachProgramme(lesson, programmes, items, byId) {
+      var itemRows = items || [];
+      var chosen = null;
+      if (programmeSlug) {
+        chosen = (programmes || []).filter(function (p) { return p.slug === programmeSlug; })[0];
+      }
+      if (!chosen) {
+        var owning = itemRows.filter(function (row) { return row.lesson_id === lesson.id; });
+        chosen = (programmes || []).filter(function (p) {
+          return owning.some(function (row) { return row.programme_id === p.id; });
+        })[0];
+      }
+      if (!chosen) return;
+      var ordered = itemRows.filter(function (row) { return row.programme_id === chosen.id; })
+        .slice().sort(function (a, b) { return (a.sort_index || 0) - (b.sort_index || 0); });
+      var idx = -1;
+      ordered.forEach(function (row, i) { if (row.lesson_id === lesson.id) idx = i; });
+      lesson.programme_slug = chosen.slug;
+      lesson.programme_title = chosen.title;
+      lesson.programme_index = idx >= 0 ? idx + 1 : null;
+      lesson.programme_count = ordered.length;
+      if (idx >= 0 && idx < ordered.length - 1) {
+        var nxt = byId[ordered[idx + 1].lesson_id];
+        if (nxt) {
+          lesson.programme_next_title = nxt.title;
+          lesson.programme_next_slug = nxt.slug;
+        }
+      } else if (idx >= 0 && ordered.length) {
+        var first = byId[ordered[0].lesson_id];
+        if (first) {
+          lesson.programme_wrap_title = first.title;
+          lesson.programme_wrap_slug = first.slug;
+        }
+      }
+      lessonPool = ordered.map(function (row) { return byId[row.lesson_id]; }).filter(Boolean);
+      if (!lessonPool.length) lessonPool = [lesson];
+    }
 
     var lessonBooted = false;
     var lessonTries = 0;
@@ -250,35 +465,29 @@
           return;
         }
 
-        client.schema('coaching').from('lessons').select(LESSON_SELECT).eq('slug', slug).maybeSingle().then(function (res) {
-          if (res.error || !res.data) {
+        var lessonReq = client.schema('coaching').from('lessons').select(LESSON_SELECT).eq('slug', slug).maybeSingle();
+        var gameReq = client.schema('coaching').from('games').select('*').order('sort_index');
+        var progReq = client.schema('coaching').from('programmes').select('*');
+        var itemReq = client.schema('coaching').from('programme_items').select('*').order('sort_index');
+        var allLessonReq = client.schema('coaching').from('lessons').select('id, slug, title, audience');
+
+        Promise.all([lessonReq, gameReq, progReq, itemReq, allLessonReq]).then(function (results) {
+          if (results[0].error || !results[0].data) {
             showState('lsnUnavailable');
             return;
           }
-          var lesson = res.data;
-          var date = lesson.session_date;
-          var pairReq = date
-            ? client.schema('coaching').from('lessons').select(LESSON_SELECT).eq('session_date', date)
-            : Promise.resolve({ data: [lesson] });
-          var nextReq = (date && lesson.audience)
-            ? client.schema('coaching').from('lessons').select(LESSON_SELECT)
-              .eq('audience', lesson.audience)
-              .gt('session_date', date)
-              .order('session_date', { ascending: true })
-              .limit(1)
-            : Promise.resolve({ data: [] });
-
-          Promise.all([pairReq, nextReq]).then(function (results) {
-            var pair = (results[0].data && results[0].data.length) ? results[0].data : [lesson];
-            var nextRows = results[1].data || [];
-            lessonPool = pair.concat(nextRows);
-            sheetLessons = pair;
-            renderLesson(composeLesson(lesson, lessonPool));
-          }).catch(function () {
-            lessonPool = [lesson];
-            sheetLessons = [lesson];
-            renderLesson(composeLesson(lesson, lessonPool));
+          var lesson = results[0].data;
+          allGames = (results[1].data && !results[1].error) ? results[1].data : [];
+          var byId = {};
+          ((results[4].data && !results[4].error) ? results[4].data : []).forEach(function (row) {
+            byId[row.id] = row;
           });
+          byId[lesson.id] = lesson;
+          attachProgramme(lesson, results[2].data, results[3].data, byId);
+          sheetLessons = [lesson];
+          if (!lessonPool.length) lessonPool = [lesson];
+          baseLesson = lesson;
+          paint();
         }).catch(function () {
           showState('lsnUnavailable');
         });

@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260920a"></script>
+  <script src="js/coach-planner-print.js?v=20260920c"></script>
   <style>
     .lib-hero.mkt-hero{padding:28px 20px 52px;text-align:left}
     .lib-hero .mkt-hero-inner{max-width:1040px;margin:0 auto;text-align:left}
@@ -112,12 +112,12 @@
       overflow:hidden;transition:transform .15s ease, box-shadow .15s ease;
     }
     .lib-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(26,34,56,.12)}
-    .lib-cal{
+    .lib-idx{
       background:linear-gradient(180deg,#1a2238 0%,#2A3990 100%);color:#fff;display:flex;
       flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;text-align:center;
     }
-    .lib-cal .dow,.lib-cal .mon{font-size:.68rem;font-weight:700;letter-spacing:.04em}
-    .lib-cal .day{font-size:1.55rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+    .lib-idx .lib-idx-n{font-size:1.55rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+    .lib-idx .lib-idx-of{font-size:.68rem;font-weight:700;letter-spacing:.04em}
     .lib-card-body{padding:16px 18px 16px 4px}
     .lib-card-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
     .lib-slot{font-size:.78rem;font-weight:700;color:#2A3990}
@@ -197,7 +197,7 @@
     <div id="libEmpty" class="lib-state" hidden>
       <i class="fas fa-box-open" aria-hidden="true"></i>
       <h2>Nothing Published Yet</h2>
-      <p>Plans land here as they are run. Come back after the next session.</p>
+      <p>Plans land here as they are published. Come back soon.</p>
       <a class="mkt-btn mkt-btn-light" href="coach-planner.html">About Coach Planner</a>
     </div>
 
@@ -206,7 +206,7 @@
         <button type="button" role="tab" id="libViewDrills" aria-selected="true">
           <i class="fas fa-layer-group" aria-hidden="true"></i>
           <span class="lib-switch-label">Drills</span>
-          <span class="lib-switch-hint">Weekly plans</span>
+          <span class="lib-switch-hint">Programmes and catalogue</span>
           <span class="lib-switch-count" id="libTabDrillsN">0</span>
         </button>
         <button type="button" role="tab" id="libViewCoaching" aria-selected="false">
@@ -229,9 +229,9 @@
             <input id="libQuery" type="search" placeholder="Search titles, objectives, tactics…" autocomplete="off">
           </label>
           <select id="libSort" class="lib-sort" aria-label="Sort plans">
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="group">By Group</option>
+            <option value="programme">Programme order</option>
+            <option value="situation">By situation</option>
+            <option value="title">By title</option>
           </select>
         </div>
         <div class="lib-filter-row">
@@ -239,12 +239,10 @@
           <div class="lib-pills" id="libGroups" role="group" aria-label="Filter by group"></div>
         </div>
         <div class="lib-filter-row">
-          <span class="lib-filter-label">When</span>
-          <div class="lib-pills" id="libWhen" role="group" aria-label="Filter by date">
-            <button type="button" class="lib-pill" data-when="all" aria-pressed="true">All Dates</button>
-            <button type="button" class="lib-pill" data-when="upcoming" aria-pressed="false">Upcoming</button>
-            <button type="button" class="lib-pill" data-when="past" aria-pressed="false">Past</button>
-            <button type="button" class="lib-pill" data-when="month" aria-pressed="false">This Month</button>
+          <span class="lib-filter-label">Browse</span>
+          <div class="lib-pills" id="libPath" role="group" aria-label="Browse by path">
+            <button type="button" class="lib-pill" data-path="programmes" aria-pressed="true">Programmes</button>
+            <button type="button" class="lib-pill" data-path="catalogue" aria-pressed="false">By situation</button>
           </div>
         </div>
         <div class="lib-filter-row" id="libSitRow" hidden>
@@ -263,11 +261,22 @@
   <script>
     var allLessons = [];
     var allGames = [];
+    var allProgrammes = [];
     var typeGuide = null;
     var viewParam = new URLSearchParams(window.location.search).get('view');
+    var pathParam = new URLSearchParams(window.location.search).get('path');
     var view = (viewParam === 'games' || viewParam === 'coaching' || viewParam === 'drills') ? viewParam : 'drills';
-    var filters = { query: '', audience: '', when: 'all', situation: '', sort: 'newest' };
+    var filters = {
+      query: '',
+      audience: '',
+      path: (pathParam === 'catalogue') ? 'catalogue' : 'programmes',
+      situation: '',
+      sort: 'programme'
+    };
     var KNOWN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate'];
+    var SITUATION_ORDER = [
+      'Serve', 'Return', 'Both Back', 'At Net', 'Opponents at Net', 'Both Pairs at the Net', 'Whole Court'
+    ];
     var SMALL = /^(a|an|and|at|for|in|of|on|or|the|to|vs)$/i;
 
     function esc(s) {
@@ -288,28 +297,48 @@
       }).join(' ');
     }
 
-    function todayIso() {
-      var d = new Date();
-      var m = String(d.getMonth() + 1).padStart(2, '0');
-      var day = String(d.getDate()).padStart(2, '0');
-      return d.getFullYear() + '-' + m + '-' + day;
+    function attachProgrammes(lessons, programmes, items) {
+      var byId = {};
+      lessons.forEach(function (l) { byId[l.id] = l; });
+      var grouped = {};
+      (items || []).forEach(function (item) {
+        if (!grouped[item.programme_id]) grouped[item.programme_id] = [];
+        grouped[item.programme_id].push(item);
+      });
+      (programmes || []).forEach(function (prog) {
+        var rows = (grouped[prog.id] || []).slice().sort(function (a, b) {
+          return (a.sort_index || 0) - (b.sort_index || 0);
+        });
+        prog.items = rows.map(function (row, i) {
+          var lesson = byId[row.lesson_id];
+          if (!lesson) return null;
+          if (!lesson.programmes) lesson.programmes = [];
+          lesson.programmes.push({
+            slug: prog.slug,
+            title: prog.title,
+            audience: prog.audience,
+            index: i + 1,
+            count: rows.length
+          });
+          if (!lesson.programme_slug) {
+            lesson.programme_slug = prog.slug;
+            lesson.programme_title = prog.title;
+            lesson.programme_index = i + 1;
+            lesson.programme_count = rows.length;
+          }
+          return lesson;
+        }).filter(Boolean);
+      });
     }
 
-    function monthNow() {
-      return todayIso().slice(0, 7);
-    }
-
-    function dateParts(iso) {
-      if (!iso) return { dow: '', day: '—', mon: '', monthKey: 'undated', monthLabel: 'Undated', long: 'Undated' };
-      var d = new Date(iso + 'T12:00:00');
-      return {
-        dow: d.toLocaleDateString('en-GB', { weekday: 'short' }),
-        day: String(d.getDate()),
-        mon: d.toLocaleDateString('en-GB', { month: 'short' }),
-        monthKey: iso.slice(0, 7),
-        monthLabel: d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
-        long: window.CoachPlannerPrint.formatDate(iso)
-      };
+    function pickProgramme(lesson) {
+      var list = lesson.programmes || [];
+      if (!list.length) return null;
+      if (filters.audience) {
+        var match = list.filter(function (p) { return p.audience === filters.audience; })[0];
+        if (match) return match;
+      }
+      return list[0];
     }
 
     function showState(id) {
@@ -341,11 +370,11 @@
 
     function matches(lesson) {
       if (filters.audience && lesson.audience !== filters.audience) return false;
-      if (filters.situation && lesson.game_situation !== filters.situation) return false;
-      var date = lesson.session_date || '';
-      if (filters.when === 'upcoming' && date && date < todayIso()) return false;
-      if (filters.when === 'past' && (!date || date >= todayIso())) return false;
-      if (filters.when === 'month' && date.slice(0, 7) !== monthNow()) return false;
+      if (filters.path === 'catalogue' && filters.situation && lesson.game_situation !== filters.situation) return false;
+      if (filters.path === 'programmes') {
+        var anyProg = allLessons.some(function (l) { return l.programmes && l.programmes.length; });
+        if (anyProg && !(lesson.programmes && lesson.programmes.length)) return false;
+      }
       if (filters.query) {
         var blob = [lesson.title, lesson.audience, lesson.objective, lesson.game_situation, lesson.phase, lesson.tactic, lesson.skill_id]
           .join(' ').toLowerCase();
@@ -354,32 +383,37 @@
       return true;
     }
 
+    function situationRank(name) {
+      var i = SITUATION_ORDER.indexOf(name);
+      return i === -1 ? 99 : i;
+    }
+
     function filteredLessons() {
       var list = lessonsForView().filter(matches);
-      if (filters.sort === 'oldest') {
+      if (filters.sort === 'title') {
         list = list.slice().sort(function (a, b) {
-          var d = String(a.session_date || '').localeCompare(String(b.session_date || ''));
-          if (d) return d;
-          return window.CoachPlannerPrint.sortLessons([a, b])[0] === a ? -1 : 1;
+          return String(a.title || '').localeCompare(String(b.title || ''));
         });
-      } else if (filters.sort === 'group') {
+      } else if (filters.sort === 'situation') {
         list = list.slice().sort(function (a, b) {
-          var g = (a.audience || '').localeCompare(b.audience || '');
-          if (g) return g;
-          return String(b.session_date || '').localeCompare(String(a.session_date || ''));
+          var s = situationRank(a.game_situation) - situationRank(b.game_situation);
+          if (s) return s;
+          return String(a.title || '').localeCompare(String(b.title || ''));
         });
       } else {
         list = list.slice().sort(function (a, b) {
-          var d = String(b.session_date || '').localeCompare(String(a.session_date || ''));
-          if (d) return d;
-          return window.CoachPlannerPrint.sortLessons([a, b])[0] === a ? -1 : 1;
+          var pa = pickProgramme(a) || {};
+          var pb = pickProgramme(b) || {};
+          var ta = (pa.title || a.audience || '').localeCompare(pb.title || b.audience || '');
+          if (ta) return ta;
+          return (pa.index || 99) - (pb.index || 99);
         });
       }
       return list;
     }
 
     function filtersActive() {
-      return !!(filters.query || filters.audience || filters.situation || filters.when !== 'all' || filters.sort !== 'newest');
+      return !!(filters.query || filters.audience || filters.situation || filters.path !== 'programmes' || filters.sort !== 'programme');
     }
 
     function setPressed(container, attr, value) {
@@ -397,20 +431,19 @@
             esc(titleCase(g)) + '</button>';
         }).join('');
 
-      var sits = unique(allLessons.map(function (l) { return l.game_situation; }));
+      var sits = unique(allLessons.map(function (l) { return l.game_situation; }))
+        .slice().sort(function (a, b) { return situationRank(a) - situationRank(b); });
       var sitRow = document.getElementById('libSitRow');
-      if (sits.length > 1) {
-        sitRow.hidden = false;
+      sitRow.hidden = filters.path !== 'catalogue' || sits.length < 2;
+      if (!sitRow.hidden) {
         document.getElementById('libSits').innerHTML = '<button type="button" class="lib-pill" data-sit="" aria-pressed="' + (filters.situation ? 'false' : 'true') + '">All Situations</button>' +
           sits.map(function (s) {
             return '<button type="button" class="lib-pill" data-sit="' + esc(s) + '" aria-pressed="' + (filters.situation === s ? 'true' : 'false') + '">' +
               esc(titleCase(s)) + '</button>';
           }).join('');
-      } else {
-        sitRow.hidden = true;
       }
 
-      setPressed(document.getElementById('libWhen'), 'data-when', filters.when);
+      setPressed(document.getElementById('libPath'), 'data-path', filters.path);
       document.getElementById('libQuery').value = filters.query;
       document.getElementById('libSort').value = filters.sort;
 
@@ -460,19 +493,28 @@
     }
 
     function cardHtml(lesson) {
-      var parts = dateParts(lesson.session_date);
-      var slot = window.CoachPlannerPrint.slotFor(lesson.audience);
+      var prog = pickProgramme(lesson);
+      var idx = prog ? String(prog.index) : '•';
+      var of = prog ? ('of ' + prog.count) : (lesson.audience || '');
+      var href = 'coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.slug);
+      if (prog && prog.slug) href += '&programme=' + encodeURIComponent(prog.slug);
       var pills = [titleCase(lesson.audience), lesson.game_situation, lesson.phase, lesson.tactic]
         .filter(Boolean).map(function (p) { return '<span class="mkt-pill">' + esc(titleCase(p)) + '</span>'; }).join('');
-      return '<a class="lib-card" href="coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.slug) + '">' +
-        '<div class="lib-cal" aria-hidden="true"><span class="dow">' + esc(parts.dow) + '</span>' +
-        '<span class="day">' + esc(parts.day) + '</span><span class="mon">' + esc(parts.mon) + '</span></div>' +
+      return '<a class="lib-card" href="' + href + '">' +
+        '<div class="lib-idx" aria-hidden="true"><span class="lib-idx-n">' + esc(idx) + '</span>' +
+        '<span class="lib-idx-of">' + esc(of) + '</span></div>' +
         '<div class="lib-card-body"><div class="lib-card-top">' +
-        (slot ? '<span class="lib-slot">' + esc(slot) + '</span>' : '') +
+        (prog && prog.title ? '<span class="lib-slot">' + esc(prog.title) + '</span>' : '') +
         (lesson.duration_min ? '<span class="lib-dur">' + esc(lesson.duration_min) + ' min</span>' : '') +
         '</div><h3>' + esc(titleCase(lesson.title)) + '</h3>' +
         (lesson.objective ? '<p class="lib-obj">' + esc(lesson.objective) + '</p>' : '') +
         '<div class="mkt-pill-row">' + pills + '</div></div></a>';
+    }
+
+    function sectionHtml(title, lessons) {
+      if (!lessons.length) return '';
+      return '<section class="lib-month"><h2>' + esc(title) + '</h2>' +
+        '<div class="lib-grid">' + lessons.map(cardHtml).join('') + '</div></section>';
     }
 
     function renderList() {
@@ -488,46 +530,54 @@
       var intro = explainHtml(view === 'coaching' ? 'coaching' : 'drill');
       if (!pool.length) {
         var empty = view === 'coaching'
-          ? '<div class="lib-none"><h3>No coached sessions yet</h3><p>Those land here when they are run: 3 or 4 players, a tight band, the whole funnel.</p></div>'
-          : '<div class="lib-none"><h3>No drills yet</h3><p>Weekly themed sessions land here as they are run.</p></div>';
+          ? '<div class="lib-none"><h3>No coached sessions yet</h3><p>Those land here when they are published: 3 or 4 players, a tight band, the whole funnel.</p></div>'
+          : '<div class="lib-none"><h3>No drills yet</h3><p>Reusable hours land here as they are published.</p></div>';
         list.innerHTML = intro + empty;
         return;
       }
 
       if (!lessons.length) {
-        list.innerHTML = intro + '<div class="lib-none"><h3>No Plans Match These Filters</h3><p>Try another group, date, or search term.</p></div>';
+        list.innerHTML = intro + '<div class="lib-none"><h3>No Plans Match These Filters</h3><p>Try another group, path, or search term.</p></div>';
         return;
       }
 
-      var months = [];
-      var monthMap = {};
-      lessons.forEach(function (l) {
-        var parts = dateParts(l.session_date);
-        if (!monthMap[parts.monthKey]) {
-          monthMap[parts.monthKey] = { key: parts.monthKey, label: titleCase(parts.monthLabel), days: [], dayMap: {} };
-          months.push(monthMap[parts.monthKey]);
-        }
-        var dayKey = l.session_date || 'undated';
-        var month = monthMap[parts.monthKey];
-        if (!month.dayMap[dayKey]) {
-          month.dayMap[dayKey] = { date: l.session_date, label: parts.long, lessons: [] };
-          month.days.push(month.dayMap[dayKey]);
-        }
-        month.dayMap[dayKey].lessons.push(l);
-      });
-
-      list.innerHTML = intro + months.map(function (month) {
-        var days = month.days.map(function (day) {
-          var sorted = filters.sort === 'group' ? window.CoachPlannerPrint.sortLessons(day.lessons) : day.lessons;
-          var sheetBtn = day.lessons.length > 1 && day.date
-            ? '<button type="button" class="mkt-btn mkt-btn-light" data-print-date="' + esc(day.date) + '">' +
-              '<i class="fas fa-print" aria-hidden="true"></i> Court Sheet</button>'
-            : '';
-          return '<div class="lib-day"><div class="lib-day-head"><h3>' + esc(day.label) + '</h3>' + sheetBtn + '</div>' +
-            '<div class="lib-grid">' + sorted.map(cardHtml).join('') + '</div></div>';
+      var html = intro;
+      if (filters.path === 'catalogue' || filters.sort === 'situation') {
+        var sitMap = {};
+        var sitKeys = [];
+        lessons.forEach(function (l) {
+          var key = l.game_situation || 'Untagged';
+          if (!sitMap[key]) {
+            sitMap[key] = [];
+            sitKeys.push(key);
+          }
+          sitMap[key].push(l);
+        });
+        sitKeys.sort(function (a, b) { return situationRank(a) - situationRank(b); });
+        html += sitKeys.map(function (key) { return sectionHtml(titleCase(key), sitMap[key]); }).join('');
+      } else {
+        var progMap = {};
+        var progKeys = [];
+        var unplaced = [];
+        lessons.forEach(function (l) {
+          var prog = pickProgramme(l);
+          if (!prog) {
+            unplaced.push(l);
+            return;
+          }
+          var key = prog.slug || prog.title;
+          if (!progMap[key]) {
+            progMap[key] = { title: prog.title, lessons: [] };
+            progKeys.push(key);
+          }
+          progMap[key].lessons.push(l);
+        });
+        html += progKeys.map(function (key) {
+          return sectionHtml(progMap[key].title, progMap[key].lessons);
         }).join('');
-        return '<section class="lib-month"><h2>' + esc(month.label) + '</h2>' + days + '</section>';
-      }).join('');
+        if (unplaced.length) html += sectionHtml('Catalogue', unplaced);
+      }
+      list.innerHTML = html;
     }
 
     function kindLabel(kind) {
@@ -594,11 +644,13 @@
       setPressed(document.getElementById('libGroups'), 'data-audience', filters.audience);
       apply();
     });
-    document.getElementById('libWhen').addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-when]');
+    document.getElementById('libPath').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-path]');
       if (!btn) return;
-      filters.when = btn.getAttribute('data-when') || 'all';
-      setPressed(document.getElementById('libWhen'), 'data-when', filters.when);
+      filters.path = btn.getAttribute('data-path') || 'programmes';
+      if (filters.path === 'programmes' && filters.sort === 'situation') filters.sort = 'programme';
+      if (filters.path === 'catalogue' && filters.sort === 'programme') filters.sort = 'situation';
+      renderToolbar();
       apply();
     });
     document.getElementById('libSits').addEventListener('click', function (e) {
@@ -617,19 +669,10 @@
       apply();
     });
     document.getElementById('libReset').addEventListener('click', function () {
-      filters = { query: '', audience: '', when: 'all', situation: '', sort: 'newest' };
+      filters = { query: '', audience: '', path: 'programmes', situation: '', sort: 'programme' };
       renderToolbar();
       apply();
     });
-    document.getElementById('libList').addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-print-date]');
-      if (!btn) return;
-      e.preventDefault();
-      var date = btn.getAttribute('data-print-date');
-      var pack = allLessons.filter(function (l) { return l.session_date === date; });
-      if (pack.length && window.CoachPlannerPrint) window.CoachPlannerPrint.printCourtSheet(pack);
-    });
-
     document.getElementById('libViewDrills').addEventListener('click', function () { setView('drills'); });
     document.getElementById('libViewCoaching').addEventListener('click', function () { setView('coaching'); });
     document.getElementById('libViewGames').addEventListener('click', function () { setView('games'); });
@@ -658,7 +701,7 @@
 
         var lessonReq = client.schema('coaching').from('lessons')
           .select('*, spines(*), warmup_game:games!warmup_game_id(*), conditioned_game:games!conditioned_game_id(*)')
-          .order('session_date', { ascending: false });
+          .order('title', { ascending: true });
         var gameReq = client.schema('coaching').from('games')
           .select('*')
           .order('sort_index', { ascending: true })
@@ -667,12 +710,16 @@
           .select('title, body')
           .eq('slug', 'drills-v-coaching')
           .maybeSingle();
+        var progReq = client.schema('coaching').from('programmes').select('*').order('title');
+        var itemReq = client.schema('coaching').from('programme_items').select('*').order('sort_index');
 
-        Promise.all([lessonReq, gameReq, guideReq]).then(function (results) {
+        Promise.all([lessonReq, gameReq, guideReq, progReq, itemReq]).then(function (results) {
           allLessons = (results[0].data && !results[0].error) ? results[0].data : [];
           allGames = (results[1].data && !results[1].error) ? results[1].data : [];
           typeGuide = (results[2].data && !results[2].error && results[2].data.body) ? results[2].data.body : null;
           if (results[2].data && results[2].data.title && typeGuide) typeGuide.title = results[2].data.title;
+          allProgrammes = (results[3].data && !results[3].error) ? results[3].data : [];
+          attachProgrammes(allLessons, allProgrammes, (results[4].data && !results[4].error) ? results[4].data : []);
           if (!allLessons.length && !allGames.length) {
             showState('libEmpty');
             return;
