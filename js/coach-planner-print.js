@@ -239,6 +239,30 @@
     return items.map(function (t) { return '<span class="pill">' + esc(t) + '</span>'; }).join('');
   }
 
+  function cueItems(lesson) {
+    var raw = lesson.step_details && lesson.step_details.Cues;
+    if (!raw) return [];
+    return String(raw).split(/\n+/).map(function (line) {
+      return line.replace(/^[-•\u2022]\s*/, '').trim();
+    }).filter(Boolean).slice(0, 3);
+  }
+
+  function cuesBlock(lesson) {
+    var items = cueItems(lesson);
+    if (!items.length) return '';
+    return '<h3>Cues</h3><ul style="margin:0 0 8px 16px;padding:0;font-size:11px">' +
+      items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') +
+      '</ul>';
+  }
+
+  function cuesCard(lesson) {
+    var items = cueItems(lesson);
+    if (!items.length) return '';
+    return '<div class="card" style="margin-bottom:14px"><h3>Cues</h3><ul style="margin:0 0 0 18px;padding:0">' +
+      items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') +
+      '</ul></div>';
+  }
+
   function overlayRows(lesson) {
     var want = { Flavour: true, Demo: true, Closed: true, 'Conditioned game': true };
     var details = lesson.step_details || {};
@@ -278,6 +302,7 @@
       '<div class="card"><h3>What good looks like</h3><p>' + esc(lesson.success_check || '') + '</p></div>' +
       '<div class="card"><h3>Differentiation</h3><p>' + esc(lesson.differentiation || '') + '</p></div>' +
       '</div>' +
+      cuesCard(lesson) +
       '<div class="card" style="margin-bottom:14px;padding:0"><div class="run" style="border:0;margin:0">' +
       runRows(lesson, true) + '</div></div>' +
       '<div class="card" style="margin-bottom:14px"><h3>Equipment</h3><div class="equip">' +
@@ -301,6 +326,7 @@
       '<div class="half-grid"><div>' + runRows(lesson, false) + '</div>' +
       '<div class="right">' +
       '<h3>Announce</h3><p>' + esc(lesson.objective || '') + '</p>' +
+      cuesBlock(lesson) +
       '<h3>Framework</h3><p>' +
       [lesson.game_situation, lesson.phase, lesson.tactic].filter(Boolean).map(esc).join(' · ') +
       '</p>' +
