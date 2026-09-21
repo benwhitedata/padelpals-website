@@ -598,10 +598,13 @@
             try {
                 var next = sessionStorage.getItem('pp_after_auth') || '';
                 sessionStorage.removeItem('pp_after_auth');
-                var path = String(next).replace(/^\//, '').split('?')[0];
+                var raw = String(next).replace(/^\//, '');
+                var path = raw.split('?')[0];
+                var qs = raw.indexOf('?') >= 0 ? raw.slice(raw.indexOf('?')) : '';
                 if (path === 'courts.html') return '/courts.html';
                 if (path === 'coach-planner-library.html') return '/coach-planner-library.html';
-                if (path === 'coach-planner-lesson.html') return '/coach-planner-lesson.html';
+                if (path === 'coach-planner-lesson.html') return '/coach-planner-lesson.html' + qs;
+                if (path === 'coach-planner-game.html') return '/coach-planner-game.html' + qs;
             } catch (e) {}
             return '/dashboard.html';
         }

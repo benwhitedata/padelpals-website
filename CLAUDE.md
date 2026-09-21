@@ -36,7 +36,8 @@ Free signed-in library for now. Subscription / Stripe later.
 **Pages**
 - `coach-planner.html` — public page: programmes you can rerun, a library by situation, drills vs coaching, the funnel, named groups.
 - `coach-planner-library.html` — signed-in index. **Drills** (programmes + catalogue) and **Coaching** are separate sections (`lessons.session_kind`). **Games** is warm-ups, mini games, and extra overhead resources (`coaching.games`). The drills-versus-coaching wording and funnel live in `coaching.guides` (`drills-v-coaching`), not in this repo.
-- `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`. Optional `?programme=`. Joins the overlay to its spine, cue packs, toolkit and programme neighbours, then composes the hour in `js/coach-planner-print.js`. Vimeo only on owned overhead extras.
+- `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`. Optional `?programme=`. Joins the overlay to its spine, cue packs, toolkit and programme neighbours, then composes the hour in `js/coach-planner-print.js`. Vimeo only on owned overhead extras. Warm-up and conditioned-game toolkit items preview `when_to_pick` / `blurb` and link to the game page in a new tab.
+- `coach-planner-game.html` — signed-in full description for one `coaching.games` row (`?slug=`). Setup, when to pick, optional clip.
 
 **Publish a lesson (overlay only)**
 - Point `spine_id` at `sunday-drill` or `intro-padel`. Leave `run_sheet` null. Leave `session_date` null.

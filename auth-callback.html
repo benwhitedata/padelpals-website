@@ -178,10 +178,13 @@
                 try {
                     var stored = sessionStorage.getItem('pp_after_auth') || '';
                     sessionStorage.removeItem('pp_after_auth');
-                    var path = String(stored).replace(/^\//, '').split('?')[0];
+                    var raw = String(stored).replace(/^\//, '');
+                    var path = raw.split('?')[0];
+                    var qs = raw.indexOf('?') >= 0 ? raw.slice(raw.indexOf('?')) : '';
                     if (path === 'courts.html') next = '/courts.html';
                     if (path === 'coach-planner-library.html') next = '/coach-planner-library.html';
-                    if (path === 'coach-planner-lesson.html') next = '/coach-planner-lesson.html';
+                    if (path === 'coach-planner-lesson.html') next = '/coach-planner-lesson.html' + qs;
+                    if (path === 'coach-planner-game.html') next = '/coach-planner-game.html' + qs;
                 } catch (e) {}
                 console.log('➡️ Redirecting to', next);
                 window.location.href = next;

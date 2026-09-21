@@ -132,7 +132,7 @@
     .lib-game span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
     .lib-game h3{margin:0 0 8px;font-size:1.15rem;color:#1a2238}
     .lib-game p{margin:0;color:#555;font-size:.95rem}
-    .lib-game a{display:inline-block;margin-top:12px;font-size:.85rem;font-weight:700;color:#2A3990}
+    .lib-game a{display:inline-block;margin-top:12px;margin-right:14px;font-size:.85rem;font-weight:700;color:#2A3990}
     .lib-month .lib-lead{margin:0 0 14px;color:#555;max-width:640px}
     .lib-explain{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;padding:24px 26px;box-shadow:0 8px 24px rgba(26,34,56,.08);margin:0 0 28px}
     .lib-explain > span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
@@ -595,13 +595,18 @@
       document.getElementById('libReset').hidden = true;
       function cards(items) {
         return '<div class="lib-game-grid">' + items.map(function (g) {
+          var href = g.slug
+            ? 'coach-planner-game.html?slug=' + encodeURIComponent(g.slug)
+            : '';
+          var full = href
+            ? '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">Full description</a>'
+            : '';
           var watch = g.video_url
             ? '<a href="' + esc(g.video_url) + '" target="_blank" rel="noopener noreferrer">Watch clip</a>'
             : '';
           return '<article class="lib-game"><span>' + esc(kindLabel(g.kind)) + '</span>' +
             '<h3>' + esc(g.title) + '</h3><p>' + esc(g.blurb) + '</p>' +
-            (g.setup ? '<p style="margin-top:8px">' + esc(g.setup) + '</p>' : '') +
-            watch + '</article>';
+            full + watch + '</article>';
         }).join('') + '</div>';
       }
       if (!allGames.length) {

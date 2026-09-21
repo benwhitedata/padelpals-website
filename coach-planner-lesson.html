@@ -56,6 +56,7 @@
     .lsn-run-time{font-weight:800;color:#2A3990;font-size:.9rem;font-variant-numeric:tabular-nums}
     .lsn-run-label{font-weight:700;margin-bottom:4px;color:#1a2238}
     .lsn-run-detail{color:#555;font-size:.95rem}
+    .lsn-run-detail a{font-weight:700;color:#2A3990;margin-left:6px}
     .lsn-note{border-left:4px solid #F6C915;background:#FFF8EC;padding:20px 24px;border-radius:0 16px 16px 0}
     .lsn-note h2{color:#E08540;font-size:1.1rem}
     .lsn-equip{display:flex;flex-wrap:wrap;gap:8px}
@@ -67,13 +68,20 @@
     }
     .lsn-chip[aria-pressed="true"]{background:#2A3990;border-color:#2A3990;color:#fff}
     .lsn-tool{display:grid;gap:10px;margin-top:10px}
-    .lsn-tool button{
-      text-align:left;appearance:none;border:1px solid rgba(26,34,56,.08);background:#fff;
-      border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer;
+    .lsn-tool-card{
+      text-align:left;border:1px solid rgba(26,34,56,.08);background:#fff;
+      border-radius:12px;padding:12px 14px;
     }
-    .lsn-tool button[aria-pressed="true"]{border-color:#2A3990;box-shadow:inset 0 0 0 2px #2A3990}
-    .lsn-tool strong{display:block;color:#1a2238;margin-bottom:4px}
-    .lsn-tool span{color:#555;font-size:.9rem}
+    .lsn-tool-card.is-selected{border-color:#2A3990;box-shadow:inset 0 0 0 2px #2A3990}
+    .lsn-tool-card strong{display:block;color:#1a2238;margin-bottom:4px}
+    .lsn-tool-card .lsn-tool-preview{color:#555;font-size:.9rem;margin:0 0 10px}
+    .lsn-tool-card .lsn-tool-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .lsn-tool-card button{
+      appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
+      border-radius:999px;padding:8px 12px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;
+    }
+    .lsn-tool-card.is-selected button{background:#2A3990;border-color:#2A3990;color:#fff}
+    .lsn-tool-card a{font-size:.85rem;font-weight:700;color:#2A3990}
     .lsn-next{margin-top:8px}
     .lsn-clip a{font-weight:700;color:#2A3990}
     @media (max-width:720px){
@@ -147,13 +155,13 @@
 
       <div class="lsn-section" id="lsnWarmToolkitWrap" hidden>
         <h2>Warm-up toolkit</h2>
-        <p class="lsn-run-detail">Default is already in the hour. Swap live from who is on court.</p>
+        <p class="lsn-run-detail">Default is already in the hour. Read the full description before you run it. Swap live from who is on court.</p>
         <div class="lsn-tool" id="lsnWarmToolkit"></div>
       </div>
 
       <div class="lsn-section" id="lsnMiniToolkitWrap" hidden>
         <h2>Conditioned-game toolkit</h2>
-        <p class="lsn-run-detail">Pick the mini that makes the focus score. Pre-planning is accepting the default.</p>
+        <p class="lsn-run-detail">Pick the mini that makes the focus score. Open the full description if you have not run it recently.</p>
         <div class="lsn-tool" id="lsnMiniToolkit"></div>
       </div>
 
@@ -199,6 +207,23 @@
     function nestedRow(value) {
       if (Array.isArray(value)) return value[0] || null;
       return value || null;
+    }
+
+    function gameHref(game) {
+      if (!game || !game.slug) return '';
+      return 'coach-planner-game.html?slug=' + encodeURIComponent(game.slug);
+    }
+
+    function gamePreview(game) {
+      if (!game) return '';
+      return game.when_to_pick || game.blurb || '';
+    }
+
+    function gameDescLink(game, label) {
+      var href = gameHref(game);
+      if (!href) return '';
+      return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' +
+        esc(label || 'Full description') + '</a>';
     }
 
     function gameById(id) {
@@ -262,14 +287,22 @@
       var listId = kind === 'warmup' ? 'lsnWarmToolkit' : 'lsnMiniToolkit';
       var games = toolkitGames(ids, kind === 'warmup' ? 'warmup' : 'mini');
       var wrap = document.getElementById(wrapId);
-      wrap.hidden = games.length < 2;
-      if (games.length < 2) return;
+      wrap.hidden = !games.length;
+      if (!games.length) return;
       var selectedId = selected && (selected.id || selected.slug);
+      var useLabel = kind === 'warmup' ? 'Use this warm-up' : 'Use this game';
       document.getElementById(listId).innerHTML = games.map(function (g) {
-        var pressed = (g.id === selectedId || g.slug === selectedId) ? 'true' : 'false';
-        var when = g.when_to_pick ? esc(g.when_to_pick) : esc(g.blurb || '');
-        return '<button type="button" data-game="' + esc(g.id) + '" data-kind="' + kind + '" aria-pressed="' + pressed + '">' +
-          '<strong>' + esc(g.title) + '</strong><span>' + when + '</span></button>';
+        var on = (g.id === selectedId || g.slug === selectedId);
+        var preview = gamePreview(g);
+        return '<article class="lsn-tool-card' + (on ? ' is-selected' : '') + '">' +
+          '<strong>' + esc(g.title) + (on ? ' · in this hour' : '') + '</strong>' +
+          (preview ? '<p class="lsn-tool-preview">' + esc(preview) + '</p>' : '') +
+          '<div class="lsn-tool-actions">' +
+            '<button type="button" data-game="' + esc(g.id) + '" data-kind="' + kind +
+            '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
+            esc(on ? 'In this hour' : useLabel) + '</button>' +
+            gameDescLink(g, 'Full description') +
+          '</div></article>';
       }).join('');
     }
 
@@ -335,10 +368,16 @@
       var runEl = document.getElementById('lsnRunSheet');
       var runSheet = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
       runEl.innerHTML = runSheet.length ? runSheet.map(function (step) {
+        var extra = '';
+        if (step.label === 'Warm up with a ball' && nestedRow(lesson.warmup_game)) {
+          extra = ' ' + gameDescLink(nestedRow(lesson.warmup_game), 'Full description');
+        } else if (step.label === 'Conditioned game' && nestedRow(lesson.conditioned_game)) {
+          extra = ' ' + gameDescLink(nestedRow(lesson.conditioned_game), 'Full description');
+        }
         return '<div class="lsn-run-row">' +
           '<div class="lsn-run-time">' + esc(step.from) + '–' + esc(step.to) + '</div>' +
           '<div><div class="lsn-run-label">' + esc(step.label) + '</div>' +
-          (step.detail ? '<div class="lsn-run-detail">' + esc(step.detail) + '</div>' : '') +
+          (step.detail || extra ? '<div class="lsn-run-detail">' + esc(step.detail || '') + extra + '</div>' : '') +
           '</div></div>';
       }).join('') : '<div class="lsn-run-row"><div class="lsn-run-detail">No run sheet on this plan yet.</div></div>';
 
@@ -372,6 +411,7 @@
 
     function bindToolkit(listId) {
       document.getElementById(listId).addEventListener('click', function (e) {
+        if (e.target.closest('a')) return;
         var btn = e.target.closest('[data-game]');
         if (!btn || !baseLesson) return;
         var game = gameById(btn.getAttribute('data-game'));

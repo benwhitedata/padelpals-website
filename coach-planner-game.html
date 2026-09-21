@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game | Coach Planner | Padel Pals</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="images/Icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="images/Icon.png">
+  <meta name="theme-color" content="#4A90E2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="css/marketing.css?v=20260916g">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config-loader.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-L426ZMNKFK');
+  </script>
+  <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
+  <style>
+    .lsn-hero.mkt-hero{padding:28px 20px 40px;text-align:left}
+    .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
+    .lsn-hero .mkt-eyebrow{margin-bottom:8px;font-size:.75rem;letter-spacing:.12em}
+    .lsn-hero h1{margin:0;font-size:clamp(1.45rem,2.8vw,1.9rem);font-weight:800;line-height:1.2;color:#fff}
+    .lsn-hero-meta{display:block;margin:8px 0 0;font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.85;color:#fff}
+    .lsn-wrap{max-width:900px;margin:0 auto;padding:36px 20px 80px}
+    .lsn-state{text-align:center;padding:64px 20px;color:#555}
+    .lsn-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
+    .lsn-state h2{margin-bottom:10px}
+    .lsn-state .mkt-btn{margin-top:20px}
+    .lsn-section{margin:0 0 28px}
+    .lsn-section h2{font-size:1.35rem;margin-bottom:12px}
+    .lsn-body{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;padding:20px 22px;box-shadow:0 8px 24px rgba(26,34,56,.08);color:#1a2238;font-size:1.02rem;line-height:1.55}
+    .lsn-body p{margin:0 0 12px}
+    .lsn-body p:last-child{margin-bottom:0}
+    .lsn-clip a{font-weight:700;color:#2A3990}
+    .lsn-library{display:flex;flex-wrap:wrap;gap:12px}
+  </style>
+</head>
+<body class="mkt-page" data-page="coach-planner-game.html">
+  <div id="lsnLoading" class="lsn-state">
+    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+    <p>Loading game…</p>
+  </div>
+
+  <div id="lsnUnavailable" class="lsn-state" hidden>
+    <i class="fas fa-lock" aria-hidden="true"></i>
+    <h2>This game isn't available to you right now</h2>
+    <p>That's either because it doesn't exist, or because you are not signed in.</p>
+    <a class="mkt-btn mkt-btn-light" href="auth.html">Sign in</a>
+    <br>
+    <a class="mkt-btn mkt-btn-light" style="margin-top:10px" href="coach-planner.html">About Coach Planner</a>
+  </div>
+
+  <article id="lsnContent" hidden>
+    <section class="mkt-hero lsn-hero">
+      <div class="mkt-hero-inner">
+        <p class="mkt-eyebrow" id="lsnKind">Game</p>
+        <h1 id="lsnTitle"></h1>
+        <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
+      </div>
+    </section>
+
+    <div class="lsn-wrap">
+      <div class="lsn-section" id="lsnWhenWrap" hidden>
+        <h2>When to pick it</h2>
+        <div class="lsn-body" id="lsnWhen"></div>
+      </div>
+
+      <div class="lsn-section">
+        <h2>How to run it</h2>
+        <div class="lsn-body" id="lsnSetup"></div>
+      </div>
+
+      <div class="lsn-section" id="lsnClipWrap" hidden>
+        <h2>Clip</h2>
+        <p class="lsn-clip" id="lsnClip"></p>
+      </div>
+
+      <div class="lsn-section lsn-library">
+        <a class="mkt-btn mkt-btn-light" href="coach-planner-library.html?view=games">Back to games</a>
+        <a class="mkt-btn mkt-btn-light" href="coach-planner-library.html">Back to the library</a>
+      </div>
+    </div>
+  </article>
+
+  <script>
+    function esc(s) {
+      var d = document.createElement('div');
+      d.textContent = (s === null || s === undefined) ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    function kindLabel(kind) {
+      if (kind === 'warmup') return 'Warm-up';
+      if (kind === 'overhead') return 'Overhead';
+      return 'Conditioned game';
+    }
+
+    function showState(id) {
+      ['lsnLoading', 'lsnUnavailable', 'lsnContent'].forEach(function (x) {
+        document.getElementById(x).hidden = (x !== id);
+      });
+    }
+
+    function paint(game) {
+      document.title = (game.title || 'Game') + ' | Coach Planner | Padel Pals';
+      document.getElementById('lsnKind').textContent = kindLabel(game.kind);
+      document.getElementById('lsnTitle').textContent = game.title || '';
+      document.getElementById('lsnHeroMeta').textContent = game.blurb || '';
+      document.getElementById('lsnHeroMeta').hidden = !game.blurb;
+
+      var when = (game.when_to_pick || '').trim();
+      document.getElementById('lsnWhenWrap').hidden = !when;
+      document.getElementById('lsnWhen').textContent = when;
+
+      var setup = (game.setup || game.blurb || '').trim();
+      document.getElementById('lsnSetup').textContent = setup || 'No setup written yet.';
+
+      var clipWrap = document.getElementById('lsnClipWrap');
+      if (game.video_url) {
+        clipWrap.hidden = false;
+        document.getElementById('lsnClip').innerHTML =
+          '<a href="' + esc(game.video_url) + '" target="_blank" rel="noopener noreferrer">Watch ' +
+          esc(game.title) + '</a>';
+      } else {
+        clipWrap.hidden = true;
+      }
+      showState('lsnContent');
+    }
+
+    var booted = false;
+    var tries = 0;
+    function boot() {
+      if (booted) return;
+      var client = window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
+      if (!client) {
+        if (tries++ > 50) {
+          showState('lsnUnavailable');
+          return;
+        }
+        setTimeout(boot, 80);
+        return;
+      }
+      booted = true;
+
+      var slug = new URLSearchParams(window.location.search).get('slug');
+      if (!slug) {
+        showState('lsnUnavailable');
+        return;
+      }
+
+      client.auth.getSession().then(function (result) {
+        if (!(result.data && result.data.session)) {
+          try {
+            sessionStorage.setItem('pp_after_auth', 'coach-planner-game.html' + window.location.search);
+          } catch (e) {}
+          showState('lsnUnavailable');
+          return;
+        }
+        return client.schema('coaching').from('games').select('*').eq('slug', slug).maybeSingle();
+      }).then(function (res) {
+        if (!res || res.error || !res.data) {
+          showState('lsnUnavailable');
+          return;
+        }
+        paint(res.data);
+      }).catch(function () {
+        showState('lsnUnavailable');
+      });
+    }
+
+    document.addEventListener('configLoaded', boot);
+    if (window.config && window.config.supabaseKey) boot();
+  </script>
+</body>
+</html>
