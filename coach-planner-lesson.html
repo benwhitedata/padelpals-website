@@ -29,14 +29,20 @@
   <style>
     .lsn-hero.mkt-hero{padding:28px 20px 40px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
-    .lsn-hero .mkt-eyebrow{margin-bottom:8px;font-size:.75rem;letter-spacing:.12em}
+    .lsn-hero .mkt-hero-inner p{max-width:none;margin:0}
+    .lsn-hero-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .lsn-hero .mkt-eyebrow{margin:0;font-size:.75rem;letter-spacing:.12em}
     .lsn-hero h1{margin:0;font-size:clamp(1.45rem,2.8vw,1.9rem);font-weight:800;line-height:1.2;color:#fff}
-    .lsn-hero-meta{display:block;margin:8px 0 0;max-width:none;font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.85;color:#fff}
-    .lsn-hero-row{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
-    .lsn-hero-copy{min-width:0;flex:1}
-    .lsn-print{display:flex;flex-shrink:0;gap:8px;margin:0}
-    .lsn-print-card{background:#fff;color:#1a2238;border:0;border-radius:10px;padding:10px 16px;font:inherit;font-size:.88rem;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.16)}
-    .lsn-print-card:hover,.lsn-print-card:focus-visible{background:#E8F4F8;outline:none}
+    .lsn-hero-meta{display:block;margin:8px 0 0;font-size:.95rem;font-weight:600;letter-spacing:0;text-transform:none;opacity:.9;color:#fff;line-height:1.4}
+    .lsn-print{display:flex;flex-shrink:0;flex-wrap:wrap;gap:8px;margin:0}
+    .lsn-print-card{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(255,255,255,.12);color:#fff;
+      border:1.5px solid rgba(255,255,255,.88);border-radius:10px;
+      padding:8px 14px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;
+    }
+    .lsn-print-card i{font-size:.85rem;opacity:.95}
+    .lsn-print-card:hover,.lsn-print-card:focus-visible{background:#fff;color:#1a2238;outline:none}
     .lsn-print-card:focus-visible{outline:3px solid #7eb6f5;outline-offset:3px}
     .lsn-wrap{max-width:900px;margin:0 auto;padding:36px 20px 80px}
     .lsn-state{text-align:center;padding:64px 20px;color:#555}
@@ -87,8 +93,7 @@
     @media (max-width:720px){
       .lsn-kicker{grid-template-columns:1fr}
       .lsn-run-row{grid-template-columns:1fr;gap:6px}
-      .lsn-hero-row{flex-direction:column;align-items:flex-start;gap:16px}
-      .lsn-print{width:100%}
+      .lsn-hero-top{flex-wrap:wrap;align-items:flex-start}
     }
     @media print{
       .top-nav,.navbar,footer,.lsn-print,.lsn-library{display:none!important}
@@ -115,17 +120,19 @@
   <article id="lsnContent" hidden>
     <section class="mkt-hero lsn-hero">
       <div class="mkt-hero-inner">
-        <div class="lsn-hero-row">
-          <div class="lsn-hero-copy">
-            <p class="mkt-eyebrow" id="lsnEyebrow">Coach Planner</p>
-            <h1 id="lsnTitle"></h1>
-            <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
-          </div>
-          <div class="lsn-print">
-            <button type="button" class="lsn-print-card" id="lsnPrintFull" aria-label="Print full plan">Plan</button>
-            <button type="button" class="lsn-print-card" id="lsnPrintSheet" aria-label="Print court sheet">Sheet</button>
+        <div class="lsn-hero-top">
+          <p class="mkt-eyebrow" id="lsnEyebrow">Coach Planner</p>
+          <div class="lsn-print" role="group" aria-label="Print this lesson">
+            <button type="button" class="lsn-print-card" id="lsnPrintFull">
+              <i class="fas fa-file-lines" aria-hidden="true"></i> Print plan
+            </button>
+            <button type="button" class="lsn-print-card" id="lsnPrintSheet">
+              <i class="fas fa-clipboard-list" aria-hidden="true"></i> Court sheet
+            </button>
           </div>
         </div>
+        <h1 id="lsnTitle"></h1>
+        <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
       </div>
     </section>
 
@@ -259,11 +266,14 @@
     }
 
     function heroMeta(lesson) {
-      var bits = [lesson.audience];
-      if (lesson.programme_title && lesson.programme_index && lesson.programme_count) {
-        bits.push(lesson.programme_title + ' · ' + lesson.programme_index + ' of ' + lesson.programme_count);
+      var audience = lesson.audience || '';
+      var prog = lesson.programme_title || '';
+      var same = audience && prog && audience.toLowerCase() === prog.toLowerCase();
+      var group = same ? audience : (prog || audience);
+      if (lesson.programme_index && lesson.programme_count && group) {
+        return 'Hour ' + lesson.programme_index + ' of ' + lesson.programme_count + ' · ' + group;
       }
-      return bits.filter(Boolean).join(' · ');
+      return [audience, !same ? prog : ''].filter(Boolean).join(' · ');
     }
 
     function renderCuePacks(lesson) {
