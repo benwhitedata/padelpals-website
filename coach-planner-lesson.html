@@ -379,17 +379,19 @@
       var pack = lesson._cuePack || (window.CoachPlannerPrint && window.CoachPlannerPrint.defaultCuePack(lesson)) || packs[0];
       var cues = pack && Array.isArray(pack.cues) ? pack.cues.slice(0, 3) : [];
       var why = pack && pack.why ? String(pack.why).trim() : '';
-      var pilot = lesson.slug === 'groundstroke-rally';
+      var seenCount = 0;
+      packs.forEach(function (p) { seenCount += watchLines(p).length; });
+      var chooseOne = seenCount > 0;
       wrap.hidden = !pack;
       if (!pack) return;
       var intro = document.getElementById('lsnCueIntro');
-      intro.hidden = packs.length < 2;
-      intro.textContent = pilot
+      intro.hidden = !chooseOne && packs.length < 2;
+      intro.textContent = chooseOne
         ? 'Choose the one you see. That opens what you say to them.'
         : 'Same hour, one teaching point. Pick the pack that matches who turned up.';
-      el.hidden = pilot || packs.length < 2;
+      el.hidden = chooseOne || packs.length < 2;
       var current = (pack.slug || pack.title);
-      el.innerHTML = (pilot || packs.length < 2) ? '' : packs.map(function (p) {
+      el.innerHTML = (chooseOne || packs.length < 2) ? '' : packs.map(function (p) {
         var key = p.slug || p.title;
         return '<button type="button" class="lsn-chip" data-cue="' + esc(key) + '" aria-pressed="' +
           (key === current ? 'true' : 'false') + '">' + esc(p.title || 'Cue pack') + '</button>';
@@ -397,12 +399,12 @@
       var lookHead = document.getElementById('lsnWatchHead');
       var look = document.getElementById('lsnWatch');
       var legacyHead = document.getElementById('lsnWatchHeadLegacy');
-      if (pilot) {
+      if (chooseOne) {
         var rows = [];
         packs.forEach(function (p) {
           var key = p.slug || p.title;
           watchLines(p).forEach(function (text) {
-            var on = text === lesson._seen;
+            var on = text === lesson._seen && key === current;
             rows.push('<button type="button" class="lsn-watch-line" data-cue="' + esc(key) + '" data-seen="' + esc(text) + '" aria-pressed="' +
               (on ? 'true' : 'false') + '">' + esc(text) + '</button>');
           });
@@ -424,7 +426,7 @@
       var whyEl = document.getElementById('lsnWhy');
       whyEl.textContent = why;
       whyEl.hidden = !why;
-      var watchShown = pilot ? !look.hidden : !legacyHead.hidden;
+      var watchShown = chooseOne ? !look.hidden : !legacyHead.hidden;
       brief.hidden = !(cueCount || why || watchShown);
     }
 
@@ -503,10 +505,20 @@
 
     function paint() {
       if (!baseLesson) return;
-      if (baseLesson.slug === 'groundstroke-rally' && !baseLesson._seen && window.CoachPlannerPrint) {
+      if (!baseLesson._seen && window.CoachPlannerPrint) {
         var commonPack = window.CoachPlannerPrint.defaultCuePack(baseLesson);
         var commonSeen = watchLines(commonPack)[0];
-        if (commonSeen) baseLesson._seen = commonSeen;
+        if (!commonSeen) {
+          (baseLesson.cue_packs || []).some(function (p) {
+            commonSeen = watchLines(p)[0];
+            if (commonSeen) commonPack = p;
+            return !!commonSeen;
+          });
+        }
+        if (commonSeen) {
+          baseLesson._seen = commonSeen;
+          if (commonPack) baseLesson = window.CoachPlannerPrint.applyCuePack(baseLesson, commonPack);
+        }
       }
       var lesson = composeLesson(baseLesson, lessonPool);
       currentLesson = lesson;
