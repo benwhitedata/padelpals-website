@@ -71,18 +71,6 @@
       'h1,h2,h3,p{margin:0}',
       '.face{position:relative;width:154mm;height:216mm;overflow:hidden;background:#fff}',
       '.face+.face{break-before:page;page-break-before:always}',
-      '.marks{position:absolute;inset:0;z-index:3;pointer-events:none}',
-      '.marks span{position:absolute;background:#111}',
-      '.marks .tlh,.marks .trh,.marks .blh,.marks .brh{height:.5pt;width:2mm}',
-      '.marks .tlv,.marks .trv,.marks .blv,.marks .brv{width:.5pt;height:2mm}',
-      '.marks .tlh,.marks .trh{top:3mm;margin-top:-.25pt}',
-      '.marks .blh,.marks .brh{bottom:3mm;margin-bottom:-.25pt}',
-      '.marks .tlv,.marks .trv{top:0}',
-      '.marks .blv,.marks .brv{bottom:0}',
-      '.marks .tlh,.marks .blh{left:0}',
-      '.marks .trh,.marks .brh{right:0}',
-      '.marks .tlv,.marks .blv{left:3mm;margin-left:-.25pt}',
-      '.marks .trv,.marks .brv{right:3mm;margin-right:-.25pt}',
       '.mast{position:absolute;top:0;left:0;right:0;height:50mm;background:var(--navy);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
       '.safe{position:absolute;top:13mm;right:13mm;bottom:13mm;left:13mm;z-index:1;display:flex;flex-direction:column}',
       '.brand{display:flex;align-items:center;gap:6pt}',
@@ -326,14 +314,6 @@
     ].filter(Boolean).join(' · ');
   }
 
-  function cropMarks() {
-    return '<div class="marks" aria-hidden="true">' +
-      '<span class="tlh"></span><span class="tlv"></span>' +
-      '<span class="trh"></span><span class="trv"></span>' +
-      '<span class="blh"></span><span class="blv"></span>' +
-      '<span class="brh"></span><span class="brv"></span></div>';
-  }
-
   function cueCards(lesson) {
     var items = cueItems(lesson);
     if (!items.length) return '';
@@ -378,7 +358,7 @@
     }
     var title = esc(lesson.title || 'Lesson');
     var court =
-      '<section class="face court">' + cropMarks() +
+      '<section class="face court">' +
       '<div class="mast"></div>' +
       '<div class="safe">' +
       '<header><div class="brand"><img src="' + esc(logo) + '" alt="">' +
@@ -390,7 +370,7 @@
       (band ? '<section class="band">' + band + '</section>' : '') +
       '</div></section>';
     var hour =
-      '<section class="face hour-face">' + cropMarks() +
+      '<section class="face hour-face">' +
       '<div class="safe">' +
       '<header class="quiet-head"><p>Padel Pals</p><h1>' + title + '</h1></header>' +
       (why ? '<p class="why">' + esc(why) + '</p>' : '') +
