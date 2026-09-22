@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260922a"></script>
+  <script src="js/coach-planner-print.js?v=20260922b"></script>
   <style>
     .lsn-hero.mkt-hero{padding:40px 20px 36px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
@@ -74,6 +74,12 @@
     .lsn-note h2{color:#2A3990;font-size:1.1rem}
     .lsn-equip{display:flex;flex-wrap:wrap;gap:8px}
     .lsn-equip span{background:#EEF0F7;border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600;color:#1a2238}
+    .lsn-brief{background:#fff;border-radius:16px;padding:18px 20px;margin-top:14px;border:1px solid rgba(26,34,56,.06);box-shadow:0 8px 24px rgba(26,34,56,.08)}
+    .lsn-brief span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:8px}
+    .lsn-brief h3{font-size:.95rem;margin:16px 0 8px;color:#1a2238}
+    .lsn-brief ul{margin:0 0 0 18px;padding:0;color:#1a2238}
+    .lsn-brief li{margin:0 0 6px}
+    .lsn-brief p{margin:12px 0 0;color:#333;font-size:.95rem;line-height:1.5}
     .lsn-chips{display:flex;flex-wrap:wrap;gap:8px}
     .lsn-chip{
       appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
@@ -154,8 +160,15 @@
 
       <div class="lsn-section" id="lsnCueWrap" hidden>
         <h2>Cue pack</h2>
-        <p class="lsn-run-detail">Same hour, one teaching point. Pick the pack that matches who turned up.</p>
+        <p class="lsn-run-detail" id="lsnCueIntro">Same hour, one teaching point. Pick the pack that matches who turned up.</p>
         <div class="lsn-chips" id="lsnCuePacks"></div>
+        <div class="lsn-brief" id="lsnBrief" hidden>
+          <span>For you, not for them</span>
+          <ul id="lsnCues"></ul>
+          <p id="lsnWhy" hidden></p>
+          <h3 id="lsnWatchHead" hidden>If you see this</h3>
+          <ul id="lsnWatch" hidden></ul>
+        </div>
       </div>
 
       <div class="lsn-section">
@@ -176,6 +189,12 @@
         <h2>Conditioned-game toolkit</h2>
         <p class="lsn-run-detail" id="lsnMiniBlurb">Pick the mini that makes the focus score. Open the full description if you have not run it recently.</p>
         <div class="lsn-tool" id="lsnMiniToolkit"></div>
+      </div>
+
+      <div class="lsn-section" id="lsnOverheadWrap" hidden>
+        <h2>One problem</h2>
+        <p class="lsn-run-detail">Pick one extra when you see the fault. It does not replace the game.</p>
+        <div class="lsn-tool" id="lsnOverheadToolkit"></div>
       </div>
 
       <div class="lsn-section" id="lsnOwnedClipWrap" hidden>
@@ -272,11 +291,24 @@
       var list = [];
       (ids || []).forEach(function (id) {
         var g = gameById(id);
-        if (g) list.push(g);
+        if (g && g.kind !== 'overhead') list.push(g);
       });
-      if (!list.length) {
+      if (!list.length && kind) {
         list = allGames.filter(function (g) { return g.kind === kind; });
       }
+      return list;
+    }
+
+    function overheadGames(lesson) {
+      var ids = [].concat(lesson.warmup_game_ids || [], lesson.conditioned_game_ids || []);
+      var seen = {};
+      var list = [];
+      ids.forEach(function (id) {
+        var g = gameById(id);
+        if (!g || g.kind !== 'overhead' || seen[g.id]) return;
+        seen[g.id] = true;
+        list.push(g);
+      });
       return list;
     }
 
@@ -309,20 +341,49 @@
       return line;
     }
 
+    function listItems(id, lines) {
+      var el = document.getElementById(id);
+      var flat = [];
+      (lines || []).forEach(function (line) {
+        String(line).split(/\n+/).forEach(function (part) { flat.push(part); });
+      });
+      var items = flat.map(function (line) {
+        return String(line).replace(/^[-•\u2022]\s*/, '').trim();
+      }).filter(Boolean).slice(0, 3);
+      el.hidden = !items.length;
+      el.innerHTML = items.map(function (line) { return '<li>' + esc(line) + '</li>'; }).join('');
+      return items.length;
+    }
+
     function renderCuePacks(lesson) {
       var packs = Array.isArray(lesson.cue_packs) ? lesson.cue_packs : [];
       var wrap = document.getElementById('lsnCueWrap');
       var el = document.getElementById('lsnCuePacks');
-      wrap.hidden = packs.length < 2;
-      if (packs.length < 2) return;
-      var current = (lesson._cuePack && (lesson._cuePack.slug || lesson._cuePack.title)) ||
-        (packs.filter(function (p) { return p.is_default; })[0] || packs[0]).slug ||
-        (packs[0].title);
-      el.innerHTML = packs.map(function (p) {
+      var pack = lesson._cuePack || (window.CoachPlannerPrint && window.CoachPlannerPrint.defaultCuePack(lesson)) || packs[0];
+      var cues = pack && Array.isArray(pack.cues) ? pack.cues.slice(0, 3) : [];
+      var watch = [];
+      if (pack && pack.watch != null) {
+        watch = Array.isArray(pack.watch) ? pack.watch : String(pack.watch).split(/\n+/);
+      }
+      var why = pack && pack.why ? String(pack.why).trim() : '';
+      wrap.hidden = !pack;
+      if (!pack) return;
+      document.getElementById('lsnCueIntro').hidden = packs.length < 2;
+      el.hidden = packs.length < 2;
+      var current = (pack.slug || pack.title);
+      el.innerHTML = packs.length < 2 ? '' : packs.map(function (p) {
         var key = p.slug || p.title;
         return '<button type="button" class="lsn-chip" data-cue="' + esc(key) + '" aria-pressed="' +
           (key === current ? 'true' : 'false') + '">' + esc(p.title || 'Cue pack') + '</button>';
       }).join('');
+      var brief = document.getElementById('lsnBrief');
+      var cueCount = listItems('lsnCues', cues);
+      var whyEl = document.getElementById('lsnWhy');
+      whyEl.textContent = why;
+      whyEl.hidden = !why;
+      var watchCount = listItems('lsnWatch', watch);
+      document.getElementById('lsnWatchHead').hidden = !watchCount;
+      brief.hidden = !(cueCount || why || watchCount);
     }
 
     function renderToolkit(kind, selected, ids) {
@@ -346,6 +407,20 @@
             esc(on ? 'In this hour' : useLabel) + '</button>' +
             gameDescLink(g, 'Full description') +
           '</div></article>';
+      }).join('');
+    }
+
+    function renderOverheads(lesson) {
+      var games = overheadGames(lesson);
+      var wrap = document.getElementById('lsnOverheadWrap');
+      wrap.hidden = !games.length;
+      if (!games.length) return;
+      document.getElementById('lsnOverheadToolkit').innerHTML = games.map(function (g) {
+        var preview = gamePreview(g);
+        return '<article class="lsn-tool-card">' +
+          '<strong>' + esc(g.title) + '</strong>' +
+          (preview ? '<p class="lsn-tool-preview">' + esc(preview) + '</p>' : '') +
+          '<div class="lsn-tool-actions">' + gameDescLink(g, 'Full description') + '</div></article>';
       }).join('');
     }
 
@@ -447,6 +522,7 @@
       renderCuePacks(lesson);
       renderToolkit('warmup', nestedRow(lesson.warmup_game), lesson.warmup_game_ids);
       renderToolkit('mini', nestedRow(lesson.conditioned_game), lesson.conditioned_game_ids);
+      renderOverheads(lesson);
       renderOwnedClip(lesson);
       renderNext(lesson);
       showState('lsnContent');

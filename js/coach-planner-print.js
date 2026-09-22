@@ -307,12 +307,38 @@
       '</ul>';
   }
 
+  function watchItems(lesson) {
+    var pack = lesson._cuePack || defaultCuePack(lesson);
+    if (!pack || pack.watch == null) return [];
+    var raw = Array.isArray(pack.watch) ? pack.watch : String(pack.watch).split(/\n+/);
+    return raw.map(function (line) {
+      return String(line).replace(/^[-•\u2022]\s*/, '').trim();
+    }).filter(Boolean).slice(0, 3);
+  }
+
+  function whyText(lesson) {
+    var pack = lesson._cuePack || defaultCuePack(lesson);
+    return pack && pack.why ? String(pack.why).trim() : '';
+  }
+
   function cuesCard(lesson) {
     var items = cueItems(lesson);
-    if (!items.length) return '';
-    return '<div class="card" style="margin-bottom:14px"><h3>Cues</h3><ul style="margin:0 0 0 18px;padding:0">' +
-      items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') +
-      '</ul></div>';
+    var why = whyText(lesson);
+    var watch = watchItems(lesson);
+    if (!items.length && !why && !watch.length) return '';
+    var html = '<div class="card" style="margin-bottom:14px"><h3>For you, not for them</h3>';
+    if (items.length) {
+      html += '<ul style="margin:0 0 8px 18px;padding:0">' +
+        items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') +
+        '</ul>';
+    }
+    if (why) html += '<p style="margin:8px 0 0">' + esc(why) + '</p>';
+    if (watch.length) {
+      html += '<h3 style="margin-top:12px">If you see this</h3><ul style="margin:0 0 0 18px;padding:0">' +
+        watch.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') +
+        '</ul>';
+    }
+    return html + '</div>';
   }
 
   function overlayRows(lesson) {
