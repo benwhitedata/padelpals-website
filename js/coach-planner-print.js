@@ -215,6 +215,11 @@
           if (lesson.warmup_game) parts.push(gameLine(lesson.warmup_game));
           else if (!coaching && step.default_detail) parts.push(step.default_detail);
           detail = parts.filter(Boolean).join(' ');
+        } else if (label === 'Observe' && coaching) {
+          var seen = hasOverlay ? String(overlay).trim() : (step.default_detail || '');
+          detail = seen.indexOf('You feed.') === 0
+            ? seen
+            : ['You feed. Buddy feed only if you are on more than one court.', seen].filter(Boolean).join(' ');
         } else if (label === 'Demo' && !coaching && lesson.objective) {
           var demoBody = hasOverlay ? String(overlay).trim() : (step.default_detail || '');
           detail = ['Say the sentence, then you show it: ' + lesson.objective, demoBody].filter(Boolean).join(' ');
