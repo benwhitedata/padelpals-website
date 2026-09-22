@@ -69,10 +69,10 @@
       'html,body{margin:0;padding:0;background:#fff;color:var(--navy);font-family:Montserrat,Arial,Helvetica,sans-serif}',
       'body{font-size:10pt;line-height:1.3}',
       'h1,h2,h3,p{margin:0}',
-      '.face{position:relative;width:154mm;height:216mm;overflow:hidden;background:#fff}',
+      '.face{position:relative;width:148mm;height:210mm;overflow:hidden;background:#fff}',
       '.face+.face{break-before:page;page-break-before:always}',
       '.mast{position:absolute;top:0;left:0;right:0;height:50mm;background:var(--navy);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
-      '.safe{position:absolute;top:13mm;right:13mm;bottom:13mm;left:13mm;z-index:1;display:flex;flex-direction:column}',
+      '.safe{position:absolute;top:10mm;right:10mm;bottom:10mm;left:10mm;z-index:1;display:flex;flex-direction:column}',
       '.brand{display:flex;align-items:center;gap:6pt}',
       '.brand img{width:20pt;height:20pt}',
       '.brand-name{font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:8pt;color:var(--gold)}',
@@ -121,9 +121,12 @@
       '.safe.packed .quiet-head{margin-bottom:3pt;padding-bottom:2pt}',
       '.safe.packed .tail{margin-top:3pt}',
       '.foot{margin-top:auto;padding-top:4pt;border-top:1.5pt solid var(--gold);text-align:center;font-size:8pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}',
-      '@page{size:154mm 216mm;margin:0}',
+      '@page{size:A5 portrait;margin:0}',
+      '@page :first{margin:0}',
+      '@page :left{margin:0}',
+      '@page :right{margin:0}',
       '@media screen{html,body{background:#cfd3dc}body{display:flex;flex-direction:column;align-items:center;gap:10mm;padding:10mm 0}.face{box-shadow:0 10px 28px rgba(26,34,56,.22)}}',
-      '@media print{a{color:inherit;text-decoration:none}*{ -webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+      '@media print{html,body{margin:0!important;padding:0!important;background:#fff}body{display:block}.face{margin:0;box-shadow:none}a{color:inherit;text-decoration:none}*{ -webkit-print-color-adjust:exact;print-color-adjust:exact}}'
     ].join('');
   }
 
