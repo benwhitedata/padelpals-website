@@ -1,0 +1,10 @@
+---
+description: Commit and push website changes without asking
+alwaysApply: true
+---
+
+# Commit and push
+
+When you change this site, commit the relevant files and push to `main` without asking. GitHub Pages deploys from that branch.
+
+Leave out unrelated untracked files, secrets, and anything the user did not ask to change. Do not force-push.
