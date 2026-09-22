@@ -217,14 +217,14 @@
           detail = parts.filter(Boolean).join(' ');
         } else if (label === 'Demo' && !coaching && lesson.objective) {
           var demoBody = hasOverlay ? String(overlay).trim() : (step.default_detail || '');
-          detail = ['One sentence, then they hit: ' + lesson.objective, demoBody].filter(Boolean).join(' ');
+          detail = ['Say the sentence, then you show it: ' + lesson.objective, demoBody].filter(Boolean).join(' ');
         } else if (hasOverlay) {
           detail = overlay;
         } else if (label === 'Name what you saw') {
           detail = [step.default_detail, lesson.objective ? ('Planned theme, for you: ' + lesson.objective) : '']
             .filter(Boolean).join(' ');
         } else if (label === 'Name the focus' && lesson.objective) {
-          detail = 'One sentence, then they hit: ' + lesson.objective;
+          detail = 'Say the sentence, then you show it: ' + lesson.objective;
         } else if (label === 'Open' && lesson.differentiation) {
           detail = [step.default_detail, lesson.differentiation].filter(Boolean).join(' ');
         } else if (label === 'Conditioned game' && lesson.conditioned_game) {
