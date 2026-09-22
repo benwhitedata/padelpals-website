@@ -444,13 +444,14 @@
     return top - lines.length * leading;
   }
 
-  function paintCard(pdf, fonts, logo, lesson, compact) {
+  function paintCard(pdf, fonts, logo, lesson) {
     var rgb = global.PDFLib.rgb;
     var navy = rgb(26 / 255, 34 / 255, 56 / 255);
     var blue = rgb(42 / 255, 57 / 255, 144 / 255);
     var gold = rgb(246 / 255, 201 / 255, 21 / 255);
     var ink = rgb(51 / 255, 51 / 255, 51 / 255);
     var tint = rgb(238 / 255, 240 / 255, 247 / 255);
+    var line = rgb(208 / 255, 213 / 255, 221 / 255);
     var white = rgb(1, 1, 1);
     var pageW = mm(148);
     var pageH = mm(210);
@@ -459,9 +460,11 @@
     var regular = fonts.regular;
     var bold = fonts.bold;
     var black = fonts.black;
-    var saySize = compact ? 13 : 15;
-    var bodySize = compact ? 9 : 10;
-    var lead = compact ? 11 : 13;
+    var saySize = 13;
+    var bodySize = 10;
+    var bodyLead = 11;
+    var cueSize = 11;
+    var cueLead = 14;
 
     var court = pdf.addPage([pageW, pageH]);
     var titleLines = wrapLines(lesson.title || 'Lesson', black, 16, inner - mm(12));
@@ -485,28 +488,26 @@
     var cursor = pageH - mastH - mm(4);
     var coaching = lesson.session_kind === 'coaching';
     var sayLabel = coaching ? 'PLANNED THEME' : 'SAY THIS';
-    var sayLines = wrapLines(lesson.objective || '', bold, saySize, inner - 16);
-    var sayH = 8 + 10 + sayLines.length * (saySize + 3) + 6;
+    var sayLines = wrapLines(lesson.objective || '', bold, saySize, inner - 18);
+    var sayH = 14 + 12 + sayLines.length * (saySize + 4) + 8;
     court.drawRectangle({ x: pad, y: cursor - sayH, width: inner, height: sayH, color: tint });
     court.drawRectangle({ x: pad, y: cursor - sayH, width: 3, height: sayH, color: gold });
-    court.drawText(sayLabel, { x: pad + 10, y: cursor - 16, size: 8, font: black, color: blue });
-    cursor = drawLines(court, sayLines, bold, saySize, pad + 10, cursor - 20, saySize + 3, navy) - 8;
+    court.drawText(sayLabel, { x: pad + 12, y: cursor - 18, size: 8, font: black, color: blue });
+    cursor = drawLines(court, sayLines, bold, saySize, pad + 12, cursor - 24, saySize + 4, navy) - 14;
 
-    cueItems(lesson).forEach(function (line, index) {
-      var lines = wrapLines(line, regular, 11, inner - 22);
-      var rowH = Math.max(16, lines.length * 14 + 4);
-      court.drawText(String(index + 1), { x: pad, y: cursor - 12, size: 11, font: black, color: blue });
-      drawLines(court, lines, regular, 11, pad + 16, cursor, 14, navy);
-      cursor -= rowH;
+    cueItems(lesson).forEach(function (cueLine, index) {
+      var lines = wrapLines(cueLine, regular, cueSize, inner - 24);
+      court.drawText(String(index + 1), { x: pad, y: cursor - cueSize, size: cueSize, font: black, color: blue });
+      cursor = drawLines(court, lines, regular, cueSize, pad + 18, cursor, cueLead, navy) - 6;
     });
     cursor -= 6;
 
     function bandBlock(heading, lines) {
       if (!lines.length) return;
-      var blockH = 8 + 12 + lines.length * lead + 4;
+      var blockH = 12 + 14 + lines.length * bodyLead + 6;
       court.drawRectangle({ x: pad, y: cursor - blockH, width: inner, height: blockH, color: tint });
-      court.drawText(heading, { x: pad + 8, y: cursor - 14, size: 8, font: black, color: blue });
-      cursor = drawLines(court, lines, regular, bodySize, pad + 8, cursor - 18, lead, ink) - 8;
+      court.drawText(heading, { x: pad + 10, y: cursor - 16, size: 8, font: black, color: blue });
+      cursor = drawLines(court, lines, regular, bodySize, pad + 10, cursor - 20, bodyLead, ink) - 8;
     }
     var good = (lesson.success_check || '').trim();
     var stepText = (lesson.differentiation || '').trim();
@@ -522,60 +523,59 @@
     if (stepText) bandBlock('STEP', wrapLines(stepText, regular, bodySize, inner - 16));
 
     var hour = pdf.addPage([pageW, pageH]);
-    var hourTitle = wrapLines(lesson.title || 'Lesson', black, 13, inner);
+    var hourTitle = wrapLines(lesson.title || 'Lesson', black, 16, inner);
     hour.drawText('PADEL PALS', { x: pad, y: pageH - pad - 8, size: 8, font: black, color: blue });
-    var afterTitle = drawLines(hour, hourTitle, black, 13, pad, pageH - pad - 14, 16, navy);
-    hour.drawRectangle({ x: pad, y: afterTitle - 6, width: inner, height: 0.6, color: navy });
-    cursor = afterTitle - mm(5);
+    var afterTitle = drawLines(hour, hourTitle, black, 16, pad, pageH - pad - 16, 20, navy);
+    hour.drawRectangle({ x: pad, y: afterTitle - 8, width: inner, height: 0.6, color: navy });
+    cursor = afterTitle - mm(6);
     var why = whyText(lesson);
     if (why) {
-      cursor = drawLines(hour, wrapLines(why, regular, bodySize, inner), regular, bodySize, pad, cursor, lead, ink) - 6;
+      cursor = drawLines(hour, wrapLines(why, regular, bodySize, inner), regular, bodySize, pad, cursor, bodyLead, ink) - 8;
     }
     hour.drawText('THE HOUR', { x: pad, y: cursor - 8, size: 8, font: black, color: blue });
-    cursor -= 14;
+    cursor -= 16;
     var rows = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
-    var floor = mm(28);
+    var floor = mm(14);
     rows.forEach(function (step) {
-      var detailLines = step.detail ? wrapLines(step.detail, regular, bodySize, inner - mm(18)) : [];
-      var rowH = 12 + detailLines.length * lead;
+      var detailLines = step.detail ? wrapLines(step.detail, regular, bodySize, inner) : [];
       hour.drawText(pdfSafe(step.from + '-' + step.to), {
-        x: pad, y: cursor - 10, size: 10, font: black, color: blue
+        x: pad, y: cursor - 10, size: bodySize, font: black, color: blue
       });
       hour.drawText(pdfSafe(step.label || ''), {
-        x: pad + mm(16), y: cursor - 10, size: 10.5, font: bold, color: navy
+        x: pad + mm(18), y: cursor - 10, size: cueSize, font: bold, color: navy
       });
       if (detailLines.length) {
-        drawLines(hour, detailLines, regular, bodySize, pad + mm(16), cursor - 12, lead, ink);
+        cursor = drawLines(hour, detailLines, regular, bodySize, pad, cursor - 14, bodyLead, ink) - 4;
+      } else {
+        cursor -= 18;
       }
-      cursor -= rowH;
-      hour.drawRectangle({ x: pad, y: cursor + 2, width: inner, height: 0.4, color: rgb(208 / 255, 213 / 255, 221 / 255) });
+      hour.drawRectangle({ x: pad, y: cursor, width: inner, height: 0.4, color: line });
+      cursor -= 4;
     });
     var note = (lesson.coach_note || '').trim();
     if (note) {
-      var noteLines = wrapLines(note, regular, bodySize, inner - 16);
-      var noteH = 16 + noteLines.length * lead;
+      var noteLines = wrapLines(note, regular, bodySize, inner - 18);
+      var noteH = 18 + noteLines.length * bodyLead + 6;
       hour.drawRectangle({ x: pad, y: cursor - noteH, width: inner, height: noteH, color: tint });
       hour.drawRectangle({ x: pad, y: cursor - noteH, width: 2, height: noteH, color: blue });
-      hour.drawText('COACH NOTE', { x: pad + 8, y: cursor - 12, size: 8, font: black, color: blue });
-      cursor = drawLines(hour, noteLines, regular, bodySize, pad + 8, cursor - 16, lead, ink) - 8;
+      hour.drawText('COACH NOTE', { x: pad + 10, y: cursor - 14, size: 8, font: black, color: blue });
+      cursor = drawLines(hour, noteLines, regular, bodySize, pad + 10, cursor - 20, bodyLead, ink) - 10;
     }
     var equip = Array.isArray(lesson.equipment) && lesson.equipment.length ? lesson.equipment : ['Balls and cones'];
-    if (cursor > mm(16)) {
-      hour.drawText('BEFORE YOU START', { x: pad, y: cursor - 10, size: 8, font: black, color: blue });
-      cursor -= 16;
-      cursor = drawLines(hour, wrapLines('Equipment: ' + equip.join(', ') + '.', regular, 9, inner), regular, 9, pad, cursor, 11, ink) - 2;
-      var colW = inner / 2 - 6;
-      REMINDERS.forEach(function (line, index) {
-        var col = index % 2;
-        var row = Math.floor(index / 2);
-        hour.drawText('- ' + pdfSafe(line), {
-          x: pad + col * (colW + 8),
-          y: cursor - 10 - row * 11,
-          size: 8,
-          font: regular,
-          color: ink
-        });
+    hour.drawText('BEFORE YOU START', { x: pad, y: cursor - 10, size: 8, font: black, color: blue });
+    cursor -= 18;
+    cursor = drawLines(hour, wrapLines('Equipment: ' + equip.join(', ') + '.', regular, bodySize, inner), regular, bodySize, pad, cursor, bodyLead, ink) - 4;
+    var colW = (inner - 16) / 2;
+    for (var r = 0; r < REMINDERS.length; r += 2) {
+      var left = wrapLines(REMINDERS[r], regular, bodySize, colW - 12).map(function (part, i) {
+        return (i === 0 ? '- ' : '  ') + part;
       });
+      var right = REMINDERS[r + 1] ? wrapLines(REMINDERS[r + 1], regular, bodySize, colW - 12).map(function (part, i) {
+        return (i === 0 ? '- ' : '  ') + part;
+      }) : [];
+      drawLines(hour, left, regular, bodySize, pad, cursor, bodyLead, ink);
+      if (right.length) drawLines(hour, right, regular, bodySize, pad + colW + 16, cursor, bodyLead, ink);
+      cursor -= Math.max(left.length, right.length) * bodyLead + 2;
     }
     var footY = mm(8);
     hour.drawRectangle({ x: pad, y: footY + 12, width: inner, height: 1.5, color: gold });
@@ -599,6 +599,21 @@
       var pdf = global.PDFLib.PDFDocument.create();
       return pdf.then(function (doc) {
         doc.registerFontkit(global.fontkit);
+        if (!global.fontkit.__ppNoLigatures) {
+          var createFont = global.fontkit.create;
+          global.fontkit.create = function () {
+            var font = createFont.apply(this, arguments);
+            if (font && !font.__ppNoLigatures) {
+              var layout = font.layout.bind(font);
+              font.layout = function (text, features) {
+                return layout(text, features || { liga: false, clig: false, dlig: false, hlig: false, calt: false });
+              };
+              font.__ppNoLigatures = true;
+            }
+            return font;
+          };
+          global.fontkit.__ppNoLigatures = true;
+        }
         return Promise.all([
           doc.embedFont(parts[0]),
           doc.embedFont(parts[1]),
@@ -606,11 +621,7 @@
           parts[3] ? doc.embedPng(parts[3]).catch(function () { return null; }) : null
         ]).then(function (embedded) {
           var fonts = { regular: embedded[0], bold: embedded[1], black: embedded[2] };
-          var fitted = paintCard(doc, fonts, embedded[3], lesson, false);
-          if (!fitted) {
-            while (doc.getPageCount()) doc.removePage(0);
-            paintCard(doc, fonts, embedded[3], lesson, true);
-          }
+          paintCard(doc, fonts, embedded[3], lesson);
           doc.setTitle((lesson.title || 'Lesson') + ' · Coach Planner');
           return doc.save();
         });
@@ -619,22 +630,28 @@
   }
 
   function openPdf(lesson) {
-    var win = global.open('', '_blank');
-    if (!win) {
-      global.alert('Please allow pop-ups to print this plan.');
-      return;
-    }
-    try {
-      win.document.open();
-      win.document.write('<!DOCTYPE html><html><body style="font-family:Montserrat,Arial,sans-serif;padding:24px;color:#1A2238"><p>Preparing the card…</p></body></html>');
-      win.document.close();
-    } catch (e) { /* the window can still navigate */ }
     buildPdf(lesson).then(function (bytes) {
-      var blob = new Blob([bytes], { type: 'application/pdf' });
-      var url = URL.createObjectURL(blob);
-      win.location = url;
+      var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      var frame = document.getElementById('pp-print-frame');
+      if (!frame) {
+        frame = document.createElement('iframe');
+        frame.id = 'pp-print-frame';
+        frame.title = 'Lesson card';
+        frame.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden';
+        document.body.appendChild(frame);
+      }
+      frame.onload = function () {
+        setTimeout(function () {
+          try {
+            frame.contentWindow.focus();
+            frame.contentWindow.print();
+          } catch (err) {
+            global.open(url, '_blank');
+          }
+        }, 500);
+      };
+      frame.src = url;
     }).catch(function () {
-      try { win.close(); } catch (err) { /* ignore */ }
       openPrint(sheetHtml(lesson));
     });
   }
