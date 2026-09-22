@@ -7,12 +7,12 @@
   --pp-bg: #F6F5F5;
   --pp-ink: #333333;
   --pp-muted: #555555;
-  /* Coach Planner scale. Other marketing pages keep their own sizes. */
-  --pp-t-label: .8125rem;
+  /* Coach Planner scale. One token per role. */
+  --pp-t-label: .75rem;
   --pp-t-meta: .875rem;
   --pp-t-body: 1rem;
-  --pp-t-lead: 1.125rem;
-  --pp-t-say: 1.5rem;
+  --pp-t-heading: 1.125rem;
+  --pp-t-say: 1.25rem;
   --pp-t-title: clamp(1.75rem, 3.4vw, 2.25rem);
 }
 
@@ -215,7 +215,7 @@ html {
   background: #fff;
   border: 1px solid #d0d5dd;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: var(--pp-t-meta);
   font-weight: 600;
   color: var(--pp-navy);
 }
@@ -227,7 +227,7 @@ html {
 
 .mkt-eyebrow {
   display: inline-block;
-  font-size: 0.75rem;
+  font-size: var(--pp-t-label);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;

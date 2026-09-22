@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="css/marketing.css?v=20260922f">
+  <link rel="stylesheet" href="css/marketing.css?v=20260922g">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config-loader.js"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -33,8 +33,9 @@
     .lib-hero .mkt-hero-inner p{display:block;max-width:560px;margin:0 auto;color:#fff;opacity:.95}
     .lib-wrap{max-width:1040px;margin:0 auto;padding:32px 20px 80px}
     .lib-state{text-align:center;padding:64px 20px;color:#555}
-    .lib-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
-    .lib-state h2{color:#1a2238;margin-bottom:10px}
+    .lib-state i{font-size:1.75rem;color:#4A90E2;margin-bottom:16px;display:block}
+    .lib-state h2{color:#1a2238;margin-bottom:10px;font-size:var(--pp-t-say);font-weight:700;line-height:1.3}
+    .lib-state p{font-size:var(--pp-t-body);line-height:1.55}
     .lib-state .mkt-btn{margin-top:20px}
     .lib-switch{
       display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
@@ -51,7 +52,7 @@
     .lib-switch button:focus-visible{outline:3px solid #7eb6f5;outline-offset:2px}
     .lib-switch i{
       grid-row:1 / span 2;width:40px;height:40px;border-radius:12px;
-      background:#EEF0F7;color:#2A3990;display:flex;align-items:center;justify-content:center;font-size:1rem;
+      background:#EEF0F7;color:#2A3990;display:flex;align-items:center;justify-content:center;font-size:var(--pp-t-body);
     }
     .lib-switch .lib-switch-label{font-weight:700;font-size:var(--pp-t-body);line-height:1.55}
     .lib-switch .lib-switch-hint{grid-column:2;color:#555;font-size:var(--pp-t-meta);font-weight:600}
@@ -97,7 +98,7 @@
     }
     .lib-reset{background:none;border:none;color:#4A90E2;font-weight:700;font-family:inherit;cursor:pointer;padding:0}
     .lib-month{margin:0 0 36px}
-    .lib-month > h2{font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin:0 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(26,34,56,.08);line-height:1.3}
+    .lib-month > h2{font-size:var(--pp-t-heading);font-weight:700;letter-spacing:0;text-transform:none;color:#2A3990;margin:0 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(26,34,56,.08);line-height:1.3}
     .lib-day{margin:0 0 18px}
     .lib-day-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
     .lib-day-head h3{font-size:var(--pp-t-body);font-weight:700;margin:0;color:#2A3990;line-height:1.55}
@@ -115,7 +116,7 @@
       background:linear-gradient(180deg,#1a2238 0%,#2A3990 100%);color:#fff;display:flex;
       flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;text-align:center;
     }
-    .lib-idx .lib-idx-n{font-size:1.55rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+    .lib-idx .lib-idx-n{font-size:var(--pp-t-say);font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
     .lib-idx .lib-idx-of{font-size:var(--pp-t-label);font-weight:700;letter-spacing:.04em}
     .lib-card-body{padding:16px 18px 16px 4px}
     .lib-card-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
@@ -135,7 +136,7 @@
     .lib-month .lib-lead{margin:0 0 14px;color:#555;max-width:640px}
     .lib-explain{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;padding:24px 26px;box-shadow:0 8px 24px rgba(26,34,56,.08);margin:0 0 28px}
     .lib-explain > span{display:block;font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
-    .lib-explain h2{margin:0 0 10px;font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;line-height:1.3}
+    .lib-explain h2{margin:0 0 10px;font-size:var(--pp-t-heading);font-weight:700;letter-spacing:0;text-transform:none;color:#2A3990;line-height:1.3}
     .lib-explain .lib-lead{margin:0 0 14px}
     .lib-explain ul{margin:0;padding:0 0 0 18px;color:#333;font-size:var(--pp-t-body);line-height:1.55}
     .lib-explain li{margin:0 0 6px}
