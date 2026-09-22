@@ -5,7 +5,8 @@
   var AUDIENCE_ORDER = [
     'Intro to Padel',
     'Beginner / Improver',
-    'Improver / Intermediate'
+    'Improver / Intermediate',
+    'Advanced'
   ];
 
   var REMINDERS = [
@@ -269,7 +270,9 @@
     if (coaching) {
       copy.session_kind = 'coaching';
       if (spine.duration_min) copy.duration_min = spine.duration_min;
-      if (spine.group_size_max) copy.group_size_max = spine.group_size_max;
+      if (spine.group_size_max && (!copy.group_size_max || copy.group_size_max > spine.group_size_max)) {
+        copy.group_size_max = spine.group_size_max;
+      }
     } else {
       if (!copy.duration_min && spine && spine.duration_min) copy.duration_min = spine.duration_min;
       if (!copy.group_size_max && spine && spine.group_size_max) copy.group_size_max = spine.group_size_max;
