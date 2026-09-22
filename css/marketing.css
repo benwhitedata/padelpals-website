@@ -7,6 +7,13 @@
   --pp-bg: #F6F5F5;
   --pp-ink: #333333;
   --pp-muted: #555555;
+  /* Coach Planner scale. Other marketing pages keep their own sizes. */
+  --pp-t-label: .8125rem;
+  --pp-t-meta: .875rem;
+  --pp-t-body: 1rem;
+  --pp-t-lead: 1.125rem;
+  --pp-t-say: 1.5rem;
+  --pp-t-title: clamp(1.75rem, 3.4vw, 2.25rem);
 }
 
 html {
