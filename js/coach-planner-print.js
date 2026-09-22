@@ -207,19 +207,19 @@
       return steps.map(function (step) {
         var label = step.label;
         var overlay = details[label];
+        var hasOverlay = overlay != null && String(overlay).trim() !== '';
         var detail;
-        if (overlay != null && String(overlay).trim() !== '') {
-          detail = overlay;
-        } else if (label === 'Warm up with a ball') {
+        if (label === 'Warm up with a ball') {
           var parts = [];
-          if (coaching) {
-            if (step.default_detail) parts.push(step.default_detail);
-          } else if (lesson.objective) {
-            parts.push('One sentence, then they hit: ' + lesson.objective);
-          }
+          if (coaching && step.default_detail) parts.push(step.default_detail);
           if (lesson.warmup_game) parts.push(gameLine(lesson.warmup_game));
           else if (!coaching && step.default_detail) parts.push(step.default_detail);
           detail = parts.filter(Boolean).join(' ');
+        } else if (label === 'Demo' && !coaching && lesson.objective) {
+          var demoBody = hasOverlay ? String(overlay).trim() : (step.default_detail || '');
+          detail = ['One sentence, then they hit: ' + lesson.objective, demoBody].filter(Boolean).join(' ');
+        } else if (hasOverlay) {
+          detail = overlay;
         } else if (label === 'Name what you saw') {
           detail = [step.default_detail, lesson.objective ? ('Planned theme, for you: ' + lesson.objective) : '']
             .filter(Boolean).join(' ');

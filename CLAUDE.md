@@ -43,7 +43,7 @@ Free signed-in library for now. Subscription / Stripe later.
 - Point `spine_id` at `sunday-drill` or `intro-padel`. Leave `run_sheet` null. Leave `session_date` null.
 - Point `warmup_game_id` / `conditioned_game_id` plus `warmup_game_ids` / `conditioned_game_ids` at `coaching.games`.
 - Write theme fields: `title`, `audience`, `skill_id`, `game_situation` / `phase` / `tactic`, `objective`, `success_check`, `differentiation`, `equipment`, `coach_note`, optional `cue_packs`.
-- Put only the lines that differ from the spine in `step_details`, keyed by label (`Demo`, `Closed`, `Open`, Intro `Flavour`). Omit a warm-up overlay (the objective is the one sentence at the start of `Warm up with a ball`). Omit `Close` to fill from the next programme item. Coaching reuses `Demo`, `Closed` and `Open`. It does not use `Flavour`.
+- Put only the lines that differ from the spine in `step_details`, keyed by label (`Demo`, `Closed`, `Open`, Intro `Flavour`). Omit a warm-up overlay (the warm-up line is only the game). The announced sentence is printed at the start of `Demo`. Omit `Close` to fill from the next programme item. Coaching reuses `Demo`, `Closed` and `Open`. It does not use `Flavour`.
 - Optionally append a `programme_items` row. Do not invent "week 7 of 6".
 - Do not paste the seven-step hour again. Do not add HTML or static lesson files. Do not flatten LTA PDFs or transcribe LTA clips into game rows. Overhead extras (Up or Down, Jumper Off, Elbow Push, Hide the Logo, Momentum, Clocks, Open Racket, Scarf, Beat the Bounce) are original one-line problem notes plus a Vimeo link.
 
