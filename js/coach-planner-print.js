@@ -68,8 +68,9 @@
       'html,body{margin:0;padding:0;background:#fff;color:var(--navy);font-family:Montserrat,Arial,Helvetica,sans-serif}',
       'body{font-size:10pt;line-height:1.3}',
       'h1,h2,h3,p{margin:0}',
+      '.sheet{width:297mm;height:210mm;display:flex;background:#fff}',
+      '.half{width:148.5mm;height:210mm;display:flex;align-items:center;justify-content:center;overflow:hidden}',
       '.face{position:relative;width:148mm;height:210mm;overflow:hidden;background:#fff}',
-      '.face+.face{break-before:page;page-break-before:always}',
       '.mast{position:absolute;top:0;left:0;right:0;height:50mm;background:var(--navy);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
       '.safe{position:absolute;top:10mm;right:10mm;bottom:10mm;left:10mm;z-index:1;display:flex;flex-direction:column}',
       '.brand{display:flex;align-items:center;gap:6pt}',
@@ -120,11 +121,9 @@
       '.safe.packed .quiet-head{margin-bottom:3pt;padding-bottom:2pt}',
       '.safe.packed .tail{margin-top:3pt}',
       '.foot{margin-top:auto;padding-top:4pt;border-top:1.5pt solid var(--gold);text-align:center;font-size:8pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}',
-      '@page{size:A5 portrait;margin:0}',
+      '@page{size:A4 landscape;margin:0}',
       '@page :first{margin:0}',
-      '@page :left{margin:0}',
-      '@page :right{margin:0}',
-      '@media screen{html,body{background:#cfd3dc}body{display:flex;flex-direction:column;align-items:center;gap:10mm;padding:10mm 0}.face{box-shadow:0 10px 28px rgba(26,34,56,.22)}}',
+      '@media screen{html,body{background:#cfd3dc}body{display:flex;flex-direction:column;align-items:center;gap:10mm;padding:10mm 0}.sheet{box-shadow:0 10px 28px rgba(26,34,56,.22)}}',
       '@media print{html,body{margin:0!important;padding:0!important;background:#fff}body{display:block}.face{margin:0;box-shadow:none}a{color:inherit;text-decoration:none}*{ -webkit-print-color-adjust:exact;print-color-adjust:exact}}'
     ].join('');
   }
@@ -400,7 +399,8 @@
       }).join('') + '</ul></div>' +
       '<p class="foot">padelpals.app</p>' +
       '</div></section>';
-    return docShell((lesson.title || 'Lesson') + ' · Coach Planner', court + hour);
+    return docShell((lesson.title || 'Lesson') + ' · Coach Planner',
+      '<section class="sheet"><div class="half">' + hour + '</div><div class="half">' + court + '</div></section>');
   }
 
   var MM = 72 / 25.4;
@@ -645,6 +645,25 @@
     return cursor > floor;
   }
 
+  function imposeFold(doc) {
+    var pages = doc.getPages();
+    if (pages.length < 2) return Promise.resolve();
+    var court = pages[0];
+    var hour = pages[1];
+    return Promise.all([doc.embedPage(court), doc.embedPage(hour)]).then(function (embedded) {
+      var sheetW = mm(297);
+      var sheetH = mm(210);
+      var faceW = mm(148);
+      var faceH = mm(210);
+      var fold = sheetW / 2;
+      var sheet = doc.addPage([sheetW, sheetH]);
+      sheet.drawPage(embedded[1], { x: fold - faceW, y: 0, width: faceW, height: faceH });
+      sheet.drawPage(embedded[0], { x: fold, y: 0, width: faceW, height: faceH });
+      doc.removePage(0);
+      doc.removePage(0);
+    });
+  }
+
   function buildPdf(lesson) {
     return loadScript('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'PDFLib').then(function () {
       return loadScript('https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js', 'fontkit');
@@ -682,8 +701,10 @@
         ]).then(function (embedded) {
           var fonts = { regular: embedded[0], bold: embedded[1], black: embedded[2] };
           paintCard(doc, fonts, embedded[3], lesson);
-          doc.setTitle((lesson.title || 'Lesson') + ' · Coach Planner');
-          return doc.save();
+          return imposeFold(doc).then(function () {
+            doc.setTitle((lesson.title || 'Lesson') + ' · Coach Planner');
+            return doc.save();
+          });
         });
       });
     });
