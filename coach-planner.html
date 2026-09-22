@@ -108,6 +108,24 @@
     .cp-funnel-key .k-coach{background:#1A2238}
     .cp-funnel-key .k-drill{background:#4A90E2}
     .cp-funnel-key .k-both{background:#EEF0F7;border:1px solid #d0d5dd}
+    .cp-sheet{
+      background:#fff;border:1.5px solid #1A2238;border-radius:16px;
+      padding:20px 22px;box-shadow:0 8px 24px rgba(26,34,56,.08);max-width:360px;margin:0 auto;
+    }
+    .cp-sheet .cp-sheet-brand{
+      display:flex;justify-content:space-between;align-items:baseline;
+      border-bottom:2px solid #1A2238;padding-bottom:8px;margin-bottom:12px;
+    }
+    .cp-sheet .cp-sheet-brand strong{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#2A3990}
+    .cp-sheet .cp-sheet-brand span{font-size:.72rem;font-weight:700;color:#555}
+    .cp-sheet h3{margin:0 0 10px;font-size:1.15rem;color:#1A2238}
+    .cp-sheet ol{list-style:none;margin:0;padding:0}
+    .cp-sheet li{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:6px 0;border-bottom:1px dotted #d0d5dd;font-size:.85rem}
+    .cp-sheet li:last-child{border-bottom:0}
+    .cp-sheet time{font-weight:800;color:#2A3990;font-variant-numeric:tabular-nums}
+    @media (max-width:720px){
+      .mkt-feature,.mkt-feature.reverse{grid-template-columns:1fr;direction:ltr}
+    }
   </style>
 </head>
 <body class="mkt-page" data-page="coach-planner.html">
@@ -121,7 +139,7 @@
 
   <div class="mkt-wrap">
     <div class="mkt-intro">
-      <p>This is not a booking product — that sits on <a href="coaches.html">Group Lessons</a>. Coach Planner is the session library: what the hour is for, how it is timed, and which game you put in the warm-up or the conditioned block. Bookings stay in the club app. These pages are for the coach standing on court.</p>
+      <p>This is not a booking product. That sits on <a href="coaches.html">Group Lessons</a>. Coach Planner is the session library: what the hour is for, how it is timed, and which game you put in the warm-up or the conditioned block. Bookings stay in the club app. These pages are for the coach standing on court.</p>
     </div>
 
     <section id="two-kinds">
@@ -140,26 +158,28 @@
           <h3>Coaching</h3>
           <p>A change they can name afterwards. You watch before you teach, demo one point, teach it fed, open it up, then finish in the game with feedback on what that player needs to change. Three or four, tight band. The hour is spent on them, not on the group.</p>
         </article>
-        <article class="mkt-outcome-card">
-          <i class="fas fa-shapes" aria-hidden="true"></i>
-          <h3>Games</h3>
-          <p>Reusable warm-ups, mini games and short overhead extras. A week points at these instead of rewriting the 5–12 and 48–58 slots. Catch the glass, Dead Zone, Glass Galore, a Mini Americano — pick one and run it.</p>
-        </article>
+      </div>
+    </section>
+
+    <section id="games-toolkit">
+      <div class="mkt-section-head">
+        <h2>What fills the hour</h2>
+        <p>Warm-ups, mini games and short overhead extras live in their own library. A drill points at these instead of rewriting the 5–12 and 48–58 slots. Catch the glass, Dead Zone, Glass Galore, a Mini Americano: pick one and run it.</p>
       </div>
     </section>
 
     <section id="funnel">
       <div class="mkt-section-head">
         <h2>Where each one sits</h2>
-        <p>The lesson structure funnels from wide to narrow. A drill lives in the middle: closed, then open. Watching first, and coaching inside the game, is what the smaller session adds.</p>
+        <p>The lesson structure funnels from wide to narrow. A drill lives in the middle: closed, then open. Watching first, and individual feedback inside the scored game, is what the smaller coached session adds. Drills still finish with a conditioned mini-game. That is a scoring rule on the focus, not one-to-one coaching.</p>
       </div>
       <div class="cp-funnel" aria-label="Lesson structure">
         <ol>
           <li class="coach"><span class="band">Observation and analysis</span><span class="tag">Coached only</span></li>
-          <li class="both"><span class="band">Demo — one point, hit three balls</span><span class="tag">Both</span></li>
-          <li class="drill"><span class="band">Teaching, closed — fed, predictable</span><span class="tag">A drill sits here</span></li>
-          <li class="drill"><span class="band">Progressing, open — live, unpredictable</span><span class="tag">A drill sits here</span></li>
-          <li class="coach"><span class="band">Game</span><span class="tag">Coached only</span></li>
+          <li class="both"><span class="band">Demo: one point, hit three balls</span><span class="tag">Both</span></li>
+          <li class="drill"><span class="band">Teaching, closed: fed, predictable</span><span class="tag">A drill sits here</span></li>
+          <li class="drill"><span class="band">Progressing, open: live, unpredictable</span><span class="tag">A drill sits here</span></li>
+          <li class="coach"><span class="band">Game with individual feedback</span><span class="tag">Coached only</span></li>
         </ol>
         <div class="cp-funnel-key">
           <span><i class="k-coach" aria-hidden="true"></i> Coaching</span>
@@ -183,13 +203,32 @@
         <article class="mkt-outcome-card">
           <i class="fas fa-sliders-h" aria-hidden="true"></i>
           <h3>STEP, not a split</h3>
-          <p>How to step it up or down without splitting the group. Space, task, equipment, people — so a mixed eight still hits.</p>
+          <p>How to step it up or down without splitting the group. Space, task, equipment, people, so a mixed eight still hits.</p>
         </article>
         <article class="mkt-outcome-card">
           <i class="fas fa-print" aria-hidden="true"></i>
           <h3>Plan and court sheet</h3>
-          <p>Print the full hour, or a one-page sheet for the fence. Same-day coach note when something actually happened on court.</p>
+          <p>Print the full hour, or a one-page sheet for the fence. The hour is composed from a shared spine plus the lines that differ.</p>
         </article>
+      </div>
+    </section>
+
+    <section class="mkt-feature" id="court-sheet">
+      <div class="mkt-feature-copy">
+        <h2>A sheet you can take to the fence</h2>
+        <p>Open a reusable hour, pick the cue pack and the games that match who turned up, then print. The booking still lives on <a href="coaches.html">Group Lessons</a>. This page is the plan.</p>
+      </div>
+      <div class="cp-sheet" aria-hidden="true">
+        <div class="cp-sheet-brand"><strong>Coach Planner</strong><span>60 min</span></div>
+        <h3>One sentence, twice</h3>
+        <ol>
+          <li><time>0–5</time><span>Name the focus</span></li>
+          <li><time>5–12</time><span>Warm-up with a ball</span></li>
+          <li><time>12–17</time><span>Demo: one point</span></li>
+          <li><time>17–32</time><span>Closed, fed</span></li>
+          <li><time>32–48</time><span>Open, live</span></li>
+          <li><time>48–58</time><span>Conditioned mini-game</span></li>
+        </ol>
       </div>
     </section>
 
@@ -201,15 +240,15 @@
       <div class="mkt-members">
         <article>
           <h3>Intro to Padel</h3>
-          <p>New faces most weeks. Fixed spine, one rotating flavour — walls, volley, lob, positioning, rules, Mini Americano.</p>
+          <p>New faces most weeks. Same spine every time, one rotating flavour: grip, movement, rules, glass, volley, lob, positioning.</p>
         </article>
         <article>
           <h3>Beginner / Improver</h3>
-          <p>Sunday hour. Opening stretch: back glass, return depth, transition, volley, lob, then under score. The programme grows from there.</p>
+          <p>Fourteen reusable hours. Rally as a pair, start the point, take and keep the net, then play under score.</p>
         </article>
         <article>
           <h3>Improver / Intermediate</h3>
-          <p>The hour after. Opening stretch: serve and net, bandeja, the corner, chiquita, net battle, then constrained match play. Append later; do not loop a closed six.</p>
+          <p>Fourteen reusable hours. Serve and keep the net, survive and build, both at net, then constrained match play.</p>
         </article>
       </div>
     </section>

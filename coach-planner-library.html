@@ -25,21 +25,20 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260920c"></script>
+  <script src="js/coach-planner-print.js?v=20260921a"></script>
   <style>
-    .lib-hero.mkt-hero{padding:28px 20px 52px;text-align:left}
-    .lib-hero .mkt-hero-inner{max-width:1040px;margin:0 auto;text-align:left}
-    .lib-hero .mkt-eyebrow{margin-bottom:6px}
-    .lib-hero h1{margin:0;font-size:clamp(1.45rem,2.6vw,1.9rem);font-weight:800}
-    .lib-hero .mkt-hero-inner p{display:none}
-    .lib-wrap{max-width:1040px;margin:0 auto;padding:0 20px 80px}
+    .lib-hero.mkt-hero{padding:48px 20px 56px;text-align:center}
+    .lib-hero .mkt-hero-inner{max-width:720px;margin:0 auto;text-align:center}
+    .lib-hero h1{margin:0 0 12px;font-size:clamp(1.7rem,3.4vw,2.4rem);font-weight:700;color:#fff}
+    .lib-hero .mkt-hero-inner p{display:block;max-width:560px;margin:0 auto;color:#fff;opacity:.95}
+    .lib-wrap{max-width:1040px;margin:0 auto;padding:32px 20px 80px}
     .lib-state{text-align:center;padding:64px 20px;color:#555}
     .lib-state i{font-size:2rem;color:#4A90E2;margin-bottom:16px;display:block}
     .lib-state h2{color:#1a2238;margin-bottom:10px}
     .lib-state .mkt-btn{margin-top:20px}
     .lib-switch{
       display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
-      margin:-36px 0 22px;position:relative;z-index:2;
+      margin:0 0 22px;position:relative;z-index:2;
     }
     .lib-switch button{
       appearance:none;border:1px solid rgba(26,34,56,.08);background:#fff;color:#1a2238;
@@ -168,7 +167,7 @@
       .lib-toolbar-top{grid-template-columns:1fr}
       .lib-card{grid-template-columns:64px 1fr}
       .lib-game-grid{grid-template-columns:1fr}
-      .lib-switch{grid-template-columns:1fr;margin-top:-28px}
+      .lib-switch{grid-template-columns:1fr}
       .lib-switch .lib-switch-hint{display:none}
     }
   </style>
@@ -178,6 +177,7 @@
     <div class="mkt-hero-inner">
       <p class="mkt-eyebrow">Coach Planner</p>
       <h1>Lesson Library</h1>
+      <p>Programmes, a catalogue by game situation, and the games that fill the hour.</p>
     </div>
   </section>
 
@@ -207,19 +207,19 @@
           <i class="fas fa-layer-group" aria-hidden="true"></i>
           <span class="lib-switch-label">Drills</span>
           <span class="lib-switch-hint">Programmes and catalogue</span>
-          <span class="lib-switch-count" id="libTabDrillsN">0</span>
+          <span class="lib-switch-count" id="libTabDrillsN"></span>
         </button>
         <button type="button" role="tab" id="libViewCoaching" aria-selected="false">
           <i class="fas fa-user-check" aria-hidden="true"></i>
           <span class="lib-switch-label">Coaching</span>
           <span class="lib-switch-hint">3 or 4 players</span>
-          <span class="lib-switch-count" id="libTabCoachN">0</span>
+          <span class="lib-switch-count" id="libTabCoachN"></span>
         </button>
         <button type="button" role="tab" id="libViewGames" aria-selected="false">
           <i class="fas fa-shapes" aria-hidden="true"></i>
           <span class="lib-switch-label">Games</span>
           <span class="lib-switch-hint">Warm-ups and extras</span>
-          <span class="lib-switch-count" id="libTabGamesN">0</span>
+          <span class="lib-switch-count" id="libTabGamesN"></span>
         </button>
       </div>
       <div class="lib-toolbar" id="libSessionToolbar">
@@ -369,7 +369,10 @@
     }
 
     function matches(lesson) {
-      if (filters.audience && lesson.audience !== filters.audience) return false;
+      if (filters.audience) {
+        var inProg = (lesson.programmes || []).some(function (p) { return p.audience === filters.audience; });
+        if (!inProg) return false;
+      }
       if (filters.path === 'catalogue' && filters.situation && lesson.game_situation !== filters.situation) return false;
       if (filters.path === 'programmes') {
         var anyProg = allLessons.some(function (l) { return l.programmes && l.programmes.length; });
@@ -423,7 +426,7 @@
     }
 
     function renderToolbar() {
-      var groups = unique(KNOWN_GROUPS.concat(allLessons.map(function (l) { return l.audience; })));
+      var groups = unique(KNOWN_GROUPS.concat(allProgrammes.map(function (p) { return p.audience; })));
       var groupEl = document.getElementById('libGroups');
       groupEl.innerHTML = '<button type="button" class="lib-pill" data-audience="" aria-pressed="' + (filters.audience ? 'false' : 'true') + '">All Groups</button>' +
         groups.map(function (g) {
@@ -449,9 +452,9 @@
 
       var drillN = allLessons.filter(function (l) { return sessionKind(l) === 'drill'; }).length;
       var coachN = allLessons.filter(function (l) { return sessionKind(l) === 'coaching'; }).length;
-      document.getElementById('libTabDrillsN').textContent = String(drillN);
-      document.getElementById('libTabCoachN').textContent = String(coachN);
-      document.getElementById('libTabGamesN').textContent = String(allGames.length);
+      document.getElementById('libTabDrillsN').textContent = drillN ? String(drillN) : '';
+      document.getElementById('libTabCoachN').textContent = coachN ? String(coachN) : '';
+      document.getElementById('libTabGamesN').textContent = allGames.length ? String(allGames.length) : '';
     }
 
     function funnelHtml(highlight) {
@@ -498,15 +501,15 @@
       var of = prog ? ('of ' + prog.count) : (lesson.audience || '');
       var href = 'coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.slug);
       if (prog && prog.slug) href += '&programme=' + encodeURIComponent(prog.slug);
-      var pills = [titleCase(lesson.audience), lesson.game_situation, lesson.phase, lesson.tactic]
-        .filter(Boolean).map(function (p) { return '<span class="mkt-pill">' + esc(titleCase(p)) + '</span>'; }).join('');
+      var pills = [lesson.audience, lesson.game_situation, lesson.phase, lesson.tactic]
+        .filter(Boolean).map(function (p) { return '<span class="mkt-pill">' + esc(p) + '</span>'; }).join('');
       return '<a class="lib-card" href="' + href + '">' +
         '<div class="lib-idx" aria-hidden="true"><span class="lib-idx-n">' + esc(idx) + '</span>' +
         '<span class="lib-idx-of">' + esc(of) + '</span></div>' +
         '<div class="lib-card-body"><div class="lib-card-top">' +
         (prog && prog.title ? '<span class="lib-slot">' + esc(prog.title) + '</span>' : '') +
         (lesson.duration_min ? '<span class="lib-dur">' + esc(lesson.duration_min) + ' min</span>' : '') +
-        '</div><h3>' + esc(titleCase(lesson.title)) + '</h3>' +
+        '</div><h3>' + esc(lesson.title || '') + '</h3>' +
         (lesson.objective ? '<p class="lib-obj">' + esc(lesson.objective) + '</p>' : '') +
         '<div class="mkt-pill-row">' + pills + '</div></div></a>';
     }
@@ -554,7 +557,7 @@
           sitMap[key].push(l);
         });
         sitKeys.sort(function (a, b) { return situationRank(a) - situationRank(b); });
-        html += sitKeys.map(function (key) { return sectionHtml(titleCase(key), sitMap[key]); }).join('');
+        html += sitKeys.map(function (key) { return sectionHtml(key, sitMap[key]); }).join('');
       } else {
         var progMap = {};
         var progKeys = [];

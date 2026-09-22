@@ -63,7 +63,7 @@
 
   function printCss() {
     return [
-      ':root{--navy:#1A2238;--blue:#2A3990;--accent:#4A90E2;--ink:#333;--muted:#555;--line:#d0d5dd;--paper:#fff;--tint:#EEF0F7;--gold:#F6C915}',
+      ':root{--navy:#1A2238;--blue:#2A3990;--accent:#4A90E2;--ink:#333;--muted:#555;--line:#d0d5dd;--paper:#fff;--tint:#EEF0F7}',
       '*{box-sizing:border-box}',
       'html,body{margin:0;padding:0;background:#fff;color:var(--navy);font-family:Montserrat,Arial,Helvetica,sans-serif}',
       'body{font-size:11pt;line-height:1.45}',
@@ -92,8 +92,8 @@
       '.run-detail{color:var(--muted);font-size:10px}',
       '.equip{display:flex;flex-wrap:wrap;gap:6px}',
       '.equip span{border:1px solid var(--line);background:var(--tint);border-radius:6px;padding:3px 8px;font-size:9px;font-weight:600}',
-      '.note{border-left:4px solid var(--gold);background:#FFF8EC;padding:10px 14px;border-radius:0 10px 10px 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
-      '.note h3{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#E08540;margin-bottom:4px}',
+      '.note{border-left:4px solid var(--blue);background:var(--tint);padding:10px 14px;border-radius:0 10px 10px 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+      '.note h3{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}',
       '.note p{margin:0;font-size:10.5px}',
       '.foot{margin-top:12px;text-align:center;font-size:9px;color:#888}',
       '.sheet{height:277mm;display:flex;flex-direction:column}',
