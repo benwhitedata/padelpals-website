@@ -341,6 +341,14 @@
       return list[0];
     }
 
+    function indexInProgramme(lesson, prog) {
+      if (!prog) return 99;
+      var match = (lesson.programmes || []).filter(function (p) {
+        return p.slug && p.slug === prog.slug;
+      })[0];
+      return match && match.index ? match.index : 99;
+    }
+
     function showState(id) {
       ['libLoading', 'libSignedOut', 'libEmpty', 'libBrowse'].forEach(function (x) {
         document.getElementById(x).hidden = (x !== id);
@@ -493,8 +501,8 @@
         '</section>';
     }
 
-    function cardHtml(lesson) {
-      var prog = pickProgramme(lesson);
+    function cardHtml(lesson, prog) {
+      if (!prog || !prog.slug) prog = pickProgramme(lesson);
       var idx = prog ? String(prog.index) : '•';
       var of = prog ? ('of ' + prog.count) : (lesson.audience || '');
       var href = 'coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.slug);
@@ -513,10 +521,12 @@
         '<div class="mkt-pill-row">' + pills + '</div></div></a>';
     }
 
-    function sectionHtml(title, lessons) {
+    function sectionHtml(title, lessons, prog) {
       if (!lessons.length) return '';
       return '<section class="lib-month"><h2>' + esc(title) + '</h2>' +
-        '<div class="lib-grid">' + lessons.map(cardHtml).join('') + '</div></section>';
+        '<div class="lib-grid">' + lessons.map(function (lesson) {
+          return cardHtml(lesson, prog);
+        }).join('') + '</div></section>';
     }
 
     function renderList() {
@@ -562,20 +572,32 @@
         var progKeys = [];
         var unplaced = [];
         lessons.forEach(function (l) {
-          var prog = pickProgramme(l);
-          if (!prog) {
+          var progs = l.programmes || [];
+          if (filters.audience) {
+            progs = progs.filter(function (p) { return p.audience === filters.audience; });
+          }
+          if (!progs.length) {
             unplaced.push(l);
             return;
           }
-          var key = prog.slug || prog.title;
-          if (!progMap[key]) {
-            progMap[key] = { title: prog.title, lessons: [] };
-            progKeys.push(key);
-          }
-          progMap[key].lessons.push(l);
+          progs.forEach(function (prog) {
+            var key = prog.slug || prog.title;
+            if (!progMap[key]) {
+              progMap[key] = { title: prog.title, prog: prog, lessons: [] };
+              progKeys.push(key);
+            }
+            progMap[key].lessons.push(l);
+          });
+        });
+        progKeys.sort(function (a, b) {
+          return String(progMap[a].title || '').localeCompare(String(progMap[b].title || ''));
         });
         html += progKeys.map(function (key) {
-          return sectionHtml(progMap[key].title, progMap[key].lessons);
+          var block = progMap[key];
+          block.lessons.sort(function (a, b) {
+            return indexInProgramme(a, block.prog) - indexInProgramme(b, block.prog);
+          });
+          return sectionHtml(block.title, block.lessons, block.prog);
         }).join('');
         if (unplaced.length) html += sectionHtml('Catalogue', unplaced);
       }
