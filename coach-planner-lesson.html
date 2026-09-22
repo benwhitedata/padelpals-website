@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260922r"></script>
+  <script src="js/coach-planner-print.js?v=20260922s"></script>
   <style>
     .lsn-hero.mkt-hero{padding:40px 20px 36px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
@@ -82,6 +82,20 @@
     .lsn-brief ul{margin:0 0 0 1.15rem;padding:0;color:#1a2238;font-size:var(--pp-t-body);line-height:1.45}
     .lsn-brief li{margin:0 0 6px}
     .lsn-brief p{margin:12px 0 0;color:#333;font-size:var(--pp-t-body);line-height:1.55}
+    #lsnSeeWrap{margin-top:14px}
+    #lsnSeeWrap h3{margin:0;font-size:var(--pp-t-body);font-weight:700;letter-spacing:0;text-transform:none;color:#2A3990}
+    .lsn-see-card{
+      text-align:left;border:1px solid rgba(26,34,56,.08);background:#fff;
+      border-radius:12px;padding:12px 14px;font:inherit;width:100%;cursor:pointer;color:#1a2238;
+    }
+    .lsn-see-card.is-selected{border-color:#2A3990;box-shadow:inset 0 0 0 2px #2A3990}
+    .lsn-see-card strong{display:block;margin-bottom:6px;font-size:var(--pp-t-body);font-weight:700}
+    .lsn-see-card ul{margin:0 0 0 1.15rem;padding:0;font-size:var(--pp-t-body);line-height:1.45}
+    .lsn-see-card li{margin:0 0 4px}
+    .lsn-brief.prepare{display:flex;flex-direction:column}
+    .lsn-brief.prepare > span{order:0}
+    .lsn-brief.prepare #lsnWhy{order:1;margin-top:0}
+    .lsn-brief.prepare #lsnCues{order:2;margin-top:12px}
     .lsn-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .lsn-chip{
       appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
@@ -160,6 +174,10 @@
       <div class="lsn-section" id="lsnCueWrap" hidden>
         <h2>Cue pack</h2>
         <p class="lsn-run-detail" id="lsnCueIntro">Same hour, one teaching point. Pick the pack that matches who turned up.</p>
+        <div id="lsnSeeWrap" hidden>
+          <h3 class="lsn-run-label">If you see this</h3>
+          <div class="lsn-see" id="lsnSee"></div>
+        </div>
         <div class="lsn-chips" id="lsnCuePacks"></div>
         <div class="lsn-brief" id="lsnBrief" hidden>
           <span>For you, not for them</span>
@@ -359,15 +377,19 @@
       var wrap = document.getElementById('lsnCueWrap');
       var el = document.getElementById('lsnCuePacks');
       var pack = lesson._cuePack || (window.CoachPlannerPrint && window.CoachPlannerPrint.defaultCuePack(lesson)) || packs[0];
+      var prepare = window.CoachPlannerPrint && window.CoachPlannerPrint.keywordHour(lesson);
       var cues = pack && Array.isArray(pack.cues) ? pack.cues.slice(0, 3) : [];
       var watch = [];
-      if (pack && pack.watch != null) {
+      if (!prepare && pack && pack.watch != null) {
         watch = Array.isArray(pack.watch) ? pack.watch : String(pack.watch).split(/\n+/);
       }
       var why = pack && pack.why ? String(pack.why).trim() : '';
       wrap.hidden = !pack;
       if (!pack) return;
-      document.getElementById('lsnCueIntro').hidden = packs.length < 2;
+      document.getElementById('lsnCueIntro').textContent = prepare
+        ? 'Pick the pack from what you know of this group.'
+        : 'Same hour, one teaching point. Pick the pack that matches who turned up.';
+      document.getElementById('lsnCueIntro').hidden = !prepare && packs.length < 2;
       el.hidden = packs.length < 2;
       var current = (pack.slug || pack.title);
       el.innerHTML = packs.length < 2 ? '' : packs.map(function (p) {
@@ -375,7 +397,20 @@
         return '<button type="button" class="lsn-chip" data-cue="' + esc(key) + '" aria-pressed="' +
           (key === current ? 'true' : 'false') + '">' + esc(p.title || 'Cue pack') + '</button>';
       }).join('');
+      var seeWrap = document.getElementById('lsnSeeWrap');
+      var see = document.getElementById('lsnSee');
+      seeWrap.hidden = !prepare;
+      see.innerHTML = prepare ? packs.map(function (p) {
+        var key = p.slug || p.title;
+        var lines = Array.isArray(p.watch) ? p.watch : [];
+        return '<button type="button" class="lsn-see-card' + (key === current ? ' is-selected' : '') +
+          '" data-cue="' + esc(key) + '" aria-pressed="' + (key === current ? 'true' : 'false') + '">' +
+          '<strong>' + esc(p.title || 'Cue pack') + '</strong>' +
+          '<ul>' + lines.slice(0, 3).map(function (line) { return '<li>' + esc(line) + '</li>'; }).join('') +
+          '</ul></button>';
+      }).join('') : '';
       var brief = document.getElementById('lsnBrief');
+      brief.classList.toggle('prepare', !!prepare);
       var cueCount = listItems('lsnCues', cues);
       var whyEl = document.getElementById('lsnWhy');
       whyEl.textContent = why;
@@ -467,9 +502,15 @@
       document.getElementById('lsnAnnounceLabel').textContent = lesson.session_kind === 'coaching'
         ? 'Planned theme'
         : 'The sentence you announce';
-      document.getElementById('lsnMiniBlurb').textContent = lesson.session_kind === 'coaching'
-        ? 'The scored game is individual feedback. A mini here is optional colour. It does not replace that.'
-        : 'Pick the mini that makes the focus score. Open the full description if you have not run it recently.';
+      document.getElementById('lsnMiniBlurb').textContent = (function () {
+        var game = nestedRow(lesson.conditioned_game);
+        if (game && game.title) {
+          return game.title + ' is the one to run for this theme. The others are alternatives while you prepare.';
+        }
+        return lesson.session_kind === 'coaching'
+          ? 'The scored game is individual feedback. A mini here is optional colour. It does not replace that.'
+          : 'Pick the mini that makes the focus score. Open the full description if you have not run it recently.';
+      })();
       document.getElementById('lsnTitle').textContent = lesson.title || '';
       var meta = heroMeta(lesson);
       document.getElementById('lsnHeroMeta').textContent = meta;
@@ -520,6 +561,16 @@
         : 'coach-planner-library.html';
 
       renderCuePacks(lesson);
+      var warmIntro = document.querySelector('#lsnWarmToolkitWrap .lsn-run-detail');
+      if (warmIntro) {
+        warmIntro.textContent = (function () {
+          var game = nestedRow(lesson.warmup_game);
+          if (game && game.title) {
+            return game.title + ' is the one to run for this theme. The others are alternatives while you prepare.';
+          }
+          return 'The one in this hour is the one to run. The others are alternatives while you prepare.';
+        })();
+      }
       renderToolkit('warmup', nestedRow(lesson.warmup_game), lesson.warmup_game_ids);
       renderToolkit('mini', nestedRow(lesson.conditioned_game), lesson.conditioned_game_ids);
       renderOverheads(lesson);
@@ -528,7 +579,7 @@
       showState('lsnContent');
     }
 
-    document.getElementById('lsnCuePacks').addEventListener('click', function (e) {
+    document.getElementById('lsnCueWrap').addEventListener('click', function (e) {
       var btn = e.target.closest('[data-cue]');
       if (!btn || !baseLesson || !window.CoachPlannerPrint) return;
       var key = btn.getAttribute('data-cue');

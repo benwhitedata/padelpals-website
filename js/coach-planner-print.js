@@ -85,6 +85,11 @@
       '.cue{display:grid;grid-template-columns:14pt 1fr;gap:5pt;align-items:start;padding:4pt 0;border-bottom:.5pt solid var(--line);font-size:10pt;line-height:1.3}',
       '.cue:last-child{border-bottom:0}',
       '.cue b{color:var(--blue);font-size:10pt}',
+      '.keywords{display:flex;flex-direction:column;gap:4pt;margin:0 0 6pt}',
+      '.keywords article{padding:3pt 0;border-top:.5pt solid var(--line)}',
+      '.keywords h3{margin:0 0 1pt;font-size:8pt;font-weight:700;letter-spacing:0;text-transform:none;color:var(--navy)}',
+      '.keywords p{margin:0;font-size:8pt;line-height:1.25;color:var(--ink)}',
+      '.keywords b{font-weight:700;color:var(--navy)}',
       '.band{display:flex;flex-direction:column;gap:5pt}',
       '.band article{background:var(--tint);padding:5pt 7pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
       '.band h3{margin-bottom:2pt}',
@@ -299,6 +304,40 @@
     }).filter(Boolean).slice(0, 3);
   }
 
+  function keywordHour(lesson) {
+    var packs = lesson && Array.isArray(lesson.cue_packs) ? lesson.cue_packs : [];
+    return packs.filter(Boolean).length > 1;
+  }
+
+  function cleanLines(value) {
+    var raw = Array.isArray(value) ? value : String(value || '').split(/\n+/);
+    return raw.map(function (line) {
+      return String(line).replace(/^[-•\u2022]\s*/, '').trim();
+    }).filter(Boolean).slice(0, 3);
+  }
+
+  function otherPacks(lesson) {
+    var packs = lesson && Array.isArray(lesson.cue_packs) ? lesson.cue_packs : [];
+    var current = lesson && (lesson._cuePack || defaultCuePack(lesson));
+    var key = current ? (current.slug || current.title) : '';
+    return packs.filter(function (pack) {
+      return pack && (pack.slug || pack.title) !== key;
+    });
+  }
+
+  function keywordPacksHtml(lesson) {
+    var packs = otherPacks(lesson);
+    if (!packs.length) return '';
+    return '<section class="keywords">' + packs.map(function (pack) {
+      var see = cleanLines(pack.watch);
+      var cues = cleanLines(pack.cues);
+      return '<article><h3>' + esc(pack.title || 'Cue pack') + '</h3>' +
+        (see.length ? '<p><b>See </b>' + esc(see.join(' ')) + '</p>' : '') +
+        (cues.length ? '<p>' + esc(cues.join(' ')) + '</p>' : '') +
+        '</article>';
+    }).join('') + '</section>';
+  }
+
   function watchItems(lesson) {
     var pack = lesson._cuePack || defaultCuePack(lesson);
     if (!pack || pack.watch == null) return [];
@@ -360,14 +399,16 @@
     var note = (lesson.coach_note || '').trim();
     var equip = Array.isArray(lesson.equipment) && lesson.equipment.length ? lesson.equipment : ['Balls and cones'];
     var band = '';
+    var keywords = keywordHour(lesson);
     if (good) {
       band += '<article><h3>What good looks like</h3><p>' + esc(good) + '</p></article>';
     }
-    if (watch.length) {
+    if (!keywords && watch.length) {
       band += '<article><h3>If you see this</h3><ul>' +
         watch.map(function (line) { return '<li>' + esc(line) + '</li>'; }).join('') +
         '</ul></article>';
     }
+    if (keywords) band += keywordPacksHtml(lesson);
     if (step) {
       band += '<article><h3>STEP</h3><p>' + esc(step).replace(/\n/g, '<br>') + '</p></article>';
     }
@@ -531,13 +572,30 @@
     var good = (lesson.success_check || '').trim();
     var stepText = (lesson.differentiation || '').trim();
     if (good) bandBlock('WHAT GOOD LOOKS LIKE', wrapLines(good, regular, bodySize, inner - 16));
-    var watch = watchItems(lesson);
-    if (watch.length) {
-      bandBlock('IF YOU SEE THIS', watch.reduce(function (all, line) {
-        return all.concat(wrapLines(line, regular, bodySize, inner - 24).map(function (part, i) {
-          return (i === 0 ? '- ' : '  ') + part;
-        }));
-      }, []));
+    if (keywordHour(lesson)) {
+      otherPacks(lesson).forEach(function (pack) {
+        var see = cleanLines(pack.watch);
+        var cues = cleanLines(pack.cues);
+        var lines = [];
+        if (see.length) lines = lines.concat(wrapLines('See ' + see.join(' '), regular, 8, inner - 16));
+        if (cues.length) lines = lines.concat(wrapLines(cues.join(' '), regular, 8, inner - 16));
+        if (!lines.length) return;
+        court.drawText(pdfSafe(pack.title || 'Cue pack'), {
+          x: pad, y: cursor - 10, size: 8, font: black, color: navy
+        });
+        cursor = drawLines(court, lines, regular, 8, pad, cursor - 14, 10, ink) - 4;
+        court.drawRectangle({ x: pad, y: cursor, width: inner, height: 0.4, color: line });
+        cursor -= 4;
+      });
+    } else {
+      var watch = watchItems(lesson);
+      if (watch.length) {
+        bandBlock('IF YOU SEE THIS', watch.reduce(function (all, line) {
+          return all.concat(wrapLines(line, regular, bodySize, inner - 24).map(function (part, i) {
+            return (i === 0 ? '- ' : '  ') + part;
+          }));
+        }, []));
+      }
     }
     if (stepText) bandBlock('STEP', stepText.split(/\n+/).reduce(function (all, line) {
       var trimmed = line.trim();
@@ -732,6 +790,7 @@
     programmeLabel: programmeLabel,
     defaultCuePack: defaultCuePack,
     applyCuePack: applyCuePack,
+    keywordHour: keywordHour,
     sortLessons: sortLessons,
     spineOf: spineOf,
     composeRunSheet: composeRunSheet,
