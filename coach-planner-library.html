@@ -502,7 +502,14 @@
     }
 
     function cardHtml(lesson, prog) {
-      if (!prog || !prog.slug) prog = pickProgramme(lesson);
+      if (prog && prog.slug) {
+        var own = (lesson.programmes || []).filter(function (p) {
+          return p.slug === prog.slug;
+        })[0];
+        if (own) prog = own;
+      } else {
+        prog = pickProgramme(lesson);
+      }
       var idx = prog ? String(prog.index) : '•';
       var of = prog ? ('of ' + prog.count) : (lesson.audience || '');
       var href = 'coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.slug);
