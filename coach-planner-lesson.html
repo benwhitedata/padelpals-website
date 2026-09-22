@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260922j"></script>
+  <script src="js/coach-planner-print.js?v=20260922k"></script>
   <style>
     .lsn-hero.mkt-hero{padding:40px 20px 36px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
@@ -55,6 +55,7 @@
     .lsn-announce span{display:block;font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
     .lsn-announce strong{display:block;font-size:var(--pp-t-say);font-weight:700;color:#1a2238;line-height:1.3}
     .lsn-announce p{margin:12px 0 0;color:#333;font-size:var(--pp-t-body);line-height:1.55}
+    #lsnStepBody{display:block;margin-top:4px;font-size:var(--pp-t-body);font-weight:600;letter-spacing:0;text-transform:none;color:#333;white-space:pre-line;line-height:1.55}
     .lsn-kick{background:#fff;border-radius:16px;padding:16px 20px;box-shadow:0 8px 24px rgba(26,34,56,.08);border:1px solid rgba(26,34,56,.06)}
     .lsn-kick span{display:block;font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
     .lsn-kick strong{display:block;font-size:var(--pp-t-body);font-weight:700;color:#1a2238;line-height:1.55}
@@ -152,7 +153,7 @@
         <span id="lsnAnnounceLabel">The sentence you announce</span>
         <strong id="lsnObjective"></strong>
         <p id="lsnSuccessCheck"></p>
-        <p id="lsnDifferentiation"></p>
+        <p id="lsnDifferentiation" hidden><span>STEP</span><span id="lsnStepBody"></span></p>
       </div>
 
       <div class="lsn-section" id="lsnCueWrap" hidden>
@@ -473,7 +474,8 @@
       document.getElementById('lsnHeroMeta').textContent = meta;
       document.getElementById('lsnHeroMeta').hidden = !meta;
 
-      var tags = [lesson.game_situation, lesson.phase, lesson.tactic].filter(Boolean);
+      var eye = lesson.technical_focus ? ('Eye on ' + lesson.technical_focus) : '';
+      var tags = [lesson.game_situation, lesson.phase, lesson.tactic, lesson.ball_characteristic, eye].filter(Boolean);
       document.getElementById('lsnTags').innerHTML = tags.map(function (t) {
         return '<span class="mkt-pill">' + esc(t) + '</span>';
       }).join('');
@@ -484,7 +486,7 @@
       var stepEl = document.getElementById('lsnDifferentiation');
       goodEl.textContent = good ? ('Good looks like: ' + good) : '';
       goodEl.hidden = !good;
-      stepEl.textContent = step ? ('STEP: ' + step) : '';
+      document.getElementById('lsnStepBody').textContent = step;
       stepEl.hidden = !step;
 
       var note = (lesson.coach_note || '').trim();

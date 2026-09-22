@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260922j"></script>
+  <script src="js/coach-planner-print.js?v=20260922k"></script>
   <style>
     .lib-hero.mkt-hero{padding:48px 20px 56px;text-align:center}
     .lib-hero .mkt-hero-inner{max-width:720px;margin:0 auto;text-align:center}
@@ -177,7 +177,7 @@
     <div class="mkt-hero-inner">
       <p class="mkt-eyebrow">Coach Planner</p>
       <h1>Lesson Library</h1>
-      <p>Programmes, a catalogue by game situation, and the games that fill the hour.</p>
+      <p>Programmes, a catalogue by skill, and the games that fill the hour.</p>
     </div>
   </section>
 
@@ -242,7 +242,7 @@
           <span class="lib-filter-label">Browse</span>
           <div class="lib-pills" id="libPath" role="group" aria-label="Browse by path">
             <button type="button" class="lib-pill" data-path="programmes" aria-pressed="true">Programmes</button>
-            <button type="button" class="lib-pill" data-path="catalogue" aria-pressed="false">By situation</button>
+            <button type="button" class="lib-pill" data-path="catalogue" aria-pressed="false">By skill</button>
           </div>
         </div>
         <div class="lib-filter-row" id="libSitRow" hidden>
@@ -275,8 +275,40 @@
     };
     var KNOWN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate'];
     var SITUATION_ORDER = [
-      'Serve', 'Return', 'Both Back', 'At Net', 'Opponents at Net', 'Both Pairs at the Net', 'Whole Court'
+      'Serve', 'Return', 'Both Back', 'At Net', 'Opponents at Net', 'Both Pairs at the Net'
     ];
+    var SKILL_GROUP_ORDER = [
+      'Foundations', 'Serve', 'Return', 'Both Back', 'At Net',
+      'Opponents at Net', 'Both Pairs at the Net', 'Whole Court'
+    ];
+    var SKILL_GROUP_BY_ID = {
+      grip_and_contact: 'Foundations',
+      ready_and_movement: 'Foundations',
+      rules_and_scoring: 'Foundations',
+      underarm_serve: 'Serve',
+      serve_and_net: 'Serve',
+      return_depth: 'Return',
+      return_lob: 'Return',
+      groundstroke_rally: 'Both Back',
+      back_glass_rally: 'Both Back',
+      side_and_double_wall: 'Both Back',
+      bajada: 'Both Back',
+      volley_placement: 'At Net',
+      bandeja: 'At Net',
+      vibora: 'At Net',
+      smash_and_finish: 'At Net',
+      holding_the_net: 'At Net',
+      the_lob: 'Opponents at Net',
+      chiquita: 'Opponents at Net',
+      defending_the_corner: 'Opponents at Net',
+      net_battle: 'Both Pairs at the Net',
+      low_block_reset: 'Both Pairs at the Net',
+      transition_to_net: 'Whole Court',
+      pair_positioning: 'Whole Court',
+      pair_communication: 'Whole Court',
+      point_construction: 'Whole Court',
+      match_mentality: 'Whole Court'
+    };
     var SMALL = /^(a|an|and|at|for|in|of|on|or|the|to|vs)$/i;
 
     function esc(s) {
@@ -386,7 +418,7 @@
         if (anyProg && !(lesson.programmes && lesson.programmes.length)) return false;
       }
       if (filters.query) {
-        var blob = [lesson.title, lesson.audience, lesson.objective, lesson.game_situation, lesson.phase, lesson.tactic, lesson.skill_id]
+        var blob = [lesson.title, lesson.audience, lesson.objective, lesson.game_situation, lesson.phase, lesson.tactic, lesson.ball_characteristic, lesson.technical_focus, lesson.skill_id, skillGroup(lesson)]
           .join(' ').toLowerCase();
         if (blob.indexOf(filters.query) === -1) return false;
       }
@@ -395,6 +427,15 @@
 
     function situationRank(name) {
       var i = SITUATION_ORDER.indexOf(name);
+      return i === -1 ? 99 : i;
+    }
+
+    function skillGroup(lesson) {
+      return SKILL_GROUP_BY_ID[lesson && lesson.skill_id] || 'Untagged';
+    }
+
+    function skillGroupRank(name) {
+      var i = SKILL_GROUP_ORDER.indexOf(name);
       return i === -1 ? 99 : i;
     }
 
@@ -515,7 +556,7 @@
       var href = 'coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.slug);
       if (prog && prog.slug) href += '&programme=' + encodeURIComponent(prog.slug);
       if (view === 'coaching') href += '&mode=coaching';
-      var pills = [lesson.audience, lesson.game_situation, lesson.phase, lesson.tactic]
+      var pills = [lesson.audience, lesson.game_situation, lesson.phase, lesson.tactic, lesson.ball_characteristic]
         .filter(Boolean).map(function (p) { return '<span class="mkt-pill">' + esc(p) + '</span>'; }).join('');
       return '<a class="lib-card" href="' + href + '">' +
         '<div class="lib-idx" aria-hidden="true"><span class="lib-idx-n">' + esc(idx) + '</span>' +
@@ -561,7 +602,20 @@
       }
 
       var html = intro;
-      if (filters.path === 'catalogue' || filters.sort === 'situation') {
+      if (filters.path === 'catalogue') {
+        var groupMap = {};
+        var groupKeys = [];
+        lessons.forEach(function (l) {
+          var key = skillGroup(l);
+          if (!groupMap[key]) {
+            groupMap[key] = [];
+            groupKeys.push(key);
+          }
+          groupMap[key].push(l);
+        });
+        groupKeys.sort(function (a, b) { return skillGroupRank(a) - skillGroupRank(b); });
+        html += groupKeys.map(function (key) { return sectionHtml(key, groupMap[key]); }).join('');
+      } else if (filters.sort === 'situation') {
         var sitMap = {};
         var sitKeys = [];
         lessons.forEach(function (l) {

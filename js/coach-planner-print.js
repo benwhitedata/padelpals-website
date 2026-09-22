@@ -307,6 +307,12 @@
     return pack && pack.why ? String(pack.why).trim() : '';
   }
 
+  function frameworkLine(lesson) {
+    var eye = lesson.technical_focus ? ('Eye on ' + lesson.technical_focus) : '';
+    return [lesson.game_situation, lesson.phase, lesson.tactic, lesson.ball_characteristic, eye]
+      .filter(Boolean).join(' · ');
+  }
+
   function metaLine(lesson) {
     var hour = programmeLabel(lesson);
     return [
@@ -357,7 +363,7 @@
         '</ul></article>';
     }
     if (step) {
-      band += '<article><h3>STEP</h3><p>' + esc(step) + '</p></article>';
+      band += '<article><h3>STEP</h3><p>' + esc(step).replace(/\n/g, '<br>') + '</p></article>';
     }
     var title = esc(lesson.title || 'Lesson');
     var court =
@@ -367,7 +373,9 @@
       '<header><div class="brand"><img src="' + esc(logo) + '" alt="">' +
       '<div class="brand-name">Padel Pals</div></div>' +
       '<h1>' + title + '</h1>' +
-      '<p class="meta">' + esc(metaLine(lesson)) + '</p></header>' +
+      '<p class="meta">' + esc(metaLine(lesson)) + '</p>' +
+      (frameworkLine(lesson) ? '<p class="meta">' + esc(frameworkLine(lesson)) + '</p>' : '') +
+      '</header>' +
       '<section class="say"><span>' + esc(sayLabel) + '</span><strong>' + esc(lesson.objective || '') + '</strong></section>' +
       cueCards(lesson) +
       (band ? '<section class="band">' + band + '</section>' : '') +
@@ -469,7 +477,8 @@
     var court = pdf.addPage([pageW, pageH]);
     var titleLines = wrapLines(lesson.title || 'Lesson', black, 16, inner - mm(12));
     var metaLines = wrapLines(metaLine(lesson), bold, 8.5, inner);
-    var headerH = 22 + titleLines.length * 19 + metaLines.length * 11;
+    var frameworkLines = wrapLines(frameworkLine(lesson), bold, 8, inner);
+    var headerH = 22 + titleLines.length * 19 + metaLines.length * 11 + frameworkLines.length * 11;
     var mastH = Math.max(mm(46), pad + headerH + mm(4));
     court.drawRectangle({ x: 0, y: pageH - mastH, width: pageW, height: mastH, color: navy });
     if (logo) {
@@ -483,7 +492,11 @@
       color: gold
     });
     drawLines(court, titleLines, black, 16, pad, pageH - pad - 26, 19, white);
-    drawLines(court, metaLines, bold, 8.5, pad, pageH - pad - 26 - titleLines.length * 19, 11, white);
+    var metaTop = pageH - pad - 26 - titleLines.length * 19;
+    drawLines(court, metaLines, bold, 8.5, pad, metaTop, 11, white);
+    if (frameworkLines.length) {
+      drawLines(court, frameworkLines, bold, 8, pad, metaTop - metaLines.length * 11, 11, white);
+    }
 
     var cursor = pageH - mastH - mm(4);
     var coaching = lesson.session_kind === 'coaching';
@@ -520,7 +533,11 @@
         }));
       }, []));
     }
-    if (stepText) bandBlock('STEP', wrapLines(stepText, regular, bodySize, inner - 16));
+    if (stepText) bandBlock('STEP', stepText.split(/\n+/).reduce(function (all, line) {
+      var trimmed = line.trim();
+      if (!trimmed) return all;
+      return all.concat(wrapLines(trimmed, regular, bodySize, inner - 16));
+    }, []));
 
     var hour = pdf.addPage([pageW, pageH]);
     var hourTitle = wrapLines(lesson.title || 'Lesson', black, 16, inner);
