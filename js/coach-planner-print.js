@@ -12,8 +12,7 @@
     'Equal hitting time, equal attention',
     'Feed from where the ball comes from in a match',
     'One teaching point',
-    'Rotate partners every round',
-    'Bats down when you are talking'
+    'Rotate partners every round'
   ];
 
   function esc(s) {
@@ -78,14 +77,14 @@
       '.brand-name{font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:8pt;color:var(--gold)}',
       '.court header{color:#fff;min-height:33mm}',
       '.court header h1{margin-top:4pt;font-size:16pt;font-weight:800;line-height:1.15;color:#fff}',
-      '.meta{margin-top:3pt;font-size:8.5pt;font-weight:600;line-height:1.3;color:rgba(255,255,255,.9)}',
+      '.meta{margin-top:3pt;font-size:10pt;font-weight:600;line-height:1.3;color:rgba(255,255,255,.9)}',
       '.say{margin:0 0 7pt;padding:7pt 9pt;background:var(--tint);border-left:3pt solid var(--gold);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
       '.say span,.band h3,.hour h2,.tail h2,.note strong,.quiet-head p{display:block;font-size:8pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue)}',
-      '.say strong{display:block;margin-top:2pt;font-size:15pt;font-weight:700;line-height:1.25;color:var(--navy)}',
+      '.say strong{display:block;margin-top:2pt;font-size:13pt;font-weight:700;line-height:1.25;color:var(--navy)}',
       '.cues{display:flex;flex-direction:column;gap:4pt;margin:0 0 7pt}',
-      '.cue{display:grid;grid-template-columns:14pt 1fr;gap:5pt;align-items:start;padding:4pt 0;border-bottom:.5pt solid var(--line);font-size:11pt;line-height:1.3}',
+      '.cue{display:grid;grid-template-columns:14pt 1fr;gap:5pt;align-items:start;padding:4pt 0;border-bottom:.5pt solid var(--line);font-size:10pt;line-height:1.3}',
       '.cue:last-child{border-bottom:0}',
-      '.cue b{color:var(--blue);font-size:11pt}',
+      '.cue b{color:var(--blue);font-size:10pt}',
       '.band{display:flex;flex-direction:column;gap:5pt}',
       '.band article{background:var(--tint);padding:5pt 7pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
       '.band h3{margin-bottom:2pt}',
@@ -93,31 +92,30 @@
       '.band ul{margin:0 0 0 12pt;padding:0;font-size:10pt;line-height:1.3}',
       '.band li{margin:0}',
       '.quiet-head{padding-bottom:4pt;margin-bottom:6pt;border-bottom:.5pt solid var(--navy)}',
-      '.quiet-head h1{margin-top:2pt;font-size:13pt;font-weight:800;line-height:1.15;color:var(--navy)}',
+      '.quiet-head h1{margin-top:2pt;font-size:16pt;font-weight:800;line-height:1.15;color:var(--navy)}',
       '.why{margin:0 0 4pt;font-size:10pt;line-height:1.3;color:var(--ink)}',
       '.hour h2{margin-bottom:2pt}',
       '.hour-rows{display:flex;flex-direction:column}',
       '.step{display:grid;grid-template-columns:40pt 1fr;gap:6pt;padding:2pt 0;border-bottom:.5pt solid var(--line);break-inside:avoid}',
       '.step:last-child{border-bottom:0}',
       '.step-time{font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums;font-size:10pt}',
-      '.step-label{font-weight:700;font-size:10.5pt;line-height:1.25}',
+      '.step-label{font-weight:700;font-size:10pt;line-height:1.25}',
       '.step-detail{margin-top:1pt;font-size:10pt;line-height:1.3;color:var(--ink)}',
       '.note{margin-top:5pt;padding:4pt 7pt;border-left:2pt solid var(--blue);background:var(--tint);font-size:10pt;line-height:1.3;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
       '.note strong{margin-bottom:1pt}',
       '.tail{margin-top:4pt}',
       '.tail h2{margin-bottom:2pt}',
-      '.equip{margin:0 0 3pt;font-size:9.5pt;line-height:1.3;color:var(--ink)}',
-      '.reminders{margin:0;padding:0 0 0 12pt;columns:2;column-gap:10pt;font-size:9pt;line-height:1.3;color:var(--ink)}',
+      '.equip{margin:0 0 3pt;font-size:10pt;line-height:1.3;color:var(--ink)}',
+      '.reminders{margin:0;padding:0 0 0 12pt;columns:2;column-gap:10pt;font-size:10pt;line-height:1.3;color:var(--ink)}',
       '.reminders li{margin:0;break-inside:avoid}',
       '.safe.tight .step{padding:1.5pt 0}',
-      '.safe.tight .why{font-size:9.5pt;line-height:1.25}',
-      '.safe.tight .reminders{font-size:8pt;line-height:1.25}',
-      '.safe.dense .step-detail{font-size:9pt;line-height:1.2}',
-      '.safe.dense .step-label{font-size:10pt}',
+      '.safe.tight .why{line-height:1.25}',
+      '.safe.tight .reminders{line-height:1.25}',
+      '.safe.dense .step-detail{line-height:1.2}',
       '.safe.columns .hour-rows{display:block;column-count:2;column-gap:8pt}',
-      '.safe.packed .why{font-size:9pt;line-height:1.2;margin-bottom:2pt}',
+      '.safe.packed .why{line-height:1.2;margin-bottom:2pt}',
       '.safe.packed .step{padding:1pt 0}',
-      '.safe.packed .note{margin-top:3pt;padding:2pt 6pt;font-size:9pt}',
+      '.safe.packed .note{margin-top:3pt;padding:2pt 6pt}',
       '.safe.packed .quiet-head{margin-bottom:3pt;padding-bottom:2pt}',
       '.safe.packed .tail{margin-top:3pt}',
       '.foot{margin-top:auto;padding-top:4pt;border-top:1.5pt solid var(--gold);text-align:center;font-size:8pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}',
@@ -470,15 +468,15 @@
     var black = fonts.black;
     var saySize = 13;
     var bodySize = 10;
-    var bodyLead = 11;
-    var cueSize = 11;
-    var cueLead = 14;
+    var bodyLead = 12;
+    var cueSize = bodySize;
+    var cueLead = bodyLead;
 
     var court = pdf.addPage([pageW, pageH]);
     var titleLines = wrapLines(lesson.title || 'Lesson', black, 16, inner - mm(12));
-    var metaLines = wrapLines(metaLine(lesson), bold, 8.5, inner);
-    var frameworkLines = wrapLines(frameworkLine(lesson), bold, 8, inner);
-    var headerH = 22 + titleLines.length * 19 + metaLines.length * 11 + frameworkLines.length * 11;
+    var metaLines = wrapLines(metaLine(lesson), bold, bodySize, inner);
+    var frameworkLines = wrapLines(frameworkLine(lesson), bold, bodySize, inner);
+    var headerH = 22 + titleLines.length * 19 + (metaLines.length + frameworkLines.length) * bodyLead;
     var mastH = Math.max(mm(46), pad + headerH + mm(4));
     court.drawRectangle({ x: 0, y: pageH - mastH, width: pageW, height: mastH, color: navy });
     if (logo) {
@@ -493,9 +491,9 @@
     });
     drawLines(court, titleLines, black, 16, pad, pageH - pad - 26, 19, white);
     var metaTop = pageH - pad - 26 - titleLines.length * 19;
-    drawLines(court, metaLines, bold, 8.5, pad, metaTop, 11, white);
+    drawLines(court, metaLines, bold, bodySize, pad, metaTop, bodyLead, white);
     if (frameworkLines.length) {
-      drawLines(court, frameworkLines, bold, 8, pad, metaTop - metaLines.length * 11, 11, white);
+      drawLines(court, frameworkLines, bold, bodySize, pad, metaTop - metaLines.length * bodyLead, bodyLead, white);
     }
 
     var cursor = pageH - mastH - mm(4);
