@@ -134,7 +134,7 @@
       '<link rel="preconnect" href="https://fonts.googleapis.com">' +
       '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">' +
       '<style>' + printCss() + '</style></head><body>' + bodyHtml +
-      '<script>window.addEventListener("load",function(){var go=function(){document.querySelectorAll(".safe").forEach(function(safe){["tight","dense","columns","packed"].forEach(function(name){if(safe.scrollHeight>safe.clientHeight+1)safe.classList.add(name);});});setTimeout(function(){window.print();},250);};if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go);}else{go();}});<\/script></body></html>';
+      '<script>window.addEventListener("load",function(){var go=function(){function over(safe){return safe.scrollHeight>safe.clientHeight+1;}document.querySelectorAll(".safe").forEach(function(safe){["tight","dense","columns","packed"].forEach(function(name){if(over(safe))safe.classList.add(name);});if(over(safe)){var why=safe.querySelector(".why");if(why)why.remove();}if(over(safe)){var reminders=safe.querySelector(".reminders");if(reminders)reminders.remove();}});setTimeout(function(){window.print();},250);};if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go);}else{go();}});<\/script></body></html>';
   }
 
   function spineOf(lesson) {
@@ -542,17 +542,60 @@
     hour.drawText('PADEL PALS', { x: pad, y: pageH - pad - 8, size: 8, font: black, color: blue });
     var afterTitle = drawLines(hour, hourTitle, black, 16, pad, pageH - pad - 16, 20, navy);
     hour.drawRectangle({ x: pad, y: afterTitle - 8, width: inner, height: 0.6, color: navy });
-    cursor = afterTitle - mm(6);
+    var floor = mm(14);
     var why = whyText(lesson);
-    if (why) {
-      cursor = drawLines(hour, wrapLines(why, regular, bodySize, inner), regular, bodySize, pad, cursor, bodyLead, ink) - 8;
+    var whyLines = why ? wrapLines(why, regular, bodySize, inner) : [];
+    var rows = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
+    var prepared = rows.map(function (step) {
+      return {
+        step: step,
+        detailLines: step.detail ? wrapLines(step.detail, regular, bodySize, inner) : []
+      };
+    });
+    var note = (lesson.coach_note || '').trim();
+    var noteLines = note ? wrapLines(note, regular, bodySize, inner - 18) : [];
+    var equip = Array.isArray(lesson.equipment) && lesson.equipment.length ? lesson.equipment : ['Balls and cones'];
+    var equipLines = wrapLines('Equipment: ' + equip.join(', ') + '.', regular, bodySize, inner);
+    var colW = (inner - 16) / 2;
+    var reminderRows = [];
+    for (var r = 0; r < REMINDERS.length; r += 2) {
+      reminderRows.push({
+        left: wrapLines(REMINDERS[r], regular, bodySize, colW - 12).map(function (part, i) {
+          return (i === 0 ? '- ' : '  ') + part;
+        }),
+        right: REMINDERS[r + 1] ? wrapLines(REMINDERS[r + 1], regular, bodySize, colW - 12).map(function (part, i) {
+          return (i === 0 ? '- ' : '  ') + part;
+        }) : []
+      });
+    }
+    function projectedEnd(showWhy, showReminders) {
+      var c = afterTitle - mm(6);
+      if (showWhy && whyLines.length) c -= whyLines.length * bodyLead + 8;
+      c -= 16;
+      prepared.forEach(function (row) {
+        c -= 22 + row.detailLines.length * bodyLead;
+      });
+      if (noteLines.length) c -= 30 + noteLines.length * bodyLead;
+      c -= 18 + equipLines.length * bodyLead + 4;
+      if (showReminders) {
+        reminderRows.forEach(function (pair) {
+          c -= Math.max(pair.left.length, pair.right.length) * bodyLead + 2;
+        });
+      }
+      return c;
+    }
+    var showWhy = whyLines.length > 0 && projectedEnd(true, true) >= floor;
+    var showReminders = projectedEnd(showWhy, true) >= floor;
+
+    cursor = afterTitle - mm(6);
+    if (showWhy) {
+      cursor = drawLines(hour, whyLines, regular, bodySize, pad, cursor, bodyLead, ink) - 8;
     }
     hour.drawText('THE HOUR', { x: pad, y: cursor - 8, size: 8, font: black, color: blue });
     cursor -= 16;
-    var rows = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
-    var floor = mm(14);
-    rows.forEach(function (step) {
-      var detailLines = step.detail ? wrapLines(step.detail, regular, bodySize, inner) : [];
+    prepared.forEach(function (row) {
+      var step = row.step;
+      var detailLines = row.detailLines;
       hour.drawText(pdfSafe(step.from + '-' + step.to), {
         x: pad, y: cursor - 10, size: bodySize, font: black, color: blue
       });
@@ -567,30 +610,22 @@
       hour.drawRectangle({ x: pad, y: cursor, width: inner, height: 0.4, color: line });
       cursor -= 4;
     });
-    var note = (lesson.coach_note || '').trim();
-    if (note) {
-      var noteLines = wrapLines(note, regular, bodySize, inner - 18);
+    if (noteLines.length) {
       var noteH = 18 + noteLines.length * bodyLead + 6;
       hour.drawRectangle({ x: pad, y: cursor - noteH, width: inner, height: noteH, color: tint });
       hour.drawRectangle({ x: pad, y: cursor - noteH, width: 2, height: noteH, color: blue });
       hour.drawText('COACH NOTE', { x: pad + 10, y: cursor - 14, size: 8, font: black, color: blue });
       cursor = drawLines(hour, noteLines, regular, bodySize, pad + 10, cursor - 20, bodyLead, ink) - 10;
     }
-    var equip = Array.isArray(lesson.equipment) && lesson.equipment.length ? lesson.equipment : ['Balls and cones'];
     hour.drawText('BEFORE YOU START', { x: pad, y: cursor - 10, size: 8, font: black, color: blue });
     cursor -= 18;
-    cursor = drawLines(hour, wrapLines('Equipment: ' + equip.join(', ') + '.', regular, bodySize, inner), regular, bodySize, pad, cursor, bodyLead, ink) - 4;
-    var colW = (inner - 16) / 2;
-    for (var r = 0; r < REMINDERS.length; r += 2) {
-      var left = wrapLines(REMINDERS[r], regular, bodySize, colW - 12).map(function (part, i) {
-        return (i === 0 ? '- ' : '  ') + part;
+    cursor = drawLines(hour, equipLines, regular, bodySize, pad, cursor, bodyLead, ink) - 4;
+    if (showReminders) {
+      reminderRows.forEach(function (pair) {
+        drawLines(hour, pair.left, regular, bodySize, pad, cursor, bodyLead, ink);
+        if (pair.right.length) drawLines(hour, pair.right, regular, bodySize, pad + colW + 16, cursor, bodyLead, ink);
+        cursor -= Math.max(pair.left.length, pair.right.length) * bodyLead + 2;
       });
-      var right = REMINDERS[r + 1] ? wrapLines(REMINDERS[r + 1], regular, bodySize, colW - 12).map(function (part, i) {
-        return (i === 0 ? '- ' : '  ') + part;
-      }) : [];
-      drawLines(hour, left, regular, bodySize, pad, cursor, bodyLead, ink);
-      if (right.length) drawLines(hour, right, regular, bodySize, pad + colW + 16, cursor, bodyLead, ink);
-      cursor -= Math.max(left.length, right.length) * bodyLead + 2;
     }
     var footY = mm(8);
     hour.drawRectangle({ x: pad, y: footY + 12, width: inner, height: 1.5, color: gold });
