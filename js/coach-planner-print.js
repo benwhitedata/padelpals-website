@@ -185,7 +185,9 @@
   function gameLine(game) {
     if (!game) return '';
     var title = game.title || '';
-    var body = game.setup || game.blurb || '';
+    // The hour names the game. The full setup stays on the game page, so the
+    // printed why is not pushed off the card.
+    var body = game.blurb || game.when_to_pick || game.setup || '';
     if (title && body) return title + '. ' + body;
     return title || body;
   }
