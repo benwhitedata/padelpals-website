@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260921a"></script>
+  <script src="js/coach-planner-print.js?v=20260922a"></script>
   <style>
     .lib-hero.mkt-hero{padding:48px 20px 56px;text-align:center}
     .lib-hero .mkt-hero-inner{max-width:720px;margin:0 auto;text-align:center}
@@ -363,7 +363,6 @@
     }
 
     function lessonsForView() {
-      if (view === 'coaching') return allLessons.filter(function (l) { return sessionKind(l) === 'coaching'; });
       if (view === 'games') return [];
       return allLessons.filter(function (l) { return sessionKind(l) === 'drill'; });
     }
@@ -451,9 +450,8 @@
       document.getElementById('libSort').value = filters.sort;
 
       var drillN = allLessons.filter(function (l) { return sessionKind(l) === 'drill'; }).length;
-      var coachN = allLessons.filter(function (l) { return sessionKind(l) === 'coaching'; }).length;
       document.getElementById('libTabDrillsN').textContent = drillN ? String(drillN) : '';
-      document.getElementById('libTabCoachN').textContent = coachN ? String(coachN) : '';
+      document.getElementById('libTabCoachN').textContent = drillN ? String(drillN) : '';
       document.getElementById('libTabGamesN').textContent = allGames.length ? String(allGames.length) : '';
     }
 
@@ -501,6 +499,7 @@
       var of = prog ? ('of ' + prog.count) : (lesson.audience || '');
       var href = 'coach-planner-lesson.html?slug=' + encodeURIComponent(lesson.slug);
       if (prog && prog.slug) href += '&programme=' + encodeURIComponent(prog.slug);
+      if (view === 'coaching') href += '&mode=coaching';
       var pills = [lesson.audience, lesson.game_situation, lesson.phase, lesson.tactic]
         .filter(Boolean).map(function (p) { return '<span class="mkt-pill">' + esc(p) + '</span>'; }).join('');
       return '<a class="lib-card" href="' + href + '">' +

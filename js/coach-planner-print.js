@@ -185,10 +185,15 @@
     return title || body;
   }
 
+  function coachingHour(spine) {
+    return !!(spine && spine.slug === 'coaching-hour');
+  }
+
   function composeRunSheet(lesson, options) {
     options = options || {};
     var nextTitle = options.nextTitle || null;
     var spine = options.spine || spineOf(lesson);
+    var coaching = coachingHour(spine);
     var details = lesson.step_details || {};
     var steps = spine && Array.isArray(spine.steps) ? spine.steps : [];
     if (steps.length) {
@@ -198,16 +203,34 @@
         var detail;
         if (overlay != null && String(overlay).trim() !== '') {
           detail = overlay;
+        } else if (label === 'Warm up with a ball') {
+          var parts = [];
+          if (coaching) {
+            if (step.default_detail) parts.push(step.default_detail);
+          } else if (lesson.objective) {
+            parts.push('One sentence, then they hit: ' + lesson.objective);
+          }
+          if (lesson.warmup_game) parts.push(gameLine(lesson.warmup_game));
+          else if (!coaching && step.default_detail) parts.push(step.default_detail);
+          detail = parts.filter(Boolean).join(' ');
+        } else if (label === 'Name what you saw') {
+          detail = [step.default_detail, lesson.objective ? ('Planned theme, for you: ' + lesson.objective) : '']
+            .filter(Boolean).join(' ');
         } else if (label === 'Name the focus' && lesson.objective) {
-          detail = 'One sentence, out loud, twice: ' + lesson.objective;
-        } else if (label === 'Warm up with a ball' && lesson.warmup_game) {
-          detail = gameLine(lesson.warmup_game);
+          detail = 'One sentence, then they hit: ' + lesson.objective;
         } else if (label === 'Open' && lesson.differentiation) {
           detail = [step.default_detail, lesson.differentiation].filter(Boolean).join(' ');
         } else if (label === 'Conditioned game' && lesson.conditioned_game) {
           detail = gameLine(lesson.conditioned_game);
         } else if (label === 'Close' && nextTitle) {
-          if (lesson.programme_wrap_title && nextTitle === lesson.programme_wrap_title) {
+          if (coaching) {
+            var named = step.default_detail || 'Each player names what they are now doing differently.';
+            if (lesson.programme_wrap_title && nextTitle === lesson.programme_wrap_title) {
+              detail = named + ' Back to the start of this programme: ' + nextTitle + '.';
+            } else {
+              detail = named + ' Next in this programme is ' + nextTitle + '.';
+            }
+          } else if (lesson.programme_wrap_title && nextTitle === lesson.programme_wrap_title) {
             detail = 'Restate the focus. Back to the start of this programme: ' + nextTitle + '.';
           } else {
             detail = 'Restate the focus. Next in this programme is ' + nextTitle + '.';
@@ -226,13 +249,20 @@
     var copy = applyCuePack(lesson, lesson._cuePack || defaultCuePack(lesson));
     copy.warmup_game = nestedRow(copy.warmup_game);
     copy.conditioned_game = nestedRow(copy.conditioned_game);
-    var spine = spineOf(copy);
+    var coaching = copy._runMode === 'coaching' && copy._overrideSpine;
+    var spine = coaching ? copy._overrideSpine : spineOf(copy);
     copy.run_sheet = composeRunSheet(copy, {
       spine: spine,
       nextTitle: nextTitleFor(copy, pool)
     });
-    if (!copy.duration_min && spine && spine.duration_min) copy.duration_min = spine.duration_min;
-    if (!copy.group_size_max && spine && spine.group_size_max) copy.group_size_max = spine.group_size_max;
+    if (coaching) {
+      copy.session_kind = 'coaching';
+      if (spine.duration_min) copy.duration_min = spine.duration_min;
+      if (spine.group_size_max) copy.group_size_max = spine.group_size_max;
+    } else {
+      if (!copy.duration_min && spine && spine.duration_min) copy.duration_min = spine.duration_min;
+      if (!copy.group_size_max && spine && spine.group_size_max) copy.group_size_max = spine.group_size_max;
+    }
     return copy;
   }
 
@@ -347,7 +377,7 @@
       '</div></div><div class="slot">' + esc(programmeLabel(lesson)) + '</div></div>' +
       '<div class="half-grid"><div>' + runRows(lesson, false) + '</div>' +
       '<div class="right">' +
-      '<h3>Announce</h3><p>' + esc(lesson.objective || '') + '</p>' +
+      '<h3>' + (lesson.session_kind === 'coaching' ? 'Planned theme' : 'Announce') + '</h3><p>' + esc(lesson.objective || '') + '</p>' +
       cuesBlock(lesson) +
       '<h3>Framework</h3><p>' +
       [lesson.game_situation, lesson.phase, lesson.tactic].filter(Boolean).map(esc).join(' · ') +
@@ -358,7 +388,7 @@
       overlayRows(lesson).map(function (step) {
         return '<h3>' + esc(step.label) + '</h3><p>' + esc(step.detail) + '</p>';
       }).join('') +
-      (conditioned ? '<h3>Conditioned game</h3><p>' + esc(conditioned) + '</p>' : '') +
+      (conditioned && lesson.session_kind !== 'coaching' ? '<h3>Conditioned game</h3><p>' + esc(conditioned) + '</p>' : '') +
       '</div></div></section>';
   }
 

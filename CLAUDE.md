@@ -27,7 +27,7 @@ Free signed-in library for now. Subscription / Stripe later.
 **Current product**
 - Signed-in Padel Pals accounts can read every published plan. No paywall.
 - Targeting is by **group name** (`audience`: Intro to Padel, Beginner / Improver, Improver / Intermediate), not numeric ratings.
-- Spines in `coaching.spines` (`sunday-drill`, `intro-padel`). Lessons are reusable templates (`spine_id` + `step_details` + cue packs + toolkit ids), not a copied seven-step `run_sheet`.
+- Spines in `coaching.spines` (`sunday-drill`, `intro-padel`, `coaching-hour`). Lessons are reusable templates (`spine_id` + `step_details` + cue packs + toolkit ids), not a copied seven-step `run_sheet`. A drill keeps its spine. Coaching reuses the same lesson and swaps in `coaching-hour` at render time (`?mode=coaching`). Do not duplicate lessons as `session_kind = coaching`.
 - Programmes in `coaching.programmes` / `programme_items`. Length is the item count. Do not hardcode 6. `session_date` stays unused in the UI.
 - Library browse: programmes, or catalogue grouped by LTA game situation. No Mode calendar.
 - Do not add `subscribers` / `stripe_events` until we actually charge.
@@ -35,15 +35,15 @@ Free signed-in library for now. Subscription / Stripe later.
 
 **Pages**
 - `coach-planner.html` — public page: programmes you can rerun, a library by situation, drills vs coaching, the funnel, named groups.
-- `coach-planner-library.html` — signed-in index. **Drills** (programmes + catalogue) and **Coaching** are separate sections (`lessons.session_kind`). **Games** is warm-ups, mini games, and extra overhead resources (`coaching.games`). The drills-versus-coaching wording and funnel live in `coaching.guides` (`drills-v-coaching`), not in this repo.
-- `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`. Optional `?programme=`. Joins the overlay to its spine, cue packs, toolkit and programme neighbours, then composes the hour in `js/coach-planner-print.js`. Vimeo only on owned overhead extras. Warm-up and conditioned-game toolkit items preview `when_to_pick` / `blurb` and link to the game page in a new tab.
+- `coach-planner-library.html` — signed-in index. **Drills** and **Coaching** are separate sections of the same programmes. Coaching opens each hour with `?mode=coaching` so the renderer uses the `coaching-hour` spine. **Games** is warm-ups, mini games, and extra overhead resources (`coaching.games`). The drills-versus-coaching wording and funnel live in `coaching.guides` (`drills-v-coaching`), not in this repo.
+- `coach-planner-lesson.html` — renderer; requires sign-in and `?slug=`. Optional `?programme=`. Optional `?mode=coaching` composes `coaching-hour` (max 4: warm-up, observe, name what you saw, demo, closed, open, game, close) instead of the lesson spine. Joins the overlay to its spine, cue packs, toolkit and programme neighbours, then composes the hour in `js/coach-planner-print.js`. Vimeo only on owned overhead extras. Warm-up and conditioned-game toolkit items preview `when_to_pick` / `blurb` and link to the game page in a new tab. The Game step does not take the conditioned-game scoring rule.
 - `coach-planner-game.html` — signed-in full description for one `coaching.games` row (`?slug=`). Setup, when to pick, optional clip.
 
 **Publish a lesson (overlay only)**
 - Point `spine_id` at `sunday-drill` or `intro-padel`. Leave `run_sheet` null. Leave `session_date` null.
 - Point `warmup_game_id` / `conditioned_game_id` plus `warmup_game_ids` / `conditioned_game_ids` at `coaching.games`.
 - Write theme fields: `title`, `audience`, `skill_id`, `game_situation` / `phase` / `tactic`, `objective`, `success_check`, `differentiation`, `equipment`, `coach_note`, optional `cue_packs`.
-- Put only the lines that differ from the spine in `step_details`, keyed by label (`Demo`, `Closed`, Intro `Flavour`). Omit `Name the focus` (uses `objective`), omit `Open` (uses `differentiation` / STEP), omit `Close` to fill from the next programme item.
+- Put only the lines that differ from the spine in `step_details`, keyed by label (`Demo`, `Closed`, `Open`, Intro `Flavour`). Omit a warm-up overlay (the objective is the one sentence at the start of `Warm up with a ball`). Omit `Close` to fill from the next programme item. Coaching reuses `Demo`, `Closed` and `Open`. It does not use `Flavour`.
 - Optionally append a `programme_items` row. Do not invent "week 7 of 6".
 - Do not paste the seven-step hour again. Do not add HTML or static lesson files. Do not flatten LTA PDFs or transcribe LTA clips into game rows. Overhead extras (Up or Down, Jumper Off, Elbow Push, Hide the Logo, Momentum, Clocks, Open Racket, Scarf, Beat the Bounce) are original one-line problem notes plus a Vimeo link.
 
