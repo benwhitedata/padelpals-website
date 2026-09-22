@@ -389,6 +389,256 @@
     return docShell((lesson.title || 'Lesson') + ' · Coach Planner', court + hour);
   }
 
+  var MM = 72 / 25.4;
+  var FONT_SRC = {
+    regular: 'https://cdn.jsdelivr.net/fontsource/fonts/montserrat@5.2.5/latin-400-normal.ttf',
+    bold: 'https://cdn.jsdelivr.net/fontsource/fonts/montserrat@5.2.5/latin-700-normal.ttf',
+    black: 'https://cdn.jsdelivr.net/fontsource/fonts/montserrat@5.2.5/latin-800-normal.ttf'
+  };
+
+  function mm(n) { return n * MM; }
+
+  function pdfSafe(value) {
+    return String(value == null ? '' : value)
+      .replace(/[\u2013\u2014]/g, '-')
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"');
+  }
+
+  function loadScript(src, globalName) {
+    return new Promise(function (resolve, reject) {
+      if (globalName && global[globalName]) { resolve(); return; }
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error(src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function wrapLines(text, font, size, width) {
+    var words = pdfSafe(text).split(/\s+/).filter(Boolean);
+    var lines = [];
+    var line = '';
+    var i;
+    for (i = 0; i < words.length; i++) {
+      var next = line ? line + ' ' + words[i] : words[i];
+      if (line && font.widthOfTextAtSize(next, size) > width) {
+        lines.push(line);
+        line = words[i];
+      } else {
+        line = next;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function drawLines(page, lines, font, size, x, top, leading, color) {
+    var y = top - size;
+    var i;
+    for (i = 0; i < lines.length; i++) {
+      page.drawText(lines[i], { x: x, y: y, size: size, font: font, color: color });
+      y -= leading;
+    }
+    return top - lines.length * leading;
+  }
+
+  function paintCard(pdf, fonts, logo, lesson, compact) {
+    var rgb = global.PDFLib.rgb;
+    var navy = rgb(26 / 255, 34 / 255, 56 / 255);
+    var blue = rgb(42 / 255, 57 / 255, 144 / 255);
+    var gold = rgb(246 / 255, 201 / 255, 21 / 255);
+    var ink = rgb(51 / 255, 51 / 255, 51 / 255);
+    var tint = rgb(238 / 255, 240 / 255, 247 / 255);
+    var white = rgb(1, 1, 1);
+    var pageW = mm(148);
+    var pageH = mm(210);
+    var pad = mm(10);
+    var inner = pageW - pad * 2;
+    var regular = fonts.regular;
+    var bold = fonts.bold;
+    var black = fonts.black;
+    var saySize = compact ? 13 : 15;
+    var bodySize = compact ? 9 : 10;
+    var lead = compact ? 11 : 13;
+
+    var court = pdf.addPage([pageW, pageH]);
+    var titleLines = wrapLines(lesson.title || 'Lesson', black, 16, inner - mm(12));
+    var metaLines = wrapLines(metaLine(lesson), bold, 8.5, inner);
+    var headerH = 22 + titleLines.length * 19 + metaLines.length * 11;
+    var mastH = Math.max(mm(46), pad + headerH + mm(4));
+    court.drawRectangle({ x: 0, y: pageH - mastH, width: pageW, height: mastH, color: navy });
+    if (logo) {
+      court.drawImage(logo, { x: pad, y: pageH - pad - 18, width: 18, height: 18 });
+    }
+    court.drawText('PADEL PALS', {
+      x: pad + (logo ? 24 : 0),
+      y: pageH - pad - 13,
+      size: 8,
+      font: black,
+      color: gold
+    });
+    drawLines(court, titleLines, black, 16, pad, pageH - pad - 26, 19, white);
+    drawLines(court, metaLines, bold, 8.5, pad, pageH - pad - 26 - titleLines.length * 19, 11, white);
+
+    var cursor = pageH - mastH - mm(4);
+    var coaching = lesson.session_kind === 'coaching';
+    var sayLabel = coaching ? 'PLANNED THEME' : 'SAY THIS';
+    var sayLines = wrapLines(lesson.objective || '', bold, saySize, inner - 16);
+    var sayH = 8 + 10 + sayLines.length * (saySize + 3) + 6;
+    court.drawRectangle({ x: pad, y: cursor - sayH, width: inner, height: sayH, color: tint });
+    court.drawRectangle({ x: pad, y: cursor - sayH, width: 3, height: sayH, color: gold });
+    court.drawText(sayLabel, { x: pad + 10, y: cursor - 16, size: 8, font: black, color: blue });
+    cursor = drawLines(court, sayLines, bold, saySize, pad + 10, cursor - 20, saySize + 3, navy) - 8;
+
+    cueItems(lesson).forEach(function (line, index) {
+      var lines = wrapLines(line, regular, 11, inner - 22);
+      var rowH = Math.max(16, lines.length * 14 + 4);
+      court.drawText(String(index + 1), { x: pad, y: cursor - 12, size: 11, font: black, color: blue });
+      drawLines(court, lines, regular, 11, pad + 16, cursor, 14, navy);
+      cursor -= rowH;
+    });
+    cursor -= 6;
+
+    function bandBlock(heading, lines) {
+      if (!lines.length) return;
+      var blockH = 8 + 12 + lines.length * lead + 4;
+      court.drawRectangle({ x: pad, y: cursor - blockH, width: inner, height: blockH, color: tint });
+      court.drawText(heading, { x: pad + 8, y: cursor - 14, size: 8, font: black, color: blue });
+      cursor = drawLines(court, lines, regular, bodySize, pad + 8, cursor - 18, lead, ink) - 8;
+    }
+    var good = (lesson.success_check || '').trim();
+    var stepText = (lesson.differentiation || '').trim();
+    if (good) bandBlock('WHAT GOOD LOOKS LIKE', wrapLines(good, regular, bodySize, inner - 16));
+    var watch = watchItems(lesson);
+    if (watch.length) {
+      bandBlock('IF YOU SEE THIS', watch.reduce(function (all, line) {
+        return all.concat(wrapLines(line, regular, bodySize, inner - 24).map(function (part, i) {
+          return (i === 0 ? '- ' : '  ') + part;
+        }));
+      }, []));
+    }
+    if (stepText) bandBlock('STEP', wrapLines(stepText, regular, bodySize, inner - 16));
+
+    var hour = pdf.addPage([pageW, pageH]);
+    var hourTitle = wrapLines(lesson.title || 'Lesson', black, 13, inner);
+    hour.drawText('PADEL PALS', { x: pad, y: pageH - pad - 8, size: 8, font: black, color: blue });
+    var afterTitle = drawLines(hour, hourTitle, black, 13, pad, pageH - pad - 14, 16, navy);
+    hour.drawRectangle({ x: pad, y: afterTitle - 6, width: inner, height: 0.6, color: navy });
+    cursor = afterTitle - mm(5);
+    var why = whyText(lesson);
+    if (why) {
+      cursor = drawLines(hour, wrapLines(why, regular, bodySize, inner), regular, bodySize, pad, cursor, lead, ink) - 6;
+    }
+    hour.drawText('THE HOUR', { x: pad, y: cursor - 8, size: 8, font: black, color: blue });
+    cursor -= 14;
+    var rows = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
+    var floor = mm(28);
+    rows.forEach(function (step) {
+      var detailLines = step.detail ? wrapLines(step.detail, regular, bodySize, inner - mm(18)) : [];
+      var rowH = 12 + detailLines.length * lead;
+      hour.drawText(pdfSafe(step.from + '-' + step.to), {
+        x: pad, y: cursor - 10, size: 10, font: black, color: blue
+      });
+      hour.drawText(pdfSafe(step.label || ''), {
+        x: pad + mm(16), y: cursor - 10, size: 10.5, font: bold, color: navy
+      });
+      if (detailLines.length) {
+        drawLines(hour, detailLines, regular, bodySize, pad + mm(16), cursor - 12, lead, ink);
+      }
+      cursor -= rowH;
+      hour.drawRectangle({ x: pad, y: cursor + 2, width: inner, height: 0.4, color: rgb(208 / 255, 213 / 255, 221 / 255) });
+    });
+    var note = (lesson.coach_note || '').trim();
+    if (note) {
+      var noteLines = wrapLines(note, regular, bodySize, inner - 16);
+      var noteH = 16 + noteLines.length * lead;
+      hour.drawRectangle({ x: pad, y: cursor - noteH, width: inner, height: noteH, color: tint });
+      hour.drawRectangle({ x: pad, y: cursor - noteH, width: 2, height: noteH, color: blue });
+      hour.drawText('COACH NOTE', { x: pad + 8, y: cursor - 12, size: 8, font: black, color: blue });
+      cursor = drawLines(hour, noteLines, regular, bodySize, pad + 8, cursor - 16, lead, ink) - 8;
+    }
+    var equip = Array.isArray(lesson.equipment) && lesson.equipment.length ? lesson.equipment : ['Balls and cones'];
+    if (cursor > mm(16)) {
+      hour.drawText('BEFORE YOU START', { x: pad, y: cursor - 10, size: 8, font: black, color: blue });
+      cursor -= 16;
+      cursor = drawLines(hour, wrapLines('Equipment: ' + equip.join(', ') + '.', regular, 9, inner), regular, 9, pad, cursor, 11, ink) - 2;
+      var colW = inner / 2 - 6;
+      REMINDERS.forEach(function (line, index) {
+        var col = index % 2;
+        var row = Math.floor(index / 2);
+        hour.drawText('- ' + pdfSafe(line), {
+          x: pad + col * (colW + 8),
+          y: cursor - 10 - row * 11,
+          size: 8,
+          font: regular,
+          color: ink
+        });
+      });
+    }
+    var footY = mm(8);
+    hour.drawRectangle({ x: pad, y: footY + 12, width: inner, height: 1.5, color: gold });
+    var foot = 'PADELPALS.APP';
+    var footW = black.widthOfTextAtSize(foot, 8);
+    hour.drawText(foot, { x: (pageW - footW) / 2, y: footY, size: 8, font: black, color: blue });
+    return cursor > floor;
+  }
+
+  function buildPdf(lesson) {
+    return loadScript('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'PDFLib').then(function () {
+      return loadScript('https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js', 'fontkit');
+    }).then(function () {
+      return Promise.all([
+        fetch(FONT_SRC.regular).then(function (r) { return r.arrayBuffer(); }),
+        fetch(FONT_SRC.bold).then(function (r) { return r.arrayBuffer(); }),
+        fetch(FONT_SRC.black).then(function (r) { return r.arrayBuffer(); }),
+        fetch(assetUrl('images/Icon.png')).then(function (r) { return r.ok ? r.arrayBuffer() : null; }).catch(function () { return null; })
+      ]);
+    }).then(function (parts) {
+      var pdf = global.PDFLib.PDFDocument.create();
+      return pdf.then(function (doc) {
+        doc.registerFontkit(global.fontkit);
+        return Promise.all([
+          doc.embedFont(parts[0]),
+          doc.embedFont(parts[1]),
+          doc.embedFont(parts[2]),
+          parts[3] ? doc.embedPng(parts[3]).catch(function () { return null; }) : null
+        ]).then(function (embedded) {
+          var fonts = { regular: embedded[0], bold: embedded[1], black: embedded[2] };
+          var fitted = paintCard(doc, fonts, embedded[3], lesson, false);
+          if (!fitted) {
+            while (doc.getPageCount()) doc.removePage(0);
+            paintCard(doc, fonts, embedded[3], lesson, true);
+          }
+          doc.setTitle((lesson.title || 'Lesson') + ' · Coach Planner');
+          return doc.save();
+        });
+      });
+    });
+  }
+
+  function openPdf(lesson) {
+    var win = global.open('', '_blank');
+    if (!win) {
+      global.alert('Please allow pop-ups to print this plan.');
+      return;
+    }
+    try {
+      win.document.open();
+      win.document.write('<!DOCTYPE html><html><body style="font-family:Montserrat,Arial,sans-serif;padding:24px;color:#1A2238"><p>Preparing the card…</p></body></html>');
+      win.document.close();
+    } catch (e) { /* the window can still navigate */ }
+    buildPdf(lesson).then(function (bytes) {
+      var blob = new Blob([bytes], { type: 'application/pdf' });
+      var url = URL.createObjectURL(blob);
+      win.location = url;
+    }).catch(function () {
+      try { win.close(); } catch (err) { /* ignore */ }
+      openPrint(sheetHtml(lesson));
+    });
+  }
+
   function openPrint(html) {
     var win = global.open('', '_blank');
     if (!win) {
@@ -411,7 +661,7 @@
     withComposedRunSheet: withComposedRunSheet,
     applyComposedRunSheets: applyComposedRunSheets,
     printSheet: function (lesson, pool) {
-      openPrint(sheetHtml(withComposedRunSheet(lesson, pool || [lesson])));
+      openPdf(withComposedRunSheet(lesson, pool || [lesson]));
     }
   };
 })(window);
