@@ -63,56 +63,43 @@
 
   function printCss() {
     return [
-      ':root{--navy:#1A2238;--blue:#2A3990;--accent:#4A90E2;--ink:#333;--muted:#555;--line:#d0d5dd;--paper:#fff;--tint:#EEF0F7}',
+      ':root{--navy:#1A2238;--blue:#2A3990;--gold:#F6C915;--ink:#333;--muted:#555;--line:#d0d5dd;--tint:#EEF0F7}',
       '*{box-sizing:border-box}',
       'html,body{margin:0;padding:0;background:#fff;color:var(--navy);font-family:Montserrat,Arial,Helvetica,sans-serif}',
-      'body{font-size:11pt;line-height:1.45}',
+      'body{font-size:10.5pt;line-height:1.4}',
       'h1,h2,h3{margin:0;color:var(--navy)}',
-      '.brand{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:10px;border-bottom:3px solid var(--navy);margin-bottom:14px}',
-      '.brand-left{display:flex;align-items:center;gap:10px}',
-      '.brand img{width:36px;height:36px}',
-      '.brand-name{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:11px}',
-      '.brand-meta{text-align:right;font-size:10px;color:var(--muted);font-weight:600}',
-      '.eyebrow{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}',
-      '.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 100%);color:#fff;border-radius:12px;padding:18px 20px;margin-bottom:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
-      '.hero h1{color:#fff;font-size:22px;font-weight:800}',
-      '.hero p{margin:6px 0 0;opacity:.92;font-size:11px}',
-      '.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}',
-      '.pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:999px;padding:3px 10px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}',
-      '.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0 0 14px}',
-      '.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}',
-      '.card h3{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}',
-      '.card p{margin:0;color:var(--ink);font-size:10.5px}',
-      '.run{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px}',
-      '.run-row{display:grid;grid-template-columns:78px 1fr;gap:10px;padding:8px 12px;border-bottom:1px solid #eee}',
-      '.run-row:nth-child(odd){background:var(--tint);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
-      '.run-row:last-child{border-bottom:0}',
-      '.run-time{font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums;font-size:10px}',
-      '.run-label{font-weight:700;font-size:11px}',
-      '.run-detail{color:var(--muted);font-size:10px}',
-      '.equip{display:flex;flex-wrap:wrap;gap:6px}',
-      '.equip span{border:1px solid var(--line);background:var(--tint);border-radius:6px;padding:3px 8px;font-size:9px;font-weight:600}',
-      '.note{border-left:4px solid var(--blue);background:var(--tint);padding:10px 14px;border-radius:0 10px 10px 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
-      '.note h3{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}',
-      '.note p{margin:0;font-size:10.5px}',
-      '.foot{margin-top:12px;text-align:center;font-size:9px;color:#888}',
-      '.sheet{height:277mm;display:flex;flex-direction:column}',
-      '.half{flex:1;border:1.5px solid var(--navy);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;min-height:0}',
-      '.half + .half{margin-top:8px}',
-      '.half-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--navy)}',
-      '.half-head h2{font-size:15px;font-weight:800}',
-      '.slot{font-weight:800;color:var(--blue);font-size:12px;font-variant-numeric:tabular-nums}',
-      '.half-grid{display:grid;grid-template-columns:42% 1fr;gap:10px;flex:1;min-height:0}',
-      '.spine-row{display:grid;grid-template-columns:52px 1fr;gap:6px;padding:3px 0;border-bottom:1px dotted #ccc;font-size:9.5px}',
-      '.spine-row:last-child{border-bottom:0}',
-      '.right h3{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin:8px 0 3px}',
-      '.right h3:first-child{margin-top:0}',
-      '.right p{margin:0;font-size:10px;color:var(--ink)}',
-      '.good{font-weight:700}',
-      '.reminders{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px}',
-      '.reminders span{font-size:8px;font-weight:600;background:var(--tint);border-radius:999px;padding:3px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
-      '@page{size:A4;margin:10mm}',
-      '@media print{html,body{height:auto} a{color:inherit;text-decoration:none}}'
+      '.head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:8px;border-bottom:3px solid var(--navy)}',
+      '.brand{display:flex;align-items:center;gap:10px}',
+      '.brand img{width:32px;height:32px}',
+      '.brand-name{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:10px;color:var(--blue)}',
+      '.head h1{font-size:20px;font-weight:800;line-height:1.15;margin-top:2px}',
+      '.meta{text-align:right;font-size:10px;font-weight:600;color:var(--muted);line-height:1.45;max-width:42%}',
+      '.say{margin:12px 0 8px;padding:10px 14px;background:var(--tint);border-left:4px solid var(--gold);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+      '.say span{display:block;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}',
+      '.say strong{display:block;margin-top:4px;font-size:16px;font-weight:700;line-height:1.3}',
+      '.cues{display:grid;gap:8px;margin:8px 0}',
+      '.cue{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:10.5px;line-height:1.35}',
+      '.cue b{display:block;color:var(--blue);font-size:12px;margin-bottom:2px}',
+      '.why{margin:0 0 12px;font-size:10px;line-height:1.45;color:var(--ink)}',
+      '.hour{margin-top:4px}',
+      '.hour h2{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}',
+      '.step{display:grid;grid-template-columns:78px 1fr;gap:8px;padding:7px 0;border-bottom:1px solid #e6e8ee;break-inside:avoid;page-break-inside:avoid}',
+      '.step:last-child{border-bottom:0}',
+      '.step-time{font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums;font-size:11px}',
+      '.step-label{font-weight:700;font-size:11.5px}',
+      '.step-detail{margin-top:2px;font-size:10.5px;color:var(--ink)}',
+      '.band{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;break-inside:avoid;page-break-inside:avoid}',
+      '.band article{background:var(--tint);border-radius:8px;padding:8px 10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+      '.band h3{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}',
+      '.band p{margin:0;font-size:10.5px}',
+      '.band ul{margin:0 0 0 16px;padding:0;font-size:10.5px}',
+      '.band li{margin:0 0 3px}',
+      '.note{margin-top:10px;padding:8px 12px;border-left:3px solid var(--blue);background:var(--tint);font-size:10.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;break-inside:avoid}',
+      '.note strong{display:block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:3px}',
+      '.quiet{margin-top:10px;font-size:9.5px;line-height:1.45;color:var(--muted)}',
+      '.foot{margin-top:8px;text-align:center;font-size:9px;color:#888}',
+      '@page{size:A4;margin:12mm}',
+      '@media print{a{color:inherit;text-decoration:none}}'
     ].join('');
   }
 
@@ -173,14 +160,6 @@
     if (!game) return '';
     var title = game.title || '';
     var body = game.setup || game.blurb || '';
-    if (title && body) return title + '. ' + body;
-    return title || body;
-  }
-
-  function gameShort(game) {
-    if (!game) return '';
-    var title = game.title || '';
-    var body = game.blurb || '';
     if (title && body) return title + '. ' + body;
     return title || body;
   }
@@ -273,18 +252,6 @@
     });
   }
 
-  function pills(lesson) {
-    var items = [
-      lesson.audience,
-      lesson.duration_min ? lesson.duration_min + ' min' : null,
-      lesson.group_size_max ? 'Up to ' + lesson.group_size_max : null,
-      lesson.game_situation,
-      lesson.phase,
-      lesson.tactic
-    ].filter(Boolean);
-    return items.map(function (t) { return '<span class="pill">' + esc(t) + '</span>'; }).join('');
-  }
-
   function cueItems(lesson) {
     var pack = lesson._cuePack || defaultCuePack(lesson);
     if (pack && Array.isArray(pack.cues) && pack.cues.length) {
@@ -297,14 +264,6 @@
     return String(raw).split(/\n+/).map(function (line) {
       return line.replace(/^[-•\u2022]\s*/, '').trim();
     }).filter(Boolean).slice(0, 3);
-  }
-
-  function cuesBlock(lesson) {
-    var items = cueItems(lesson);
-    if (!items.length) return '';
-    return '<h3>Cues</h3><ul style="margin:0 0 8px 16px;padding:0;font-size:11px">' +
-      items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') +
-      '</ul>';
   }
 
   function watchItems(lesson) {
@@ -321,117 +280,77 @@
     return pack && pack.why ? String(pack.why).trim() : '';
   }
 
-  function cuesCard(lesson) {
+  function metaLine(lesson) {
+    var hour = programmeLabel(lesson);
+    return [
+      lesson.audience || '',
+      hour ? ('Hour ' + hour) : '',
+      lesson.duration_min ? lesson.duration_min + ' min' : '',
+      lesson.group_size_max ? 'Up to ' + lesson.group_size_max : ''
+    ].filter(Boolean).join(' · ');
+  }
+
+  function cueCards(lesson) {
     var items = cueItems(lesson);
-    var why = whyText(lesson);
-    var watch = watchItems(lesson);
-    if (!items.length && !why && !watch.length) return '';
-    var html = '<div class="card" style="margin-bottom:14px"><h3>For you, not for them</h3>';
-    if (items.length) {
-      html += '<ul style="margin:0 0 8px 18px;padding:0">' +
-        items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') +
-        '</ul>';
-    }
-    if (why) html += '<p style="margin:8px 0 0">' + esc(why) + '</p>';
-    if (watch.length) {
-      html += '<h3 style="margin-top:12px">If you see this</h3><ul style="margin:0 0 0 18px;padding:0">' +
-        watch.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') +
-        '</ul>';
-    }
-    return html + '</div>';
+    if (!items.length) return '';
+    return '<div class="cues" style="grid-template-columns:repeat(' + items.length + ',minmax(0,1fr))">' +
+      items.map(function (line, i) {
+        return '<div class="cue"><b>' + (i + 1) + '</b>' + esc(line) + '</div>';
+      }).join('') + '</div>';
   }
 
-  function overlayRows(lesson) {
-    var want = { Flavour: true, Demo: true, Closed: true, 'Conditioned game': true };
-    var details = lesson.step_details || {};
-    return (Array.isArray(lesson.run_sheet) ? lesson.run_sheet : []).filter(function (step) {
-      return want[step.label] && details[step.label];
-    });
-  }
-
-  function runRows(lesson, withDetail) {
+  function hourRows(lesson) {
     var rows = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
-    if (!rows.length) {
-      return '<div class="run-row"><div></div><div>No run sheet on this plan yet.</div></div>';
-    }
+    if (!rows.length) return '<p class="why">No run sheet on this plan yet.</p>';
     return rows.map(function (step) {
-      return '<div class="' + (withDetail ? 'run-row' : 'spine-row') + '">' +
-        '<div class="run-time">' + esc(step.from) + '–' + esc(step.to) + '</div>' +
-        '<div><div class="run-label">' + esc(step.label) + '</div>' +
-        (withDetail && step.detail ? '<div class="run-detail">' + esc(step.detail) + '</div>' : '') +
+      return '<div class="step"><div class="step-time">' + esc(step.from) + '–' + esc(step.to) + '</div>' +
+        '<div><div class="step-label">' + esc(step.label) + '</div>' +
+        (step.detail ? '<div class="step-detail">' + esc(step.detail) + '</div>' : '') +
         '</div></div>';
     }).join('');
   }
 
-  function fullPlanHtml(lesson) {
+  function sheetHtml(lesson) {
     var logo = assetUrl('images/Icon.png');
-    var dateLabel = programmeLabel(lesson);
-    var equip = Array.isArray(lesson.equipment) ? lesson.equipment : [];
+    var coaching = lesson.session_kind === 'coaching';
+    var sayLabel = coaching ? 'Planned theme' : 'Say this';
+    var why = whyText(lesson);
+    var watch = watchItems(lesson);
+    var good = (lesson.success_check || '').trim();
+    var step = (lesson.differentiation || '').trim();
     var note = (lesson.coach_note || '').trim();
+    var equip = Array.isArray(lesson.equipment) && lesson.equipment.length ? lesson.equipment : ['Balls and cones'];
+    var band = '';
+    var bandCount = 0;
+    if (good) {
+      band += '<article><h3>What good looks like</h3><p>' + esc(good) + '</p></article>';
+      bandCount += 1;
+    }
+    if (watch.length) {
+      band += '<article><h3>If you see this</h3><ul>' +
+        watch.map(function (line) { return '<li>' + esc(line) + '</li>'; }).join('') +
+        '</ul></article>';
+      bandCount += 1;
+    }
+    if (step) {
+      band += '<article><h3>STEP</h3><p>' + esc(step) + '</p></article>';
+      bandCount += 1;
+    }
     var body =
-      '<div class="brand"><div class="brand-left"><img src="' + esc(logo) + '" alt="">' +
-      '<div><div class="brand-name">Padel Pals</div><div class="eyebrow" style="margin:0">Coach Planner</div></div></div>' +
-      '<div class="brand-meta">' + esc(dateLabel) + '<br>padelpals.app</div></div>' +
-      '<div class="hero"><h1>' + esc(lesson.title) + '</h1>' +
-      (lesson.audience ? '<p>' + esc(lesson.audience) + (programmeLabel(lesson) ? ' · ' + esc(programmeLabel(lesson)) : '') + '</p>' : '') +
-      '<div class="pills">' + pills(lesson) + '</div></div>' +
-      '<div class="grid-3">' +
-      '<div class="card"><h3>Objective</h3><p>' + esc(lesson.objective || '') + '</p></div>' +
-      '<div class="card"><h3>What good looks like</h3><p>' + esc(lesson.success_check || '') + '</p></div>' +
-      '<div class="card"><h3>Differentiation</h3><p>' + esc(lesson.differentiation || '') + '</p></div>' +
-      '</div>' +
-      cuesCard(lesson) +
-      '<div class="card" style="margin-bottom:14px;padding:0"><div class="run" style="border:0;margin:0">' +
-      runRows(lesson, true) + '</div></div>' +
-      '<div class="card" style="margin-bottom:14px"><h3>Equipment</h3><div class="equip">' +
-      (equip.length ? equip.map(function (e) { return '<span>' + esc(e) + '</span>'; }).join('') : '<span>Balls and cones</span>') +
-      '</div></div>' +
-      (note ? '<div class="note"><h3>Coach note</h3><p>' + esc(note) + '</p></div>' : '') +
-      '<div class="foot">Padel Pals · padelpals.app · Print at 100%, not fit-to-page</div>';
+      '<header class="head"><div><div class="brand"><img src="' + esc(logo) + '" alt="">' +
+      '<div class="brand-name">Padel Pals</div></div>' +
+      '<h1>' + esc(lesson.title || 'Lesson') + '</h1></div>' +
+      '<p class="meta">' + esc(metaLine(lesson)) + '</p></header>' +
+      '<section class="say"><span>' + esc(sayLabel) + '</span><strong>' + esc(lesson.objective || '') + '</strong></section>' +
+      cueCards(lesson) +
+      (why ? '<p class="why">' + esc(why) + '</p>' : '') +
+      '<section class="hour"><h2>The hour</h2>' + hourRows(lesson) + '</section>' +
+      (band ? '<section class="band" style="grid-template-columns:repeat(' + bandCount + ',minmax(0,1fr))">' + band + '</section>' : '') +
+      (note ? '<div class="note"><strong>Coach note</strong>' + esc(note) + '</div>' : '') +
+      '<p class="quiet">Equipment: ' + esc(equip.join(', ')) + '. ' +
+      REMINDERS.map(esc).join(' · ') + '.</p>' +
+      '<p class="foot">Print at 100%, not fit-to-page</p>';
     return docShell((lesson.title || 'Lesson') + ' · Coach Planner', body);
-  }
-
-  function halfHtml(lesson) {
-    var warmup = gameShort(nestedRow(lesson.warmup_game));
-    var conditioned = gameShort(nestedRow(lesson.conditioned_game));
-    return '<section class="half">' +
-      '<div class="half-head"><div><div class="eyebrow">Coach Planner</div>' +
-      '<h2>' + esc(lesson.title) + '</h2>' +
-      '<div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:2px">' +
-      esc(lesson.audience || '') +
-      (lesson.group_size_max ? ' · max ' + esc(lesson.group_size_max) : '') +
-      '</div></div><div class="slot">' + esc(programmeLabel(lesson)) + '</div></div>' +
-      '<div class="half-grid"><div>' + runRows(lesson, false) + '</div>' +
-      '<div class="right">' +
-      '<h3>' + (lesson.session_kind === 'coaching' ? 'Planned theme' : 'Announce') + '</h3><p>' + esc(lesson.objective || '') + '</p>' +
-      cuesBlock(lesson) +
-      '<h3>Framework</h3><p>' +
-      [lesson.game_situation, lesson.phase, lesson.tactic].filter(Boolean).map(esc).join(' · ') +
-      '</p>' +
-      '<h3>Good is</h3><p class="good">' + esc(lesson.success_check || '') + '</p>' +
-      (lesson.differentiation ? '<h3>STEP</h3><p>' + esc(lesson.differentiation) + '</p>' : '') +
-      (warmup ? '<h3>Warm up</h3><p>' + esc(warmup) + '</p>' : '') +
-      overlayRows(lesson).map(function (step) {
-        return '<h3>' + esc(step.label) + '</h3><p>' + esc(step.detail) + '</p>';
-      }).join('') +
-      (conditioned && lesson.session_kind !== 'coaching' ? '<h3>Conditioned game</h3><p>' + esc(conditioned) + '</p>' : '') +
-      '</div></div></section>';
-  }
-
-  function courtSheetHtml(lessons) {
-    var list = sortLessons(lessons).slice(0, 2);
-    if (!list.length) return '';
-    var logo = assetUrl('images/Icon.png');
-    var dateLabel = programmeLabel(list[0]) || (list[0].audience || '');
-    var title = list[0].title || 'Court sheet';
-    var body =
-      '<div class="sheet"><div class="brand"><div class="brand-left"><img src="' + esc(logo) + '" alt="">' +
-      '<div><div class="brand-name">Padel Pals</div><div class="eyebrow" style="margin:0">Court sheet</div></div></div>' +
-      '<div class="brand-meta">' + esc(dateLabel) + '<br>Print at 100%</div></div>' +
-      list.map(halfHtml).join('') +
-      '<div class="reminders">' + REMINDERS.map(function (r) { return '<span>' + esc(r) + '</span>'; }).join('') + '</div>' +
-      '</div>';
-    return docShell(title, body);
   }
 
   function openPrint(html) {
@@ -455,11 +374,8 @@
     composeRunSheet: composeRunSheet,
     withComposedRunSheet: withComposedRunSheet,
     applyComposedRunSheets: applyComposedRunSheets,
-    printFull: function (lesson, pool) {
-      openPrint(fullPlanHtml(withComposedRunSheet(lesson, pool || [lesson])));
-    },
-    printCourtSheet: function (lessons) {
-      openPrint(courtSheetHtml(applyComposedRunSheets(lessons)));
+    printSheet: function (lesson, pool) {
+      openPrint(sheetHtml(withComposedRunSheet(lesson, pool || [lesson])));
     }
   };
 })(window);

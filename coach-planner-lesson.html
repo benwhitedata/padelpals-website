@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260922b"></script>
+  <script src="js/coach-planner-print.js?v=20260922c"></script>
   <style>
     .lsn-hero.mkt-hero{padding:40px 20px 36px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
@@ -135,12 +135,9 @@
       <div class="mkt-hero-inner">
         <div class="lsn-hero-top">
           <p class="mkt-eyebrow" id="lsnEyebrow">Coach Planner</p>
-          <div class="lsn-print" role="group" aria-label="Print this lesson">
-            <button type="button" class="lsn-print-card" id="lsnPrintFull">
-              <i class="fas fa-file-lines" aria-hidden="true"></i> Print plan
-            </button>
-            <button type="button" class="lsn-print-card" id="lsnPrintSheet">
-              <i class="fas fa-clipboard-list" aria-hidden="true"></i> Court sheet
+          <div class="lsn-print">
+            <button type="button" class="lsn-print-card" id="lsnPrint">
+              <i class="fas fa-print" aria-hidden="true"></i> Print
             </button>
           </div>
         </div>
@@ -567,14 +564,10 @@
       paint();
     });
 
-    document.getElementById('lsnPrintFull').addEventListener('click', function () {
+    document.getElementById('lsnPrint').addEventListener('click', function () {
       if (currentLesson && window.CoachPlannerPrint) {
-        window.CoachPlannerPrint.printFull(currentLesson, lessonPool);
+        window.CoachPlannerPrint.printSheet(currentLesson, lessonPool);
       }
-    });
-    document.getElementById('lsnPrintSheet').addEventListener('click', function () {
-      if (!window.CoachPlannerPrint) return;
-      window.CoachPlannerPrint.printCourtSheet(currentLesson ? [currentLesson] : []);
     });
 
     function attachProgramme(lesson, programmes, items, byId) {
