@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260922c"></script>
+  <script src="js/coach-planner-print.js?v=20260922d"></script>
   <style>
     .lsn-hero.mkt-hero{padding:40px 20px 36px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
@@ -39,7 +39,7 @@
       display:inline-flex;align-items:center;gap:8px;
       background:rgba(255,255,255,.12);color:#fff;
       border:1.5px solid rgba(255,255,255,.88);border-radius:10px;
-      padding:8px 14px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;
+      padding:10px 16px;font:inherit;font-size:.95rem;font-weight:700;cursor:pointer;
     }
     .lsn-print-card i{font-size:.85rem;opacity:.95}
     .lsn-print-card:hover,.lsn-print-card:focus-visible{background:#fff;color:#1a2238;outline:none}
@@ -52,38 +52,38 @@
     .lsn-kicker{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
     .lsn-kicker .mkt-pill{margin:0}
     .lsn-announce{background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 8px 24px rgba(26,34,56,.08);border:1px solid rgba(26,34,56,.06);margin:0 0 28px}
-    .lsn-announce span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
-    .lsn-announce strong{display:block;font-size:1.12rem;font-weight:600;color:#1a2238;line-height:1.4}
-    .lsn-announce p{margin:12px 0 0;color:#555;font-size:.95rem}
+    .lsn-announce span{display:block;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:8px}
+    .lsn-announce strong{display:block;font-size:1.5rem;font-weight:700;color:#1a2238;line-height:1.35}
+    .lsn-announce p{margin:14px 0 0;color:#333;font-size:1.05rem;line-height:1.5}
     .lsn-kick{background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 8px 24px rgba(26,34,56,.08);border:1px solid rgba(26,34,56,.06)}
     .lsn-kick span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
     .lsn-kick strong{display:block;font-size:1.05rem;color:#1a2238}
     .lsn-section{margin:0 0 28px}
-    .lsn-section h2{font-size:1.35rem;margin-bottom:12px}
+    .lsn-section h2{font-size:1.2rem;margin-bottom:10px}
     .lsn-run-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
     .lsn-run-head h2{margin:0}
     .lsn-run{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(26,34,56,.08)}
-    .lsn-run-row{display:grid;grid-template-columns:96px 1fr;gap:16px;padding:16px 20px;border-bottom:1px solid #eee;position:relative}
+    .lsn-run-row{display:grid;grid-template-columns:104px 1fr;gap:16px;padding:18px 20px;border-bottom:1px solid #eee;position:relative}
     .lsn-run-row:last-child{border-bottom:0}
     .lsn-run-row:nth-child(odd){background:#fafbfe}
-    .lsn-run-time{font-weight:800;color:#2A3990;font-size:.9rem;font-variant-numeric:tabular-nums}
-    .lsn-run-label{font-weight:700;margin-bottom:4px;color:#1a2238}
-    .lsn-run-detail{color:#555;font-size:.95rem}
+    .lsn-run-time{font-weight:800;color:#2A3990;font-size:1rem;font-variant-numeric:tabular-nums}
+    .lsn-run-label{font-weight:700;margin-bottom:4px;color:#1a2238;font-size:1.05rem}
+    .lsn-run-detail{color:#333;font-size:1rem;line-height:1.5}
     .lsn-run-detail a{font-weight:700;color:#2A3990;margin-left:6px}
     .lsn-note{border-left:4px solid #2A3990;background:#EEF0F7;padding:20px 24px;border-radius:0 16px 16px 0}
     .lsn-note h2{color:#2A3990;font-size:1.1rem}
     .lsn-equip{display:flex;flex-wrap:wrap;gap:8px}
     .lsn-equip span{background:#EEF0F7;border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600;color:#1a2238}
     .lsn-brief{background:#fff;border-radius:16px;padding:18px 20px;margin-top:14px;border:1px solid rgba(26,34,56,.06);box-shadow:0 8px 24px rgba(26,34,56,.08)}
-    .lsn-brief span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:8px}
-    .lsn-brief h3{font-size:.95rem;margin:16px 0 8px;color:#1a2238}
-    .lsn-brief ul{margin:0 0 0 18px;padding:0;color:#1a2238}
-    .lsn-brief li{margin:0 0 6px}
-    .lsn-brief p{margin:12px 0 0;color:#333;font-size:.95rem;line-height:1.5}
+    .lsn-brief span{display:block;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:10px}
+    .lsn-brief h3{font-size:1rem;margin:18px 0 8px;color:#1a2238}
+    .lsn-brief ul{margin:0 0 0 1.15rem;padding:0;color:#1a2238;font-size:1.0625rem;line-height:1.5}
+    .lsn-brief li{margin:0 0 8px}
+    .lsn-brief p{margin:14px 0 0;color:#333;font-size:1rem;line-height:1.55}
     .lsn-chips{display:flex;flex-wrap:wrap;gap:8px}
     .lsn-chip{
       appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
-      border-radius:999px;padding:8px 14px;font:inherit;font-size:.85rem;font-weight:700;cursor:pointer;
+      border-radius:999px;padding:9px 16px;font:inherit;font-size:.95rem;font-weight:700;cursor:pointer;
     }
     .lsn-chip[aria-pressed="true"]{background:#2A3990;border-color:#2A3990;color:#fff}
     .lsn-tool{display:grid;gap:10px;margin-top:10px}
@@ -93,14 +93,14 @@
     }
     .lsn-tool-card.is-selected{border-color:#2A3990;box-shadow:inset 0 0 0 2px #2A3990}
     .lsn-tool-card strong{display:block;color:#1a2238;margin-bottom:4px}
-    .lsn-tool-card .lsn-tool-preview{color:#555;font-size:.9rem;margin:0 0 10px}
+    .lsn-tool-card .lsn-tool-preview{color:#333;font-size:1rem;line-height:1.5;margin:0 0 10px}
     .lsn-tool-card .lsn-tool-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
     .lsn-tool-card button{
       appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
-      border-radius:999px;padding:8px 12px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;
+      border-radius:999px;padding:9px 14px;font:inherit;font-size:.95rem;font-weight:700;cursor:pointer;
     }
     .lsn-tool-card.is-selected button{background:#2A3990;border-color:#2A3990;color:#fff}
-    .lsn-tool-card a{font-size:.85rem;font-weight:700;color:#2A3990}
+    .lsn-tool-card a{font-size:.95rem;font-weight:700;color:#2A3990}
     .lsn-next{margin-top:8px}
     .lsn-clip a{font-weight:700;color:#2A3990}
     @media (max-width:720px){
