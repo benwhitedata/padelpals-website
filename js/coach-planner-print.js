@@ -94,6 +94,7 @@
       '.quiet-head{padding-bottom:4pt;margin-bottom:6pt;border-bottom:.5pt solid var(--navy)}',
       '.quiet-head h1{margin-top:2pt;font-size:16pt;font-weight:800;line-height:1.15;color:var(--navy)}',
       '.why{margin:0 0 4pt;font-size:10pt;line-height:1.3;color:var(--ink)}',
+      '.hour-face.coaching .why,.hour-face.coaching .step-time,.hour-face.coaching .step-label,.hour-face.coaching .step-detail,.hour-face.coaching .note,.hour-face.coaching .equip,.hour-face.coaching .reminders{font-size:8pt;line-height:1.25}',
       '.hour h2{margin-bottom:2pt}',
       '.hour-rows{display:flex;flex-direction:column}',
       '.step{display:grid;grid-template-columns:40pt 1fr;gap:6pt;padding:2pt 0;border-bottom:.5pt solid var(--line);break-inside:avoid}',
@@ -379,7 +380,7 @@
       (band ? '<section class="band">' + band + '</section>' : '') +
       '</div></section>';
     var hour =
-      '<section class="face hour-face">' +
+      '<section class="face hour-face' + (coaching ? ' coaching' : '') + '">' +
       '<div class="safe">' +
       '<header class="quiet-head"><p>Padel Pals</p><h1>' + title + '</h1></header>' +
       (why ? '<p class="why">' + esc(why) + '</p>' : '') +
@@ -543,43 +544,45 @@
     var afterTitle = drawLines(hour, hourTitle, black, 16, pad, pageH - pad - 16, 20, navy);
     hour.drawRectangle({ x: pad, y: afterTitle - 8, width: inner, height: 0.6, color: navy });
     var floor = mm(14);
+    var hourSize = coaching ? 8 : bodySize;
+    var hourLead = coaching ? 10 : bodyLead;
     var why = whyText(lesson);
-    var whyLines = why ? wrapLines(why, regular, bodySize, inner) : [];
+    var whyLines = why ? wrapLines(why, regular, hourSize, inner) : [];
     var rows = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
     var prepared = rows.map(function (step) {
       return {
         step: step,
-        detailLines: step.detail ? wrapLines(step.detail, regular, bodySize, inner) : []
+        detailLines: step.detail ? wrapLines(step.detail, regular, hourSize, inner) : []
       };
     });
     var note = (lesson.coach_note || '').trim();
-    var noteLines = note ? wrapLines(note, regular, bodySize, inner - 18) : [];
+    var noteLines = note ? wrapLines(note, regular, hourSize, inner - 18) : [];
     var equip = Array.isArray(lesson.equipment) && lesson.equipment.length ? lesson.equipment : ['Balls and cones'];
-    var equipLines = wrapLines('Equipment: ' + equip.join(', ') + '.', regular, bodySize, inner);
+    var equipLines = wrapLines('Equipment: ' + equip.join(', ') + '.', regular, hourSize, inner);
     var colW = (inner - 16) / 2;
     var reminderRows = [];
     for (var r = 0; r < REMINDERS.length; r += 2) {
       reminderRows.push({
-        left: wrapLines(REMINDERS[r], regular, bodySize, colW - 12).map(function (part, i) {
+        left: wrapLines(REMINDERS[r], regular, hourSize, colW - 12).map(function (part, i) {
           return (i === 0 ? '- ' : '  ') + part;
         }),
-        right: REMINDERS[r + 1] ? wrapLines(REMINDERS[r + 1], regular, bodySize, colW - 12).map(function (part, i) {
+        right: REMINDERS[r + 1] ? wrapLines(REMINDERS[r + 1], regular, hourSize, colW - 12).map(function (part, i) {
           return (i === 0 ? '- ' : '  ') + part;
         }) : []
       });
     }
     function projectedEnd(showWhy, showReminders) {
       var c = afterTitle - mm(6);
-      if (showWhy && whyLines.length) c -= whyLines.length * bodyLead + 8;
+      if (showWhy && whyLines.length) c -= whyLines.length * hourLead + 8;
       c -= 16;
       prepared.forEach(function (row) {
-        c -= 22 + row.detailLines.length * bodyLead;
+        c -= 22 + row.detailLines.length * hourLead;
       });
-      if (noteLines.length) c -= 30 + noteLines.length * bodyLead;
-      c -= 18 + equipLines.length * bodyLead + 4;
+      if (noteLines.length) c -= 30 + noteLines.length * hourLead;
+      c -= 18 + equipLines.length * hourLead + 4;
       if (showReminders) {
         reminderRows.forEach(function (pair) {
-          c -= Math.max(pair.left.length, pair.right.length) * bodyLead + 2;
+          c -= Math.max(pair.left.length, pair.right.length) * hourLead + 2;
         });
       }
       return c;
@@ -589,7 +592,7 @@
 
     cursor = afterTitle - mm(6);
     if (showWhy) {
-      cursor = drawLines(hour, whyLines, regular, bodySize, pad, cursor, bodyLead, ink) - 8;
+      cursor = drawLines(hour, whyLines, regular, hourSize, pad, cursor, hourLead, ink) - 8;
     }
     hour.drawText('THE HOUR', { x: pad, y: cursor - 8, size: 8, font: black, color: blue });
     cursor -= 16;
@@ -597,13 +600,13 @@
       var step = row.step;
       var detailLines = row.detailLines;
       hour.drawText(pdfSafe(step.from + '-' + step.to), {
-        x: pad, y: cursor - 10, size: bodySize, font: black, color: blue
+        x: pad, y: cursor - 10, size: hourSize, font: black, color: blue
       });
       hour.drawText(pdfSafe(step.label || ''), {
-        x: pad + mm(18), y: cursor - 10, size: cueSize, font: bold, color: navy
+        x: pad + mm(18), y: cursor - 10, size: hourSize, font: bold, color: navy
       });
       if (detailLines.length) {
-        cursor = drawLines(hour, detailLines, regular, bodySize, pad, cursor - 14, bodyLead, ink) - 4;
+        cursor = drawLines(hour, detailLines, regular, hourSize, pad, cursor - 14, hourLead, ink) - 4;
       } else {
         cursor -= 18;
       }
@@ -611,20 +614,20 @@
       cursor -= 4;
     });
     if (noteLines.length) {
-      var noteH = 18 + noteLines.length * bodyLead + 6;
+      var noteH = 18 + noteLines.length * hourLead + 6;
       hour.drawRectangle({ x: pad, y: cursor - noteH, width: inner, height: noteH, color: tint });
       hour.drawRectangle({ x: pad, y: cursor - noteH, width: 2, height: noteH, color: blue });
       hour.drawText('COACH NOTE', { x: pad + 10, y: cursor - 14, size: 8, font: black, color: blue });
-      cursor = drawLines(hour, noteLines, regular, bodySize, pad + 10, cursor - 20, bodyLead, ink) - 10;
+      cursor = drawLines(hour, noteLines, regular, hourSize, pad + 10, cursor - 20, hourLead, ink) - 10;
     }
     hour.drawText('BEFORE YOU START', { x: pad, y: cursor - 10, size: 8, font: black, color: blue });
     cursor -= 18;
-    cursor = drawLines(hour, equipLines, regular, bodySize, pad, cursor, bodyLead, ink) - 4;
+    cursor = drawLines(hour, equipLines, regular, hourSize, pad, cursor, hourLead, ink) - 4;
     if (showReminders) {
       reminderRows.forEach(function (pair) {
-        drawLines(hour, pair.left, regular, bodySize, pad, cursor, bodyLead, ink);
-        if (pair.right.length) drawLines(hour, pair.right, regular, bodySize, pad + colW + 16, cursor, bodyLead, ink);
-        cursor -= Math.max(pair.left.length, pair.right.length) * bodyLead + 2;
+        drawLines(hour, pair.left, regular, hourSize, pad, cursor, hourLead, ink);
+        if (pair.right.length) drawLines(hour, pair.right, regular, hourSize, pad + colW + 16, cursor, hourLead, ink);
+        cursor -= Math.max(pair.left.length, pair.right.length) * hourLead + 2;
       });
     }
     var footY = mm(8);
