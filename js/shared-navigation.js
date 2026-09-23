@@ -397,6 +397,7 @@ const SHARED_NAVIGATION_HTML = `
                 <div class="dropdown" role="menu">
                     <a href="coaches.html" class="dropdown-link" role="menuitem">Group Lessons</a>
                     <a href="coach-planner.html" class="dropdown-link" role="menuitem">Coach Planner</a>
+                    <a href="coach-planner-library.html" class="dropdown-link" role="menuitem">Lesson Library</a>
                     <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
                 </div>
             </li>
@@ -755,6 +756,7 @@ const SHARED_FOOTER_HTML = `
                 <ul>
                     <li><a href="coaches.html">Group Lessons</a></li>
                     <li><a href="coach-planner.html">Coach Planner</a></li>
+                    <li><a href="coach-planner-library.html">Lesson Library</a></li>
                     <li><a href="ratings.html">Player Levels</a></li>
                 </ul>
             </div>
