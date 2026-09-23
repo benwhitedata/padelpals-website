@@ -132,7 +132,7 @@
     .lib-game p{margin:0;color:#333;font-size:var(--pp-t-body);line-height:1.55}
     .lib-game a{display:inline-block;margin-top:12px;margin-right:14px;font-size:var(--pp-t-body);font-weight:700;color:#2A3990}
     .lib-month .lib-lead{margin:0 0 14px;color:#555;max-width:640px}
-    .lib-explain{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;padding:18px 22px;box-shadow:0 8px 24px rgba(26,34,56,.08);margin:0 0 28px}
+    .lib-explain{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;padding:18px 22px;box-shadow:0 8px 24px rgba(26,34,56,.08);margin:0 0 16px}
     .lib-explain-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .lib-explain-head span{display:block;font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
     .lib-explain h2{margin:0;font-size:var(--pp-t-heading);font-weight:700;letter-spacing:0;text-transform:none;color:#2A3990;line-height:1.3}
@@ -228,6 +228,7 @@
           <span class="lib-switch-count" id="libTabGamesN"></span>
         </button>
       </div>
+      <div id="libExplain" hidden></div>
       <div class="lib-toolbar" id="libGamesToolbar" hidden>
         <div class="lib-filter-row">
           <span class="lib-filter-label">Kids</span>
@@ -695,24 +696,23 @@
         : ('Showing ' + lessons.length + ' of ' + pool.length + ' ' + noun + 's');
       document.getElementById('libReset').hidden = !filtersActive();
 
-      var intro = explainHtml(view === 'coaching' ? 'coaching' : 'drill');
       if (!pool.length) {
         var empty = view === 'coaching'
           ? '<div class="lib-none"><h3>No coached sessions yet</h3><p>Those land here when they are published: 3 or 4 players, a tight band, the whole funnel.</p></div>'
           : '<div class="lib-none"><h3>No drills yet</h3><p>Reusable hours land here as they are published.</p></div>';
-        list.innerHTML = intro + empty;
+        list.innerHTML = empty;
         return;
       }
 
       if (!lessons.length) {
-        list.innerHTML = intro + '<div class="lib-none"><h3>No Plans Match These Filters</h3><p>Try another group, path, or search term.</p></div>';
+        list.innerHTML = '<div class="lib-none"><h3>No Plans Match These Filters</h3><p>Try another group, path, or search term.</p></div>';
         return;
       }
 
-      var html = intro;
+      var html = '';
       if (filters.sort === 'recent' || filters.sort === 'rated') {
         var heading = filters.sort === 'recent' ? 'Least recently run' : 'Top rated';
-        list.innerHTML = intro + sectionHtml(heading, lessons);
+        list.innerHTML = sectionHtml(heading, lessons);
         return;
       }
       if (filters.path === 'catalogue') {
@@ -915,7 +915,20 @@
       apply();
     }
 
+    function renderExplain() {
+      var slot = document.getElementById('libExplain');
+      if (view === 'games') {
+        slot.hidden = true;
+        slot.innerHTML = '';
+        return;
+      }
+      var html = explainHtml(view === 'coaching' ? 'coaching' : 'drill');
+      slot.innerHTML = html;
+      slot.hidden = !html;
+    }
+
     function apply() {
+      renderExplain();
       if (view === 'games') renderGames();
       else renderList();
     }
@@ -970,7 +983,7 @@
     document.getElementById('libViewDrills').addEventListener('click', function () { setView('drills'); });
     document.getElementById('libViewCoaching').addEventListener('click', function () { setView('coaching'); });
     document.getElementById('libViewGames').addEventListener('click', function () { setView('games'); });
-    document.getElementById('libList').addEventListener('click', function (e) {
+    document.getElementById('libExplain').addEventListener('click', function (e) {
       var btn = e.target.closest('.lib-explain-toggle');
       if (!btn) return;
       var body = btn.closest('.lib-explain').querySelector('.lib-explain-body');
