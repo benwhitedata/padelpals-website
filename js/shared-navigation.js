@@ -372,7 +372,6 @@ const SHARED_NAVIGATION_HTML = `
                     For Clubs <span class="nav-chevron" aria-hidden="true"></span>
                 </button>
                 <div class="dropdown" role="menu">
-                    <a href="courts.html" class="dropdown-link" role="menuitem">Open Courts</a>
                     <a href="court-bookings.html" class="dropdown-link" role="menuitem">Court Bookings</a>
                     <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
                     <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
@@ -733,7 +732,6 @@ const SHARED_FOOTER_HTML = `
             <div class="footer-section">
                 <h4>For Clubs</h4>
                 <ul>
-                    <li><a href="courts.html">Open Courts</a></li>
                     <li><a href="court-bookings.html">Court Bookings</a></li>
                     <li><a href="club-socials.html">Club Socials</a></li>
                     <li><a href="americano.html">Americano</a></li>

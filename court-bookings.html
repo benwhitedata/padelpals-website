@@ -30,6 +30,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="css/marketing.css?v=20260916g">
+  <style>
+    /* Pilot: one type scale, no menu-source line in the hero. */
+    body[data-page="court-bookings.html"] .mkt-hero{padding:48px 20px}
+    body[data-page="court-bookings.html"] .mkt-hero h1{
+      font-size:var(--pp-t-title);font-weight:700;line-height:1.2;margin:0 0 12px;
+    }
+    body[data-page="court-bookings.html"] .mkt-hero p{
+      font-size:var(--pp-t-body);font-weight:400;line-height:1.55;margin:0 auto;
+    }
+    body[data-page="court-bookings.html"] .mkt-wrap{padding:40px 20px 64px}
+    body[data-page="court-bookings.html"] .mkt-intro{margin-bottom:40px}
+    body[data-page="court-bookings.html"] .mkt-intro p,
+    body[data-page="court-bookings.html"] .mkt-feature-copy p,
+    body[data-page="court-bookings.html"] .mkt-section-head p,
+    body[data-page="court-bookings.html"] .mkt-outcome-card p,
+    body[data-page="court-bookings.html"] .mkt-cta-band p{
+      font-size:var(--pp-t-body);line-height:1.55;
+    }
+    body[data-page="court-bookings.html"] .mkt-feature{gap:32px;margin-bottom:48px}
+    body[data-page="court-bookings.html"] .mkt-feature-copy h2,
+    body[data-page="court-bookings.html"] .mkt-section-head h2,
+    body[data-page="court-bookings.html"] .mkt-cta-band h2{
+      font-size:var(--pp-t-say);font-weight:700;line-height:1.3;letter-spacing:0;margin-bottom:8px;
+    }
+    body[data-page="court-bookings.html"] .mkt-outcome-card h3{
+      font-size:var(--pp-t-heading);font-weight:700;line-height:1.3;
+    }
+    body[data-page="court-bookings.html"] .mkt-outcome-grid{margin-bottom:48px}
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config-loader.js"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -39,7 +68,7 @@
     gtag('js', new Date());
     gtag('config', 'G-L426ZMNKFK');
   </script>
-  <script src="js/shared-navigation.js?v=20260923a" data-auto-nav="true"></script>
+  <script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -85,7 +114,6 @@
 <body class="mkt-page" data-page="court-bookings.html">
   <section class="mkt-hero">
     <div class="mkt-hero-inner">
-      <p class="mkt-eyebrow">For padel clubs</p>
       <h1>Court Bookings</h1>
       <p>Tap a free slot. Clubs set hours, slot length and who can book — the same courts then feed socials, box leagues and Group Lessons.</p>
     </div>
