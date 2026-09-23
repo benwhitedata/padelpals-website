@@ -136,9 +136,17 @@
     .lib-game p{margin:0;color:#333;font-size:var(--pp-t-body);line-height:1.55}
     .lib-game a{display:inline-block;margin-top:12px;margin-right:14px;font-size:var(--pp-t-body);font-weight:700;color:#2A3990}
     .lib-month .lib-lead{margin:0 0 14px;color:#555;max-width:640px}
-    .lib-explain{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;padding:24px 26px;box-shadow:0 8px 24px rgba(26,34,56,.08);margin:0 0 28px}
-    .lib-explain > span{display:block;font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
-    .lib-explain h2{margin:0 0 10px;font-size:var(--pp-t-heading);font-weight:700;letter-spacing:0;text-transform:none;color:#2A3990;line-height:1.3}
+    .lib-explain{background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;padding:18px 22px;box-shadow:0 8px 24px rgba(26,34,56,.08);margin:0 0 28px}
+    .lib-explain-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .lib-explain-head span{display:block;font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
+    .lib-explain h2{margin:0;font-size:var(--pp-t-heading);font-weight:700;letter-spacing:0;text-transform:none;color:#2A3990;line-height:1.3}
+    .lib-explain-toggle{
+      appearance:none;flex-shrink:0;border:1px solid #d0d5dd;background:#fff;color:#2A3990;
+      border-radius:999px;padding:8px 14px;font:inherit;font-size:var(--pp-t-meta);font-weight:700;cursor:pointer;
+    }
+    .lib-explain-toggle:focus-visible{outline:3px solid #7eb6f5;outline-offset:2px}
+    .lib-explain-body{margin-top:14px}
+    .lib-explain-body[hidden]{display:none !important}
     .lib-explain .lib-lead{margin:0 0 14px}
     .lib-explain ul{margin:0;padding:0 0 0 18px;color:#333;font-size:var(--pp-t-body);line-height:1.55}
     .lib-explain li{margin:0 0 6px}
@@ -300,6 +308,7 @@
       kids: '',
       gameSort: 'default'
     };
+    var explainOpen = false;
     var KNOWN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate', 'Advanced'];
     var SITUATION_ORDER = [
       'Serve', 'Return', 'Both Back', 'At Net', 'Opponents at Net', 'Both Pairs at the Net'
@@ -631,13 +640,18 @@
       var bullets = Array.isArray(block.bullets)
         ? '<ul>' + block.bullets.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join('') + '</ul>'
         : '';
+      var open = explainOpen;
       return '<section class="lib-explain">' +
+        '<div class="lib-explain-head"><div>' +
         (block.kicker ? '<span>' + esc(block.kicker) + '</span>' : '') +
         '<h2>' + esc(block.title || typeGuide.title || '') + '</h2>' +
+        '</div><button type="button" class="lib-explain-toggle" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+        (open ? 'Hide' : 'Show') + '</button></div>' +
+        '<div class="lib-explain-body"' + (open ? '' : ' hidden') + '>' +
         (block.body ? '<p class="lib-lead">' + esc(block.body) + '</p>' : '') +
         bullets +
         funnelHtml(kind) +
-        '</section>';
+        '</div></section>';
     }
 
     function cardHtml(lesson, prog) {
@@ -961,6 +975,15 @@
     document.getElementById('libViewDrills').addEventListener('click', function () { setView('drills'); });
     document.getElementById('libViewCoaching').addEventListener('click', function () { setView('coaching'); });
     document.getElementById('libViewGames').addEventListener('click', function () { setView('games'); });
+    document.getElementById('libList').addEventListener('click', function (e) {
+      var btn = e.target.closest('.lib-explain-toggle');
+      if (!btn) return;
+      var body = btn.closest('.lib-explain').querySelector('.lib-explain-body');
+      explainOpen = body.hidden;
+      body.hidden = !explainOpen;
+      btn.setAttribute('aria-expanded', explainOpen ? 'true' : 'false');
+      btn.textContent = explainOpen ? 'Hide' : 'Show';
+    });
 
     var libraryBooted = false;
     var libraryTries = 0;
