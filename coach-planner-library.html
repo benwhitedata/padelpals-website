@@ -131,6 +131,7 @@
     .lib-game-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
     .lib-game{background:#fff;border:1px solid rgba(26,34,56,.08);border-radius:16px;padding:20px 22px;box-shadow:0 8px 24px rgba(26,34,56,.06)}
     .lib-game span{display:block;font-size:var(--pp-t-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2A3990;margin-bottom:6px}
+    .lib-game .lib-kids{display:inline-block;margin:0 0 8px;padding:3px 10px;border:1px solid #2A3990;border-radius:999px;font-size:var(--pp-t-label);font-weight:700;letter-spacing:0;text-transform:none;color:#2A3990}
     .lib-game h3{margin:0 0 8px;font-size:var(--pp-t-body);font-weight:700;color:#1a2238;line-height:1.55}
     .lib-game p{margin:0;color:#333;font-size:var(--pp-t-body);line-height:1.55}
     .lib-game a{display:inline-block;margin-top:12px;margin-right:14px;font-size:var(--pp-t-body);font-weight:700;color:#2A3990}
@@ -224,6 +225,16 @@
           <span class="lib-switch-count" id="libTabGamesN"></span>
         </button>
       </div>
+      <div class="lib-toolbar" id="libGamesToolbar" hidden>
+        <div class="lib-filter-row">
+          <span class="lib-filter-label">Kids</span>
+          <div class="lib-pills" id="libKids" role="group" aria-label="Filter by age">
+            <button type="button" class="lib-pill" data-kids="" aria-pressed="true">All</button>
+            <button type="button" class="lib-pill" data-kids="8-11" aria-pressed="false">Kids 8–11</button>
+            <button type="button" class="lib-pill" data-kids="11-14" aria-pressed="false">Kids 11–14</button>
+          </div>
+        </div>
+      </div>
       <div class="lib-toolbar" id="libSessionToolbar">
         <div class="lib-toolbar-top">
           <label class="lib-search">
@@ -276,7 +287,8 @@
       audience: '',
       path: (pathParam === 'catalogue') ? 'catalogue' : 'programmes',
       situation: '',
-      sort: 'programme'
+      sort: 'programme',
+      kids: ''
     };
     var KNOWN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate', 'Advanced'];
     var SITUATION_ORDER = [
@@ -753,13 +765,32 @@
       return 'Mini game';
     }
 
+    function kidsLabel(bands) {
+      var list = bands || [];
+      var young = list.indexOf('8-11') !== -1;
+      var older = list.indexOf('11-14') !== -1;
+      if (young && older) return 'Kids 8–14';
+      if (older) return 'Kids 11–14';
+      if (young) return 'Kids 8–11';
+      return '';
+    }
+
+    function gamesForView() {
+      if (!filters.kids) return allGames;
+      return allGames.filter(function (g) {
+        return (g.junior_bands || []).indexOf(filters.kids) !== -1;
+      });
+    }
+
     function renderGames() {
       var list = document.getElementById('libList');
-      var warm = allGames.filter(function (g) { return g.kind === 'warmup'; });
-      var mini = allGames.filter(function (g) { return g.kind === 'mini'; });
-      var overhead = allGames.filter(function (g) { return g.kind === 'overhead'; });
-      document.getElementById('libCount').textContent = allGames.length + ' Game' + (allGames.length === 1 ? '' : 's');
-      document.getElementById('libReset').hidden = true;
+      var shown = gamesForView();
+      var warm = shown.filter(function (g) { return g.kind === 'warmup'; });
+      var mini = shown.filter(function (g) { return g.kind === 'mini'; });
+      var overhead = shown.filter(function (g) { return g.kind === 'overhead'; });
+      document.getElementById('libCount').textContent = shown.length + ' Game' + (shown.length === 1 ? '' : 's');
+      document.getElementById('libReset').hidden = !filters.kids;
+      setPressed(document.getElementById('libKids'), 'data-kids', filters.kids);
       function cards(items) {
         return '<div class="lib-game-grid">' + items.map(function (g) {
           var href = g.slug
@@ -771,13 +802,18 @@
           var watch = g.video_url
             ? '<a href="' + esc(g.video_url) + '" target="_blank" rel="noopener noreferrer">Watch clip</a>'
             : '';
+          var kids = kidsLabel(g.junior_bands);
+          var pill = kids ? '<span class="lib-kids">' + esc(kids) + '</span>' : '';
           return '<article class="lib-game"><span>' + esc(kindLabel(g.kind)) + '</span>' +
+            pill +
             '<h3>' + esc(g.title) + '</h3><p>' + esc(g.blurb) + '</p>' +
             full + watch + '</article>';
         }).join('') + '</div>';
       }
-      if (!allGames.length) {
-        list.innerHTML = '<div class="lib-none"><h3>No Games Yet</h3><p>Warm-ups, mini games and extras land here as they are written.</p></div>';
+      if (!shown.length) {
+        list.innerHTML = '<div class="lib-none"><h3>No Games Yet</h3><p>' +
+          (filters.kids ? 'Nothing in this age band yet.' : 'Warm-ups, mini games and extras land here as they are written.') +
+          '</p></div>';
         return;
       }
       list.innerHTML =
@@ -801,6 +837,7 @@
       document.getElementById('libViewCoaching').setAttribute('aria-selected', view === 'coaching' ? 'true' : 'false');
       document.getElementById('libViewGames').setAttribute('aria-selected', view === 'games' ? 'true' : 'false');
       document.getElementById('libSessionToolbar').hidden = view === 'games' || !lessonsForView().length;
+      document.getElementById('libGamesToolbar').hidden = view !== 'games';
       apply();
     }
 
@@ -840,8 +877,15 @@
       filters.sort = document.getElementById('libSort').value;
       apply();
     });
+    document.getElementById('libKids').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-kids]');
+      if (!btn) return;
+      filters.kids = btn.getAttribute('data-kids') || '';
+      setPressed(document.getElementById('libKids'), 'data-kids', filters.kids);
+      apply();
+    });
     document.getElementById('libReset').addEventListener('click', function () {
-      filters = { query: '', audience: '', path: 'programmes', situation: '', sort: 'programme' };
+      filters = { query: '', audience: '', path: 'programmes', situation: '', sort: 'programme', kids: '' };
       renderToolbar();
       apply();
     });

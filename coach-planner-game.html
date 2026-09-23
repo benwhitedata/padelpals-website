@@ -32,6 +32,7 @@
     .lsn-hero .mkt-eyebrow{margin:0 0 12px;font-size:var(--pp-t-label);letter-spacing:.12em}
     .lsn-hero h1{margin:0;font-size:var(--pp-t-title);font-weight:700;line-height:1.2;color:#fff}
     .lsn-hero-meta{display:block;margin:8px auto 0;font-size:var(--pp-t-body);font-weight:600;letter-spacing:0;text-transform:none;opacity:.9;color:#fff;line-height:1.4}
+    .lsn-kids-pill{display:inline-block;margin-top:14px;border:1px solid rgba(255,255,255,.75);border-radius:999px;padding:6px 12px;font-size:var(--pp-t-meta);font-weight:700;color:#fff}
     .lsn-wrap{max-width:900px;margin:0 auto;padding:36px 20px 80px}
     .lsn-state{text-align:center;padding:64px 20px;color:#555}
     .lsn-state i{font-size:1.75rem;color:#4A90E2;margin-bottom:16px;display:block}
@@ -68,10 +69,16 @@
         <p class="mkt-eyebrow" id="lsnKind">Game</p>
         <h1 id="lsnTitle"></h1>
         <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
+        <p class="lsn-kids-pill" id="lsnKids" hidden></p>
       </div>
     </section>
 
     <div class="lsn-wrap">
+      <div class="lsn-section" id="lsnKidsWrap" hidden>
+        <h2>With kids</h2>
+        <div class="lsn-body" id="lsnKidsNote"></div>
+      </div>
+
       <div class="lsn-section" id="lsnWhenWrap" hidden>
         <h2>When to pick it</h2>
         <div class="lsn-body" id="lsnWhen"></div>
@@ -107,6 +114,16 @@
       return 'Conditioned game';
     }
 
+    function kidsLabel(bands) {
+      var list = bands || [];
+      var young = list.indexOf('8-11') !== -1;
+      var older = list.indexOf('11-14') !== -1;
+      if (young && older) return 'Kids 8–14';
+      if (older) return 'Kids 11–14';
+      if (young) return 'Kids 8–11';
+      return '';
+    }
+
     function showState(id) {
       ['lsnLoading', 'lsnUnavailable', 'lsnContent'].forEach(function (x) {
         document.getElementById(x).hidden = (x !== id);
@@ -119,6 +136,15 @@
       document.getElementById('lsnTitle').textContent = game.title || '';
       document.getElementById('lsnHeroMeta').textContent = game.blurb || '';
       document.getElementById('lsnHeroMeta').hidden = !game.blurb;
+
+      var kids = kidsLabel(game.junior_bands);
+      var kidsEl = document.getElementById('lsnKids');
+      kidsEl.textContent = kids;
+      kidsEl.hidden = !kids;
+
+      var note = (game.junior_note || '').trim();
+      document.getElementById('lsnKidsWrap').hidden = !note;
+      document.getElementById('lsnKidsNote').textContent = note;
 
       var when = (game.when_to_pick || '').trim();
       document.getElementById('lsnWhenWrap').hidden = !when;
