@@ -234,6 +234,15 @@
             <button type="button" class="lib-pill" data-kids="11-14" aria-pressed="false">Kids 11–14</button>
           </div>
         </div>
+        <div class="lib-filter-row" id="libGameSortRow" hidden>
+          <span class="lib-filter-label">Sort</span>
+          <select id="libGameSort" class="lib-sort" aria-label="Sort games">
+            <option value="default">As written</option>
+            <option value="recent">Least recently run</option>
+            <option value="effective">Most effective</option>
+            <option value="popular">Most popular</option>
+          </select>
+        </div>
       </div>
       <div class="lib-toolbar" id="libSessionToolbar">
         <div class="lib-toolbar-top">
@@ -276,6 +285,7 @@
     var allGames = [];
     var allProgrammes = [];
     var allRuns = [];
+    var allGameRuns = [];
     var iAmCoach = false;
     var myUserId = null;
     var typeGuide = null;
@@ -288,7 +298,8 @@
       path: (pathParam === 'catalogue') ? 'catalogue' : 'programmes',
       situation: '',
       sort: 'programme',
-      kids: ''
+      kids: '',
+      gameSort: 'default'
     };
     var KNOWN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate', 'Advanced'];
     var SITUATION_ORDER = [
@@ -782,14 +793,71 @@
       });
     }
 
+    function gameScore(rows, key) {
+      var sum = 0;
+      var n = 0;
+      rows.forEach(function (row) {
+        if (row[key] == null) return;
+        sum += row[key];
+        n += 1;
+      });
+      return { avg: n ? sum / n : 0, n: n };
+    }
+
+    function myLastGameRun(game) {
+      var best = '';
+      allGameRuns.forEach(function (run) {
+        if (run.game_id !== game.id || run.coach_id !== myUserId) return;
+        if (run.run_on > best) best = run.run_on;
+      });
+      return best;
+    }
+
+    function gameMetaHtml(game) {
+      if (!iAmCoach || !game || (game.kind !== 'warmup' && game.kind !== 'mini')) return '';
+      var rows = allGameRuns.filter(function (run) { return run.game_id === game.id; });
+      var last = myLastGameRun(game);
+      var eff = gameScore(rows, 'effectiveness');
+      var pop = gameScore(rows, 'popularity');
+      var bits = [last ? ('Last run ' + shortRunDate(last)) : 'Not run yet'];
+      if (eff.n) bits.push('Effective ' + eff.avg.toFixed(1) + ' (' + eff.n + ')');
+      if (pop.n) bits.push('Popular ' + pop.avg.toFixed(1) + ' (' + pop.n + ')');
+      return '<p class="lib-ran">' + esc(bits.join(' · ')) + '</p>';
+    }
+
+    function orderedGames(items) {
+      var mode = filters.gameSort || 'default';
+      if (!iAmCoach || mode === 'default') return items;
+      return items.slice().sort(function (a, b) {
+        if (mode === 'recent') {
+          var da = myLastGameRun(a);
+          var db = myLastGameRun(b);
+          if (!da && db) return -1;
+          if (da && !db) return 1;
+          if (da !== db) return da < db ? -1 : 1;
+        } else {
+          var key = mode === 'popular' ? 'popularity' : 'effectiveness';
+          var sa = gameScore(allGameRuns.filter(function (run) { return run.game_id === a.id; }), key);
+          var sb = gameScore(allGameRuns.filter(function (run) { return run.game_id === b.id; }), key);
+          if (!sa.n && sb.n) return 1;
+          if (sa.n && !sb.n) return -1;
+          if (sb.avg !== sa.avg) return sb.avg - sa.avg;
+          if (sb.n !== sa.n) return sb.n - sa.n;
+        }
+        return String(a.title || '').localeCompare(String(b.title || ''));
+      });
+    }
+
     function renderGames() {
       var list = document.getElementById('libList');
       var shown = gamesForView();
-      var warm = shown.filter(function (g) { return g.kind === 'warmup'; });
-      var mini = shown.filter(function (g) { return g.kind === 'mini'; });
+      var warm = orderedGames(shown.filter(function (g) { return g.kind === 'warmup'; }));
+      var mini = orderedGames(shown.filter(function (g) { return g.kind === 'mini'; }));
       var overhead = shown.filter(function (g) { return g.kind === 'overhead'; });
       document.getElementById('libCount').textContent = shown.length + ' Game' + (shown.length === 1 ? '' : 's');
-      document.getElementById('libReset').hidden = !filters.kids;
+      document.getElementById('libReset').hidden = !filters.kids && (filters.gameSort || 'default') === 'default';
+      document.getElementById('libGameSortRow').hidden = !iAmCoach;
+      document.getElementById('libGameSort').value = filters.gameSort || 'default';
       setPressed(document.getElementById('libKids'), 'data-kids', filters.kids);
       function cards(items) {
         return '<div class="lib-game-grid">' + items.map(function (g) {
@@ -807,6 +875,7 @@
           return '<article class="lib-game"><span>' + esc(kindLabel(g.kind)) + '</span>' +
             pill +
             '<h3>' + esc(g.title) + '</h3><p>' + esc(g.blurb) + '</p>' +
+            gameMetaHtml(g) +
             full + watch + '</article>';
         }).join('') + '</div>';
       }
@@ -884,8 +953,12 @@
       setPressed(document.getElementById('libKids'), 'data-kids', filters.kids);
       apply();
     });
+    document.getElementById('libGameSort').addEventListener('change', function () {
+      filters.gameSort = document.getElementById('libGameSort').value || 'default';
+      apply();
+    });
     document.getElementById('libReset').addEventListener('click', function () {
-      filters = { query: '', audience: '', path: 'programmes', situation: '', sort: 'programme', kids: '' };
+      filters = { query: '', audience: '', path: 'programmes', situation: '', sort: 'programme', kids: '', gameSort: 'default' };
       renderToolbar();
       apply();
     });
@@ -937,6 +1010,8 @@
           if (iAmCoach) {
             requests.push(client.schema('coaching').from('lesson_runs')
               .select('lesson_id, coach_id, run_on, group_label, rating'));
+            requests.push(client.schema('coaching').from('game_runs')
+              .select('game_id, coach_id, run_on, group_label, effectiveness, popularity'));
           }
 
           Promise.all(requests).then(function (results) {
@@ -946,6 +1021,7 @@
             if (results[2].data && results[2].data.title && typeGuide) typeGuide.title = results[2].data.title;
             allProgrammes = (results[3].data && !results[3].error) ? results[3].data : [];
             allRuns = (iAmCoach && results[5] && results[5].data && !results[5].error) ? results[5].data : [];
+            allGameRuns = (iAmCoach && results[6] && results[6].data && !results[6].error) ? results[6].data : [];
             attachProgrammes(allLessons, allProgrammes, (results[4].data && !results[4].error) ? results[4].data : []);
             if (!allLessons.length && !allGames.length) {
               showState('libEmpty');

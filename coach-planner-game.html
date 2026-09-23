@@ -46,6 +46,49 @@
     .lsn-body p:last-child{margin-bottom:0}
     .lsn-clip a{font-weight:700;color:#2A3990}
     .lsn-library{display:flex;flex-wrap:wrap;gap:12px}
+    .lsn-log-btn{
+      appearance:none;margin-top:16px;background:rgba(255,255,255,.12);color:#fff;
+      border:1.5px solid rgba(255,255,255,.88);border-radius:10px;padding:10px 16px;
+      font:inherit;font-size:var(--pp-t-meta);font-weight:700;cursor:pointer;
+    }
+    .lsn-log-btn:hover,.lsn-log-btn:focus-visible{background:#fff;color:#1a2238;outline:none}
+    .lsn-log{
+      background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;
+      padding:16px 20px;margin:0 0 16px;box-shadow:0 8px 24px rgba(26,34,56,.08);
+      display:grid;gap:14px;
+    }
+    .lsn-log-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .lsn-log label,.lsn-metric span{display:grid;gap:6px;font-size:var(--pp-t-meta);font-weight:700;color:#2A3990}
+    .lsn-metric span{display:block;margin-bottom:6px}
+    .lsn-log input,.lsn-log select,.lsn-log textarea{
+      width:100%;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:10px;
+      padding:10px 12px;font:inherit;font-size:var(--pp-t-body);font-weight:600;color:#1a2238;background:#F6F5F5;
+    }
+    .lsn-log textarea{font-weight:400;resize:vertical}
+    .lsn-log input:focus,.lsn-log select:focus,.lsn-log textarea:focus{outline:3px solid #7eb6f5;outline-offset:2px;background:#fff}
+    .lsn-star{
+      appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
+      width:40px;height:40px;border-radius:10px;margin-right:6px;font-size:1.1rem;cursor:pointer;
+    }
+    .lsn-star[aria-pressed="true"]{background:#2A3990;border-color:#2A3990;color:#fff}
+    .lsn-log-error{margin:0;color:#9b2c2c;font-size:var(--pp-t-meta);font-weight:700}
+    .lsn-log-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .lsn-log-actions .mkt-btn{margin:0}
+    .lsn-chip{
+      appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
+      border-radius:999px;padding:8px 14px;font:inherit;font-size:var(--pp-t-meta);font-weight:700;cursor:pointer;
+    }
+    .lsn-run-empty{margin:0;color:#555}
+    .lsn-run-item{
+      background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;
+      padding:14px 18px;margin:0 0 10px;box-shadow:0 8px 24px rgba(26,34,56,.06);
+    }
+    .lsn-run-item header{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:6px}
+    .lsn-run-item strong{color:#1a2238}
+    .lsn-run-item .lsn-run-when{font-weight:700;color:#2A3990}
+    .lsn-run-item p{margin:0 0 6px;color:#333}
+    .lsn-run-actions{display:flex;gap:8px;margin-top:8px}
+    @media (max-width:720px){.lsn-log-row{grid-template-columns:1fr}}
   </style>
 </head>
 <body class="mkt-page" data-page="coach-planner-game.html">
@@ -69,6 +112,8 @@
         <p class="mkt-eyebrow" id="lsnKind">Game</p>
         <h1 id="lsnTitle"></h1>
         <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
+        <p class="lsn-hero-meta" id="gmSummary" hidden></p>
+        <button type="button" class="lsn-log-btn" id="gmLog" hidden>Log this game</button>
         <p class="lsn-kids-pill" id="lsnKids" hidden></p>
       </div>
     </section>
@@ -92,6 +137,31 @@
       <div class="lsn-section" id="lsnClipWrap" hidden>
         <h2>Clip</h2>
         <p class="lsn-clip" id="lsnClip"></p>
+      </div>
+
+      <div class="lsn-section" id="gmLogSection" hidden>
+        <h2>Coach feedback</h2>
+        <form id="gmForm" class="lsn-log" hidden>
+          <div class="lsn-log-row">
+            <label>Date
+              <input type="date" id="gmDate" required>
+            </label>
+            <label>Group
+              <select id="gmGroup"></select>
+            </label>
+          </div>
+          <div class="lsn-metric"><span>How effective?</span><div id="gmEffective"></div></div>
+          <div class="lsn-metric"><span>How popular with the players?</span><div id="gmPopular"></div></div>
+          <label>Note for other coaches
+            <textarea id="gmComment" maxlength="1000" rows="2" placeholder="Optional"></textarea>
+          </label>
+          <p class="lsn-log-error" id="gmError" hidden></p>
+          <div class="lsn-log-actions">
+            <button type="submit" class="mkt-btn" id="gmSave">Save</button>
+            <button type="button" class="lsn-chip" id="gmCancel">Cancel</button>
+          </div>
+        </form>
+        <div id="gmList"></div>
       </div>
 
       <div class="lsn-section lsn-library">
@@ -165,6 +235,245 @@
       showState('lsnContent');
     }
 
+    var currentGame = null;
+    var iAmCoach = false;
+    var myUserId = null;
+    var gameRuns = [];
+    var coachNames = {};
+    var editingId = null;
+    var draft = { effectiveness: null, popularity: null };
+    var RUN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate', 'Advanced'];
+    var RUN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    function plannerClient() {
+      return window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
+    }
+
+    function isoToday() {
+      var d = new Date();
+      var m = d.getMonth() + 1;
+      var day = d.getDate();
+      return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+    }
+
+    function shortRunDate(iso) {
+      if (!iso) return '';
+      var parts = String(iso).split('-');
+      if (parts.length < 3) return iso;
+      return Number(parts[2]) + ' ' + (RUN_MONTHS[Number(parts[1]) - 1] || '');
+    }
+
+    function coachLabel(id) {
+      if (id === myUserId) return 'You';
+      return coachNames[id] || 'Coach';
+    }
+
+    function setGameError(message) {
+      var el = document.getElementById('gmError');
+      el.textContent = message || '';
+      el.hidden = !message;
+    }
+
+    function paintMetric(id, metric) {
+      var value = draft[metric];
+      var html = '';
+      var n;
+      for (n = 1; n <= 5; n++) {
+        html += '<button type="button" class="lsn-star" data-metric="' + metric + '" data-star="' + n +
+          '" aria-pressed="' + (value === n ? 'true' : 'false') + '" aria-label="' + n + ' out of 5">' +
+          (value !== null && n <= value ? '★' : '☆') + '</button>';
+      }
+      document.getElementById(id).innerHTML = html;
+    }
+
+    function fillGroups(selected) {
+      document.getElementById('gmGroup').innerHTML = '<option value="">Not set</option>' +
+        RUN_GROUPS.map(function (g) {
+          return '<option value="' + esc(g) + '"' + (g === selected ? ' selected' : '') + '>' + esc(g) + '</option>';
+        }).join('');
+    }
+
+    function openGameForm(run) {
+      editingId = run ? run.id : null;
+      draft.effectiveness = run && run.effectiveness != null ? run.effectiveness : null;
+      draft.popularity = run && run.popularity != null ? run.popularity : null;
+      document.getElementById('gmDate').value = run ? run.run_on : isoToday();
+      fillGroups(run ? (run.group_label || '') : '');
+      document.getElementById('gmComment').value = run && run.comment ? run.comment : '';
+      document.getElementById('gmSave').textContent = run ? 'Update' : 'Save';
+      setGameError('');
+      paintMetric('gmEffective', 'effectiveness');
+      paintMetric('gmPopular', 'popularity');
+      document.getElementById('gmForm').hidden = false;
+      document.getElementById('gmDate').focus();
+    }
+
+    function closeGameForm() {
+      editingId = null;
+      document.getElementById('gmForm').hidden = true;
+      setGameError('');
+    }
+
+    function renderGameSummary() {
+      var el = document.getElementById('gmSummary');
+      if (!iAmCoach || !gameRuns.length) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      var mine = gameRuns.filter(function (row) { return row.coach_id === myUserId; });
+      function avg(key) {
+        var rows = gameRuns.filter(function (row) { return row[key] != null; });
+        if (!rows.length) return '';
+        var sum = 0;
+        rows.forEach(function (row) { sum += row[key]; });
+        return (sum / rows.length).toFixed(1) + ' (' + rows.length + ')';
+      }
+      var parts = [];
+      if (mine.length) parts.push('You last ran this ' + shortRunDate(mine[0].run_on));
+      var eff = avg('effectiveness');
+      var pop = avg('popularity');
+      if (eff) parts.push('Effective ' + eff);
+      if (pop) parts.push('Popular ' + pop);
+      el.textContent = parts.join(' · ');
+      el.hidden = !parts.length;
+    }
+
+    function renderGameList() {
+      var list = document.getElementById('gmList');
+      if (!gameRuns.length) {
+        list.innerHTML = '<p class="lsn-run-empty">No feedback yet.</p>';
+        return;
+      }
+      list.innerHTML = gameRuns.map(function (run) {
+        var bits = [coachLabel(run.coach_id)];
+        if (run.group_label) bits.push(run.group_label);
+        var scores = [];
+        if (run.effectiveness != null) scores.push('Effective ' + run.effectiveness + '/5');
+        if (run.popularity != null) scores.push('Popular ' + run.popularity + '/5');
+        var actions = run.coach_id === myUserId
+          ? '<div class="lsn-run-actions"><button type="button" class="lsn-chip" data-edit="' + esc(run.id) + '">Edit</button>' +
+            '<button type="button" class="lsn-chip" data-delete="' + esc(run.id) + '">Delete</button></div>'
+          : '';
+        return '<article class="lsn-run-item"><header><span class="lsn-run-when">' + esc(shortRunDate(run.run_on)) +
+          '</span><strong>' + esc(bits.join(' · ')) + '</strong></header>' +
+          (scores.length ? '<p>' + esc(scores.join(' · ')) + '</p>' : '') +
+          (run.comment ? '<p>' + esc(run.comment) + '</p>' : '') +
+          actions + '</article>';
+      }).join('');
+    }
+
+    function loadNames(client) {
+      var ids = [];
+      gameRuns.forEach(function (row) {
+        if (row.coach_id && row.coach_id !== myUserId && !coachNames[row.coach_id] && ids.indexOf(row.coach_id) === -1) {
+          ids.push(row.coach_id);
+        }
+      });
+      if (!ids.length) return Promise.resolve();
+      return client.from('user_profiles').select('id, display_name, short_name').in('id', ids).then(function (result) {
+        ((result && result.data) || []).forEach(function (row) {
+          coachNames[row.id] = row.short_name || row.display_name || 'Coach';
+        });
+      });
+    }
+
+    function loadGameRuns() {
+      var client = plannerClient();
+      if (!client || !currentGame) return;
+      client.schema('coaching').from('game_runs')
+        .select('id, game_id, coach_id, run_on, group_label, effectiveness, popularity, comment')
+        .eq('game_id', currentGame.id)
+        .order('run_on', { ascending: false })
+        .order('created_at', { ascending: false })
+        .then(function (result) {
+          gameRuns = (result && result.data && !result.error) ? result.data : [];
+          return loadNames(client);
+        }).then(function () {
+          renderGameSummary();
+          renderGameList();
+        });
+    }
+
+    function saveGameRun(event) {
+      event.preventDefault();
+      var client = plannerClient();
+      if (!client || !currentGame || !iAmCoach) return;
+      var comment = document.getElementById('gmComment').value.trim();
+      var group = document.getElementById('gmGroup').value || null;
+      var payload = {
+        run_on: document.getElementById('gmDate').value,
+        group_label: group,
+        effectiveness: draft.effectiveness,
+        popularity: draft.popularity,
+        comment: comment || null
+      };
+      if (!payload.run_on) {
+        setGameError('Choose the date you ran it.');
+        return;
+      }
+      if (payload.effectiveness == null && payload.popularity == null && !payload.comment) {
+        setGameError('Add a score or a note.');
+        return;
+      }
+      var saveBtn = document.getElementById('gmSave');
+      saveBtn.disabled = true;
+      setGameError('');
+      var write;
+      if (editingId) {
+        write = client.schema('coaching').from('game_runs').update(payload).eq('id', editingId).select('id').single();
+      } else {
+        payload.game_id = currentGame.id;
+        payload.coach_id = myUserId;
+        write = client.schema('coaching').from('game_runs').insert(payload).select('id').single();
+      }
+      write.then(function (result) {
+        saveBtn.disabled = false;
+        if (result.error) {
+          setGameError(result.error.code === '23505'
+            ? 'You already logged this game for that group on that date. Edit that entry instead.'
+            : 'Could not save this feedback. Try again.');
+          return;
+        }
+        closeGameForm();
+        loadGameRuns();
+      }).catch(function () {
+        saveBtn.disabled = false;
+        setGameError('Could not save this feedback. Try again.');
+      });
+    }
+
+    document.getElementById('gmLog').addEventListener('click', function () {
+      if (document.getElementById('gmForm').hidden || editingId) openGameForm(null);
+      else closeGameForm();
+    });
+    document.getElementById('gmCancel').addEventListener('click', closeGameForm);
+    document.getElementById('gmForm').addEventListener('submit', saveGameRun);
+    document.getElementById('gmForm').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-star]');
+      if (!btn) return;
+      var metric = btn.getAttribute('data-metric');
+      var n = Number(btn.getAttribute('data-star'));
+      draft[metric] = draft[metric] === n ? null : n;
+      paintMetric(metric === 'effectiveness' ? 'gmEffective' : 'gmPopular', metric);
+    });
+    document.getElementById('gmList').addEventListener('click', function (e) {
+      var edit = e.target.closest('[data-edit]');
+      var del = e.target.closest('[data-delete]');
+      if (edit) {
+        var run = gameRuns.filter(function (row) { return row.id === edit.getAttribute('data-edit'); })[0];
+        if (run) openGameForm(run);
+      } else if (del && window.confirm('Delete this feedback?')) {
+        var client = plannerClient();
+        if (!client) return;
+        client.schema('coaching').from('game_runs').delete().eq('id', del.getAttribute('data-delete')).then(function (result) {
+          if (result.error) return;
+          if (editingId === del.getAttribute('data-delete')) closeGameForm();
+          loadGameRuns();
+        });
+      }
+    });
+
     var booted = false;
     var tries = 0;
     function boot() {
@@ -194,13 +503,26 @@
           showState('lsnUnavailable');
           return;
         }
-        return client.schema('coaching').from('games').select('*').eq('slug', slug).maybeSingle();
+        var userId = result.data.session.user.id;
+        return Promise.all([
+          client.schema('coaching').from('games').select('*').eq('slug', slug).maybeSingle(),
+          client.from('user_profiles').select('is_coach').eq('id', userId).maybeSingle()
+        ]).then(function (parts) {
+          return { game: parts[0], profile: parts[1], userId: userId };
+        });
       }).then(function (res) {
-        if (!res || res.error || !res.data) {
+        if (!res || !res.game || res.game.error || !res.game.data) {
           showState('lsnUnavailable');
           return;
         }
-        paint(res.data);
+        currentGame = res.game.data;
+        myUserId = res.userId;
+        iAmCoach = !!(res.profile && res.profile.data && res.profile.data.is_coach && !res.profile.error);
+        var canLog = iAmCoach && (currentGame.kind === 'warmup' || currentGame.kind === 'mini');
+        document.getElementById('gmLog').hidden = !canLog;
+        document.getElementById('gmLogSection').hidden = !canLog;
+        paint(currentGame);
+        if (canLog) loadGameRuns();
       }).catch(function () {
         showState('lsnUnavailable');
       });
