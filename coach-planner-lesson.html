@@ -113,13 +113,50 @@
     .lsn-tool-card a{font-size:var(--pp-t-body);font-weight:700;color:#2A3990}
     .lsn-next{margin-top:8px}
     .lsn-clip a{font-weight:700;color:#2A3990}
+    .lsn-log{
+      background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;
+      padding:16px 20px;margin:0 0 16px;box-shadow:0 8px 24px rgba(26,34,56,.08);
+      display:grid;gap:14px;
+    }
+    .lsn-log-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}
+    .lsn-log label{display:grid;gap:6px;font-size:var(--pp-t-meta);font-weight:700;color:#2A3990}
+    .lsn-log input,.lsn-log select,.lsn-log textarea{
+      width:100%;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:10px;
+      padding:10px 12px;font:inherit;font-size:var(--pp-t-body);font-weight:600;color:#1a2238;background:#F6F5F5;
+    }
+    .lsn-log textarea{font-weight:400;resize:vertical}
+    .lsn-log input:focus,.lsn-log select:focus,.lsn-log textarea:focus{outline:3px solid #7eb6f5;outline-offset:2px;background:#fff}
+    .lsn-log-mode{margin:0;font-size:var(--pp-t-body);font-weight:700;color:#1a2238;grid-column:1 / -1}
+    .lsn-log-stars{border:0;margin:0;padding:0}
+    .lsn-log-stars legend{font-size:var(--pp-t-meta);font-weight:700;color:#2A3990;margin-bottom:8px}
+    .lsn-star{
+      appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
+      width:40px;height:40px;border-radius:10px;margin-right:6px;font-size:1.1rem;cursor:pointer;
+    }
+    .lsn-star[aria-pressed="true"]{background:#2A3990;border-color:#2A3990;color:#fff}
+    .lsn-star:focus-visible{outline:3px solid #7eb6f5;outline-offset:2px}
+    .lsn-log-error{margin:0;color:#9b2c2c;font-size:var(--pp-t-meta);font-weight:700}
+    .lsn-log-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .lsn-log-actions .mkt-btn{margin:0}
+    .lsn-run-empty{margin:0;color:#555}
+    .lsn-run-item{
+      background:#fff;border:1px solid rgba(26,34,56,.06);border-radius:16px;
+      padding:14px 18px;margin:0 0 10px;box-shadow:0 8px 24px rgba(26,34,56,.06);
+    }
+    .lsn-run-item header{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:6px}
+    .lsn-run-item strong{color:#1a2238}
+    .lsn-run-item .lsn-run-when{font-weight:700;color:#2A3990}
+    .lsn-run-item p{margin:0 0 6px;color:#333;font-size:var(--pp-t-body);line-height:1.55}
+    .lsn-run-private{color:#555;font-size:var(--pp-t-meta)}
+    .lsn-run-actions{display:flex;gap:8px;margin-top:8px}
     @media (max-width:720px){
       .lsn-run-row{grid-template-columns:1fr;gap:6px}
       .lsn-hero-top{flex-wrap:wrap;align-items:flex-start}
       .lsn-print{width:100%;justify-content:flex-start}
+      .lsn-log-row{grid-template-columns:1fr}
     }
     @media print{
-      .top-nav,.navbar,footer,.lsn-print,.lsn-library{display:none!important}
+      .top-nav,.navbar,footer,.lsn-print,.lsn-library,.lsn-runlog,#lsnRunSummary{display:none!important}
       .lsn-hero{padding:20px!important;border-radius:0}
       .lsn-kicker{margin-top:16px}
     }
@@ -152,10 +189,14 @@
             <button type="button" class="lsn-print-card" id="lsnCard" hidden>
               <i class="fas fa-clone" aria-hidden="true"></i> Card
             </button>
+            <button type="button" class="lsn-print-card" id="lsnLog" hidden>
+              <i class="fas fa-clipboard-check" aria-hidden="true"></i> Log this session
+            </button>
           </div>
         </div>
         <h1 id="lsnTitle"></h1>
         <p class="lsn-hero-meta" id="lsnHeroMeta"></p>
+        <p class="lsn-hero-meta" id="lsnRunSummary" hidden></p>
       </div>
     </section>
 
@@ -224,6 +265,39 @@
         <p id="lsnCoachNote"></p>
       </div>
 
+      <div class="lsn-section lsn-runlog" id="lsnRunLog" hidden>
+        <div class="lsn-run-head">
+          <h2>Coach feedback</h2>
+        </div>
+        <form id="lsnRunForm" class="lsn-log" hidden>
+          <div class="lsn-log-row">
+            <label>Date
+              <input type="date" id="lsnRunDate" required>
+            </label>
+            <label>Group
+              <select id="lsnRunGroup"></select>
+            </label>
+            <p class="lsn-log-mode" id="lsnRunModeLabel"></p>
+          </div>
+          <fieldset class="lsn-log-stars">
+            <legend>How did it land?</legend>
+            <div id="lsnRunStars" role="group" aria-label="Score from 1 to 5"></div>
+          </fieldset>
+          <label>Comment for other coaches
+            <textarea id="lsnRunComment" maxlength="1000" rows="3" placeholder="What worked, and what you would change"></textarea>
+          </label>
+          <label>Private note
+            <textarea id="lsnRunNote" maxlength="1000" rows="2" placeholder="Only you can see this"></textarea>
+          </label>
+          <p class="lsn-log-error" id="lsnRunError" hidden></p>
+          <div class="lsn-log-actions">
+            <button type="submit" class="mkt-btn" id="lsnRunSave">Save</button>
+            <button type="button" class="lsn-chip" id="lsnRunCancel">Cancel</button>
+          </div>
+        </form>
+        <div id="lsnRunList"></div>
+      </div>
+
       <div class="lsn-section lsn-library" id="lsnLibraryLink" hidden>
         <p class="lsn-next" id="lsnNextLine" hidden></p>
         <a class="mkt-btn mkt-btn-light" id="lsnNextLink" hidden href="coach-planner-library.html">Next in this programme</a>
@@ -242,6 +316,15 @@
     var programmeSlug = pageParams.get('programme') || '';
     var runAsCoaching = pageParams.get('mode') === 'coaching';
     var coachingSpine = null;
+    var iAmCoach = false;
+    var myUserId = null;
+    var lessonRuns = [];
+    var runNotes = {};
+    var coachNames = {};
+    var editingRunId = null;
+    var draftRating = null;
+    var RUN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate', 'Advanced'];
+    var RUN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     var LESSON_SELECT = '*, spines(*), warmup_game:games!warmup_game_id(*), conditioned_game:games!conditioned_game_id(*)';
 
     function lessonHref(slug, programme) {
@@ -542,6 +625,10 @@
       var meta = heroMeta(lesson);
       document.getElementById('lsnHeroMeta').textContent = meta;
       document.getElementById('lsnHeroMeta').hidden = !meta;
+      renderRunSummary();
+      if (iAmCoach && !editingRunId && !document.getElementById('lsnRunForm').hidden) {
+        document.getElementById('lsnRunModeLabel').textContent = runModeLabel(runAsCoaching ? 'coaching' : 'drill');
+      }
 
       var eye = lesson.technical_focus ? ('Eye on ' + lesson.technical_focus) : '';
       var tags = [lesson.game_situation, lesson.phase, lesson.tactic, lesson.ball_characteristic, eye].filter(Boolean);
@@ -694,6 +781,270 @@
       if (!lessonPool.length) lessonPool = [lesson];
     }
 
+    function plannerClient() {
+      return window.getOrCreateSupabaseClient && window.getOrCreateSupabaseClient();
+    }
+
+    function isoToday() {
+      var d = new Date();
+      var m = d.getMonth() + 1;
+      var day = d.getDate();
+      return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+    }
+
+    function shortRunDate(iso) {
+      if (!iso) return '';
+      var parts = String(iso).split('-');
+      if (parts.length < 3) return iso;
+      return Number(parts[2]) + ' ' + (RUN_MONTHS[Number(parts[1]) - 1] || '');
+    }
+
+    function runModeLabel(mode) {
+      return mode === 'coaching' ? 'Logged as coaching' : 'Logged as a drill';
+    }
+
+    function coachLabel(id) {
+      if (id === myUserId) return 'You';
+      return coachNames[id] || 'Coach';
+    }
+
+    function setRunError(message) {
+      var el = document.getElementById('lsnRunError');
+      el.textContent = message || '';
+      el.hidden = !message;
+    }
+
+    function paintStars() {
+      var html = '';
+      var n;
+      for (n = 1; n <= 5; n++) {
+        html += '<button type="button" class="lsn-star" data-star="' + n + '" aria-pressed="' +
+          (draftRating === n ? 'true' : 'false') + '" aria-label="' + n + ' out of 5">' +
+          (draftRating !== null && n <= draftRating ? '★' : '☆') + '</button>';
+      }
+      document.getElementById('lsnRunStars').innerHTML = html;
+    }
+
+    function fillGroupSelect(selected) {
+      var groups = RUN_GROUPS.slice();
+      var audience = baseLesson && baseLesson.audience;
+      if (audience && groups.indexOf(audience) === -1) groups.unshift(audience);
+      if (selected && groups.indexOf(selected) === -1) groups.unshift(selected);
+      document.getElementById('lsnRunGroup').innerHTML =
+        '<option value="">Not set</option>' +
+        groups.map(function (g) {
+          return '<option value="' + esc(g) + '"' + (g === selected ? ' selected' : '') + '>' + esc(g) + '</option>';
+        }).join('');
+    }
+
+    function openRunForm(run) {
+      editingRunId = run ? run.id : null;
+      draftRating = run && run.rating != null ? run.rating : null;
+      document.getElementById('lsnRunDate').value = run ? run.run_on : isoToday();
+      fillGroupSelect(run ? (run.group_label || '') : ((baseLesson && baseLesson.audience) || ''));
+      document.getElementById('lsnRunModeLabel').textContent = runModeLabel(
+        run ? run.mode : (runAsCoaching ? 'coaching' : 'drill')
+      );
+      document.getElementById('lsnRunComment').value = run && run.comment ? run.comment : '';
+      document.getElementById('lsnRunNote').value = run && runNotes[run.id] ? runNotes[run.id] : '';
+      document.getElementById('lsnRunSave').textContent = run ? 'Update' : 'Save';
+      setRunError('');
+      paintStars();
+      document.getElementById('lsnRunForm').hidden = false;
+      document.getElementById('lsnRunDate').focus();
+    }
+
+    function closeRunForm() {
+      editingRunId = null;
+      draftRating = null;
+      document.getElementById('lsnRunForm').hidden = true;
+      setRunError('');
+    }
+
+    function renderRunSummary() {
+      var el = document.getElementById('lsnRunSummary');
+      if (!iAmCoach || !lessonRuns.length) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      var mine = lessonRuns.filter(function (r) { return r.coach_id === myUserId; });
+      var rated = lessonRuns.filter(function (r) { return r.rating != null; });
+      var parts = [];
+      if (mine.length) parts.push('You last ran this ' + shortRunDate(mine[0].run_on));
+      parts.push(lessonRuns.length + ' run' + (lessonRuns.length === 1 ? '' : 's'));
+      if (rated.length) {
+        var sum = 0;
+        rated.forEach(function (r) { sum += r.rating; });
+        parts.push((sum / rated.length).toFixed(1) + ' from ' + rated.length + ' rating' + (rated.length === 1 ? '' : 's'));
+      }
+      el.textContent = parts.join(' · ');
+      el.hidden = false;
+    }
+
+    function renderRunList() {
+      var list = document.getElementById('lsnRunList');
+      if (!lessonRuns.length) {
+        list.innerHTML = '<p class="lsn-run-empty">No sessions logged yet.</p>';
+        return;
+      }
+      list.innerHTML = lessonRuns.map(function (run) {
+        var bits = [coachLabel(run.coach_id)];
+        if (run.group_label) bits.push(run.group_label);
+        bits.push(run.mode === 'coaching' ? 'Coaching' : 'Drill');
+        var stars = run.rating != null ? ('★'.repeat(run.rating) + '☆'.repeat(5 - run.rating)) : '';
+        var note = run.coach_id === myUserId ? runNotes[run.id] : '';
+        var actions = run.coach_id === myUserId
+          ? '<div class="lsn-run-actions">' +
+            '<button type="button" class="lsn-chip" data-edit="' + esc(run.id) + '">Edit</button>' +
+            '<button type="button" class="lsn-chip" data-delete="' + esc(run.id) + '">Delete</button>' +
+            '</div>'
+          : '';
+        return '<article class="lsn-run-item">' +
+          '<header><span class="lsn-run-when">' + esc(shortRunDate(run.run_on)) + '</span>' +
+          '<strong>' + esc(bits.join(' · ')) + '</strong>' +
+          (stars ? '<span aria-label="' + run.rating + ' out of 5">' + stars + '</span>' : '') +
+          '</header>' +
+          (run.comment ? '<p>' + esc(run.comment) + '</p>' : '') +
+          (note ? '<p class="lsn-run-private">Only you: ' + esc(note) + '</p>' : '') +
+          actions + '</article>';
+      }).join('');
+    }
+
+    function loadCoachNames(client, ids) {
+      var missing = ids.filter(function (id) { return id && !coachNames[id] && id !== myUserId; });
+      if (!missing.length) return Promise.resolve();
+      return client.from('user_profiles').select('id, display_name, short_name').in('id', missing).then(function (result) {
+        ((result && result.data) || []).forEach(function (row) {
+          coachNames[row.id] = row.short_name || row.display_name || 'Coach';
+        });
+      });
+    }
+
+    function loadLessonRuns() {
+      var client = plannerClient();
+      if (!client || !baseLesson || !iAmCoach) return;
+      client.schema('coaching').from('lesson_runs')
+        .select('id, lesson_id, coach_id, run_on, mode, group_label, rating, comment')
+        .eq('lesson_id', baseLesson.id)
+        .order('run_on', { ascending: false })
+        .order('created_at', { ascending: false })
+        .then(function (result) {
+          lessonRuns = (result && result.data && !result.error) ? result.data : [];
+          var ids = lessonRuns.map(function (r) { return r.id; });
+          var notesReq = ids.length
+            ? client.schema('coaching').from('lesson_run_notes').select('run_id, note').in('run_id', ids)
+            : Promise.resolve({ data: [] });
+          return Promise.all([notesReq, loadCoachNames(client, lessonRuns.map(function (r) { return r.coach_id; }))]).then(function (parts) {
+            runNotes = {};
+            ((parts[0] && parts[0].data) || []).forEach(function (row) { runNotes[row.run_id] = row.note; });
+            renderRunSummary();
+            renderRunList();
+          });
+        });
+    }
+
+    function savePrivateNote(client, runId, note) {
+      var trimmed = (note || '').trim();
+      if (!trimmed) {
+        if (!runNotes[runId]) return Promise.resolve();
+        return client.schema('coaching').from('lesson_run_notes').delete().eq('run_id', runId);
+      }
+      return client.schema('coaching').from('lesson_run_notes').upsert({
+        run_id: runId,
+        coach_id: myUserId,
+        note: trimmed
+      }, { onConflict: 'run_id' });
+    }
+
+    function saveRun(event) {
+      event.preventDefault();
+      var client = plannerClient();
+      if (!client || !baseLesson || !iAmCoach) return;
+      var saveBtn = document.getElementById('lsnRunSave');
+      var group = document.getElementById('lsnRunGroup').value || null;
+      var comment = document.getElementById('lsnRunComment').value.trim();
+      var payload = {
+        run_on: document.getElementById('lsnRunDate').value,
+        group_label: group,
+        rating: draftRating,
+        comment: comment || null
+      };
+      if (!payload.run_on) {
+        setRunError('Choose the date you ran it.');
+        return;
+      }
+      saveBtn.disabled = true;
+      setRunError('');
+      var write;
+      if (editingRunId) {
+        write = client.schema('coaching').from('lesson_runs').update(payload).eq('id', editingRunId).select('id').single();
+      } else {
+        payload.lesson_id = baseLesson.id;
+        payload.coach_id = myUserId;
+        payload.mode = runAsCoaching ? 'coaching' : 'drill';
+        write = client.schema('coaching').from('lesson_runs').insert(payload).select('id').single();
+      }
+      write.then(function (result) {
+        if (result.error || !result.data) {
+          saveBtn.disabled = false;
+          var code = result.error && result.error.code;
+          setRunError(code === '23505'
+            ? 'You already logged this lesson for that group on that date. Edit that entry instead.'
+            : 'Could not save this session. Try again.');
+          return;
+        }
+        var runId = result.data.id;
+        savePrivateNote(client, runId, document.getElementById('lsnRunNote').value).then(function (noteResult) {
+          saveBtn.disabled = false;
+          if (noteResult && noteResult.error) {
+            setRunError('The session was saved, but the private note was not.');
+            loadLessonRuns();
+            return;
+          }
+          closeRunForm();
+          loadLessonRuns();
+        });
+      }).catch(function () {
+        saveBtn.disabled = false;
+        setRunError('Could not save this session. Try again.');
+      });
+    }
+
+    function deleteRun(id) {
+      var client = plannerClient();
+      if (!client || !window.confirm('Delete this session log?')) return;
+      client.schema('coaching').from('lesson_runs').delete().eq('id', id).then(function (result) {
+        if (result.error) return;
+        if (editingRunId === id) closeRunForm();
+        loadLessonRuns();
+      });
+    }
+
+    document.getElementById('lsnLog').addEventListener('click', function () {
+      if (document.getElementById('lsnRunForm').hidden || editingRunId) openRunForm(null);
+      else closeRunForm();
+    });
+    document.getElementById('lsnRunCancel').addEventListener('click', closeRunForm);
+    document.getElementById('lsnRunForm').addEventListener('submit', saveRun);
+    document.getElementById('lsnRunStars').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-star]');
+      if (!btn) return;
+      var n = Number(btn.getAttribute('data-star'));
+      draftRating = draftRating === n ? null : n;
+      paintStars();
+    });
+    document.getElementById('lsnRunList').addEventListener('click', function (e) {
+      var edit = e.target.closest('[data-edit]');
+      var del = e.target.closest('[data-delete]');
+      if (edit) {
+        var run = lessonRuns.filter(function (r) { return r.id === edit.getAttribute('data-edit'); })[0];
+        if (run) openRunForm(run);
+      } else if (del) {
+        deleteRun(del.getAttribute('data-delete'));
+      }
+    });
+
     var lessonBooted = false;
     var lessonTries = 0;
     function bootLesson() {
@@ -727,14 +1078,16 @@
           return;
         }
 
+        myUserId = result.data.session.user.id;
         var lessonReq = client.schema('coaching').from('lessons').select(LESSON_SELECT).eq('slug', slug).maybeSingle();
         var gameReq = client.schema('coaching').from('games').select('*').order('sort_index');
         var progReq = client.schema('coaching').from('programmes').select('*');
         var itemReq = client.schema('coaching').from('programme_items').select('*').order('sort_index');
         var allLessonReq = client.schema('coaching').from('lessons').select('id, slug, title, audience');
         var spineReq = client.schema('coaching').from('spines').select('*');
+        var coachReq = client.from('user_profiles').select('is_coach').eq('id', myUserId).maybeSingle();
 
-        Promise.all([lessonReq, gameReq, progReq, itemReq, allLessonReq, spineReq]).then(function (results) {
+        Promise.all([lessonReq, gameReq, progReq, itemReq, allLessonReq, spineReq, coachReq]).then(function (results) {
           if (results[0].error || !results[0].data) {
             showState('lsnUnavailable');
             return;
@@ -752,8 +1105,15 @@
           var spines = (results[5].data && !results[5].error) ? results[5].data : [];
           coachingSpine = spines.filter(function (s) { return s.slug === 'coaching-hour'; })[0] || null;
           baseLesson = lesson;
+          iAmCoach = !!(results[6].data && results[6].data.is_coach);
+          document.getElementById('lsnLog').hidden = !iAmCoach;
+          document.getElementById('lsnRunLog').hidden = !iAmCoach;
           syncRunMode();
           paint();
+          if (iAmCoach) {
+            renderRunList();
+            loadLessonRuns();
+          }
         }).catch(function () {
           showState('lsnUnavailable');
         });

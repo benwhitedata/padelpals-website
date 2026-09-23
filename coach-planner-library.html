@@ -124,6 +124,7 @@
     .lib-dur{font-size:var(--pp-t-meta);color:#555;font-weight:600}
     .lib-card h3{font-size:var(--pp-t-body);font-weight:700;margin:0 0 6px;color:#1a2238;line-height:1.55}
     .lib-obj{margin:0 0 10px;color:#333;font-size:var(--pp-t-body);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .lib-ran{margin:0 0 8px;color:#2A3990;font-size:var(--pp-t-meta);font-weight:700}
     .lib-card .mkt-pill-row{margin:0}
     .lib-card .mkt-pill{font-size:var(--pp-t-meta);padding:4px 8px}
     .lib-none{text-align:center;padding:40px 16px;background:#fff;border-radius:16px;border:1px dashed #d0d5dd;color:#555}
@@ -263,6 +264,9 @@
     var allLessons = [];
     var allGames = [];
     var allProgrammes = [];
+    var allRuns = [];
+    var iAmCoach = false;
+    var myUserId = null;
     var typeGuide = null;
     var viewParam = new URLSearchParams(window.location.search).get('view');
     var pathParam = new URLSearchParams(window.location.search).get('path');
@@ -442,9 +446,73 @@
       return i === -1 ? 99 : i;
     }
 
+    var RUN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    function shortRunDate(iso) {
+      if (!iso) return '';
+      var parts = String(iso).split('-');
+      if (parts.length < 3) return iso;
+      return Number(parts[2]) + ' ' + (RUN_MONTHS[Number(parts[1]) - 1] || '');
+    }
+
+    function runMatchesGroup(run) {
+      if (!filters.audience) return true;
+      return (run.group_label || '') === filters.audience;
+    }
+
+    function myLastRun(lesson) {
+      var best = '';
+      allRuns.forEach(function (run) {
+        if (run.lesson_id !== lesson.id || run.coach_id !== myUserId) return;
+        if (!runMatchesGroup(run)) return;
+        if (run.run_on > best) best = run.run_on;
+      });
+      return best;
+    }
+
+    function ratingStats(lesson) {
+      var sum = 0;
+      var n = 0;
+      allRuns.forEach(function (run) {
+        if (run.lesson_id !== lesson.id || run.rating == null) return;
+        if (!runMatchesGroup(run)) return;
+        sum += run.rating;
+        n += 1;
+      });
+      return { avg: n ? sum / n : 0, n: n };
+    }
+
+    function runMetaHtml(lesson) {
+      if (!iAmCoach) return '';
+      var last = myLastRun(lesson);
+      var stats = ratingStats(lesson);
+      var bits = [last ? ('Last run ' + shortRunDate(last)) : 'Not run yet'];
+      if (stats.n) bits.push(stats.avg.toFixed(1) + ' (' + stats.n + ')');
+      return '<p class="lib-ran">' + esc(bits.join(' · ')) + '</p>';
+    }
+
     function filteredLessons() {
       var list = lessonsForView().filter(matches);
-      if (filters.sort === 'title') {
+      if (filters.sort === 'recent') {
+        list = list.slice().sort(function (a, b) {
+          var da = myLastRun(a);
+          var db = myLastRun(b);
+          if (!da && db) return -1;
+          if (da && !db) return 1;
+          if (da !== db) return da < db ? -1 : 1;
+          return String(a.title || '').localeCompare(String(b.title || ''));
+        });
+      } else if (filters.sort === 'rated') {
+        list = list.slice().sort(function (a, b) {
+          var sa = ratingStats(a);
+          var sb = ratingStats(b);
+          if (!sa.n && sb.n) return 1;
+          if (sa.n && !sb.n) return -1;
+          if (sb.avg !== sa.avg) return sb.avg - sa.avg;
+          if (sb.n !== sa.n) return sb.n - sa.n;
+          return String(a.title || '').localeCompare(String(b.title || ''));
+        });
+      } else if (filters.sort === 'title') {
         list = list.slice().sort(function (a, b) {
           return String(a.title || '').localeCompare(String(b.title || ''));
         });
@@ -500,6 +568,11 @@
       setPressed(document.getElementById('libPath'), 'data-path', filters.path);
       document.getElementById('libQuery').value = filters.query;
       document.getElementById('libSort').value = filters.sort;
+      if (iAmCoach && !document.querySelector('#libSort [value="recent"]')) {
+        document.getElementById('libSort').insertAdjacentHTML('beforeend',
+          '<option value="recent">Least recently run</option><option value="rated">Top rated</option>');
+        document.getElementById('libSort').value = filters.sort;
+      }
 
       var drillN = allLessons.filter(function (l) { return sessionKind(l) === 'drill'; }).length;
       document.getElementById('libTabDrillsN').textContent = drillN ? String(drillN) : '';
@@ -569,6 +642,7 @@
         (lesson.duration_min ? '<span class="lib-dur">' + esc(lesson.duration_min) + ' min</span>' : '') +
         '</div><h3>' + esc(lesson.title || '') + '</h3>' +
         (lesson.objective ? '<p class="lib-obj">' + esc(lesson.objective) + '</p>' : '') +
+        runMetaHtml(lesson) +
         '<div class="mkt-pill-row">' + pills + '</div></div></a>';
     }
 
@@ -605,6 +679,11 @@
       }
 
       var html = intro;
+      if (filters.sort === 'recent' || filters.sort === 'rated') {
+        var heading = filters.sort === 'recent' ? 'Least recently run' : 'Top rated';
+        list.innerHTML = intro + sectionHtml(heading, lessons);
+        return;
+      }
       if (filters.path === 'catalogue') {
         var groupMap = {};
         var groupKeys = [];
@@ -792,34 +871,48 @@
           return;
         }
 
-        var lessonReq = client.schema('coaching').from('lessons')
-          .select('*, spines(*), warmup_game:games!warmup_game_id(*), conditioned_game:games!conditioned_game_id(*)')
-          .order('title', { ascending: true });
-        var gameReq = client.schema('coaching').from('games')
-          .select('*')
-          .order('sort_index', { ascending: true })
-          .order('title', { ascending: true });
-        var guideReq = client.schema('coaching').from('guides')
-          .select('title, body')
-          .eq('slug', 'drills-v-coaching')
-          .maybeSingle();
-        var progReq = client.schema('coaching').from('programmes').select('*').order('title');
-        var itemReq = client.schema('coaching').from('programme_items').select('*').order('sort_index');
+        var userId = result.data.session.user.id;
+        client.from('user_profiles').select('is_coach').eq('id', userId).maybeSingle().then(function (profile) {
+          iAmCoach = !!(profile.data && profile.data.is_coach && !profile.error);
+          myUserId = userId;
 
-        Promise.all([lessonReq, gameReq, guideReq, progReq, itemReq]).then(function (results) {
-          allLessons = (results[0].data && !results[0].error) ? results[0].data : [];
-          allGames = (results[1].data && !results[1].error) ? results[1].data : [];
-          typeGuide = (results[2].data && !results[2].error && results[2].data.body) ? results[2].data.body : null;
-          if (results[2].data && results[2].data.title && typeGuide) typeGuide.title = results[2].data.title;
-          allProgrammes = (results[3].data && !results[3].error) ? results[3].data : [];
-          attachProgrammes(allLessons, allProgrammes, (results[4].data && !results[4].error) ? results[4].data : []);
-          if (!allLessons.length && !allGames.length) {
-            showState('libEmpty');
-            return;
+          var lessonReq = client.schema('coaching').from('lessons')
+            .select('*, spines(*), warmup_game:games!warmup_game_id(*), conditioned_game:games!conditioned_game_id(*)')
+            .order('title', { ascending: true });
+          var gameReq = client.schema('coaching').from('games')
+            .select('*')
+            .order('sort_index', { ascending: true })
+            .order('title', { ascending: true });
+          var guideReq = client.schema('coaching').from('guides')
+            .select('title, body')
+            .eq('slug', 'drills-v-coaching')
+            .maybeSingle();
+          var progReq = client.schema('coaching').from('programmes').select('*').order('title');
+          var itemReq = client.schema('coaching').from('programme_items').select('*').order('sort_index');
+          var requests = [lessonReq, gameReq, guideReq, progReq, itemReq];
+          if (iAmCoach) {
+            requests.push(client.schema('coaching').from('lesson_runs')
+              .select('lesson_id, coach_id, run_on, group_label, rating'));
           }
-          renderToolbar();
-          setView(view);
-          showState('libBrowse');
+
+          Promise.all(requests).then(function (results) {
+            allLessons = (results[0].data && !results[0].error) ? results[0].data : [];
+            allGames = (results[1].data && !results[1].error) ? results[1].data : [];
+            typeGuide = (results[2].data && !results[2].error && results[2].data.body) ? results[2].data.body : null;
+            if (results[2].data && results[2].data.title && typeGuide) typeGuide.title = results[2].data.title;
+            allProgrammes = (results[3].data && !results[3].error) ? results[3].data : [];
+            allRuns = (iAmCoach && results[5] && results[5].data && !results[5].error) ? results[5].data : [];
+            attachProgrammes(allLessons, allProgrammes, (results[4].data && !results[4].error) ? results[4].data : []);
+            if (!allLessons.length && !allGames.length) {
+              showState('libEmpty');
+              return;
+            }
+            renderToolbar();
+            setView(view);
+            showState('libBrowse');
+          }).catch(function () {
+            showState('libEmpty');
+          });
         }).catch(function () {
           showState('libEmpty');
         });
