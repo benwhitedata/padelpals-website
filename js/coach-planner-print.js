@@ -725,10 +725,13 @@
       'h1,p{margin:0}',
       '.page{position:relative;width:210mm;height:297mm;page-break-after:always}',
       '.page:last-child{page-break-after:auto}',
-      '.cut{position:absolute;top:12mm;left:12mm;width:74mm;height:105mm;border:.3pt solid #c5cad3;overflow:hidden;padding:4mm}',
+      '.cut{position:absolute;top:12mm;left:12mm;width:74mm;height:105mm;border:.3pt solid #c5cad3;overflow:hidden;display:flex;flex-direction:column;background:#fff}',
       '.note{position:absolute;top:20mm;left:94mm;width:100mm;font-size:9pt;line-height:1.35;color:#555}',
-      '.brand{font-size:6.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}',
-      'h1{margin-top:1.5mm;font-size:11pt;font-weight:800;line-height:1.15}',
+      '.mast{display:flex;align-items:center;gap:1.6mm;height:8mm;padding:0 3mm;background:var(--navy);border-bottom:1.4pt solid var(--gold);-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+      '.mast img{width:4.4mm;height:4.4mm}',
+      '.mast span{font-size:6.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}',
+      '.card-body{padding:2.5mm 4mm 0}',
+      'h1{font-size:11pt;font-weight:800;line-height:1.15}',
       '.row{display:grid;grid-template-columns:16mm 1fr;gap:1.5mm;padding:1.2mm 0;border-top:.4pt solid var(--line)}',
       '.row:first-of-type{margin-top:2.5mm}',
       '.time{font-size:7pt;font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums}',
@@ -738,24 +741,28 @@
       '.sentence{margin-top:1mm;font-size:9pt;font-weight:700;line-height:1.25}',
       '.cue{display:grid;grid-template-columns:4mm 1fr;gap:1.5mm;margin-top:2mm;font-size:8pt;line-height:1.25}',
       '.cue b{color:var(--blue)}',
+      '.foot{margin-top:auto;padding:1.1mm 0 1.3mm;border-top:1.4pt solid var(--gold);text-align:center;font-size:5.5pt;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--navy)}',
       '@page{size:A4 portrait;margin:0}',
       '@media print{html,body{margin:0!important;background:#fff}}'
     ].join('');
   }
 
   function cardHtml(lesson) {
+    var logo = assetUrl('images/Icon.png');
+    var mast = '<div class="mast"><img src="' + esc(logo) + '" alt=""><span>Padel Pals</span></div>';
+    var foot = '<p class="foot">padelpals.app</p>';
     var rows = cardRows(lesson);
-    var front = '<p class="brand">Padel Pals</p><h1>' + esc(lesson.title || 'Lesson') + '</h1>' +
+    var front = mast + '<div class="card-body"><h1>' + esc(lesson.title || 'Lesson') + '</h1>' +
       rows.map(function (row) {
         return '<div class="row"><div class="time">' + esc(row.from) + '–' + esc(row.to) + '</div><div>' +
           '<div class="label">' + esc(row.label) + '</div>' +
           (row.detail ? '<div class="detail">' + esc(row.detail) + '</div>' : '') +
           '</div></div>';
-      }).join('');
+      }).join('') + '</div>' + foot;
     var cues = cueItems(lesson).map(function (line, i) {
       return '<div class="cue"><b>' + (i + 1) + '</b><span>' + esc(line) + '</span></div>';
     }).join('');
-    var back = '<p class="say">Say this</p><p class="sentence">' + esc(lesson.objective || '') + '</p>' + cues;
+    var back = mast + '<div class="card-body"><p class="say">Say this</p><p class="sentence">' + esc(lesson.objective || '') + '</p>' + cues + '</div>' + foot;
     var body =
       '<section class="page"><div class="cut">' + front + '</div>' +
       '<p class="note">Cut on the line. Print both sides, flip on the long edge, actual size.</p></section>' +
@@ -767,10 +774,11 @@
       '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script></body></html>';
   }
 
-  function paintCueCard(pdf, fonts, lesson) {
+  function paintCueCard(pdf, fonts, logo, lesson) {
     var rgb = global.PDFLib.rgb;
     var navy = rgb(26 / 255, 34 / 255, 56 / 255);
     var blue = rgb(42 / 255, 57 / 255, 144 / 255);
+    var gold = rgb(246 / 255, 201 / 255, 21 / 255);
     var ink = rgb(51 / 255, 51 / 255, 51 / 255);
     var hair = rgb(197 / 255, 202 / 255, 211 / 255);
     var muted = rgb(0.33, 0.33, 0.33);
@@ -799,12 +807,44 @@
       return page;
     }
 
+    var barH = mm(8);
+    var footH = mm(5.5);
+    function paintFrame(page) {
+      page.drawRectangle({ x: originX, y: originY + cardH - barH, width: cardW, height: barH, color: navy });
+      page.drawRectangle({ x: originX, y: originY + cardH - barH - 1.4, width: cardW, height: 1.4, color: gold });
+      if (logo) {
+        page.drawImage(logo, {
+          x: originX + mm(3),
+          y: originY + cardH - barH + (barH - 12) / 2,
+          width: 12,
+          height: 12
+        });
+      }
+      page.drawText('PADEL PALS', {
+        x: originX + mm(3) + (logo ? 16 : 0),
+        y: originY + cardH - barH / 2 - 2.2,
+        size: 6.5,
+        font: black,
+        color: gold
+      });
+      page.drawRectangle({ x: originX + mm(4), y: originY + footH, width: cardW - mm(8), height: 1.4, color: gold });
+      var foot = 'PADELPALS.APP';
+      var footW = black.widthOfTextAtSize(foot, 5.5);
+      page.drawText(foot, {
+        x: originX + (cardW - footW) / 2,
+        y: originY + mm(1.7),
+        size: 5.5,
+        font: black,
+        color: navy
+      });
+    }
+
     var front = addSheet();
-    var top = originY + cardH - pad;
-    var floor = originY + pad;
-    front.drawText('PADEL PALS', { x: originX + pad, y: top - 8, size: 6.5, font: black, color: navy });
+    paintFrame(front);
+    var top = originY + cardH - barH - mm(3.5);
+    var floor = originY + footH + mm(1.5);
     var titleLines = wrapLines(lesson.title || 'Lesson', black, 11, inner);
-    var cursor = drawLines(front, titleLines.slice(0, 2), black, 11, originX + pad, top - 12, 13, navy) - mm(1.5);
+    var cursor = drawLines(front, titleLines.slice(0, 2), black, 11, originX + pad, top, 13, navy) - mm(1);
     cardRows(lesson).forEach(function (row) {
       if (cursor - 16 < floor) return;
       front.drawRectangle({ x: originX + pad, y: cursor, width: inner, height: 0.3, color: hair });
@@ -824,6 +864,7 @@
     drawLines(front, help, regular, 9, originX + cardW + mm(6), pageH - mm(24), 12, muted);
 
     var back = addSheet();
+    paintFrame(back);
     cursor = top;
     back.drawText('SAY THIS', { x: originX + pad, y: cursor - 8, size: 6.5, font: black, color: blue });
     var sayLines = wrapLines(lesson.objective || '', bold, 9, inner);
@@ -843,7 +884,8 @@
       return Promise.all([
         fetch(FONT_SRC.regular).then(function (r) { return r.arrayBuffer(); }),
         fetch(FONT_SRC.bold).then(function (r) { return r.arrayBuffer(); }),
-        fetch(FONT_SRC.black).then(function (r) { return r.arrayBuffer(); })
+        fetch(FONT_SRC.black).then(function (r) { return r.arrayBuffer(); }),
+        fetch(assetUrl('images/Icon.png')).then(function (r) { return r.ok ? r.arrayBuffer() : null; }).catch(function () { return null; })
       ]);
     }).then(function (parts) {
       return global.PDFLib.PDFDocument.create().then(function (doc) {
@@ -866,9 +908,10 @@
         return Promise.all([
           doc.embedFont(parts[0]),
           doc.embedFont(parts[1]),
-          doc.embedFont(parts[2])
+          doc.embedFont(parts[2]),
+          parts[3] ? doc.embedPng(parts[3]).catch(function () { return null; }) : null
         ]).then(function (embedded) {
-          paintCueCard(doc, { regular: embedded[0], bold: embedded[1], black: embedded[2] }, lesson);
+          paintCueCard(doc, { regular: embedded[0], bold: embedded[1], black: embedded[2] }, embedded[3], lesson);
           doc.setTitle((lesson.title || 'Lesson') + ' · Card');
           return doc.save();
         });
