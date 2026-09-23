@@ -263,17 +263,6 @@
           <span class="lib-filter-label">Group</span>
           <div class="lib-pills" id="libGroups" role="group" aria-label="Filter by group"></div>
         </div>
-        <div class="lib-filter-row">
-          <span class="lib-filter-label">Browse</span>
-          <div class="lib-pills" id="libPath" role="group" aria-label="Browse by path">
-            <button type="button" class="lib-pill" data-path="programmes" aria-pressed="true">Programmes</button>
-            <button type="button" class="lib-pill" data-path="catalogue" aria-pressed="false">By skill</button>
-          </div>
-        </div>
-        <div class="lib-filter-row" id="libSitRow" hidden>
-          <span class="lib-filter-label">Situation</span>
-          <div class="lib-pills" id="libSits" role="group" aria-label="Filter by game situation"></div>
-        </div>
       </div>
       <div class="lib-meta-bar">
         <span id="libCount"></span>
@@ -293,12 +282,11 @@
     var myUserId = null;
     var typeGuide = null;
     var viewParam = new URLSearchParams(window.location.search).get('view');
-    var pathParam = new URLSearchParams(window.location.search).get('path');
     var view = (viewParam === 'games' || viewParam === 'coaching' || viewParam === 'drills') ? viewParam : 'drills';
     var filters = {
       query: '',
       audience: '',
-      path: (pathParam === 'catalogue') ? 'catalogue' : 'programmes',
+      path: 'programmes',
       situation: '',
       sort: 'programme',
       kids: '',
@@ -446,11 +434,8 @@
         var inProg = (lesson.programmes || []).some(function (p) { return p.audience === filters.audience; });
         if (!inProg) return false;
       }
-      if (filters.path === 'catalogue' && filters.situation && lesson.game_situation !== filters.situation) return false;
-      if (filters.path === 'programmes') {
-        var anyProg = allLessons.some(function (l) { return l.programmes && l.programmes.length; });
-        if (anyProg && !(lesson.programmes && lesson.programmes.length)) return false;
-      }
+      var anyProg = allLessons.some(function (l) { return l.programmes && l.programmes.length; });
+      if (anyProg && !(lesson.programmes && lesson.programmes.length)) return false;
       if (filters.query) {
         var blob = [lesson.title, lesson.audience, lesson.objective, lesson.game_situation, lesson.phase, lesson.tactic, lesson.ball_characteristic, lesson.technical_focus, lesson.skill_id, skillGroup(lesson)]
           .join(' ').toLowerCase();
@@ -562,7 +547,7 @@
     }
 
     function filtersActive() {
-      return !!(filters.query || filters.audience || filters.situation || filters.path !== 'programmes' || filters.sort !== 'programme');
+      return !!(filters.query || filters.audience || filters.sort !== 'programme');
     }
 
     function setPressed(container, attr, value) {
@@ -580,19 +565,6 @@
             esc(titleCase(g)) + '</button>';
         }).join('');
 
-      var sits = unique(allLessons.map(function (l) { return l.game_situation; }))
-        .slice().sort(function (a, b) { return situationRank(a) - situationRank(b); });
-      var sitRow = document.getElementById('libSitRow');
-      sitRow.hidden = filters.path !== 'catalogue' || sits.length < 2;
-      if (!sitRow.hidden) {
-        document.getElementById('libSits').innerHTML = '<button type="button" class="lib-pill" data-sit="" aria-pressed="' + (filters.situation ? 'false' : 'true') + '">All Situations</button>' +
-          sits.map(function (s) {
-            return '<button type="button" class="lib-pill" data-sit="' + esc(s) + '" aria-pressed="' + (filters.situation === s ? 'true' : 'false') + '">' +
-              esc(titleCase(s)) + '</button>';
-          }).join('');
-      }
-
-      setPressed(document.getElementById('libPath'), 'data-path', filters.path);
       document.getElementById('libQuery').value = filters.query;
       document.getElementById('libSort').value = filters.sort;
       if (iAmCoach && !document.querySelector('#libSort [value="recent"]')) {
@@ -705,7 +677,7 @@
       }
 
       if (!lessons.length) {
-        list.innerHTML = '<div class="lib-none"><h3>No Plans Match These Filters</h3><p>Try another group, path, or search term.</p></div>';
+        list.innerHTML = '<div class="lib-none"><h3>No Plans Match These Filters</h3><p>Try another group or search term.</p></div>';
         return;
       }
 
@@ -715,20 +687,7 @@
         list.innerHTML = sectionHtml(heading, lessons);
         return;
       }
-      if (filters.path === 'catalogue') {
-        var groupMap = {};
-        var groupKeys = [];
-        lessons.forEach(function (l) {
-          var key = skillGroup(l);
-          if (!groupMap[key]) {
-            groupMap[key] = [];
-            groupKeys.push(key);
-          }
-          groupMap[key].push(l);
-        });
-        groupKeys.sort(function (a, b) { return skillGroupRank(a) - skillGroupRank(b); });
-        html += groupKeys.map(function (key) { return sectionHtml(key, groupMap[key]); }).join('');
-      } else if (filters.sort === 'situation') {
+      if (filters.sort === 'situation') {
         var sitMap = {};
         var sitKeys = [];
         lessons.forEach(function (l) {
@@ -938,22 +897,6 @@
       if (!btn) return;
       filters.audience = btn.getAttribute('data-audience') || '';
       setPressed(document.getElementById('libGroups'), 'data-audience', filters.audience);
-      apply();
-    });
-    document.getElementById('libPath').addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-path]');
-      if (!btn) return;
-      filters.path = btn.getAttribute('data-path') || 'programmes';
-      if (filters.path === 'programmes' && filters.sort === 'situation') filters.sort = 'programme';
-      if (filters.path === 'catalogue' && filters.sort === 'programme') filters.sort = 'situation';
-      renderToolbar();
-      apply();
-    });
-    document.getElementById('libSits').addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-sit]');
-      if (!btn) return;
-      filters.situation = btn.getAttribute('data-sit') || '';
-      setPressed(document.getElementById('libSits'), 'data-sit', filters.situation);
       apply();
     });
     document.getElementById('libQuery').addEventListener('input', function () {
