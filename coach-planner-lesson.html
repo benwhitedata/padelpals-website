@@ -25,7 +25,7 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <script src="js/shared-navigation.js?v=20260916h" data-auto-nav="true"></script>
-  <script src="js/coach-planner-print.js?v=20260922v"></script>
+  <script src="js/coach-planner-print.js?v=20260923a"></script>
   <style>
     .lsn-hero.mkt-hero{padding:40px 20px 36px;text-align:left}
     .lsn-hero .mkt-hero-inner{max-width:900px;margin:0 auto;text-align:left}
@@ -148,6 +148,9 @@
           <div class="lsn-print">
             <button type="button" class="lsn-print-card" id="lsnPrint">
               <i class="fas fa-print" aria-hidden="true"></i> Print
+            </button>
+            <button type="button" class="lsn-print-card" id="lsnCard" hidden>
+              <i class="fas fa-clone" aria-hidden="true"></i> Card
             </button>
           </div>
         </div>
@@ -523,6 +526,8 @@
       var lesson = composeLesson(baseLesson, lessonPool);
       currentLesson = lesson;
       document.title = lesson.title + ' | Coach Planner | Padel Pals';
+      var cardBtn = document.getElementById('lsnCard');
+      if (cardBtn) cardBtn.hidden = lesson.slug !== 'intro-volley';
       document.getElementById('lsnEyebrow').textContent = lesson.session_kind === 'coaching' ? 'Coaching' : 'Drill';
       document.getElementById('lsnAnnounceLabel').textContent = lesson.session_kind === 'coaching'
         ? 'Planned theme'
@@ -642,6 +647,12 @@
     document.getElementById('lsnPrint').addEventListener('click', function () {
       if (currentLesson && window.CoachPlannerPrint) {
         window.CoachPlannerPrint.printSheet(currentLesson, lessonPool);
+      }
+    });
+
+    document.getElementById('lsnCard').addEventListener('click', function () {
+      if (currentLesson && window.CoachPlannerPrint && window.CoachPlannerPrint.printCard) {
+        window.CoachPlannerPrint.printCard(currentLesson, lessonPool);
       }
     });
 

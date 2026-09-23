@@ -667,6 +667,242 @@
     });
   }
 
+  function significantWords(text) {
+    return pdfSafe(text).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function (word) {
+      return word && word.length > 2 && word !== 'the' && word !== 'and' && word !== 'then';
+    });
+  }
+
+  function lineOverlap(a, b) {
+    var left = significantWords(a);
+    var right = significantWords(b);
+    if (!left.length || !right.length) return 0;
+    var seen = {};
+    right.forEach(function (word) { seen[word] = true; });
+    var hit = 0;
+    left.forEach(function (word) { if (seen[word]) hit++; });
+    return hit / Math.min(left.length, right.length);
+  }
+
+  function cardLabel(label) {
+    if (label === 'Warm up with a ball') return 'Warm up';
+    if (label === 'Conditioned game') return 'Game';
+    if (label === 'Name what you saw' || label === 'Name the focus') return 'Name it';
+    return label || '';
+  }
+
+  function cardRows(lesson) {
+    var rows = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
+    var objective = lesson.objective || '';
+    var used = [];
+    return rows.map(function (step) {
+      var raw = String(step.detail || '').replace(/^Say the sentence, then you show it:\s*/i, '').trim();
+      var parts = raw.split(/\.\s+/).map(function (part) {
+        return part.replace(/\.$/, '').trim();
+      }).filter(Boolean);
+      var line = '';
+      var i;
+      for (i = 0; i < parts.length; i++) {
+        var bit = parts[i];
+        if (i === 0 && bit.split(/\s+/).length <= 2 && parts.length > 1) continue;
+        if (lineOverlap(bit, objective) >= 0.6) continue;
+        if (used.some(function (prev) { return lineOverlap(bit, prev) >= 0.5; })) continue;
+        line = bit;
+        break;
+      }
+      var words = line.split(/\s+/).filter(Boolean);
+      if (words.length > 12) line = words.slice(0, 12).join(' ');
+      if (line) used.push(line);
+      return { from: step.from, to: step.to, label: cardLabel(step.label), detail: line };
+    });
+  }
+
+  function cardCss() {
+    return [
+      ':root{--navy:#1A2238;--blue:#2A3990;--gold:#F6C915;--ink:#333;--line:#d0d5dd}',
+      '*{box-sizing:border-box}',
+      'html,body{margin:0;padding:0;background:#fff;color:var(--navy);font-family:Montserrat,Arial,Helvetica,sans-serif}',
+      'h1,p{margin:0}',
+      '.page{position:relative;width:210mm;height:297mm;page-break-after:always}',
+      '.page:last-child{page-break-after:auto}',
+      '.cut{position:absolute;top:12mm;left:12mm;width:74mm;height:105mm;border:.3pt solid #c5cad3;overflow:hidden;padding:4mm}',
+      '.note{position:absolute;top:20mm;left:94mm;width:100mm;font-size:9pt;line-height:1.35;color:#555}',
+      '.brand{font-size:6.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}',
+      'h1{margin-top:1.5mm;font-size:11pt;font-weight:800;line-height:1.15}',
+      '.row{display:grid;grid-template-columns:16mm 1fr;gap:1.5mm;padding:1.2mm 0;border-top:.4pt solid var(--line)}',
+      '.row:first-of-type{margin-top:2.5mm}',
+      '.time{font-size:7pt;font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums}',
+      '.label{font-size:7.5pt;font-weight:700;line-height:1.2}',
+      '.detail{margin-top:.4mm;font-size:7pt;line-height:1.25;color:var(--ink)}',
+      '.say{margin-top:1mm;font-size:6.5pt;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--blue)}',
+      '.sentence{margin-top:1mm;font-size:9pt;font-weight:700;line-height:1.25}',
+      '.cue{display:grid;grid-template-columns:4mm 1fr;gap:1.5mm;margin-top:2mm;font-size:8pt;line-height:1.25}',
+      '.cue b{color:var(--blue)}',
+      '@page{size:A4 portrait;margin:0}',
+      '@media print{html,body{margin:0!important;background:#fff}}'
+    ].join('');
+  }
+
+  function cardHtml(lesson) {
+    var rows = cardRows(lesson);
+    var front = '<p class="brand">Padel Pals</p><h1>' + esc(lesson.title || 'Lesson') + '</h1>' +
+      rows.map(function (row) {
+        return '<div class="row"><div class="time">' + esc(row.from) + '–' + esc(row.to) + '</div><div>' +
+          '<div class="label">' + esc(row.label) + '</div>' +
+          (row.detail ? '<div class="detail">' + esc(row.detail) + '</div>' : '') +
+          '</div></div>';
+      }).join('');
+    var cues = cueItems(lesson).map(function (line, i) {
+      return '<div class="cue"><b>' + (i + 1) + '</b><span>' + esc(line) + '</span></div>';
+    }).join('');
+    var back = '<p class="say">Say this</p><p class="sentence">' + esc(lesson.objective || '') + '</p>' + cues;
+    var body =
+      '<section class="page"><div class="cut">' + front + '</div>' +
+      '<p class="note">Cut on the line. Print both sides, flip on the long edge, actual size.</p></section>' +
+      '<section class="page"><div class="cut">' + back + '</div></section>';
+    return '<!DOCTYPE html><html lang="en-GB"><head><meta charset="UTF-8"><title>' +
+      esc((lesson.title || 'Lesson') + ' · Card') + '</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">' +
+      '<style>' + cardCss() + '</style></head><body>' + body +
+      '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script></body></html>';
+  }
+
+  function paintCueCard(pdf, fonts, lesson) {
+    var rgb = global.PDFLib.rgb;
+    var navy = rgb(26 / 255, 34 / 255, 56 / 255);
+    var blue = rgb(42 / 255, 57 / 255, 144 / 255);
+    var ink = rgb(51 / 255, 51 / 255, 51 / 255);
+    var hair = rgb(197 / 255, 202 / 255, 211 / 255);
+    var muted = rgb(0.33, 0.33, 0.33);
+    var pageW = mm(210);
+    var pageH = mm(297);
+    var cardW = mm(74);
+    var cardH = mm(105);
+    var originX = mm(12);
+    var originY = pageH - mm(12) - cardH;
+    var pad = mm(4);
+    var inner = cardW - pad * 2;
+    var regular = fonts.regular;
+    var bold = fonts.bold;
+    var black = fonts.black;
+
+    function addSheet() {
+      var page = pdf.addPage([pageW, pageH]);
+      page.drawRectangle({
+        x: originX,
+        y: originY,
+        width: cardW,
+        height: cardH,
+        borderColor: hair,
+        borderWidth: 0.4
+      });
+      return page;
+    }
+
+    var front = addSheet();
+    var top = originY + cardH - pad;
+    var floor = originY + pad;
+    front.drawText('PADEL PALS', { x: originX + pad, y: top - 8, size: 6.5, font: black, color: navy });
+    var titleLines = wrapLines(lesson.title || 'Lesson', black, 11, inner);
+    var cursor = drawLines(front, titleLines.slice(0, 2), black, 11, originX + pad, top - 12, 13, navy) - mm(1.5);
+    cardRows(lesson).forEach(function (row) {
+      if (cursor - 16 < floor) return;
+      front.drawRectangle({ x: originX + pad, y: cursor, width: inner, height: 0.3, color: hair });
+      cursor -= 11;
+      front.drawText(pdfSafe(row.from + '-' + row.to), {
+        x: originX + pad, y: cursor, size: 7, font: black, color: blue
+      });
+      var labelLines = wrapLines(row.label, bold, 7.5, inner - mm(16));
+      drawLines(front, labelLines.slice(0, 1), bold, 7.5, originX + pad + mm(16), cursor + 7.5, 9, navy);
+      if (row.detail && cursor - 12 > floor) {
+        var detailLines = wrapLines(row.detail, regular, 7, inner - mm(16));
+        cursor = drawLines(front, detailLines.slice(0, 2), regular, 7, originX + pad + mm(16), cursor - 2, 9, ink);
+      }
+      cursor -= mm(1.2);
+    });
+    var help = wrapLines('Cut on the line. Print both sides, flip on the long edge, actual size.', regular, 9, mm(90));
+    drawLines(front, help, regular, 9, originX + cardW + mm(6), pageH - mm(24), 12, muted);
+
+    var back = addSheet();
+    cursor = top;
+    back.drawText('SAY THIS', { x: originX + pad, y: cursor - 8, size: 6.5, font: black, color: blue });
+    var sayLines = wrapLines(lesson.objective || '', bold, 9, inner);
+    cursor = drawLines(back, sayLines.slice(0, 4), bold, 9, originX + pad, cursor - 14, 12, navy) - mm(2);
+    cueItems(lesson).slice(0, 3).forEach(function (cueLine, index) {
+      if (cursor - 14 < floor) return;
+      back.drawText(String(index + 1), { x: originX + pad, y: cursor - 8, size: 8, font: black, color: blue });
+      var lines = wrapLines(cueLine, regular, 8, inner - mm(5));
+      cursor = drawLines(back, lines.slice(0, 3), regular, 8, originX + pad + mm(5), cursor, 10, navy) - mm(1.5);
+    });
+  }
+
+  function buildCuePdf(lesson) {
+    return loadScript('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'PDFLib').then(function () {
+      return loadScript('https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js', 'fontkit');
+    }).then(function () {
+      return Promise.all([
+        fetch(FONT_SRC.regular).then(function (r) { return r.arrayBuffer(); }),
+        fetch(FONT_SRC.bold).then(function (r) { return r.arrayBuffer(); }),
+        fetch(FONT_SRC.black).then(function (r) { return r.arrayBuffer(); })
+      ]);
+    }).then(function (parts) {
+      return global.PDFLib.PDFDocument.create().then(function (doc) {
+        doc.registerFontkit(global.fontkit);
+        if (global.fontkit && !global.fontkit.__ppNoLigatures) {
+          var createFont = global.fontkit.create;
+          global.fontkit.create = function () {
+            var font = createFont.apply(this, arguments);
+            if (font && !font.__ppNoLigatures) {
+              var layout = font.layout.bind(font);
+              font.layout = function (text, features) {
+                return layout(text, features || { liga: false, clig: false, dlig: false, hlig: false, calt: false });
+              };
+              font.__ppNoLigatures = true;
+            }
+            return font;
+          };
+          global.fontkit.__ppNoLigatures = true;
+        }
+        return Promise.all([
+          doc.embedFont(parts[0]),
+          doc.embedFont(parts[1]),
+          doc.embedFont(parts[2])
+        ]).then(function (embedded) {
+          paintCueCard(doc, { regular: embedded[0], bold: embedded[1], black: embedded[2] }, lesson);
+          doc.setTitle((lesson.title || 'Lesson') + ' · Card');
+          return doc.save();
+        });
+      });
+    });
+  }
+
+  function openCuePdf(lesson) {
+    buildCuePdf(lesson).then(function (bytes) {
+      var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      var frame = document.getElementById('pp-card-frame');
+      if (!frame) {
+        frame = document.createElement('iframe');
+        frame.id = 'pp-card-frame';
+        frame.title = 'Cue card';
+        frame.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden';
+        document.body.appendChild(frame);
+      }
+      frame.onload = function () {
+        setTimeout(function () {
+          try {
+            frame.contentWindow.focus();
+            frame.contentWindow.print();
+          } catch (err) {
+            global.open(url, '_blank');
+          }
+        }, 500);
+      };
+      frame.src = url;
+    }).catch(function () {
+      openPrint(cardHtml(lesson));
+    });
+  }
+
   function buildPdf(lesson) {
     return loadScript('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'PDFLib').then(function () {
       return loadScript('https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js', 'fontkit');
@@ -763,6 +999,9 @@
     applyComposedRunSheets: applyComposedRunSheets,
     printSheet: function (lesson, pool) {
       openPdf(withComposedRunSheet(lesson, pool || [lesson]));
+    },
+    printCard: function (lesson, pool) {
+      openCuePdf(withComposedRunSheet(lesson, pool || [lesson]));
     }
   };
 })(window);
