@@ -58,14 +58,15 @@
       display:grid;gap:14px;
     }
     .lsn-log-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .lsn-log label,.lsn-metric span{display:grid;gap:6px;font-size:var(--pp-t-meta);font-weight:700;color:#2A3990}
-    .lsn-metric span{display:block;margin-bottom:6px}
+    .lsn-log label{display:grid;gap:6px;font-size:var(--pp-t-meta);font-weight:700;color:#2A3990}
     .lsn-log input,.lsn-log select,.lsn-log textarea{
       width:100%;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:10px;
       padding:10px 12px;font:inherit;font-size:var(--pp-t-body);font-weight:600;color:#1a2238;background:#F6F5F5;
     }
     .lsn-log textarea{font-weight:400;resize:vertical}
     .lsn-log input:focus,.lsn-log select:focus,.lsn-log textarea:focus{outline:3px solid #7eb6f5;outline-offset:2px;background:#fff}
+    .lsn-log-stars{border:0;margin:0;padding:0}
+    .lsn-log-stars legend{font-size:var(--pp-t-meta);font-weight:700;color:#2A3990;margin-bottom:8px}
     .lsn-star{
       appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
       width:40px;height:40px;border-radius:10px;margin-right:6px;font-size:1.1rem;cursor:pointer;
@@ -87,6 +88,7 @@
     .lsn-run-item strong{color:#1a2238}
     .lsn-run-item .lsn-run-when{font-weight:700;color:#2A3990}
     .lsn-run-item p{margin:0 0 6px;color:#333}
+    .lsn-run-private{color:#555;font-size:var(--pp-t-meta)}
     .lsn-run-actions{display:flex;gap:8px;margin-top:8px}
     @media (max-width:720px){.lsn-log-row{grid-template-columns:1fr}}
   </style>
@@ -150,10 +152,15 @@
               <select id="gmGroup"></select>
             </label>
           </div>
-          <div class="lsn-metric"><span>How effective?</span><div id="gmEffective"></div></div>
-          <div class="lsn-metric"><span>How popular with the players?</span><div id="gmPopular"></div></div>
-          <label>Note for other coaches
-            <textarea id="gmComment" maxlength="1000" rows="2" placeholder="Optional"></textarea>
+          <fieldset class="lsn-log-stars">
+            <legend>How did it land?</legend>
+            <div id="gmStars" role="group" aria-label="Score from 1 to 5"></div>
+          </fieldset>
+          <label>Comment for other coaches
+            <textarea id="gmComment" maxlength="1000" rows="3" placeholder="What worked, and what you would change"></textarea>
+          </label>
+          <label>Private note
+            <textarea id="gmNote" maxlength="1000" rows="2" placeholder="Only you can see this"></textarea>
           </label>
           <p class="lsn-log-error" id="gmError" hidden></p>
           <div class="lsn-log-actions">
@@ -239,9 +246,10 @@
     var iAmCoach = false;
     var myUserId = null;
     var gameRuns = [];
+    var runNotes = {};
     var coachNames = {};
     var editingId = null;
-    var draft = { effectiveness: null, popularity: null };
+    var draftRating = null;
     var RUN_GROUPS = ['Intro to Padel', 'Beginner / Improver', 'Improver / Intermediate', 'Advanced'];
     var RUN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -274,16 +282,15 @@
       el.hidden = !message;
     }
 
-    function paintMetric(id, metric) {
-      var value = draft[metric];
+    function paintStars() {
       var html = '';
       var n;
       for (n = 1; n <= 5; n++) {
-        html += '<button type="button" class="lsn-star" data-metric="' + metric + '" data-star="' + n +
-          '" aria-pressed="' + (value === n ? 'true' : 'false') + '" aria-label="' + n + ' out of 5">' +
-          (value !== null && n <= value ? '★' : '☆') + '</button>';
+        html += '<button type="button" class="lsn-star" data-star="' + n + '" aria-pressed="' +
+          (draftRating === n ? 'true' : 'false') + '" aria-label="' + n + ' out of 5">' +
+          (draftRating !== null && n <= draftRating ? '★' : '☆') + '</button>';
       }
-      document.getElementById(id).innerHTML = html;
+      document.getElementById('gmStars').innerHTML = html;
     }
 
     function fillGroups(selected) {
@@ -295,21 +302,21 @@
 
     function openGameForm(run) {
       editingId = run ? run.id : null;
-      draft.effectiveness = run && run.effectiveness != null ? run.effectiveness : null;
-      draft.popularity = run && run.popularity != null ? run.popularity : null;
+      draftRating = run && run.rating != null ? run.rating : null;
       document.getElementById('gmDate').value = run ? run.run_on : isoToday();
       fillGroups(run ? (run.group_label || '') : '');
       document.getElementById('gmComment').value = run && run.comment ? run.comment : '';
+      document.getElementById('gmNote').value = run && runNotes[run.id] ? runNotes[run.id] : '';
       document.getElementById('gmSave').textContent = run ? 'Update' : 'Save';
       setGameError('');
-      paintMetric('gmEffective', 'effectiveness');
-      paintMetric('gmPopular', 'popularity');
+      paintStars();
       document.getElementById('gmForm').hidden = false;
       document.getElementById('gmDate').focus();
     }
 
     function closeGameForm() {
       editingId = null;
+      draftRating = null;
       document.getElementById('gmForm').hidden = true;
       setGameError('');
     }
@@ -322,43 +329,40 @@
         return;
       }
       var mine = gameRuns.filter(function (row) { return row.coach_id === myUserId; });
-      function avg(key) {
-        var rows = gameRuns.filter(function (row) { return row[key] != null; });
-        if (!rows.length) return '';
-        var sum = 0;
-        rows.forEach(function (row) { sum += row[key]; });
-        return (sum / rows.length).toFixed(1) + ' (' + rows.length + ')';
-      }
+      var rated = gameRuns.filter(function (row) { return row.rating != null; });
       var parts = [];
       if (mine.length) parts.push('You last ran this ' + shortRunDate(mine[0].run_on));
-      var eff = avg('effectiveness');
-      var pop = avg('popularity');
-      if (eff) parts.push('Effective ' + eff);
-      if (pop) parts.push('Popular ' + pop);
+      parts.push(gameRuns.length + ' run' + (gameRuns.length === 1 ? '' : 's'));
+      if (rated.length) {
+        var sum = 0;
+        rated.forEach(function (row) { sum += row.rating; });
+        parts.push((sum / rated.length).toFixed(1) + ' from ' + rated.length + ' rating' + (rated.length === 1 ? '' : 's'));
+      }
       el.textContent = parts.join(' · ');
-      el.hidden = !parts.length;
+      el.hidden = false;
     }
 
     function renderGameList() {
       var list = document.getElementById('gmList');
       if (!gameRuns.length) {
-        list.innerHTML = '<p class="lsn-run-empty">No feedback yet.</p>';
+        list.innerHTML = '<p class="lsn-run-empty">No sessions logged yet.</p>';
         return;
       }
       list.innerHTML = gameRuns.map(function (run) {
         var bits = [coachLabel(run.coach_id)];
         if (run.group_label) bits.push(run.group_label);
-        var scores = [];
-        if (run.effectiveness != null) scores.push('Effective ' + run.effectiveness + '/5');
-        if (run.popularity != null) scores.push('Popular ' + run.popularity + '/5');
+        var stars = run.rating != null ? ('★'.repeat(run.rating) + '☆'.repeat(5 - run.rating)) : '';
+        var note = run.coach_id === myUserId ? runNotes[run.id] : '';
         var actions = run.coach_id === myUserId
           ? '<div class="lsn-run-actions"><button type="button" class="lsn-chip" data-edit="' + esc(run.id) + '">Edit</button>' +
             '<button type="button" class="lsn-chip" data-delete="' + esc(run.id) + '">Delete</button></div>'
           : '';
         return '<article class="lsn-run-item"><header><span class="lsn-run-when">' + esc(shortRunDate(run.run_on)) +
-          '</span><strong>' + esc(bits.join(' · ')) + '</strong></header>' +
-          (scores.length ? '<p>' + esc(scores.join(' · ')) + '</p>' : '') +
+          '</span><strong>' + esc(bits.join(' · ')) + '</strong>' +
+          (stars ? '<span aria-label="' + run.rating + ' out of 5">' + stars + '</span>' : '') +
+          '</header>' +
           (run.comment ? '<p>' + esc(run.comment) + '</p>' : '') +
+          (note ? '<p class="lsn-run-private">Only you: ' + esc(note) + '</p>' : '') +
           actions + '</article>';
       }).join('');
     }
@@ -382,17 +386,36 @@
       var client = plannerClient();
       if (!client || !currentGame) return;
       client.schema('coaching').from('game_runs')
-        .select('id, game_id, coach_id, run_on, group_label, effectiveness, popularity, comment')
+        .select('id, game_id, coach_id, run_on, group_label, rating, comment')
         .eq('game_id', currentGame.id)
         .order('run_on', { ascending: false })
         .order('created_at', { ascending: false })
         .then(function (result) {
           gameRuns = (result && result.data && !result.error) ? result.data : [];
-          return loadNames(client);
-        }).then(function () {
-          renderGameSummary();
-          renderGameList();
+          var ids = gameRuns.map(function (row) { return row.id; });
+          var notesReq = ids.length
+            ? client.schema('coaching').from('game_run_notes').select('run_id, note').in('run_id', ids)
+            : Promise.resolve({ data: [] });
+          return Promise.all([notesReq, loadNames(client)]).then(function (parts) {
+            runNotes = {};
+            ((parts[0] && parts[0].data) || []).forEach(function (row) { runNotes[row.run_id] = row.note; });
+            renderGameSummary();
+            renderGameList();
+          });
         });
+    }
+
+    function savePrivateNote(client, runId, note) {
+      var trimmed = (note || '').trim();
+      if (!trimmed) {
+        if (!runNotes[runId]) return Promise.resolve();
+        return client.schema('coaching').from('game_run_notes').delete().eq('run_id', runId);
+      }
+      return client.schema('coaching').from('game_run_notes').upsert({
+        run_id: runId,
+        coach_id: myUserId,
+        note: trimmed
+      }, { onConflict: 'run_id' });
     }
 
     function saveGameRun(event) {
@@ -400,20 +423,14 @@
       var client = plannerClient();
       if (!client || !currentGame || !iAmCoach) return;
       var comment = document.getElementById('gmComment').value.trim();
-      var group = document.getElementById('gmGroup').value || null;
       var payload = {
         run_on: document.getElementById('gmDate').value,
-        group_label: group,
-        effectiveness: draft.effectiveness,
-        popularity: draft.popularity,
+        group_label: document.getElementById('gmGroup').value || null,
+        rating: draftRating,
         comment: comment || null
       };
       if (!payload.run_on) {
         setGameError('Choose the date you ran it.');
-        return;
-      }
-      if (payload.effectiveness == null && payload.popularity == null && !payload.comment) {
-        setGameError('Add a score or a note.');
         return;
       }
       var saveBtn = document.getElementById('gmSave');
@@ -428,18 +445,26 @@
         write = client.schema('coaching').from('game_runs').insert(payload).select('id').single();
       }
       write.then(function (result) {
-        saveBtn.disabled = false;
-        if (result.error) {
-          setGameError(result.error.code === '23505'
+        if (result.error || !result.data) {
+          saveBtn.disabled = false;
+          setGameError(result.error && result.error.code === '23505'
             ? 'You already logged this game for that group on that date. Edit that entry instead.'
-            : 'Could not save this feedback. Try again.');
+            : 'Could not save this session. Try again.');
           return;
         }
-        closeGameForm();
-        loadGameRuns();
+        savePrivateNote(client, result.data.id, document.getElementById('gmNote').value).then(function (noteResult) {
+          saveBtn.disabled = false;
+          if (noteResult && noteResult.error) {
+            setGameError('The session was saved, but the private note was not.');
+            loadGameRuns();
+            return;
+          }
+          closeGameForm();
+          loadGameRuns();
+        });
       }).catch(function () {
         saveBtn.disabled = false;
-        setGameError('Could not save this feedback. Try again.');
+        setGameError('Could not save this session. Try again.');
       });
     }
 
@@ -449,13 +474,12 @@
     });
     document.getElementById('gmCancel').addEventListener('click', closeGameForm);
     document.getElementById('gmForm').addEventListener('submit', saveGameRun);
-    document.getElementById('gmForm').addEventListener('click', function (e) {
+    document.getElementById('gmStars').addEventListener('click', function (e) {
       var btn = e.target.closest('[data-star]');
       if (!btn) return;
-      var metric = btn.getAttribute('data-metric');
       var n = Number(btn.getAttribute('data-star'));
-      draft[metric] = draft[metric] === n ? null : n;
-      paintMetric(metric === 'effectiveness' ? 'gmEffective' : 'gmPopular', metric);
+      draftRating = draftRating === n ? null : n;
+      paintStars();
     });
     document.getElementById('gmList').addEventListener('click', function (e) {
       var edit = e.target.closest('[data-edit]');
@@ -463,7 +487,7 @@
       if (edit) {
         var run = gameRuns.filter(function (row) { return row.id === edit.getAttribute('data-edit'); })[0];
         if (run) openGameForm(run);
-      } else if (del && window.confirm('Delete this feedback?')) {
+      } else if (del && window.confirm('Delete this session log?')) {
         var client = plannerClient();
         if (!client) return;
         client.schema('coaching').from('game_runs').delete().eq('id', del.getAttribute('data-delete')).then(function (result) {

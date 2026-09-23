@@ -129,9 +129,6 @@
     .lsn-log-mode{margin:0;font-size:var(--pp-t-body);font-weight:700;color:#1a2238;grid-column:1 / -1}
     .lsn-log-stars{border:0;margin:0;padding:0}
     .lsn-log-stars legend{font-size:var(--pp-t-meta);font-weight:700;color:#2A3990;margin-bottom:8px}
-    .lsn-game-feedback{border:0;margin:0;padding:12px 0 0;border-top:1px solid rgba(26,34,56,.08);display:grid;gap:10px}
-    .lsn-game-feedback legend{font-size:var(--pp-t-body);font-weight:700;color:#1a2238;padding:0}
-    .lsn-metric span{display:block;font-size:var(--pp-t-meta);font-weight:700;color:#2A3990;margin-bottom:6px}
     .lsn-star{
       appearance:none;border:1px solid #d0d5dd;background:#fff;color:#1a2238;
       width:40px;height:40px;border-radius:10px;margin-right:6px;font-size:1.1rem;cursor:pointer;
@@ -292,7 +289,6 @@
           <label>Private note
             <textarea id="lsnRunNote" maxlength="1000" rows="2" placeholder="Only you can see this"></textarea>
           </label>
-          <div id="lsnGameFeedback"></div>
           <p class="lsn-log-error" id="lsnRunError" hidden></p>
           <div class="lsn-log-actions">
             <button type="submit" class="mkt-btn" id="lsnRunSave">Save</button>
@@ -323,8 +319,6 @@
     var iAmCoach = false;
     var myUserId = null;
     var lessonRuns = [];
-    var gameRuns = [];
-    var draftGame = { warmup: null, mini: null };
     var runNotes = {};
     var coachNames = {};
     var editingRunId = null;
@@ -534,11 +528,9 @@
       document.getElementById(listId).innerHTML = games.map(function (g) {
         var on = (g.id === selectedId || g.slug === selectedId);
         var preview = gamePreview(g);
-        var record = gameRunSummary(g);
         return '<article class="lsn-tool-card' + (on ? ' is-selected' : '') + '">' +
           '<strong>' + esc(g.title) + (on ? ' · in this hour' : '') + '</strong>' +
           (preview ? '<p class="lsn-tool-preview">' + esc(preview) + '</p>' : '') +
-          (record ? '<p class="lsn-tool-preview">' + esc(record) + '</p>' : '') +
           '<div class="lsn-tool-actions">' +
             '<button type="button" data-game="' + esc(g.id) + '" data-kind="' + kind +
             '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
@@ -634,12 +626,8 @@
       document.getElementById('lsnHeroMeta').textContent = meta;
       document.getElementById('lsnHeroMeta').hidden = !meta;
       renderRunSummary();
-      if (iAmCoach && !document.getElementById('lsnRunForm').hidden) {
-        if (!editingRunId) {
-          document.getElementById('lsnRunModeLabel').textContent = runModeLabel(runAsCoaching ? 'coaching' : 'drill');
-        }
-        captureGameComments();
-        renderGameFeedback();
+      if (iAmCoach && !editingRunId && !document.getElementById('lsnRunForm').hidden) {
+        document.getElementById('lsnRunModeLabel').textContent = runModeLabel(runAsCoaching ? 'coaching' : 'drill');
       }
 
       var eye = lesson.technical_focus ? ('Eye on ' + lesson.technical_focus) : '';
@@ -862,8 +850,6 @@
       document.getElementById('lsnRunSave').textContent = run ? 'Update' : 'Save';
       setRunError('');
       paintStars();
-      resetGameDraft(run);
-      renderGameFeedback();
       document.getElementById('lsnRunForm').hidden = false;
       document.getElementById('lsnRunDate').focus();
     }
@@ -920,7 +906,6 @@
           (stars ? '<span aria-label="' + run.rating + ' out of 5">' + stars + '</span>' : '') +
           '</header>' +
           (run.comment ? '<p>' + esc(run.comment) + '</p>' : '') +
-          (linkedGameLine(run) ? '<p>' + esc(linkedGameLine(run)) + '</p>' : '') +
           (note ? '<p class="lsn-run-private">Only you: ' + esc(note) + '</p>' : '') +
           actions + '</article>';
       }).join('');
@@ -933,165 +918,6 @@
         ((result && result.data) || []).forEach(function (row) {
           coachNames[row.id] = row.short_name || row.display_name || 'Coach';
         });
-      });
-    }
-
-    function blankGameDraft() {
-      return { effectiveness: null, popularity: null, comment: '' };
-    }
-
-    function rateableGame(game) {
-      return game && (game.kind === 'warmup' || game.kind === 'mini') ? game : null;
-    }
-
-    function hourGame(slot) {
-      if (!baseLesson) return null;
-      if (slot === 'warmup') return rateableGame(nestedRow(baseLesson.warmup_game));
-      return rateableGame(nestedRow(baseLesson.conditioned_game));
-    }
-
-    function sameGroup(run, group) {
-      return (run.group_label || '') === (group || '');
-    }
-
-    function gameScore(rows, key) {
-      var sum = 0;
-      var n = 0;
-      rows.forEach(function (row) {
-        if (row[key] == null) return;
-        sum += row[key];
-        n += 1;
-      });
-      return { avg: n ? sum / n : 0, n: n };
-    }
-
-    function gameRunSummary(game) {
-      if (!iAmCoach || !game) return '';
-      var rows = gameRuns.filter(function (row) { return row.game_id === game.id; });
-      if (!rows.length) return 'Not run yet';
-      var mine = '';
-      rows.forEach(function (row) {
-        if (row.coach_id === myUserId && row.run_on > mine) mine = row.run_on;
-      });
-      var eff = gameScore(rows, 'effectiveness');
-      var pop = gameScore(rows, 'popularity');
-      var bits = [mine ? ('Last run ' + shortRunDate(mine)) : 'Not run yet'];
-      if (eff.n) bits.push('Effective ' + eff.avg.toFixed(1) + ' (' + eff.n + ')');
-      if (pop.n) bits.push('Popular ' + pop.avg.toFixed(1) + ' (' + pop.n + ')');
-      return bits.join(' · ');
-    }
-
-    function linkedGameLine(run) {
-      var rows = gameRuns.filter(function (row) { return row.lesson_run_id === run.id; });
-      if (!rows.length) return '';
-      return rows.map(function (row) {
-        var game = gameById(row.game_id);
-        var bits = [];
-        if (row.effectiveness != null) bits.push('effective ' + row.effectiveness);
-        if (row.popularity != null) bits.push('popular ' + row.popularity);
-        if (row.comment) bits.push(row.comment);
-        return (game ? game.title : 'Game') + (bits.length ? ': ' + bits.join(', ') : '');
-      }).join(' · ');
-    }
-
-    function starButtons(slot, metric, value) {
-      var html = '';
-      var n;
-      for (n = 1; n <= 5; n++) {
-        html += '<button type="button" class="lsn-star" data-slot="' + slot + '" data-metric="' + metric +
-          '" data-star="' + n + '" aria-pressed="' + (value === n ? 'true' : 'false') + '" aria-label="' +
-          n + ' out of 5">' + (value !== null && n <= value ? '★' : '☆') + '</button>';
-      }
-      return html;
-    }
-
-    function captureGameComments() {
-      ['warmup', 'mini'].forEach(function (slot) {
-        var field = document.querySelector('[data-game-comment="' + slot + '"]');
-        if (field && draftGame[slot]) draftGame[slot].comment = field.value;
-      });
-    }
-
-    function resetGameDraft(run) {
-      draftGame = { warmup: blankGameDraft(), mini: blankGameDraft() };
-      if (!run) return;
-      gameRuns.filter(function (row) { return row.lesson_run_id === run.id; }).forEach(function (row) {
-        ['warmup', 'mini'].forEach(function (slot) {
-          var game = hourGame(slot);
-          if (game && row.game_id === game.id) {
-            draftGame[slot] = {
-              effectiveness: row.effectiveness,
-              popularity: row.popularity,
-              comment: row.comment || ''
-            };
-          }
-        });
-      });
-    }
-
-    function renderGameFeedback() {
-      var host = document.getElementById('lsnGameFeedback');
-      if (!host) return;
-      host.innerHTML = ['warmup', 'mini'].map(function (slot) {
-        var game = hourGame(slot);
-        if (!game) return '';
-        var draft = draftGame[slot] || blankGameDraft();
-        var label = slot === 'warmup' ? 'Warm-up' : 'Mini game';
-        return '<fieldset class="lsn-game-feedback">' +
-          '<legend>' + esc(label + ': ' + (game.title || '')) + '</legend>' +
-          '<div class="lsn-metric"><span>How effective?</span>' + starButtons(slot, 'effectiveness', draft.effectiveness) + '</div>' +
-          '<div class="lsn-metric"><span>How popular with the players?</span>' + starButtons(slot, 'popularity', draft.popularity) + '</div>' +
-          '<label>Note for other coaches<textarea data-game-comment="' + slot + '" maxlength="1000" rows="2" placeholder="Optional"></textarea></label>' +
-          '</fieldset>';
-      }).join('');
-      ['warmup', 'mini'].forEach(function (slot) {
-        var field = host.querySelector('[data-game-comment="' + slot + '"]');
-        if (field && draftGame[slot]) field.value = draftGame[slot].comment || '';
-      });
-    }
-
-    function saveOneGame(client, lessonRunId, game, slot, runOn, group) {
-      if (!game) return Promise.resolve();
-      var draft = draftGame[slot] || blankGameDraft();
-      var comment = (draft.comment || '').trim();
-      var empty = draft.effectiveness == null && draft.popularity == null && !comment;
-      var existing = gameRuns.filter(function (row) {
-        return row.game_id === game.id && row.coach_id === myUserId && row.run_on === runOn && sameGroup(row, group);
-      })[0];
-      var table = client.schema('coaching').from('game_runs');
-      if (empty) {
-        if (existing && existing.lesson_run_id === lessonRunId) return table.delete().eq('id', existing.id);
-        return Promise.resolve();
-      }
-      var payload = {
-        run_on: runOn,
-        group_label: group,
-        effectiveness: draft.effectiveness,
-        popularity: draft.popularity,
-        comment: comment || null,
-        lesson_run_id: lessonRunId
-      };
-      if (existing) return table.update(payload).eq('id', existing.id);
-      payload.game_id = game.id;
-      payload.coach_id = myUserId;
-      return table.insert(payload).then(function (result) {
-        if (result.error && result.error.code === '23505') {
-          var retry = client.schema('coaching').from('game_runs').update(payload)
-            .eq('game_id', game.id).eq('coach_id', myUserId).eq('run_on', runOn);
-          return group ? retry.eq('group_label', group) : retry.is('group_label', null);
-        }
-        return result;
-      });
-    }
-
-    function saveGameFeedback(client, lessonRunId, runOn, group) {
-      captureGameComments();
-      return Promise.all([
-        saveOneGame(client, lessonRunId, hourGame('warmup'), 'warmup', runOn, group),
-        saveOneGame(client, lessonRunId, hourGame('mini'), 'mini', runOn, group)
-      ]).then(function (results) {
-        var failed = results.filter(function (result) { return result && result.error; })[0];
-        return failed || {};
       });
     }
 
@@ -1109,18 +935,11 @@
           var notesReq = ids.length
             ? client.schema('coaching').from('lesson_run_notes').select('run_id, note').in('run_id', ids)
             : Promise.resolve({ data: [] });
-          var gameReq = client.schema('coaching').from('game_runs')
-            .select('id, game_id, coach_id, lesson_run_id, run_on, group_label, effectiveness, popularity, comment');
-          return Promise.all([notesReq, loadCoachNames(client, lessonRuns.map(function (r) { return r.coach_id; })), gameReq]).then(function (parts) {
+          return Promise.all([notesReq, loadCoachNames(client, lessonRuns.map(function (r) { return r.coach_id; }))]).then(function (parts) {
             runNotes = {};
             ((parts[0] && parts[0].data) || []).forEach(function (row) { runNotes[row.run_id] = row.note; });
-            gameRuns = (parts[2] && parts[2].data && !parts[2].error) ? parts[2].data : [];
             renderRunSummary();
             renderRunList();
-            if (baseLesson) {
-              renderToolkit('warmup', nestedRow(baseLesson.warmup_game), baseLesson.warmup_game_ids);
-              renderToolkit('mini', nestedRow(baseLesson.conditioned_game), baseLesson.conditioned_game_ids);
-            }
           });
         });
     }
@@ -1177,22 +996,14 @@
         }
         var runId = result.data.id;
         savePrivateNote(client, runId, document.getElementById('lsnRunNote').value).then(function (noteResult) {
+          saveBtn.disabled = false;
           if (noteResult && noteResult.error) {
-            saveBtn.disabled = false;
             setRunError('The session was saved, but the private note was not.');
             loadLessonRuns();
             return;
           }
-          saveGameFeedback(client, runId, payload.run_on, payload.group_label).then(function (gameResult) {
-            saveBtn.disabled = false;
-            if (gameResult && gameResult.error) {
-              setRunError('The session was saved, but the game feedback was not.');
-              loadLessonRuns();
-              return;
-            }
-            closeRunForm();
-            loadLessonRuns();
-          });
+          closeRunForm();
+          loadLessonRuns();
         });
       }).catch(function () {
         saveBtn.disabled = false;
@@ -1218,21 +1029,10 @@
     document.getElementById('lsnRunForm').addEventListener('submit', saveRun);
     document.getElementById('lsnRunStars').addEventListener('click', function (e) {
       var btn = e.target.closest('[data-star]');
-      if (!btn || btn.getAttribute('data-slot')) return;
+      if (!btn) return;
       var n = Number(btn.getAttribute('data-star'));
       draftRating = draftRating === n ? null : n;
       paintStars();
-    });
-    document.getElementById('lsnGameFeedback').addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-star]');
-      if (!btn) return;
-      var slot = btn.getAttribute('data-slot');
-      var metric = btn.getAttribute('data-metric');
-      var n = Number(btn.getAttribute('data-star'));
-      if (!draftGame[slot]) draftGame[slot] = blankGameDraft();
-      captureGameComments();
-      draftGame[slot][metric] = draftGame[slot][metric] === n ? null : n;
-      renderGameFeedback();
     });
     document.getElementById('lsnRunList').addEventListener('click', function (e) {
       var edit = e.target.closest('[data-edit]');

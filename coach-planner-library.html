@@ -239,8 +239,7 @@
           <select id="libGameSort" class="lib-sort" aria-label="Sort games">
             <option value="default">As written</option>
             <option value="recent">Least recently run</option>
-            <option value="effective">Most effective</option>
-            <option value="popular">Most popular</option>
+            <option value="rated">Top rated</option>
           </select>
         </div>
       </div>
@@ -817,11 +816,9 @@
       if (!iAmCoach || !game || (game.kind !== 'warmup' && game.kind !== 'mini')) return '';
       var rows = allGameRuns.filter(function (run) { return run.game_id === game.id; });
       var last = myLastGameRun(game);
-      var eff = gameScore(rows, 'effectiveness');
-      var pop = gameScore(rows, 'popularity');
+      var stats = gameScore(rows, 'rating');
       var bits = [last ? ('Last run ' + shortRunDate(last)) : 'Not run yet'];
-      if (eff.n) bits.push('Effective ' + eff.avg.toFixed(1) + ' (' + eff.n + ')');
-      if (pop.n) bits.push('Popular ' + pop.avg.toFixed(1) + ' (' + pop.n + ')');
+      if (stats.n) bits.push(stats.avg.toFixed(1) + ' (' + stats.n + ')');
       return '<p class="lib-ran">' + esc(bits.join(' · ')) + '</p>';
     }
 
@@ -836,9 +833,8 @@
           if (da && !db) return 1;
           if (da !== db) return da < db ? -1 : 1;
         } else {
-          var key = mode === 'popular' ? 'popularity' : 'effectiveness';
-          var sa = gameScore(allGameRuns.filter(function (run) { return run.game_id === a.id; }), key);
-          var sb = gameScore(allGameRuns.filter(function (run) { return run.game_id === b.id; }), key);
+          var sa = gameScore(allGameRuns.filter(function (run) { return run.game_id === a.id; }), 'rating');
+          var sb = gameScore(allGameRuns.filter(function (run) { return run.game_id === b.id; }), 'rating');
           if (!sa.n && sb.n) return 1;
           if (sa.n && !sb.n) return -1;
           if (sb.avg !== sa.avg) return sb.avg - sa.avg;
@@ -1011,7 +1007,7 @@
             requests.push(client.schema('coaching').from('lesson_runs')
               .select('lesson_id, coach_id, run_on, group_label, rating'));
             requests.push(client.schema('coaching').from('game_runs')
-              .select('game_id, coach_id, run_on, group_label, effectiveness, popularity'));
+              .select('game_id, coach_id, run_on, group_label, rating'));
           }
 
           Promise.all(requests).then(function (results) {
