@@ -232,7 +232,7 @@
           detail = 'Say the sentence, then you show it: ' + lesson.objective;
         } else if (label === 'Open' && lesson.differentiation) {
           detail = [step.default_detail, lesson.differentiation].filter(Boolean).join(' ');
-        } else if (label === 'Conditioned game' && lesson.conditioned_game) {
+        } else if ((label === 'Conditioned game' || label === 'Game') && lesson.conditioned_game) {
           detail = gameLine(lesson.conditioned_game);
         } else if (label === 'Close' && nextTitle) {
           if (coaching) {
@@ -669,7 +669,7 @@
 
   function significantWords(text) {
     return pdfSafe(text).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function (word) {
-      return word && word.length > 2 && word !== 'the' && word !== 'and' && word !== 'then';
+      return word && word.length > 3 && word !== 'then';
     });
   }
 
@@ -685,35 +685,67 @@
   }
 
   function cardLabel(label) {
-    if (label === 'Warm up with a ball') return 'Warm up';
+    if (label === 'Warm up with a ball') return 'Warm-up';
     if (label === 'Conditioned game') return 'Game';
     if (label === 'Name what you saw' || label === 'Name the focus') return 'Name it';
     return label || '';
   }
 
+  function sentenceParts(text) {
+    return String(text || '')
+      .replace(/^Say the sentence, then you show it:\s*/i, '')
+      .split(/\.\s+/)
+      .map(function (part) { return part.replace(/\.$/, '').trim(); })
+      .filter(Boolean);
+  }
+
+  var CARD_BOILER = /^(moving warm-up|no standing still|relevant to the planned theme|no lecture|this week's extra|fed and predictable|high volume|nobody waits|show and tell|check they got it|live ball, same focus|step to differentiate|points only score if the focus|scored game\b|do not teach\b|look for a pattern\b|play the point out|short turns, then the rally takes over|next in this programme|back to the start of this programme|buddy feed only if|players on both sides|no closer drop)/i;
+
+  function cardBits(text, lesson, used) {
+    var objective = lesson.objective || '';
+    return sentenceParts(text).filter(function (bit) {
+      if (bit.split(/\s+/).length <= 2) return false;
+      if (CARD_BOILER.test(bit)) return false;
+      if (lineOverlap(bit, objective) >= 0.6) return false;
+      if (used.some(function (prev) { return lineOverlap(bit, prev) >= 0.6; })) return false;
+      return true;
+    });
+  }
+
+  function joinCardBits(bits) {
+    var chosen = [];
+    var count = 0;
+    var i;
+    for (i = 0; i < bits.length && chosen.length < 2; i++) {
+      var n = bits[i].split(/\s+/).length;
+      if (chosen.length && count + n > 22) continue;
+      chosen.push(bits[i]);
+      count += n;
+    }
+    bits.splice(0, bits.length);
+    chosen.forEach(function (bit) { bits.push(bit); });
+    return chosen.join('. ');
+  }
+
   function cardRows(lesson) {
     var rows = Array.isArray(lesson.run_sheet) ? lesson.run_sheet : [];
-    var objective = lesson.objective || '';
     var used = [];
+    var warm = nestedRow(lesson.warmup_game);
+    var game = nestedRow(lesson.conditioned_game);
     return rows.map(function (step) {
-      var raw = String(step.detail || '').replace(/^Say the sentence, then you show it:\s*/i, '').trim();
-      var parts = raw.split(/\.\s+/).map(function (part) {
-        return part.replace(/\.$/, '').trim();
-      }).filter(Boolean);
-      var line = '';
-      var i;
-      for (i = 0; i < parts.length; i++) {
-        var bit = parts[i];
-        if (i === 0 && bit.split(/\s+/).length <= 2 && parts.length > 1) continue;
-        if (lineOverlap(bit, objective) >= 0.6) continue;
-        if (used.some(function (prev) { return lineOverlap(bit, prev) >= 0.5; })) continue;
-        line = bit;
-        break;
+      var label = cardLabel(step.label);
+      var source = step.detail || '';
+      if (step.label === 'Warm up with a ball' && warm && warm.title) {
+        label = 'Warm-up: ' + warm.title;
+        source = warm.blurb || warm.setup || '';
+      } else if ((step.label === 'Conditioned game' || step.label === 'Game') && game && game.title) {
+        label = 'Game: ' + game.title;
+        source = game.blurb || '';
       }
-      var words = line.split(/\s+/).filter(Boolean);
-      if (words.length > 12) line = words.slice(0, 12).join(' ');
-      if (line) used.push(line);
-      return { from: step.from, to: step.to, label: cardLabel(step.label), detail: line };
+      var bits = cardBits(source, lesson, used);
+      var line = joinCardBits(bits);
+      bits.forEach(function (bit) { used.push(bit); });
+      return { from: step.from, to: step.to, label: label, detail: line };
     });
   }
 
@@ -762,7 +794,10 @@
     var cues = cueItems(lesson).map(function (line, i) {
       return '<div class="cue"><b>' + (i + 1) + '</b><span>' + esc(line) + '</span></div>';
     }).join('');
-    var back = mast + '<div class="card-body"><p class="say">Say this</p><p class="sentence">' + esc(lesson.objective || '') + '</p>' + cues + '</div>' + foot;
+    var seen = watchItems(lesson)[0];
+    var back = mast + '<div class="card-body"><p class="say">Say this</p><p class="sentence">' + esc(lesson.objective || '') + '</p>' + cues +
+      (seen ? '<p class="say">If you see this</p><p class="detail">' + esc(seen) + '</p>' : '') +
+      '</div>' + foot;
     var body =
       '<section class="page"><div class="cut">' + front + '</div>' +
       '<p class="note">Cut on the line. Print both sides, flip on the long edge, actual size.</p></section>' +
@@ -855,8 +890,8 @@
       var labelLines = wrapLines(row.label, bold, 7.5, inner - mm(16));
       drawLines(front, labelLines.slice(0, 1), bold, 7.5, originX + pad + mm(16), cursor + 7.5, 9, navy);
       if (row.detail && cursor - 12 > floor) {
-        var detailLines = wrapLines(row.detail, regular, 7, inner - mm(16));
-        cursor = drawLines(front, detailLines.slice(0, 2), regular, 7, originX + pad + mm(16), cursor - 2, 9, ink);
+        var detailLines = wrapLines(row.detail, regular, 7, inner);
+        cursor = drawLines(front, detailLines.slice(0, 2), regular, 7, originX + pad, cursor - 2, 9, ink);
       }
       cursor -= mm(1.2);
     });
@@ -875,6 +910,11 @@
       var lines = wrapLines(cueLine, regular, 8, inner - mm(5));
       cursor = drawLines(back, lines.slice(0, 3), regular, 8, originX + pad + mm(5), cursor, 10, navy) - mm(1.5);
     });
+    var seen = watchItems(lesson)[0];
+    if (seen && cursor - 20 > floor) {
+      back.drawText('IF YOU SEE THIS', { x: originX + pad, y: cursor - 8, size: 6.5, font: black, color: blue });
+      drawLines(back, wrapLines(seen, regular, 8, inner).slice(0, 2), regular, 8, originX + pad, cursor - 12, 10, navy);
+    }
   }
 
   function buildCuePdf(lesson) {
