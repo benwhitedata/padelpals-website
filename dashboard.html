@@ -3867,6 +3867,8 @@
         }
 
         
+        let currentBoxContext = null;
+
         // Load details for a specific box
         async function loadBoxDetails(boxId) {
             try {
@@ -3915,6 +3917,8 @@
                     }
 
                 });
+                
+                currentBoxContext = { boxId, teams, matches: matches || [] };
                 
                 // Create league table
                 createLeagueTable(teams, matches);
@@ -4177,33 +4181,277 @@
             const team1Id = this.getAttribute('data-team1');
             const team2Id = this.getAttribute('data-team2');
             const matchId = this.getAttribute('data-match-id');
-            
-            console.log(`Match clicked: ${team1Id} vs ${team2Id}, match ID: ${matchId}`);
-            
-            // TODO: Open match details modal or form
-            alert(`Match detail view coming soon for ${team1Id} vs ${team2Id}`);
+            openBoxMatchModal(team1Id, team2Id, matchId || null);
         }
 
         
         // Handle match card click
         function handleMatchCardClick(matchId, matches, teams) {
             const match = matches.find(m => m.id === matchId);
-            
             if (!match) return;
-            
-            const team1 = teams.find(t => t.id === match.team1_id);
-            const team2 = teams.find(t => t.id === match.team2_id);
-            
-            if (!team1 || !team2) return;
-            
-            const team1Names = getPlayerNames(team1);
-            const team2Names = getPlayerNames(team2);
-            
-            console.log(`Match card clicked: ${team1Names} vs ${team2Names}`);
-            
-            // TODO: Open match details modal or form
-            alert(`Match detail view coming soon for ${team1Names} vs ${team2Names}`);
+            openBoxMatchModal(match.team1_id, match.team2_id, match.id);
         }
+
+        let boxMatchEditState = null;
+        let boxMatchModalInstance = null;
+
+        function openBoxMatchModal(teamAId, teamBId, matchId) {
+            if (!currentBoxContext) return;
+            const { teams, matches } = currentBoxContext;
+
+            const match = (matchId && matches.find(m => m.id === matchId)) ||
+                matches.find(m =>
+                    (m.team1_id === teamAId && m.team2_id === teamBId) ||
+                    (m.team1_id === teamBId && m.team2_id === teamAId)
+                ) || null;
+
+            // New matches store the lower team id as team1, matching the iOS app.
+            let team1Id, team2Id;
+            if (match) {
+                team1Id = match.team1_id;
+                team2Id = match.team2_id;
+            } else {
+                [team1Id, team2Id] = teamAId < teamBId ? [teamAId, teamBId] : [teamBId, teamAId];
+            }
+
+            const team1 = teams.find(t => t.id === team1Id);
+            const team2 = teams.find(t => t.id === team2Id);
+            if (!team1 || !team2) return;
+
+            boxMatchEditState = { boxId: currentBoxContext.boxId, match, team1, team2 };
+
+            const team1Name = escapeHtml(getPlayerNames(team1));
+            const team2Name = escapeHtml(getPlayerNames(team2));
+            document.getElementById('boxMatchTeam1').innerHTML = team1Name;
+            document.getElementById('boxMatchTeam2').innerHTML = team2Name;
+            document.getElementById('boxMatchSetsTeam1Label').innerHTML = team1Name;
+            document.getElementById('boxMatchSetsTeam2Label').innerHTML = team2Name;
+            document.getElementById('boxMatchWalkoverWinner').innerHTML = `
+                <option value="team1">${team1Name}</option>
+                <option value="team2">${team2Name}</option>
+            `;
+
+            const scheduled = match?.scheduled_date ? new Date(match.scheduled_date) : new Date();
+            document.getElementById('boxMatchDate').value = toDateTimeLocalValue(scheduled);
+
+            const isWalkover = !!match?.is_walkover;
+            document.getElementById('boxMatchWalkover').checked = isWalkover;
+            document.getElementById('boxMatchWalkoverWinner').value =
+                isWalkover && match.is_completed && match.team2_score > match.team1_score ? 'team2' : 'team1';
+
+            const t1Sets = match?.team1_set_scores || [];
+            const t2Sets = match?.team2_set_scores || [];
+            const setRows = [0, 1, 2].map(i => {
+                const max = i === 2 ? 15 : 7;
+                const options = sel => Array.from({ length: max + 1 }, (_, n) =>
+                    `<option value="${n}"${n === sel ? ' selected' : ''}>${n}</option>`).join('');
+                return `
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="text-white-50" style="width: 70px;">Set ${i + 1}</span>
+                        <select class="form-select form-select-sm box-set-score" data-set="${i}" data-team="1" style="width: 80px;">${options(t1Sets[i] || 0)}</select>
+                        <span class="mx-2 text-white-50">–</span>
+                        <select class="form-select form-select-sm box-set-score" data-set="${i}" data-team="2" style="width: 80px;">${options(t2Sets[i] || 0)}</select>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('boxMatchSets').innerHTML = setRows;
+
+            document.getElementById('boxMatchDeleteBtn').style.display = match ? '' : 'none';
+            document.getElementById('boxMatchDeleteBtn').textContent = match?.is_completed ? 'Delete Match Result' : 'Delete Match';
+            setBoxMatchError('');
+            updateBoxMatchFormState();
+
+            const modalEl = document.getElementById('boxMatchModal');
+            if (!boxMatchModalInstance) boxMatchModalInstance = new bootstrap.Modal(modalEl);
+            boxMatchModalInstance.show();
+        }
+
+        function toDateTimeLocalValue(date) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        function readBoxMatchSets() {
+            const sets = [0, 1, 2].map(() => ({ team1: 0, team2: 0 }));
+            document.querySelectorAll('#boxMatchSets .box-set-score').forEach(el => {
+                const i = parseInt(el.dataset.set, 10);
+                sets[i][el.dataset.team === '1' ? 'team1' : 'team2'] = parseInt(el.value, 10) || 0;
+            });
+            return sets;
+        }
+
+        function isValidBoxSetScores(sets) {
+            let hasPlayedSet = false;
+            for (let i = 0; i < sets.length; i++) {
+                const { team1, team2 } = sets[i];
+                if (team1 === 0 && team2 === 0) continue;
+                hasPlayedSet = true;
+                const max = Math.max(team1, team2);
+                const min = Math.min(team1, team2);
+                if (i === 2 && max === 1 && min === 0) continue; // championship tie-break
+                if (i === 2 && max >= 6 && max - min >= 2) continue;
+                if (max === 6 && min <= 4) continue;
+                if (max === 7 && (min === 5 || min === 6)) continue;
+                return false;
+            }
+            return hasPlayedSet;
+        }
+
+        function countBoxSetsWon(sets) {
+            let team1 = 0;
+            let team2 = 0;
+            for (const set of sets) {
+                if (team1 >= 2 || team2 >= 2) break;
+                if (set.team1 > set.team2) team1++;
+                else if (set.team2 > set.team1) team2++;
+            }
+            return { team1, team2 };
+        }
+
+        function updateBoxMatchFormState() {
+            const isWalkover = document.getElementById('boxMatchWalkover').checked;
+            document.getElementById('boxMatchWalkoverOptions').style.display = isWalkover ? '' : 'none';
+            document.getElementById('boxMatchSetsSection').style.display = isWalkover ? 'none' : '';
+            const canSubmit = isWalkover || isValidBoxSetScores(readBoxMatchSets());
+            document.getElementById('boxMatchSubmitBtn').disabled = !canSubmit;
+        }
+
+        function setBoxMatchError(message) {
+            const el = document.getElementById('boxMatchError');
+            el.textContent = message;
+            el.style.display = message ? '' : 'none';
+        }
+
+        function setBoxMatchBusy(busy) {
+            document.querySelectorAll('#boxMatchModal button, #boxMatchModal input, #boxMatchModal select')
+                .forEach(el => { el.disabled = busy; });
+            if (!busy) updateBoxMatchFormState();
+        }
+
+        // Writes the match row, inserting it if the pair has no match yet.
+        // RLS can silently filter an update to zero rows, so that case is reported as a permission error.
+        async function saveBoxMatch(fields) {
+            const { boxId, match, team1, team2 } = boxMatchEditState;
+            let result;
+            if (match) {
+                result = await supabaseClient
+                    .from('box_league_matches')
+                    .update(fields)
+                    .eq('id', match.id)
+                    .select('id');
+            } else {
+                result = await supabaseClient
+                    .from('box_league_matches')
+                    .insert({
+                        id: crypto.randomUUID(),
+                        box_id: boxId,
+                        team1_id: team1.id,
+                        team2_id: team2.id,
+                        ...fields
+                    })
+                    .select('id');
+            }
+            if (result.error) throw result.error;
+            if (!result.data || result.data.length === 0) {
+                throw new Error("You don't have permission to update this match.");
+            }
+        }
+
+        async function runBoxMatchAction(action) {
+            setBoxMatchError('');
+            setBoxMatchBusy(true);
+            try {
+                await action();
+                const boxId = boxMatchEditState.boxId;
+                boxMatchModalInstance.hide();
+                await loadBoxDetails(boxId);
+            } catch (error) {
+                console.error('Box match save failed:', error);
+                setBoxMatchError(error.message || 'Something went wrong. Please try again.');
+            } finally {
+                setBoxMatchBusy(false);
+            }
+        }
+
+        function readBoxMatchDate() {
+            const value = document.getElementById('boxMatchDate').value;
+            if (!value) throw new Error('Please choose a date and time.');
+            return new Date(value).toISOString();
+        }
+
+        function scheduleBoxMatch() {
+            runBoxMatchAction(() => saveBoxMatch({
+                scheduled_date: readBoxMatchDate(),
+                completed_date: null,
+                is_completed: false,
+                is_walkover: false,
+                team1_score: 0,
+                team2_score: 0,
+                team1_set_scores: null,
+                team2_set_scores: null
+            }));
+        }
+
+        function submitBoxMatchResult() {
+            runBoxMatchAction(() => {
+                const fields = {
+                    scheduled_date: readBoxMatchDate(),
+                    completed_date: new Date().toISOString(),
+                    is_completed: true
+                };
+                if (document.getElementById('boxMatchWalkover').checked) {
+                    const team1Won = document.getElementById('boxMatchWalkoverWinner').value === 'team1';
+                    Object.assign(fields, {
+                        is_walkover: true,
+                        team1_score: team1Won ? 2 : 0,
+                        team2_score: team1Won ? 0 : 2,
+                        team1_set_scores: null,
+                        team2_set_scores: null
+                    });
+                } else {
+                    const sets = readBoxMatchSets();
+                    if (!isValidBoxSetScores(sets)) throw new Error('Please enter valid set scores.');
+                    const played = sets.filter(s => s.team1 > 0 || s.team2 > 0);
+                    const won = countBoxSetsWon(played);
+                    Object.assign(fields, {
+                        is_walkover: false,
+                        team1_score: won.team1,
+                        team2_score: won.team2,
+                        team1_set_scores: played.map(s => s.team1),
+                        team2_set_scores: played.map(s => s.team2)
+                    });
+                }
+                return saveBoxMatch(fields);
+            });
+        }
+
+        function deleteBoxMatch() {
+            const { match } = boxMatchEditState;
+            if (!match) return;
+            const prompt = match.is_completed
+                ? 'Delete this match result? This cannot be undone.'
+                : 'Delete this match? This cannot be undone.';
+            if (!confirm(prompt)) return;
+            runBoxMatchAction(async () => {
+                const { data, error } = await supabaseClient
+                    .from('box_league_matches')
+                    .delete()
+                    .eq('id', match.id)
+                    .select('id');
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    throw new Error("You don't have permission to delete this match.");
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('boxMatchWalkover').addEventListener('change', updateBoxMatchFormState);
+            document.getElementById('boxMatchSets').addEventListener('change', updateBoxMatchFormState);
+            document.getElementById('boxMatchScheduleBtn').addEventListener('click', scheduleBoxMatch);
+            document.getElementById('boxMatchSubmitBtn').addEventListener('click', submitBoxMatchResult);
+            document.getElementById('boxMatchDeleteBtn').addEventListener('click', deleteBoxMatch);
+        });
 
         
         // Helper function: Get match result for display in the grid
@@ -7166,6 +7414,55 @@ document.fonts.ready.then(function () {
         }
     </script>
     
+    <!-- Box League Match Modal -->
+    <div class="modal fade" id="boxMatchModal" tabindex="-1" aria-labelledby="boxMatchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="background:#1a2238; color:#fff; border:none;">
+                <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.15);">
+                    <h5 class="modal-title" id="boxMatchModalLabel">Match Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                        <strong id="boxMatchTeam1" class="flex-fill"></strong>
+                        <span class="mx-2 text-white-50">vs</span>
+                        <strong id="boxMatchTeam2" class="flex-fill"></strong>
+                    </div>
+
+                    <label for="boxMatchDate" class="form-label">Scheduled date</label>
+                    <input type="datetime-local" id="boxMatchDate" class="form-control mb-2">
+                    <button type="button" id="boxMatchScheduleBtn" class="btn btn-primary w-100 mb-4">Schedule Match</button>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="boxMatchWalkover">
+                        <label class="form-check-label" for="boxMatchWalkover">Award walkover</label>
+                    </div>
+                    <div id="boxMatchWalkoverOptions" class="mb-3" style="display:none;">
+                        <label for="boxMatchWalkoverWinner" class="form-label">Walkover winner</label>
+                        <select id="boxMatchWalkoverWinner" class="form-select"></select>
+                        <small class="text-white-50">A walkover awards 4 points to the winner. The opposing team receives 0 points.</small>
+                    </div>
+
+                    <div id="boxMatchSetsSection" class="mb-3">
+                        <div class="d-flex mb-2 small">
+                            <span style="width: 70px;"></span>
+                            <span id="boxMatchSetsTeam1Label" class="text-truncate" style="width: 80px;"></span>
+                            <span class="mx-2" style="visibility:hidden;">–</span>
+                            <span id="boxMatchSetsTeam2Label" class="text-truncate" style="width: 80px;"></span>
+                        </div>
+                        <div id="boxMatchSets"></div>
+                        <small class="text-white-50">Enter the games won by each team in each set. Sets 1–2 go up to 7 games. For the 3rd set, enter a full set score or 1–0 for a championship tie-break win.</small>
+                    </div>
+
+                    <div id="boxMatchError" class="alert alert-danger py-2" style="display:none;"></div>
+
+                    <button type="button" id="boxMatchSubmitBtn" class="btn btn-success w-100 mb-2">Submit Result</button>
+                    <button type="button" id="boxMatchDeleteBtn" class="btn btn-outline-danger w-100">Delete Match</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Match Detail Modal -->
     <div class="modal fade" id="matchDetailModal" tabindex="-1" aria-labelledby="matchDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
