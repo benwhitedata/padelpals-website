@@ -1,6 +1,6 @@
 # Padel Pals
 
-> Padel Pals is a free padel club app for iOS and Android that helps clubs organise court bookings, socials, Americano sessions, box leagues and Group Lessons with fair fixtures, live standings and clear updates for every member.
+> Padel Pals is a padel club app for iOS and Android, free to download, that helps clubs organise court bookings, socials, Americano sessions, box leagues and Group Lessons with fair fixtures, live standings and clear updates for every member.
 
 Padel Pals is built for padel clubs and their members. Clubs run organised play in one place; players book courts, join sessions, track levels and follow form. Contact: support@padelpals.app
 
