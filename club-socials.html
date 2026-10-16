@@ -39,6 +39,13 @@
     gtag('js', new Date());
     gtag('config', 'G-L426ZMNKFK');
   </script>
+  <style>
+    .socials-videos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin: 0 0 72px; }
+    .socials-videos figure { margin: 0; text-align: center; }
+    .socials-videos figcaption { margin-top: 16px; color: var(--pp-muted); font-size: var(--pp-t-meta); line-height: 1.5; }
+    .socials-videos figcaption strong { display: block; color: var(--pp-navy); font-size: var(--pp-t-body); margin-bottom: 2px; }
+    @media (max-width: 900px) { .socials-videos { grid-template-columns: 1fr; gap: 48px; } }
+  </style>
   <script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
   <script type="application/ld+json">
   {
@@ -93,6 +100,37 @@
   <div class="mkt-wrap">
     <div class="mkt-intro">
       <p>Club Socials are availability-first sessions. You collect who’s free, pack fair courts, then publish into the same match flow everyone already uses. When the club uses <a href="court-bookings.html">Court Bookings</a>, organisers book those courts before opening sign-ups. For rotating-partner nights, see <a href="americano.html">Americano sessions</a>.</p>
+    </div>
+
+    <div class="mkt-section-head">
+      <h2>See it in under a minute</h2>
+      <p>One tap for players. A few taps for organisers. A format your club sets up once.</p>
+    </div>
+    <div class="socials-videos">
+      <figure>
+        <div class="mkt-phone">
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_socials_player_poster.jpg" aria-label="Video: how players sign up for a club social in one tap">
+            <source src="images/mkt_socials_player.mp4" type="video/mp4">
+          </video>
+        </div>
+        <figcaption><strong>For players</strong>Sign up in one tap, then your court lands on Home.</figcaption>
+      </figure>
+      <figure>
+        <div class="mkt-phone">
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_socials_organiser_poster.jpg" aria-label="Video: how organisers share sign-ups, generate fixtures and publish a weekly social">
+            <source src="images/mkt_socials_organiser.mp4" type="video/mp4">
+          </video>
+        </div>
+        <figcaption><strong>For organisers</strong>Share, generate fair courts, publish. Everyone is notified.</figcaption>
+      </figure>
+      <figure>
+        <div class="mkt-phone">
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_socials_club_poster.jpg" aria-label="Video: the social format settings clubs configure once and reuse every week">
+            <source src="images/mkt_socials_club.mp4" type="video/mp4">
+          </video>
+        </div>
+        <figcaption><strong>For clubs</strong>Fully configurable, reusable every week, ready in a tap.</figcaption>
+      </figure>
     </div>
 
     <section class="mkt-feature">
