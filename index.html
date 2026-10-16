@@ -247,7 +247,16 @@
             </div>
         </div>
         <div class="home-hero-visual">
-            <img class="home-hero-phone" src="images/mkt_club_socials_fixtures.png" width="300" height="650" alt="Club Socials fixtures with court pairings ready to publish" fetchpriority="high">
+            <video class="home-hero-phone" id="hero-loop" width="300" height="652" autoplay muted loop playsinline preload="auto" poster="images/mkt_hero_loop_poster.jpg" aria-label="Club Socials: 28 sign-ups turned into fair courts with Generate fixtures, then published">
+                <source src="images/mkt_hero_loop.mp4" type="video/mp4">
+            </video>
+            <script>
+                if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    var heroLoop = document.getElementById('hero-loop');
+                    heroLoop.removeAttribute('autoplay');
+                    heroLoop.pause();
+                }
+            </script>
         </div>
     </section>
 
