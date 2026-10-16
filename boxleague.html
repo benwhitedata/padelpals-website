@@ -39,7 +39,14 @@
     gtag('js', new Date());
     gtag('config', 'G-L426ZMNKFK');
   </script>
-  <script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
+    <style>
+    .pp-videos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 280px)); justify-content: center; gap: 40px 32px; margin: 0 0 64px; }
+    .pp-videos figure { margin: 0; text-align: center; }
+    .pp-videos video { display: block; margin: 0 auto; width: min(280px, 70vw); height: auto; border-radius: 28px; background: #000; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08); }
+    .pp-videos figcaption { margin-top: 16px; color: #555; font-size: .875rem; line-height: 1.5; }
+    .pp-videos figcaption strong { display: block; color: #1a2238; font-size: 1rem; margin-bottom: 2px; }
+  </style>
+<script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -115,6 +122,19 @@
         <h3>Submit Result</h3>
         <p>Open a pending cell or upcoming row. Enter <strong>Set Scores</strong> — or <strong>Award Walkover</strong> — then <strong>Submit Result</strong>. Scores feed ratings and match history.</p>
       </article>
+    </div>
+
+    <div class="mkt-section-head">
+      <h2>Submit a result in 30 seconds</h2>
+      <p>The exact steps a player takes after a box league match.</p>
+    </div>
+    <div class="pp-videos">
+      <figure>
+        <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_boxleague_result_poster.jpg" aria-label="Video: how to submit a box league result">
+          <source src="images/mkt_video_boxleague_result.mp4" type="video/mp4">
+        </video>
+        <figcaption><strong>Submit a box league result</strong>Competitions, View League, tap + and enter scores.</figcaption>
+      </figure>
     </div>
 
     <section class="mkt-feature">

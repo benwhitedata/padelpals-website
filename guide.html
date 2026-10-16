@@ -129,7 +129,17 @@
   <!-- End Google Analytics -->
     
   <!-- Shared Navigation -->
-  <script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
+    <style>
+    .pp-videos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 280px)); justify-content: center; gap: 40px 32px; margin: 0 0 64px; }
+    .pp-videos figure { margin: 0; text-align: center; }
+    .pp-videos video { display: block; margin: 0 auto; width: min(280px, 70vw); height: auto; border-radius: 28px; background: #000; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08); }
+    .pp-videos figcaption { margin-top: 16px; color: #555; font-size: .875rem; line-height: 1.5; }
+    .pp-videos figcaption strong { display: block; color: #1a2238; font-size: 1rem; margin-bottom: 2px; }
+    .pp-videos-title { text-align: center; color: #1a2238; font-weight: 700; margin: 8px 0 8px; }
+    .pp-videos-sub { text-align: center; color: #555; margin: 0 auto 28px; max-width: 560px; }
+    .pp-video-guide { padding: 48px 0 8px; }
+  </style>
+<script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -181,7 +191,7 @@
         <p>Padel Pals is a free padel club app for iOS and Android. This guide covers the main tasks clubs and players use every week. Choose a topic below, or open the matching product page for a fuller overview.</p>
         <ul>
           <li><strong>Choose Club</strong> — join or add your club from Profile so socials, leagues and lessons line up. See <a href="index.html">how clubs get started</a>.</li>
-          <li><strong>Schedule a Match</strong> — set up a fixture from the Matches tab with players, time and format.</li>
+          <li><strong>Schedule a Match</strong> — tap <strong>+</strong> on Home, then <strong>Schedule match</strong>, to add players, time and format.</li>
           <li><strong>Record Match Result</strong> — enter set scores so ratings, history and stats stay up to date.</li>
           <li><strong>View Box League</strong> — open standings and the grid in Competitions. More: <a href="boxleague.html">Box Leagues</a>.</li>
           <li><strong>Submit Box League Result</strong> — enter set scores or a walkover from the match sheet. Playing rules: <a href="boxleague-rules.html">Box League rules</a>.</li>
@@ -238,6 +248,69 @@
   <section class="guide-section" id="guide-content">
     <div class="container">
       <!-- Dynamic content will be inserted here -->
+    </div>
+  </section>
+
+  <section class="pp-video-guide">
+    <div class="container">
+      <h2 class="pp-videos-title">Watch the videos</h2>
+      <p class="pp-videos-sub">Short walkthroughs filmed in the app. Captions are built in, so they work with the sound off.</p>
+      <div class="pp-videos">
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_intro_poster.jpg" aria-label="Video: what Padel Pals does for players">
+            <source src="images/mkt_video_intro.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>What is Padel Pals?</strong>Find, play and track padel at your level.</figcaption>
+        </figure>
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_join_match_poster.jpg" aria-label="Video: how to find and join an open match">
+            <source src="images/mkt_video_join_match.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>Find and join a match</strong>Open matches at your level, then one tap to join.</figcaption>
+        </figure>
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_create_match_poster.jpg" aria-label="Video: how to create your own match and leave spots open">
+            <source src="images/mkt_video_create_match.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>Create your own match</strong>Pick a partner, leave spots open, schedule.</figcaption>
+        </figure>
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_record_result_poster.jpg" aria-label="Video: how to record a match result and give ratings feedback">
+            <source src="images/mkt_video_record_result.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>Record a result</strong>Enter set scores, see your rating move, rate fairness.</figcaption>
+        </figure>
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_ratings_poster.jpg" aria-label="Video: how Padel Pals ratings and confidence work">
+            <source src="images/mkt_video_ratings.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>Your rating, explained</strong>How your level is set, moves and stays fair.</figcaption>
+        </figure>
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_boxleague_result_poster.jpg" aria-label="Video: how to submit a box league result">
+            <source src="images/mkt_video_boxleague_result.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>Submit a box league result</strong>Competitions, View League, tap + and enter scores.</figcaption>
+        </figure>
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_socials_player_poster.jpg" aria-label="Video: how players sign up for a club social in one tap">
+            <source src="images/mkt_socials_player.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>Club Socials: players</strong>Sign up in one tap, then your court lands on Home.</figcaption>
+        </figure>
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_socials_organiser_poster.jpg" aria-label="Video: how organisers share sign-ups, generate fixtures and publish a weekly social">
+            <source src="images/mkt_socials_organiser.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>Club Socials: organisers</strong>Share, generate fair courts, publish. Everyone is notified.</figcaption>
+        </figure>
+        <figure>
+          <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_socials_club_poster.jpg" aria-label="Video: the social format settings clubs configure once and reuse every week">
+            <source src="images/mkt_socials_club.mp4" type="video/mp4">
+          </video>
+          <figcaption><strong>Club Socials: clubs</strong>Fully configurable, reusable every week, ready in a tap.</figcaption>
+        </figure>
+      </div>
     </div>
   </section>
 

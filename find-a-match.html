@@ -39,7 +39,14 @@
     gtag('js', new Date());
     gtag('config', 'G-L426ZMNKFK');
   </script>
-  <script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
+    <style>
+    .pp-videos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 280px)); justify-content: center; gap: 40px 32px; margin: 0 0 64px; }
+    .pp-videos figure { margin: 0; text-align: center; }
+    .pp-videos video { display: block; margin: 0 auto; width: min(280px, 70vw); height: auto; border-radius: 28px; background: #000; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08); }
+    .pp-videos figcaption { margin-top: 16px; color: #555; font-size: .875rem; line-height: 1.5; }
+    .pp-videos figcaption strong { display: block; color: #1a2238; font-size: 1rem; margin-bottom: 2px; }
+  </style>
+<script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -92,7 +99,32 @@
 
   <div class="mkt-wrap">
     <div class="mkt-intro">
-      <p>Once your club is in Padel Pals, members can fill empty seats without a group-chat scramble. Under <strong>Matches → Upcoming</strong> you can browse Mine, Club and Join. When you schedule, you decide who can sit in the empty seats.</p>
+      <p>Once your club is in Padel Pals, members can fill empty seats without a group-chat scramble. On <strong>Home</strong>, tap <strong>Upcoming Matches</strong> to browse Mine, Club and Join. When you schedule, you decide who can sit in the empty seats.</p>
+    </div>
+
+    <div class="mkt-section-head">
+      <h2>Watch how it works</h2>
+      <p>Join an open match, start your own, then record the result.</p>
+    </div>
+    <div class="pp-videos">
+      <figure>
+        <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_join_match_poster.jpg" aria-label="Video: how to find and join an open match">
+          <source src="images/mkt_video_join_match.mp4" type="video/mp4">
+        </video>
+        <figcaption><strong>Find and join a match</strong>Open matches at your level, then one tap to join.</figcaption>
+      </figure>
+      <figure>
+        <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_create_match_poster.jpg" aria-label="Video: how to create your own match and leave spots open">
+          <source src="images/mkt_video_create_match.mp4" type="video/mp4">
+        </video>
+        <figcaption><strong>Create your own match</strong>Pick a partner, leave spots open, schedule.</figcaption>
+      </figure>
+      <figure>
+        <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_record_result_poster.jpg" aria-label="Video: how to record a match result and give ratings feedback">
+          <source src="images/mkt_video_record_result.mp4" type="video/mp4">
+        </video>
+        <figcaption><strong>Record a result</strong>Enter set scores, see your rating move, rate fairness.</figcaption>
+      </figure>
     </div>
 
     <section class="mkt-feature">

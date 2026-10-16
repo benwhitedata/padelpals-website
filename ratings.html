@@ -190,7 +190,17 @@
     gtag('js', new Date());
     gtag('config', 'G-L426ZMNKFK');
   </script>
-  <script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
+    <style>
+    .pp-videos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 280px)); justify-content: center; gap: 40px 32px; margin: 0 0 64px; }
+    .pp-videos figure { margin: 0; text-align: center; }
+    .pp-videos video { display: block; margin: 0 auto; width: min(280px, 70vw); height: auto; border-radius: 28px; background: #000; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08); }
+    .pp-videos figcaption { margin-top: 16px; color: #555; font-size: .875rem; line-height: 1.5; }
+    .pp-videos figcaption strong { display: block; color: #1a2238; font-size: 1rem; margin-bottom: 2px; }
+    .pp-videos-title { text-align: center; color: #1a2238; font-weight: 700; margin: 8px 0 8px; }
+    .pp-videos-sub { text-align: center; color: #555; margin: 0 auto 28px; max-width: 560px; }
+    .pp-video-guide { padding: 48px 0 8px; }
+  </style>
+<script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -255,6 +265,16 @@
       <p>After matches you may see per-player rating deltas, and you can leave anonymous feedback on whether opponents’ levels felt fair — helping keep the ladder honest. Club leaderboards filter by Men, Ladies and people you follow.</p>
       <p style="margin-bottom: 0;"><a href="stats.html" style="color: #2a3990; font-weight: 600;">See Stats &amp; profiles in the product →</a></p>
     </article>
+
+    <h2 class="pp-videos-title">Your rating, explained</h2>
+    <div class="pp-videos">
+      <figure>
+        <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_video_ratings_poster.jpg" aria-label="Video: how Padel Pals ratings and confidence work">
+          <source src="images/mkt_video_ratings.mp4" type="video/mp4">
+        </video>
+        <figcaption><strong>Your rating, explained</strong>How your level is set, moves and stays fair.</figcaption>
+      </figure>
+    </div>
 
     <nav class="level-nav" aria-label="Jump to player level">
       <a href="#newcomer">1. Newcomer</a>

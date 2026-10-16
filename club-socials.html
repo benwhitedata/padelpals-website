@@ -40,11 +40,11 @@
     gtag('config', 'G-L426ZMNKFK');
   </script>
   <style>
-    .socials-videos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin: 0 0 72px; }
-    .socials-videos figure { margin: 0; text-align: center; }
-    .socials-videos figcaption { margin-top: 16px; color: var(--pp-muted); font-size: var(--pp-t-meta); line-height: 1.5; }
-    .socials-videos figcaption strong { display: block; color: var(--pp-navy); font-size: var(--pp-t-body); margin-bottom: 2px; }
-    @media (max-width: 900px) { .socials-videos { grid-template-columns: 1fr; gap: 48px; } }
+    .pp-videos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 280px)); justify-content: center; gap: 40px 32px; margin: 0 0 64px; }
+    .pp-videos figure { margin: 0; text-align: center; }
+    .pp-videos video { display: block; margin: 0 auto; width: min(280px, 70vw); height: auto; border-radius: 28px; background: #000; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08); }
+    .pp-videos figcaption { margin-top: 16px; color: #555; font-size: .875rem; line-height: 1.5; }
+    .pp-videos figcaption strong { display: block; color: #1a2238; font-size: 1rem; margin-bottom: 2px; }
   </style>
   <script src="js/shared-navigation.js?v=20260923b" data-auto-nav="true"></script>
   <script type="application/ld+json">
@@ -106,7 +106,7 @@
       <h2>See it in under a minute</h2>
       <p>One tap for players. A few taps for organisers. A format your club sets up once.</p>
     </div>
-    <div class="socials-videos">
+    <div class="pp-videos">
       <figure>
         <div class="mkt-phone">
           <video width="280" height="498" controls playsinline muted preload="none" poster="images/mkt_socials_player_poster.jpg" aria-label="Video: how players sign up for a club social in one tap">
