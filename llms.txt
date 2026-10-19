@@ -11,6 +11,7 @@ Padel Pals is built for padel clubs and their members. Clubs run organised play 
 - [Club Socials](https://www.padelpals.app/club-socials.html): Availability sign-up, fair court packing and published fixtures
 - [Americano](https://www.padelpals.app/americano.html): Americano and Mexicano sessions with rotating partners, live standings and a shareable board
 - [Box Leagues](https://www.padelpals.app/boxleague.html): Ability-based box leagues, results, play times and knockouts
+- [Tournaments](https://www.padelpals.app/tournaments.html): Club tournaments on the night or over weeks: groups, knockouts, placing matches, sign-ups with reserves
 - [Box League Rules](https://www.padelpals.app/boxleague-rules.html): Playing rules for format, points, walkovers and promotion
 - [Group Lessons](https://www.padelpals.app/coaches.html): Coaching classes by player level or skill, with optional 1-to-1s
 - [Find a Match](https://www.padelpals.app/find-a-match.html): Open padel matches filtered by level, gender and format

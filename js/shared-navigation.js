@@ -376,6 +376,7 @@ const SHARED_NAVIGATION_HTML = `
                     <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
                     <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
                     <a href="boxleague.html" class="dropdown-link" role="menuitem">Box League</a>
+                    <a href="tournaments.html" class="dropdown-link" role="menuitem">Tournaments</a>
                 </div>
             </li>
             <li class="nav-item has-dropdown">
@@ -410,6 +411,7 @@ const SHARED_NAVIGATION_HTML = `
                     <a href="americano.html" class="dropdown-link" role="menuitem">Americano</a>
                     <a href="club-socials.html" class="dropdown-link" role="menuitem">Club Socials</a>
                     <a href="boxleague.html" class="dropdown-link" role="menuitem">Box League</a>
+                    <a href="tournaments.html" class="dropdown-link" role="menuitem">Tournaments</a>
                     <a href="coaches.html" class="dropdown-link" role="menuitem">Group Lessons</a>
                     <a href="ratings.html" class="dropdown-link" role="menuitem">Player Levels</a>
                     <a href="badges.html" class="dropdown-link" role="menuitem">Badges</a>
@@ -736,6 +738,7 @@ const SHARED_FOOTER_HTML = `
                     <li><a href="club-socials.html">Club Socials</a></li>
                     <li><a href="americano.html">Americano</a></li>
                     <li><a href="boxleague.html">Box League</a></li>
+                    <li><a href="tournaments.html">Tournaments</a></li>
                 </ul>
             </div>
 
