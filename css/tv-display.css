@@ -1,0 +1,712 @@
+/* Big-screen ("show on TV") displays: rankings, Americano and tournament.
+   Built by js/tv-display.js. Every size is in rem, and while a screen is open
+   the root size follows the viewport (16px at 1080p, 32px at 4K), so every
+   resolution shows the same layout. */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap');
+
+html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
+
+.tv-screen {
+    --tv-primary: #FFD700;
+    --tv-secondary: #1A1A1A;
+    --tv-primary-rgb: 255, 215, 0;
+    --tv-gold: #FFD24A;
+    --tv-silver: #D5DCE4;
+    --tv-bronze: #D9925B;
+    --tv-card: rgba(255, 255, 255, 0.1);
+    --tv-line: rgba(255, 255, 255, 0.14);
+    --tv-dim: rgba(255, 255, 255, 0.62);
+
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    overflow: hidden;
+    flex-direction: column;
+    font-size: 1rem;
+    font-family: Montserrat, 'Segoe UI', Arial, sans-serif;
+    color: #fff;
+    background: var(--tv-secondary);
+    cursor: none;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+}
+.tv-screen.active { display: flex; }
+.tv-screen.tv-awake { cursor: default; }
+.tv-screen *, .tv-screen *::before, .tv-screen *::after { box-sizing: border-box; }
+
+.tv-backdrop {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(60rem 40rem at 88% -10%, rgba(var(--tv-primary-rgb), 0.16), transparent 70%),
+        radial-gradient(50rem 36rem at -10% 110%, rgba(var(--tv-primary-rgb), 0.09), transparent 70%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.25));
+}
+
+/* ── Status strip ─────────────────────────────────────────── */
+.tv-strip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem 2.6rem 1.4rem;
+    flex-shrink: 0;
+}
+.tv-logo {
+    width: 6.4rem;
+    height: 6.4rem;
+    flex-shrink: 0;
+    border-radius: 1.4rem;
+    /* Club logos are made for the app's dark background, so no white tile. */
+    background: rgba(255, 255, 255, 0.08);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    box-shadow: 0 0.6rem 2rem rgba(0, 0, 0, 0.35);
+}
+.tv-logo img { width: 84%; height: 84%; object-fit: contain; }
+.tv-logo.tv-logo-text {
+    background: rgba(var(--tv-primary-rgb), 0.18);
+    color: var(--tv-primary);
+    font-weight: 900;
+    font-size: 2.4rem;
+}
+.tv-heading { min-width: 0; flex: 1; }
+.tv-title {
+    margin: 0;
+    font-size: 3.4rem;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tv-status {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-top: 0.6rem;
+    font-size: 1.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.tv-stage {
+    color: var(--tv-primary);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+.tv-stage.tv-live::before {
+    content: '';
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: #FF3B30;
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    animation: tvPulse 1.8s ease-out infinite;
+    align-self: center;
+}
+.tv-detail { color: #fff; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.tv-progress {
+    margin-top: 0.9rem;
+    height: 0.6rem;
+    max-width: 44rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.14);
+    overflow: hidden;
+}
+.tv-progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--tv-primary);
+    transition: width 0.8s ease;
+}
+.tv-progress[hidden] { display: none; }
+
+.tv-now {
+    text-align: right;
+    flex-shrink: 0;
+    padding: 1rem 1.6rem;
+    border-radius: 1.4rem;
+    background: var(--tv-card);
+    min-width: 17rem;
+}
+.tv-now-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--tv-dim);
+}
+.tv-now-value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--tv-primary);
+    white-space: nowrap;
+}
+.tv-clock {
+    flex-shrink: 0;
+    font-size: 3.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    min-width: 11rem;
+    text-align: right;
+}
+
+/* ── Stage area ───────────────────────────────────────────── */
+.tv-main {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    padding: 0.6rem 2.6rem 1rem;
+}
+.tv-page {
+    position: absolute;
+    inset: 0.6rem 2.6rem 1rem;
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.tv-page.tv-out { opacity: 0; transform: translateY(-1.2rem); }
+.tv-page.tv-in .tv-rise {
+    animation: tvRise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+}
+.tv-page.tv-in .tv-pop {
+    animation: tvPop 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+    animation-delay: calc(var(--i, 0) * 140ms + 120ms);
+}
+.tv-empty {
+    margin: auto;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: var(--tv-dim);
+    text-align: center;
+}
+
+/* ── Avatars ──────────────────────────────────────────────── */
+.tv-av {
+    --av: 4rem;
+    position: relative;
+    flex-shrink: 0;
+    width: var(--av);
+    height: var(--av);
+    border-radius: 50%;
+    background: rgba(var(--tv-primary-rgb), 0.2);
+    color: var(--tv-primary);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: calc(var(--av) * 0.4);
+    letter-spacing: -0.02em;
+    box-shadow: 0 0 0 0.18rem rgba(255, 255, 255, 0.16), 0 0.4rem 1.2rem rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+.tv-av img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.tv-av.tv-ring-1 { box-shadow: 0 0 0 0.3rem var(--tv-gold), 0 0 2.4rem rgba(255, 210, 74, 0.45); }
+.tv-av.tv-ring-2 { box-shadow: 0 0 0 0.3rem var(--tv-silver), 0 0 1.8rem rgba(213, 220, 228, 0.3); }
+.tv-av.tv-ring-3 { box-shadow: 0 0 0 0.3rem var(--tv-bronze), 0 0 1.8rem rgba(217, 146, 91, 0.3); }
+.tv-pair { display: flex; flex-shrink: 0; }
+.tv-pair .tv-av + .tv-av { margin-left: calc(var(--av) * -0.12); }
+.tv-pair .tv-av { box-shadow: 0 0 0 0.25rem var(--tv-secondary), 0 0.4rem 1.2rem rgba(0, 0, 0, 0.35); }
+.tv-pair .tv-av.tv-ring-1 { box-shadow: 0 0 0 0.3rem var(--tv-gold), 0 0 2.4rem rgba(255, 210, 74, 0.45); }
+.tv-pair .tv-av.tv-ring-2 { box-shadow: 0 0 0 0.3rem var(--tv-silver), 0 0 1.8rem rgba(213, 220, 228, 0.3); }
+.tv-pair .tv-av.tv-ring-3 { box-shadow: 0 0 0 0.3rem var(--tv-bronze), 0 0 1.8rem rgba(217, 146, 91, 0.3); }
+
+/* ── Rating / points pill ─────────────────────────────────── */
+.tv-pill {
+    flex-shrink: 0;
+    padding: 0.35em 0.75em;
+    border-radius: 999px;
+    background: rgba(var(--tv-primary-rgb), 0.18);
+    color: var(--tv-primary);
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+.tv-pill small { font-size: 0.6em; font-weight: 700; margin-left: 0.25em; opacity: 0.85; }
+
+/* ── Ranked table (two columns of ten) ────────────────────── */
+.tv-table {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--rows, 10), minmax(0, 5.6rem));
+    align-content: center;
+    column-gap: 2.4rem;
+    row-gap: 0.5rem;
+}
+.tv-table.tv-single { max-width: 64rem; width: 100%; margin: 0 auto; }
+.tv-row {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+    padding: 0 1.4rem 0 1rem;
+    border-radius: 1.2rem;
+    background: var(--tv-card);
+    min-width: 0;
+}
+.tv-row .tv-av { --av: 3.6rem; }
+.tv-rank {
+    width: 2.8rem;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--tv-dim);
+}
+.tv-row.tv-top-1 { background: linear-gradient(90deg, rgba(255, 210, 74, 0.26), rgba(255, 255, 255, 0.08)); }
+.tv-row.tv-top-2 { background: linear-gradient(90deg, rgba(213, 220, 228, 0.2), rgba(255, 255, 255, 0.08)); }
+.tv-row.tv-top-3 { background: linear-gradient(90deg, rgba(217, 146, 91, 0.22), rgba(255, 255, 255, 0.08)); }
+.tv-row.tv-top-1 .tv-rank { color: var(--tv-gold); }
+.tv-row.tv-top-2 .tv-rank { color: var(--tv-silver); }
+.tv-row.tv-top-3 .tv-rank { color: var(--tv-bronze); }
+.tv-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tv-meta {
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--tv-dim);
+}
+.tv-row .tv-pill { font-size: 2rem; }
+
+/* ── Podium ───────────────────────────────────────────────── */
+.tv-podium {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 2.4rem;
+    padding: 0 4rem;
+}
+.tv-podium-spot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 0;
+}
+.tv-podium-spot .tv-av { --av: 13rem; }
+.tv-podium-spot.tv-place-1 .tv-av { --av: 17rem; }
+.tv-podium-spot .tv-pair .tv-av { --av: 10.5rem; }
+.tv-podium-spot.tv-place-1 .tv-pair .tv-av { --av: 13rem; }
+.tv-crown {
+    font-size: 4rem;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+    color: var(--tv-gold);
+    filter: drop-shadow(0 0.4rem 1rem rgba(255, 210, 74, 0.5));
+}
+.tv-podium-name {
+    margin-top: 1.6rem;
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1.1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.tv-place-1 .tv-podium-name { font-size: 3.4rem; }
+.tv-podium-spot .tv-pill { margin-top: 1rem; font-size: 2.6rem; }
+.tv-plinth {
+    margin-top: 1.6rem;
+    width: 100%;
+    border-radius: 1.6rem 1.6rem 0 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+    display: grid;
+    place-items: center;
+    font-size: 5.5rem;
+    font-weight: 900;
+}
+.tv-place-1 .tv-plinth { height: 11rem; color: var(--tv-gold); background: linear-gradient(180deg, rgba(255, 210, 74, 0.32), rgba(255, 210, 74, 0.05)); }
+.tv-place-2 .tv-plinth { height: 8rem; color: var(--tv-silver); }
+.tv-place-3 .tv-plinth { height: 6rem; color: var(--tv-bronze); }
+
+/* ── Court cards (Americano and tournament matches) ───────── */
+.tv-courts {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 2rem;
+    --s: 1;
+}
+.tv-court {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: calc(var(--s) * 1rem);
+    padding: calc(var(--s) * 2rem) calc(var(--s) * 2.4rem);
+    border-radius: 2rem;
+    background: var(--tv-card);
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+.tv-court::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0.6rem;
+    background: var(--tv-primary);
+}
+.tv-court.tv-court-done::before { background: rgba(255, 255, 255, 0.25); }
+.tv-court-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: calc(var(--s) * 1.9rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--tv-primary);
+}
+.tv-chip {
+    font-size: 0.7em;
+    padding: 0.4em 0.9em;
+    border-radius: 999px;
+    letter-spacing: 0.1em;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    white-space: nowrap;
+}
+.tv-chip.tv-chip-live { background: rgba(255, 59, 48, 0.9); }
+.tv-team {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--s) * 1.4rem);
+    min-width: 0;
+}
+.tv-team .tv-av { --av: calc(var(--s) * 6.4rem); }
+.tv-team-names {
+    flex: 1;
+    min-width: 0;
+    font-size: calc(var(--s) * 2.4rem);
+    font-weight: 700;
+    line-height: 1.15;
+}
+.tv-team-names div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-team-score {
+    flex-shrink: 0;
+    font-size: calc(var(--s) * 5rem);
+    font-weight: 900;
+    min-width: 1.2em;
+    text-align: right;
+    color: rgba(255, 255, 255, 0.5);
+}
+.tv-team.tv-win .tv-team-score { color: var(--tv-primary); }
+.tv-team.tv-lose .tv-team-names { color: rgba(255, 255, 255, 0.7); }
+.tv-team-score.tv-unplayed { color: rgba(255, 255, 255, 0.3); }
+.tv-vs {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: calc(var(--s) * 1.3rem);
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: var(--tv-dim);
+}
+.tv-vs::before, .tv-vs::after { content: ''; flex: 1; height: 0.15rem; background: var(--tv-line); }
+.tv-sets {
+    font-size: calc(var(--s) * 1.6rem);
+    font-weight: 600;
+    color: var(--tv-dim);
+    margin-right: 0.6em;
+}
+
+.tv-bench {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    margin-top: 1.4rem;
+    padding: 1rem 1.6rem;
+    border-radius: 1.4rem;
+    background: var(--tv-card);
+    font-size: 1.9rem;
+    font-weight: 700;
+    overflow: hidden;
+}
+.tv-bench-label {
+    color: var(--tv-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 1.4rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+.tv-bench-player { display: flex; align-items: center; gap: 0.8rem; white-space: nowrap; }
+.tv-bench .tv-av { --av: 3.4rem; }
+
+/* ── Tournament group table ───────────────────────────────── */
+.tv-section-title {
+    flex-shrink: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 1.4rem;
+    margin: 0 0 1.2rem;
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: var(--tv-primary);
+}
+.tv-section-title span { font-size: 1.7rem; font-weight: 600; color: var(--tv-dim); }
+.tv-groups {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
+    gap: 2.4rem;
+}
+.tv-group { display: flex; flex-direction: column; min-height: 0; }
+.tv-group-rows {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto repeat(var(--rows, 4), minmax(0, 8rem));
+    align-content: start;
+    row-gap: 0.7rem;
+}
+.tv-group-head, .tv-group-row {
+    display: grid;
+    grid-template-columns: 2.4rem auto minmax(0, 1fr) 3rem 5rem 4.6rem 6.4rem;
+    align-items: center;
+    column-gap: 1rem;
+    padding: 0 1.2rem 0 0.8rem;
+}
+.tv-group-head {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tv-dim);
+    padding-bottom: 0.2rem;
+}
+.tv-group-head > :nth-child(n+4), .tv-group-row > :nth-child(n+4) { text-align: center; }
+.tv-group-row {
+    border-radius: 1.2rem;
+    background: var(--tv-card);
+    font-size: 2rem;
+    font-weight: 700;
+    height: 100%;
+}
+.tv-group-row .tv-av { --av: 4.6rem; }
+.tv-group-row .tv-name { font-size: 2.2rem; }
+.tv-group-row .tv-pill { font-size: 1.9rem; justify-self: center; }
+.tv-group-row.tv-through { box-shadow: inset 0.5rem 0 0 var(--tv-primary); }
+.tv-group-row .tv-num { color: rgba(255, 255, 255, 0.85); }
+
+/* ── Knockout bracket ─────────────────────────────────────── */
+.tv-bracket {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+    column-gap: 2.6rem;
+}
+.tv-round { display: flex; flex-direction: column; min-height: 0; }
+.tv-round-title {
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tv-primary);
+    margin-bottom: 1rem;
+}
+.tv-round-matches {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 1rem;
+}
+.tv-tie {
+    border-radius: 1.2rem;
+    background: var(--tv-card);
+    padding: 0.6rem 0;
+    --s: var(--tie-s, 1);
+    position: relative;
+}
+.tv-tie.tv-tie-next { box-shadow: 0 0 0 0.25rem rgba(var(--tv-primary-rgb), 0.85), 0 0 2rem rgba(var(--tv-primary-rgb), 0.25); }
+.tv-tie-side {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--s) * 1rem);
+    padding: calc(var(--s) * 0.35rem) calc(var(--s) * 1.2rem);
+    min-width: 0;
+}
+.tv-tie-side .tv-av { --av: calc(var(--s) * 3rem); }
+.tv-tie-name {
+    flex: 1;
+    min-width: 0;
+    font-size: calc(var(--s) * 1.75rem);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tv-tie-score {
+    flex-shrink: 0;
+    font-size: calc(var(--s) * 1.9rem);
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.5);
+}
+.tv-tie-side.tv-win .tv-tie-score, .tv-tie-side.tv-win .tv-tie-name { color: var(--tv-primary); }
+.tv-tie-side.tv-lose .tv-tie-name { color: rgba(255, 255, 255, 0.55); }
+.tv-tie-side.tv-tbd .tv-tie-name { color: rgba(255, 255, 255, 0.4); font-style: italic; }
+
+/* ── Champions ────────────────────────────────────────────── */
+.tv-champion {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.tv-champion-label {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--tv-primary);
+}
+.tv-champion .tv-pair .tv-av { --av: 17rem; }
+.tv-champion .tv-pair { margin: 2.4rem 0 2rem; }
+.tv-champion-name { font-size: 4.6rem; font-weight: 900; line-height: 1.1; }
+.tv-champion-sub { margin-top: 1.2rem; font-size: 2.2rem; font-weight: 600; color: var(--tv-dim); }
+
+/* ── Rotation rail ────────────────────────────────────────── */
+.tv-rail {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 0.8rem 2.6rem 1.8rem;
+}
+.tv-segments { flex: 1; display: flex; gap: 0.8rem; min-width: 0; }
+.tv-seg { flex: 1; min-width: 0; }
+.tv-seg-bar {
+    height: 0.7rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.16);
+    overflow: hidden;
+}
+.tv-seg-fill {
+    height: 100%;
+    width: 100%;
+    background: var(--tv-primary);
+    transform-origin: left center;
+    transform: scaleX(0);
+}
+.tv-seg.tv-done .tv-seg-fill { transform: scaleX(1); opacity: 0.45; }
+.tv-seg-label {
+    margin-top: 0.6rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tv-seg.tv-current .tv-seg-label { color: #fff; }
+.tv-countdown {
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--tv-dim);
+    min-width: 13rem;
+    text-align: right;
+}
+.tv-brand {
+    flex-shrink: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--tv-primary);
+}
+
+/* ── Controls: only while the mouse is moving ─────────────── */
+.tv-controls {
+    position: absolute;
+    right: 2.6rem;
+    bottom: 5.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    border-radius: 1.4rem;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    font-size: max(14px, 1rem);
+}
+.tv-awake .tv-controls { opacity: 1; pointer-events: auto; }
+.tv-controls button {
+    font: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 0;
+    border-radius: 0.8em;
+    padding: 0.6em 1em;
+    cursor: pointer;
+}
+.tv-controls button:hover { background: rgba(255, 255, 255, 0.22); }
+.tv-controls button.tv-on { background: var(--tv-primary); color: var(--tv-secondary); }
+.tv-controls .tv-exit { background: var(--tv-primary); color: var(--tv-secondary); }
+.tv-controls .tv-gap { width: 0.6em; }
+
+@keyframes tvRise {
+    from { opacity: 0; transform: translateY(1.6rem); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes tvPop {
+    from { opacity: 0; transform: translateY(3rem) scale(0.85); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes tvPulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+    70% { box-shadow: 0 0 0 1rem rgba(255, 59, 48, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tv-page, .tv-page.tv-in .tv-rise, .tv-page.tv-in .tv-pop { animation: none; transition: none; }
+    .tv-stage.tv-live::before { animation: none; }
+}
