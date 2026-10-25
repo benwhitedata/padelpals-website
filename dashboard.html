@@ -2993,9 +2993,16 @@
             return null;
         }
 
+        // Every club-scoped tab shows the signed-in player's home club only.
+        // "No Club Assigned" is a placeholder club, so it counts as no club.
+        function homeClubIdFromProfile(me) {
+            if (me?.clubs?.club_name === 'No Club Assigned') return null;
+            return me?.clubs?.id || me?.club_id || null;
+        }
+
         async function resolveAmericanoClubId() {
             if (typeof currentUserClubId !== 'undefined' && currentUserClubId) return currentUserClubId;
-            if (window.currentUserClubData?.id) return window.currentUserClubData.id;
+            if (window.currentUserClubData?.id && window.currentUserClubData.club_name !== 'No Club Assigned') return window.currentUserClubData.id;
             try {
                 const client = getAmericanoSupabaseClient();
                 if (!client) return null;
@@ -3006,9 +3013,8 @@
                     .select('club_id, clubs!user_profiles_club_id_fkey(id, club_name, primary_color, secondary_color, logo_url)')
                     .eq('id', session.user.id)
                     .maybeSingle();
-                const clubId = me?.clubs?.id || me?.club_id || null;
                 if (me?.clubs) window.currentUserClubData = me.clubs;
-                return clubId;
+                return homeClubIdFromProfile(me);
             } catch (_) {
                 return null;
             }
@@ -3343,12 +3349,26 @@
                 // Log to console but don't show in UI
                 addDebugInfo(`Loading box league data for ${isAdmin ? 'admin' : 'regular'} user`);
                 
-                // Get leagues
-                // If RLS is properly set up, this will automatically filter to leagues the user has access to
-                // Admins would see all leagues, regular users would see leagues they created or participate in
+                // Leagues for the player's home club only, admins included:
+                // row-level security lets any signed-in user read every club's leagues.
+                const clubId = await resolveAmericanoClubId();
+                if (!clubId) {
+                    document.getElementById('leagueTableContainer').innerHTML = `
+                        <div class="alert alert-info">
+                            <h5 class="alert-heading">Select a club on your profile</h5>
+                            <p class="mb-0">Box leagues are club-scoped. Choose your club under Profile in the PadelPals app to see its leagues.</p>
+                        </div>`;
+                    document.getElementById('statusFilter').style.display = 'none';
+                    document.getElementById('leagueSelector').style.display = 'none';
+                    document.getElementById('boxSelector').style.display = 'none';
+                    document.getElementById('upcomingMatches').innerHTML = '<p>No upcoming matches.</p>';
+                    document.getElementById('matchResults').innerHTML = '<p>No match results available.</p>';
+                    return;
+                }
                 const { data: leagues, error: leaguesError } = await supabaseClient
                     .from('box_leagues')
                     .select('*')
+                    .eq('club_id', clubId)
                     .order('created_at', { ascending: false });
                 
                 if (leaguesError) {
@@ -3365,7 +3385,7 @@
                         <div class="alert alert-info">
                             <h4>No Box Leagues Available</h4>
                             <p>${isAdmin ? 
-                                'There are no box leagues in the system yet.' : 
+                                'Your club has no box leagues yet.' : 
                                 'You are not currently part of any box leagues.'}
 
                             </p>
@@ -7461,7 +7481,7 @@ document.fonts.ready.then(function () {
                 if (profileRes.ok) {
                     const profiles = await profileRes.json();
                     const me = Array.isArray(profiles) ? profiles[0] : null;
-                    currentUserClubId = me?.clubs?.id || me?.club_id || null;
+                    currentUserClubId = homeClubIdFromProfile(me);
                     if (me) cacheProfileRow(me);
                     if (me?.clubs) {
                         window.currentUserClubData = me.clubs;
@@ -7787,7 +7807,7 @@ document.fonts.ready.then(function () {
                             if (pr.ok) {
                                 const profiles = await pr.json();
                                 const me = Array.isArray(profiles) ? profiles[0] : null;
-                                currentUserClubId = me?.clubs?.id || me?.club_id || null;
+                                currentUserClubId = homeClubIdFromProfile(me);
                             }
                             if (currentUserClubId) {
                                 const membersEndpointLocal = `${window.config.supabaseUrl}/rest/v1/user_profiles?club_id=eq.${currentUserClubId}&select=id,display_name,gender`;
@@ -7819,7 +7839,14 @@ document.fonts.ready.then(function () {
                 // Match iOS: active leaderboard players from player_search_view
                 // last_activity_at = latest rating date only (match or coach rating; not profile edits)
                 const activityCutoff = getLeaderboardActivityCutoffIso(LEADERBOARD_ACTIVE_MONTHS);
-                const endpoint = `${window.config.supabaseUrl}/rest/v1/player_search_view?select=*&last_activity_at=gte.${encodeURIComponent(activityCutoff)}&order=current_rating.desc&limit=${LEADERBOARD_FETCH_LIMIT}`;
+                if (!currentUserClubId) {
+                    rankingsLoading.style.display = 'none';
+                    rankingsError.className = 'alert alert-info';
+                    rankingsError.textContent = 'Rankings are club-scoped. Choose your club under Profile in the PadelPals app to see your club’s leaderboard.';
+                    rankingsError.style.display = 'block';
+                    return;
+                }
+                const endpoint = `${window.config.supabaseUrl}/rest/v1/player_search_view?select=*&club_id=eq.${encodeURIComponent(currentUserClubId)}&last_activity_at=gte.${encodeURIComponent(activityCutoff)}&order=current_rating.desc&limit=${LEADERBOARD_FETCH_LIMIT}`;
                 console.log('Fetching leaderboard from player_search_view since', activityCutoff);
 
                 const response = await fetch(endpoint, {
@@ -7958,6 +7985,7 @@ document.fonts.ready.then(function () {
                 console.error('Error loading player rankings:', error);
                 rankingsLoading.style.display = 'none';
                 rankingsError.style.display = 'block';
+                rankingsError.className = 'alert alert-danger';
                 rankingsError.textContent = `Error loading player rankings: ${error.message}`;
             }
         }
