@@ -1321,6 +1321,30 @@
         .americano-fs-badge.live { background: #28a745; }
         .americano-fs-badge.final { background: rgba(255,255,255,0.2); }
 
+        #tournamentFullscreenOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #0d1b2e;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #tournamentFullscreenOverlay.active { display: flex; }
+        .tournament-fs-table { width: 100%; color: #fff; }
+        .tournament-fs-table th, .tournament-fs-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+        }
+        .tournament-fs-match {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
     </style>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L426ZMNKFK"></script>
@@ -1580,10 +1604,9 @@
                         <!-- Header row: filter pills + print button -->
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                             <div id="tournamentStatusFilter" class="d-flex flex-wrap gap-2">
-                                <button class="btn btn-sm tournament-status-btn active" data-status="all">All</button>
-                                <button class="btn btn-sm tournament-status-btn" data-status="active">Active</button>
-                                <button class="btn btn-sm tournament-status-btn" data-status="upcoming">Upcoming</button>
-                                <button class="btn btn-sm tournament-status-btn" data-status="completed">Completed</button>
+                                <button type="button" class="btn btn-sm tournament-status-btn active" data-filter="live">Live</button>
+                                <button type="button" class="btn btn-sm tournament-status-btn active" data-filter="upcoming">Upcoming</button>
+                                <button type="button" class="btn btn-sm tournament-status-btn" data-filter="completed">Completed</button>
                             </div>
                             <button id="printTournamentBtn" class="btn btn-primary btn-sm" style="display:none;">
                                 <i class="fas fa-print me-1"></i> Print Bracket
@@ -1600,8 +1623,16 @@
                             <div class="modal-dialog modal-xl modal-dialog-scrollable">
                                 <div class="modal-content" style="background:#1a2238; color:#fff; border:none;">
                                     <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.15);">
-                                        <h5 class="modal-title" id="bracketModalLabel">Tournament Bracket</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        <div>
+                                            <h5 class="modal-title" id="bracketModalLabel">Tournament</h5>
+                                            <div class="americano-updated" id="bracketModalMeta"></div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button type="button" class="btn btn-outline-light btn-sm" id="tournamentFullscreenBtn" style="display:none;" onclick="openTournamentFullscreen()" title="Fullscreen display">
+                                                <i class="fas fa-expand me-1"></i>Fullscreen
+                                            </button>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
                                     </div>
                                     <div class="modal-body" id="bracketModalBody" style="overflow-x:auto;">
                                         <p class="text-center text-white-50 py-4">Loading bracket…</p>
@@ -2251,140 +2282,421 @@
 
         // ── Tournaments ────────────────────────────────────────────────────────
 
-        // All tournaments fetched once; filtered client-side.
+        // Club tournaments. Filters are toggles; default is Live and Upcoming.
         let allTournaments = [];
-        let allTournamentTeams = {};   // keyed by tournament_id
-        let allTournamentMatches = {}; // keyed by tournament_id
-        let tournamentsLoaded = false;
+        let allTournamentTeams = {};
+        let allTournamentMatches = {};
+        let allTournamentGroups = {};
+        let tournamentActiveFilters = new Set(['live', 'upcoming']);
+        let tournamentDetailId = null;
+        let tournamentPollTimer = null;
+        let tournamentLastUpdatedAt = null;
+        const TOURNAMENT_POLL_MS = 3000;
+
+        function tournamentFilterKey(status) {
+            if (status === 'active') return 'live';
+            if (status === 'upcoming') return 'upcoming';
+            if (status === 'completed') return 'completed';
+            return null;
+        }
+
+        function tournamentStatusLabel(status) {
+            if (status === 'active') return 'Live';
+            if (status === 'upcoming') return 'Upcoming';
+            if (status === 'completed') return 'Completed';
+            return status || '—';
+        }
+
+        function tournamentPhaseLabel(phase) {
+            if (phase === 'group_stage') return 'Group stage';
+            if (phase === 'knockout') return 'Knockout';
+            if (phase === 'completed') return 'Completed';
+            return 'Setup';
+        }
+
+        function tournamentSideName(team) {
+            if (!team) return 'TBD';
+            const first = (team.player1_name || '').trim();
+            const second = (team.player2_name || '').trim();
+            if (!second) return first || 'TBD';
+            return `${first} & ${second}`;
+        }
+
+        function tournamentMatchScore(match) {
+            if (!match.is_completed) return 'Still to play';
+            if (match.is_walkover) return 'Walkover';
+            const a = Array.isArray(match.team1_set_scores) ? match.team1_set_scores : [];
+            const b = Array.isArray(match.team2_set_scores) ? match.team2_set_scores : [];
+            const n = Math.max(a.length, b.length);
+            if (n > 0) {
+                const sets = [];
+                for (let i = 0; i < n; i++) sets.push(`${a[i] ?? 0}–${b[i] ?? 0}`);
+                return sets.join(', ');
+            }
+            return `${match.team1_score ?? 0}–${match.team2_score ?? 0}`;
+        }
+
+        function tournamentLots(id) {
+            let hash = 0xcbf29ce484222325n;
+            const prime = 0x100000001b3n;
+            const mask = 0xffffffffffffffffn;
+            for (const ch of String(id || '').toLowerCase()) {
+                hash ^= BigInt(ch.charCodeAt(0));
+                hash = (hash * prime) & mask;
+            }
+            return hash;
+        }
+
+        function tournamentGroupStandings(teams, matches) {
+            const rows = {};
+            teams.forEach(team => {
+                rows[team.id] = { teamId: team.id, won: 0, setsWon: 0, setsLost: 0, gamesWon: 0, gamesLost: 0, played: 0 };
+            });
+            const completed = matches.filter(m => m.is_completed && (m.stage || 'group') === 'group');
+            completed.forEach(match => {
+                const t1 = match.team1_id;
+                const t2 = match.team2_id;
+                if (!rows[t1] || !rows[t2]) return;
+                rows[t1].played += 1;
+                rows[t2].played += 1;
+                const s1 = match.team1_score || 0;
+                const s2 = match.team2_score || 0;
+                rows[t1].setsWon += s1; rows[t1].setsLost += s2;
+                rows[t2].setsWon += s2; rows[t2].setsLost += s1;
+                const g1 = (match.team1_set_scores || []).reduce((sum, n) => sum + (Number(n) || 0), 0);
+                const g2 = (match.team2_set_scores || []).reduce((sum, n) => sum + (Number(n) || 0), 0);
+                rows[t1].gamesWon += g1; rows[t1].gamesLost += g2;
+                rows[t2].gamesWon += g2; rows[t2].gamesLost += g1;
+                if (match.winner_team_id === t1) rows[t1].won += 1;
+                else if (match.winner_team_id === t2) rows[t2].won += 1;
+            });
+            const ratings = {};
+            teams.forEach(team => { ratings[team.id] = Number(team.average_rating) || 0; });
+            const lastResort = (a, b) => {
+                if (ratings[a] !== ratings[b]) return ratings[a] > ratings[b] ? -1 : 1;
+                const la = tournamentLots(a);
+                const lb = tournamentLots(b);
+                if (la < lb) return -1;
+                if (la > lb) return 1;
+                return String(a) < String(b) ? -1 : 1;
+            };
+            const primaryTie = (a, b) => a.won === b.won && a.setsWon === b.setsWon
+                && (a.setsWon - a.setsLost) === (b.setsWon - b.setsLost)
+                && a.gamesWon === b.gamesWon
+                && (a.gamesWon - a.gamesLost) === (b.gamesWon - b.gamesLost);
+            function sortRows(list, among, pool, depth) {
+                const scoped = list.filter(row => among.includes(row.teamId));
+                const sorted = scoped.slice().sort((a, b) => {
+                    if (a.won !== b.won) return b.won - a.won;
+                    if (a.setsWon !== b.setsWon) return b.setsWon - a.setsWon;
+                    const sd = (b.setsWon - b.setsLost) - (a.setsWon - a.setsLost);
+                    if (sd) return sd;
+                    if (a.gamesWon !== b.gamesWon) return b.gamesWon - a.gamesWon;
+                    const gd = (b.gamesWon - b.gamesLost) - (a.gamesWon - a.gamesLost);
+                    if (gd) return gd;
+                    return lastResort(a.teamId, b.teamId);
+                });
+                const result = [];
+                let i = 0;
+                while (i < sorted.length) {
+                    let j = i + 1;
+                    while (j < sorted.length && primaryTie(sorted[i], sorted[j])) j += 1;
+                    const block = sorted.slice(i, j);
+                    if (block.length === 1 || depth > 3) {
+                        result.push(...block.slice().sort((a, b) => lastResort(a.teamId, b.teamId)));
+                    } else {
+                        const tiedIds = block.map(row => row.teamId);
+                        const mini = pool.filter(match => tiedIds.includes(match.team1_id) && tiedIds.includes(match.team2_id));
+                        if (!mini.length) {
+                            result.push(...block.slice().sort((a, b) => lastResort(a.teamId, b.teamId)));
+                        } else {
+                            const miniRows = {};
+                            tiedIds.forEach(id => { miniRows[id] = { teamId: id, won: 0, setsWon: 0, setsLost: 0, gamesWon: 0, gamesLost: 0, played: 0 }; });
+                            mini.forEach(match => {
+                                const t1 = match.team1_id;
+                                const t2 = match.team2_id;
+                                if (!miniRows[t1] || !miniRows[t2]) return;
+                                const s1 = match.team1_score || 0;
+                                const s2 = match.team2_score || 0;
+                                miniRows[t1].setsWon += s1; miniRows[t1].setsLost += s2;
+                                miniRows[t2].setsWon += s2; miniRows[t2].setsLost += s1;
+                                const g1 = (match.team1_set_scores || []).reduce((sum, n) => sum + (Number(n) || 0), 0);
+                                const g2 = (match.team2_set_scores || []).reduce((sum, n) => sum + (Number(n) || 0), 0);
+                                miniRows[t1].gamesWon += g1; miniRows[t1].gamesLost += g2;
+                                miniRows[t2].gamesWon += g2; miniRows[t2].gamesLost += g1;
+                                if (match.winner_team_id === t1) miniRows[t1].won += 1;
+                                else if (match.winner_team_id === t2) miniRows[t2].won += 1;
+                            });
+                            const ordered = sortRows(Object.values(miniRows), tiedIds, mini, depth + 1);
+                            const byId = {};
+                            block.forEach(row => { byId[row.teamId] = row; });
+                            ordered.forEach(row => { if (byId[row.teamId]) result.push(byId[row.teamId]); });
+                        }
+                    }
+                    i = j;
+                }
+                return result;
+            }
+            return sortRows(Object.values(rows), teams.map(team => team.id), completed, 0);
+        }
+
+        function indexTournamentChildren(teams, matches, groups) {
+            allTournamentTeams = {};
+            allTournamentMatches = {};
+            allTournamentGroups = {};
+            (teams || []).forEach(team => {
+                if (!allTournamentTeams[team.tournament_id]) allTournamentTeams[team.tournament_id] = [];
+                allTournamentTeams[team.tournament_id].push(team);
+            });
+            (matches || []).forEach(match => {
+                if (!allTournamentMatches[match.tournament_id]) allTournamentMatches[match.tournament_id] = [];
+                allTournamentMatches[match.tournament_id].push(match);
+            });
+            (groups || []).forEach(group => {
+                if (!allTournamentGroups[group.tournament_id]) allTournamentGroups[group.tournament_id] = [];
+                allTournamentGroups[group.tournament_id].push(group);
+            });
+            Object.values(allTournamentGroups).forEach(list => list.sort((a, b) => (a.group_index || 0) - (b.group_index || 0)));
+        }
 
         async function loadTournamentData() {
-            if (tournamentsLoaded) return;
             const listEl = document.getElementById('tournamentList');
+            if (!listEl) return;
+            const clubId = await resolveAmericanoClubId();
+            if (!clubId) {
+                allTournaments = [];
+                listEl.innerHTML = `
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Select a club on your profile</h5>
+                        <p class="mb-0">Tournaments are club-scoped. Choose your club under Profile to see live and upcoming events.</p>
+                    </div>`;
+                return;
+            }
             listEl.innerHTML = '<p class="placeholder-text">Loading tournaments…</p>';
-
             try {
-                const client = window.supabaseClient;
-
-                // Fetch all tournaments
+                const client = getAmericanoSupabaseClient();
+                if (!client) throw new Error('Supabase client not ready');
                 const { data: tournaments, error: tErr } = await client
                     .from('bracket_tournaments')
                     .select('*')
-                    .order('created_at', { ascending: false });
-
+                    .eq('club_id', clubId)
+                    .eq('is_private', false)
+                    .in('status', ['upcoming', 'active', 'completed'])
+                    .order('start_date', { ascending: false });
                 if (tErr) throw tErr;
-
-                if (!tournaments || tournaments.length === 0) {
-                    listEl.innerHTML = '<div class="alert alert-info">No tournaments found.</div>';
+                allTournaments = tournaments || [];
+                if (!allTournaments.length) {
+                    renderTournamentList();
                     return;
                 }
-
-                allTournaments = tournaments;
-
-                // Fetch all teams and matches in parallel
-                const ids = tournaments.map(t => t.id);
-
-                const [{ data: teams, error: teamsErr }, { data: matches, error: matchesErr }] = await Promise.all([
+                const ids = allTournaments.map(t => t.id);
+                const [{ data: teams, error: teamsErr }, { data: matches, error: matchesErr }, { data: groups, error: groupsErr }] = await Promise.all([
                     client.from('bracket_tournament_teams').select('*').in('tournament_id', ids),
-                    client.from('bracket_tournament_matches').select('*').in('tournament_id', ids)
+                    client.from('bracket_tournament_matches').select('*').in('tournament_id', ids),
+                    client.from('bracket_tournament_groups').select('*').in('tournament_id', ids)
                 ]);
-
                 if (teamsErr) throw teamsErr;
                 if (matchesErr) throw matchesErr;
-
-                // Index by tournament_id
-                (teams || []).forEach(t => {
-                    if (!allTournamentTeams[t.tournament_id]) allTournamentTeams[t.tournament_id] = [];
-                    allTournamentTeams[t.tournament_id].push(t);
-                });
-                (matches || []).forEach(m => {
-                    if (!allTournamentMatches[m.tournament_id]) allTournamentMatches[m.tournament_id] = [];
-                    allTournamentMatches[m.tournament_id].push(m);
-                });
-
-                tournamentsLoaded = true;
-                renderTournamentList('all');
-                setupTournamentFilters();
-
+                if (groupsErr) throw groupsErr;
+                indexTournamentChildren(teams, matches, groups);
+                renderTournamentList();
+                if (tournamentDetailId && allTournaments.some(t => t.id === tournamentDetailId)) {
+                    renderTournamentDetail(tournamentDetailId);
+                }
             } catch (err) {
                 console.error('Error loading tournament data:', err);
-                listEl.innerHTML = `<div class="alert alert-danger">Unable to load tournaments: ${err.message}</div>`;
+                listEl.innerHTML = `<div class="alert alert-danger">Unable to load tournaments. Please try again.</div>`;
             }
         }
 
-        function setupTournamentFilters() {
-            document.querySelectorAll('.tournament-status-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.tournament-status-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    renderTournamentList(this.dataset.status);
-                });
-            });
-        }
-
-        function renderTournamentList(statusFilter) {
+        function renderTournamentList() {
             const listEl = document.getElementById('tournamentList');
-            const filtered = statusFilter === 'all'
-                ? allTournaments
-                : allTournaments.filter(t => t.status === statusFilter);
-
+            if (!listEl) return;
+            const filtered = allTournaments.filter(t => {
+                const key = tournamentFilterKey(t.status);
+                return key && tournamentActiveFilters.has(key);
+            });
             if (filtered.length === 0) {
-                listEl.innerHTML = `<p class="placeholder-text">No ${statusFilter === 'all' ? '' : statusFilter + ' '}tournaments.</p>`;
+                listEl.innerHTML = `<p class="placeholder-text">No tournaments in this view.</p>`;
                 return;
             }
-
             listEl.innerHTML = filtered.map(t => {
                 const teams = allTournamentTeams[t.id] || [];
                 const matches = allTournamentMatches[t.id] || [];
-                // A bye is a completed round-1 match where one team slot is null.
-                // Future match slots (both IDs null) are valid upcoming matches — keep them.
                 const isBye = m => m.round === 1 && m.is_completed && (!m.team1_id || !m.team2_id);
                 const realMatches = matches.filter(m => !isBye(m));
                 const completedMatches = realMatches.filter(m => m.is_completed);
                 const champion = getChampion(t, teams, matches);
-
                 const startDate = new Date(t.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                 const statusClass = `t-status-${t.status}`;
-
                 return `
                 <div class="tournament-card" onclick="openBracketModal('${t.id}')">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="t-name">${escapeHtml(t.name)}</div>
-                            <div class="t-meta">${startDate} &nbsp;·&nbsp; ${teams.length} teams &nbsp;·&nbsp; ${completedMatches.length}/${realMatches.length} matches played</div>
+                            <div class="t-meta">${startDate} &nbsp;·&nbsp; ${escapeHtml(tournamentPhaseLabel(t.phase))} &nbsp;·&nbsp; ${completedMatches.length}/${realMatches.length} matches played</div>
                         </div>
-                        <span class="t-status-badge ${statusClass}">${t.status}</span>
+                        <span class="t-status-badge ${statusClass}">${tournamentStatusLabel(t.status)}</span>
                     </div>
                     ${champion ? `
                     <div class="d-flex align-items-center gap-2 mt-2 t-champion">
                         <i class="fas fa-trophy" style="color:var(--orange);"></i>
-                        <span>${escapeHtml(champion.display_name || (champion.player1_name + ' & ' + champion.player2_name))}</span>
+                        <span>${escapeHtml(tournamentSideName(champion))}</span>
                     </div>` : ''}
                 </div>`;
             }).join('');
         }
 
-        function getChampion(tournament, teams, matches) {
-            if (!matches.length || !teams.length) return null;
-            const maxRound = Math.max(...matches.map(m => m.round));
-            const final = matches.find(m => m.round === maxRound && m.is_completed);
-            if (!final || !final.winner_team_id) return null;
-            return teams.find(t => t.id === final.winner_team_id) || null;
+        function renderGroupTablesHtml(teams, matches, groups) {
+            if (!groups.length) return '';
+            return groups.map(group => {
+                const groupTeams = teams.filter(team => team.group_id === group.id);
+                const groupMatches = matches.filter(match => match.group_id === group.id || (match.stage === 'group' && groupTeams.some(team => team.id === match.team1_id || team.id === match.team2_id) && !match.group_id));
+                if (groupTeams.length < 2) return '';
+                const standings = tournamentGroupStandings(groupTeams, groupMatches.length ? groupMatches : matches.filter(m => m.stage === 'group'));
+                const byId = {};
+                groupTeams.forEach(team => { byId[team.id] = team; });
+                const played = groupMatches.filter(m => m.is_completed && m.team1_id && m.team2_id).length;
+                const total = groupMatches.filter(m => m.team1_id && m.team2_id).length;
+                const body = standings.map((row, index) => {
+                    const team = byId[row.teamId];
+                    return `<tr>
+                        <td>${index + 1}</td>
+                        <td>${escapeHtml(tournamentSideName(team))}</td>
+                        <td>${row.played}</td>
+                        <td class="a-pts">${row.won}</td>
+                        <td>${row.setsWon}–${row.setsLost}</td>
+                        <td>${row.gamesWon}–${row.gamesLost}</td>
+                    </tr>`;
+                }).join('');
+                return `
+                    <h6 class="text-white-50 text-uppercase mb-2 mt-3" style="letter-spacing:0.06em;font-size:0.75rem;">${escapeHtml(group.name || 'Group')} · ${played}/${total} played</h6>
+                    <table class="americano-standings-table">
+                        <thead><tr><th>#</th><th>Pair</th><th>P</th><th>W</th><th>Sets</th><th>Games</th></tr></thead>
+                        <tbody>${body}</tbody>
+                    </table>`;
+            }).join('');
+        }
+
+        function renderMatchListHtml(matches, teamsById) {
+            if (!matches.length) return '';
+            return matches.map(match => {
+                const left = tournamentSideName(match.team1_id ? teamsById[match.team1_id] : null);
+                const right = tournamentSideName(match.team2_id ? teamsById[match.team2_id] : null);
+                return `<div class="tournament-fs-match">
+                    <div>${escapeHtml(left)}<div class="text-white-50">${escapeHtml(right)}</div></div>
+                    <div style="font-weight:700; white-space:nowrap;">${escapeHtml(tournamentMatchScore(match))}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderTournamentDetail(tournamentId) {
+            const tournament = allTournaments.find(t => t.id === tournamentId);
+            const body = document.getElementById('bracketModalBody');
+            const titleEl = document.getElementById('bracketModalLabel');
+            const metaEl = document.getElementById('bracketModalMeta');
+            const fsBtn = document.getElementById('tournamentFullscreenBtn');
+            if (!tournament || !body || !titleEl) return;
+            const teams = allTournamentTeams[tournamentId] || [];
+            const matches = (allTournamentMatches[tournamentId] || []).slice().sort((a, b) => (a.match_number || 0) - (b.match_number || 0));
+            const groups = allTournamentGroups[tournamentId] || [];
+            titleEl.textContent = tournament.name;
+            const updatedStr = tournamentLastUpdatedAt
+                ? tournamentLastUpdatedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                : '';
+            if (metaEl) {
+                metaEl.innerHTML = `<span class="t-status-badge t-status-${tournament.status}">${tournamentStatusLabel(tournament.status)}</span> · ${escapeHtml(tournamentPhaseLabel(tournament.phase))}${updatedStr ? ` · Updated ${updatedStr}` : ''}`;
+            }
+            const showBoard = tournament.status === 'active' || tournament.status === 'completed';
+            if (fsBtn) fsBtn.style.display = showBoard && matches.length ? '' : 'none';
+            if (!matches.length) {
+                body.innerHTML = `<p class="text-center text-white-50 py-4">The draw has not been made yet. Scores are entered in the PadelPals app.</p>`;
+                return;
+            }
+            const knockout = matches.filter(m => (m.stage || 'knockout') !== 'group');
+            const groupHtml = renderGroupTablesHtml(teams, matches, groups);
+            const knockoutHtml = knockout.length ? renderBracket(tournament, teams, knockout) : '';
+            const played = matches.filter(m => m.is_completed && m.team1_id && m.team2_id).length;
+            const total = matches.filter(m => m.team1_id && m.team2_id).length;
+            const champion = !knockout.length ? getChampion(tournament, teams, matches) : null;
+            body.innerHTML = `
+                ${champion ? `<div class="champion-banner mb-3"><i class="fas fa-trophy trophy-icon"></i><div><div class="champion-label">Champion</div><div class="champion-name">${escapeHtml(tournamentSideName(champion))}</div></div></div>` : ''}
+                <p class="text-white-50 mb-2">${played} of ${total} matches played. Scores are entered in the app.</p>
+                ${groupHtml}
+                ${knockoutHtml ? `<h6 class="text-white-50 text-uppercase mb-2 mt-4" style="letter-spacing:0.06em;font-size:0.75rem;">Knockout</h6>${knockoutHtml}` : ''}`;
         }
 
         function openBracketModal(tournamentId) {
-            const tournament = allTournaments.find(t => t.id === tournamentId);
-            if (!tournament) return;
-
-            const teams = allTournamentTeams[tournamentId] || [];
-            const matches = (allTournamentMatches[tournamentId] || []).slice().sort((a, b) => a.match_number - b.match_number);
-
+            tournamentDetailId = tournamentId;
+            tournamentLastUpdatedAt = new Date();
             const modalEl = document.getElementById('bracketModal');
             modalEl.dataset.tournamentId = tournamentId;
-            document.getElementById('bracketModalLabel').textContent = tournament.name;
-            document.getElementById('bracketModalBody').innerHTML = renderBracket(tournament, teams, matches);
-
-            const modal = new bootstrap.Modal(modalEl);
+            renderTournamentDetail(tournamentId);
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
+            maybeStartTournamentPolling(true);
+        }
+
+        function stopTournamentPolling() {
+            if (tournamentPollTimer) {
+                clearInterval(tournamentPollTimer);
+                tournamentPollTimer = null;
+            }
+        }
+
+        function maybeStartTournamentPolling(force) {
+            stopTournamentPolling();
+            const tournament = allTournaments.find(t => t.id === tournamentDetailId);
+            if (!tournament || tournament.status !== 'active' || document.hidden) return;
+            const modalOpen = document.getElementById('bracketModal')?.classList.contains('show');
+            const fsOpen = document.getElementById('tournamentFullscreenOverlay')?.classList.contains('active');
+            if (!force && !modalOpen && !fsOpen) return;
+            tournamentPollTimer = setInterval(refreshOpenTournament, TOURNAMENT_POLL_MS);
+        }
+
+        async function refreshOpenTournament() {
+            const id = tournamentDetailId;
+            if (!id || document.hidden) return;
+            try {
+                const client = getAmericanoSupabaseClient();
+                if (!client) return;
+                const { data: rows, error } = await client.from('bracket_tournaments').select('*').eq('id', id).limit(1);
+                if (error || !rows || !rows[0]) return;
+                const fresh = rows[0];
+                const index = allTournaments.findIndex(t => t.id === id);
+                if (index >= 0) allTournaments[index] = fresh;
+                const [{ data: teams }, { data: matches }, { data: groups }] = await Promise.all([
+                    client.from('bracket_tournament_teams').select('*').eq('tournament_id', id),
+                    client.from('bracket_tournament_matches').select('*').eq('tournament_id', id),
+                    client.from('bracket_tournament_groups').select('*').eq('tournament_id', id)
+                ]);
+                allTournamentTeams[id] = teams || [];
+                allTournamentMatches[id] = matches || [];
+                allTournamentGroups[id] = (groups || []).slice().sort((a, b) => (a.group_index || 0) - (b.group_index || 0));
+                tournamentLastUpdatedAt = new Date();
+                renderTournamentList();
+                if (document.getElementById('bracketModal')?.classList.contains('show')) {
+                    renderTournamentDetail(id);
+                }
+                if (document.getElementById('tournamentFullscreenOverlay')?.classList.contains('active')) {
+                    renderTournamentFullscreen();
+                }
+                if (fresh.status !== 'active') stopTournamentPolling();
+            } catch (err) {
+                console.error('refreshOpenTournament', err);
+            }
+        }
+
+        function getChampion(tournament, teams, matches) {
+            if (!matches.length || !teams.length) return null;
+            const knockout = matches.filter(m => (m.stage || 'knockout') !== 'group'
+                && m.knockout_role !== 'third_place'
+                && m.knockout_role !== 'placement');
+            const pool = knockout.length ? knockout : matches;
+            const maxRound = Math.max(...pool.map(m => m.round));
+            const final = pool.find(m => m.round === maxRound && m.is_completed && m.winner_team_id);
+            if (!final) return null;
+            return teams.find(t => t.id === final.winner_team_id) || null;
         }
 
         function renderBracket(tournament, teams, matches) {
@@ -2794,7 +3106,7 @@
             return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
-        // Lazy-load tournaments when the tab is first shown
+        // Lazy-load tournaments when the tab is shown, and keep a live board polling.
         document.addEventListener('DOMContentLoaded', function() {
             const tournamentsTab = document.getElementById('tournaments-tab');
             if (tournamentsTab) {
@@ -2802,7 +3114,156 @@
                     loadTournamentData();
                 });
             }
+            document.getElementById('tournamentStatusFilter')?.addEventListener('click', function(e) {
+                const btn = e.target.closest('.tournament-status-btn');
+                if (!btn) return;
+                const key = btn.dataset.filter;
+                if (tournamentActiveFilters.has(key)) {
+                    if (tournamentActiveFilters.size === 1) return;
+                    tournamentActiveFilters.delete(key);
+                    btn.classList.remove('active');
+                } else {
+                    tournamentActiveFilters.add(key);
+                    btn.classList.add('active');
+                }
+                renderTournamentList();
+            });
+            const modalEl = document.getElementById('bracketModal');
+            if (modalEl) {
+                modalEl.addEventListener('hidden.bs.modal', function() {
+                    if (!document.getElementById('tournamentFullscreenOverlay')?.classList.contains('active')) {
+                        stopTournamentPolling();
+                        tournamentDetailId = null;
+                    }
+                });
+            }
+            document.addEventListener('visibilitychange', function() {
+                const tournament = allTournaments.find(t => t.id === tournamentDetailId);
+                if (!document.hidden && tournament?.status === 'active') maybeStartTournamentPolling();
+            });
         });
+
+        const TOURNAMENT_FS_ROTATE_MS = 8000;
+        let tournamentFsPage = 0;
+        let tournamentFsPages = [];
+        let tournamentFsRotating = true;
+        let tournamentFsTimer = null;
+
+        function tournamentFsApplyTheme() {
+            const clubData = window.currentUserClubData;
+            const primary = clubData?.primary_color || clubData?.primaryColor || '#FF6B35';
+            const secondary = clubData?.secondary_color || clubData?.secondaryColor || '#0d1b2e';
+            const overlay = document.getElementById('tournamentFullscreenOverlay');
+            if (!overlay) return;
+            overlay.style.background = secondary;
+            const header = overlay.querySelector('.rankings-fs-header');
+            if (header) header.style.background = primary;
+            const logo = document.getElementById('tournamentFsClubLogo');
+            const logoUrl = clubData?.logo_url || '';
+            if (logo) {
+                if (logoUrl) {
+                    logo.src = logoUrl;
+                    logo.style.display = '';
+                } else {
+                    logo.style.display = 'none';
+                }
+            }
+        }
+
+        function buildTournamentFsPages(tournament) {
+            const teams = allTournamentTeams[tournament.id] || [];
+            const matches = allTournamentMatches[tournament.id] || [];
+            const groups = allTournamentGroups[tournament.id] || [];
+            const teamsById = {};
+            teams.forEach(team => { teamsById[team.id] = team; });
+            const pages = [];
+            groups.forEach(group => {
+                const html = renderGroupTablesHtml(teams, matches, [group]);
+                if (html) pages.push({ title: group.name || 'Group', html });
+            });
+            const knockout = matches.filter(m => (m.stage || 'knockout') !== 'group')
+                .slice()
+                .sort((a, b) => (a.round || 0) - (b.round || 0) || (a.match_number || 0) - (b.match_number || 0));
+            if (knockout.length) {
+                pages.push({ title: 'Knockout', html: renderMatchListHtml(knockout, teamsById) });
+            }
+            if (!pages.length) {
+                pages.push({ title: tournament.name, html: '<p>The draw has not been made yet.</p>' });
+            }
+            return pages;
+        }
+
+        function renderTournamentFullscreen() {
+            const tournament = allTournaments.find(t => t.id === tournamentDetailId);
+            const overlay = document.getElementById('tournamentFullscreenOverlay');
+            if (!tournament || !overlay) return;
+            tournamentFsPages = buildTournamentFsPages(tournament);
+            if (tournamentFsPage >= tournamentFsPages.length) tournamentFsPage = 0;
+            const page = tournamentFsPages[tournamentFsPage];
+            document.getElementById('tournamentFsTitle').textContent = tournament.name;
+            document.getElementById('tournamentFsSubtitle').textContent = page.title;
+            const badge = document.getElementById('tournamentFsStatusBadge');
+            badge.textContent = tournamentStatusLabel(tournament.status);
+            badge.className = 'americano-fs-badge ' + (tournament.status === 'active' ? 'live' : 'final');
+            document.getElementById('tournamentFsBody').innerHTML = page.html;
+            const badgePage = document.getElementById('tournamentFsPageBadge');
+            if (badgePage) badgePage.textContent = `${tournamentFsPage + 1} / ${tournamentFsPages.length}`;
+            tournamentFsApplyTheme();
+        }
+
+        function tournamentFsStep(delta) {
+            if (!tournamentFsPages.length) return;
+            tournamentFsPage = (tournamentFsPage + delta + tournamentFsPages.length) % tournamentFsPages.length;
+            renderTournamentFullscreen();
+        }
+
+        function tournamentFsSchedule() {
+            if (tournamentFsTimer) clearInterval(tournamentFsTimer);
+            if (!tournamentFsRotating || tournamentFsPages.length < 2) return;
+            tournamentFsTimer = setInterval(() => tournamentFsStep(1), TOURNAMENT_FS_ROTATE_MS);
+        }
+
+        function openTournamentFullscreen() {
+            const overlay = document.getElementById('tournamentFullscreenOverlay');
+            if (!overlay || !tournamentDetailId) return;
+            tournamentFsPage = 0;
+            tournamentFsRotating = true;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            renderTournamentFullscreen();
+            tournamentFsSchedule();
+            document.addEventListener('keydown', tournamentFsKeyHandler);
+            maybeStartTournamentPolling(true);
+        }
+
+        function closeTournamentFullscreen() {
+            const overlay = document.getElementById('tournamentFullscreenOverlay');
+            if (overlay) overlay.classList.remove('active');
+            document.body.style.overflow = '';
+            if (tournamentFsTimer) {
+                clearInterval(tournamentFsTimer);
+                tournamentFsTimer = null;
+            }
+            document.removeEventListener('keydown', tournamentFsKeyHandler);
+            if (!document.getElementById('bracketModal')?.classList.contains('show')) {
+                stopTournamentPolling();
+                tournamentDetailId = null;
+            }
+        }
+
+        function tournamentFsKeyHandler(e) {
+            if (!document.getElementById('tournamentFullscreenOverlay')?.classList.contains('active')) return;
+            if (e.key === 'Escape') closeTournamentFullscreen();
+            else if (e.key === 'ArrowRight') tournamentFsStep(1);
+            else if (e.key === 'ArrowLeft') tournamentFsStep(-1);
+            else if (e.key === ' ') {
+                e.preventDefault();
+                tournamentFsRotating = !tournamentFsRotating;
+                const icon = document.getElementById('tournamentFsRotateIcon');
+                if (icon) icon.className = tournamentFsRotating ? 'fas fa-pause' : 'fas fa-play';
+                tournamentFsSchedule();
+            }
+        }
 
         // ── end Tournaments ────────────────────────────────────────────────────
 
@@ -8972,6 +9433,41 @@ document.fonts.ready.then(function () {
                 </button>
             </div>
             <div class="fs-page-info" id="rankingsFsPageInfo"></div>
+        </div>
+    </div>
+
+    <!-- Tournament Fullscreen Overlay -->
+    <div id="tournamentFullscreenOverlay" role="dialog" aria-modal="true" aria-label="Tournament fullscreen">
+        <div class="rankings-fs-header">
+            <div class="d-flex align-items-center gap-3">
+                <img id="tournamentFsClubLogo" src="" alt="Club logo" class="rankings-fs-club-logo" style="display:none;">
+                <div>
+                    <h2 id="tournamentFsTitle">Tournament</h2>
+                    <div class="fs-subtitle" id="tournamentFsSubtitle">PadelPals</div>
+                </div>
+            </div>
+            <div class="rankings-fs-controls">
+                <span class="americano-fs-badge live" id="tournamentFsStatusBadge">Live</span>
+                <button class="btn btn-outline-light btn-sm" onclick="closeTournamentFullscreen()" title="Exit fullscreen">
+                    <i class="fas fa-compress me-1"></i>Exit
+                </button>
+            </div>
+        </div>
+        <div class="rankings-fs-body" id="tournamentFsBody"></div>
+        <div class="rankings-fs-footer">
+            <div class="rankings-fs-logo">PadelPals</div>
+            <div class="fs-nav-btns">
+                <button class="btn btn-outline-light btn-sm" type="button" onclick="tournamentFsStep(-1)">
+                    <i class="fas fa-chevron-left me-1"></i>Prev
+                </button>
+                <button class="btn btn-sm ms-1 me-1" type="button" onclick="tournamentFsKeyHandler({key:' ', preventDefault:function(){}})" title="Pause or resume" style="border:1px solid rgba(255,255,255,0.3); color:#fff; background:rgba(255,255,255,0.1); min-width:36px;">
+                    <i class="fas fa-pause" id="tournamentFsRotateIcon"></i>
+                </button>
+                <span class="badge px-3 py-2" id="tournamentFsPageBadge" style="font-size:0.9rem; background:rgba(255,255,255,0.15);">1 / 1</span>
+                <button class="btn btn-outline-light btn-sm" type="button" onclick="tournamentFsStep(1)">
+                    Next<i class="fas fa-chevron-right ms-1"></i>
+                </button>
+            </div>
         </div>
     </div>
 
