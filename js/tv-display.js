@@ -225,13 +225,16 @@ function tvCourtCard(index, title, chip, chipLive, done, sides) {
 
 // ── Screen ────────────────────────────────────────────────────
 
-// A page is { key, label, now, html(), ids[] }. The screen keeps the page
-// index across data refreshes and only animates when the page changes.
+// A page is { key, label, now, html(), ids[] }, and optionally header() for
+// its own status strip, group (pages that sit together on the rail), nowLabel
+// and ms (how long it shows). The screen keeps the page index across data
+// refreshes and only animates when the page changes.
 class TvScreen {
-    constructor({ id, ariaLabel, rotateMs, pages, header, extraControls, onClose }) {
+    constructor({ id, ariaLabel, rotateMs, pages, header, extraControls, onClose, compactRail }) {
         this.id = id;
         this.ariaLabel = ariaLabel;
         this.rotateMs = rotateMs;
+        this.compactRail = !!compactRail;
         this.buildPages = pages;
         this.buildHeader = header;
         this.extraControls = extraControls || '';
@@ -258,7 +261,7 @@ class TvScreen {
         if (this.el) return this.el;
         const el = document.createElement('div');
         el.id = this.id;
-        el.className = 'tv-screen';
+        el.className = this.compactRail ? 'tv-screen tv-compact-rail' : 'tv-screen';
         el.setAttribute('role', 'dialog');
         el.setAttribute('aria-modal', 'true');
         el.setAttribute('aria-label', this.ariaLabel);
@@ -397,7 +400,7 @@ class TvScreen {
         if (this.index >= this.pages.length) this.index = 0;
         const page = this.pages[this.index];
 
-        const head = this.buildHeader() || {};
+        const head = (page.header ? page.header() : this.buildHeader?.()) || {};
         el.querySelector('.tv-title').textContent = head.title || '';
         const stage = el.querySelector('.tv-stage');
         stage.textContent = head.stage || '';
@@ -410,6 +413,7 @@ class TvScreen {
         } else {
             progress.hidden = true;
         }
+        el.querySelector('.tv-now-label').textContent = page.nowLabel || 'Now showing';
         el.querySelector('.tv-now-value').textContent = page.now || page.label || '';
 
         this.renderRail();
@@ -493,13 +497,17 @@ class TvScreen {
             if (fill) fill.style.transform = 'scaleX(0)';
             return;
         }
-        const pct = Math.min(1, elapsed / this.rotateMs);
+        const pct = Math.min(1, elapsed / this.pageMs());
         if (fill) fill.style.transform = `scaleX(${pct})`;
         const next = this.pages[(this.index + 1) % this.pages.length];
-        const secs = Math.max(1, Math.ceil((this.rotateMs - elapsed) / 1000));
+        const secs = Math.max(1, Math.ceil((this.pageMs() - elapsed) / 1000));
         // Moving on to another league names the league, not its first division.
         const nextName = next.group && next.group !== this.pages[this.index].group ? next.group : next.label;
         out.textContent = `${nextName} in ${secs}s`;
+    }
+
+    pageMs() {
+        return this.pages[this.index]?.ms || this.rotateMs;
     }
 
     startRotate() {
@@ -508,12 +516,13 @@ class TvScreen {
         if (btn) btn.className = this.rotating ? 'fas fa-pause' : 'fas fa-play';
         if (!this.rotating || this.pages.length < 2) { this.updateCountdown(0); return; }
         const start = performance.now();
+        const ms = this.pageMs();
         const tick = now => {
             this.updateCountdown(now - start);
-            if (now - start < this.rotateMs) this.frame = requestAnimationFrame(tick);
+            if (now - start < ms) this.frame = requestAnimationFrame(tick);
         };
         this.frame = requestAnimationFrame(tick);
-        this.timer = setTimeout(() => this.step(1, true), this.rotateMs);
+        this.timer = setTimeout(() => this.step(1), ms);
     }
 
     stopRotate() {
@@ -564,9 +573,10 @@ function rankingsFsGetFilteredPlayers() {
     return players;
 }
 
-function rankingsTvPages() {
+// source: leaderboard rows ({ id, display_name, rating_0_10, avatar_url }), best first.
+function rankingsTvPages(source = rankingsFsGetFilteredPlayers(), maxPages = Infinity) {
     const names = (typeof playerProfilesCache !== 'undefined' ? playerProfilesCache : new Map());
-    const players = rankingsFsGetFilteredPlayers().slice(0, FS_MAX_PLAYERS).map((p, i) => {
+    const players = source.slice(0, FS_MAX_PLAYERS).map((p, i) => {
         tvSeedAvatar(p.id, p.avatar_url);
         return {
             rank: i + 1,
@@ -585,26 +595,29 @@ function rankingsTvPages() {
         const label = `${start + 1}–${start + rows.length}`;
         pages.push({ key: 'p' + start, label, now: `Places ${label}`, ids: rows.map(r => r.id), html: () => tvTableHtml(rows) });
     }
-    return pages;
+    const shown = pages.slice(0, maxPages);
+    shown.forEach(page => { page.header = () => rankingsTvHeader(players.length); });
+    return shown;
+}
+
+function rankingsTvHeader(count) {
+    const club = window.currentUserClubData;
+    const gender = rankingsFsGender === 'all' ? '' : (rankingsFsGender === 'male' ? 'Men · ' : 'Women · ');
+    return {
+        title: club?.club_name ? `${club.club_name} rankings` : 'Player rankings',
+        stage: 'Leaderboard',
+        detail: count
+            ? `${gender}Top ${count} player${count === 1 ? '' : 's'} · active in the last 4 months`
+            : `${gender}No rated players in the last 4 months`
+    };
 }
 
 const rankingsTv = new TvScreen({
     id: 'rankingsFullscreenOverlay',
     ariaLabel: 'Player rankings on TV',
     rotateMs: FS_ROTATE_MS,
-    pages: rankingsTvPages,
-    header: () => {
-        const club = window.currentUserClubData;
-        const count = Math.min(rankingsFsGetFilteredPlayers().length, FS_MAX_PLAYERS);
-        const gender = rankingsFsGender === 'all' ? '' : (rankingsFsGender === 'male' ? 'Men · ' : 'Women · ');
-        return {
-            title: club?.club_name ? `${club.club_name} rankings` : 'Player rankings',
-            stage: 'Leaderboard',
-            detail: count
-                ? `${gender}Top ${count} player${count === 1 ? '' : 's'} · active in the last 4 months`
-                : `${gender}No rated players in the last 4 months`
-        };
-    },
+    pages: () => rankingsTvPages(),
+    header: () => rankingsTvHeader(0),
     extraControls: `
         <button type="button" data-gender="all" onclick="rankingsFsSetGender('all')">All</button>
         <button type="button" data-gender="male" onclick="rankingsFsSetGender('male')">Men</button>
@@ -646,8 +659,8 @@ function americanoTvPeople(list) {
     return (list || []).map(p => ({ name: p.name || 'Player', id: p.user_id || p.userId || null }));
 }
 
-function americanoTvPages() {
-    const data = americanoDetailData;
+// data: what get_americano_by_token returns for one session.
+function americanoTvPages(data = americanoDetailData) {
     if (!data?.session) return [];
     const s = data.session;
     const live = s.payload || {};
@@ -711,38 +724,41 @@ function americanoTvPages() {
     if (s.status === 'completed' && fixtures.length) {
         pages.push({ key: 'courts', label: 'Last round', now: 'Last round', ids: fixtureIds, html: courtsPage });
     }
+    pages.forEach(page => { page.header = () => americanoTvHeader(data); });
     return pages;
+}
+
+function americanoTvHeader(data) {
+    const s = data?.session;
+    if (!s) return {};
+    const live = s.payload || {};
+    const done = s.status === 'completed';
+    const round = s.current_round || live.current_round || 1;
+    const format = live.play_format === 'mexicano' ? 'Mexicano' : 'Americano';
+    const courts = live.number_of_courts ? ` · ${live.number_of_courts} court${live.number_of_courts === 1 ? '' : 's'}` : '';
+    const players = (live.players || []).length;
+    const current = getAmericanoCurrentRound(live);
+    const fixtures = current?.fixtures || [];
+    const scored = fixtures.filter(f => f.team1_score != null).length;
+    const planned = Number(s.planned_rounds) || 0;
+    const roundPart = fixtures.length ? scored / fixtures.length : 0;
+    return {
+        title: s.session_name || 'Americano',
+        stage: done ? 'Final' : 'Live',
+        live: !done,
+        detail: done
+            ? `${format} · ${round} rounds · ${players} players`
+            : `Round ${round}${planned ? ` of ${planned}` : ''} · ${scored} of ${fixtures.length} courts in · ${format}${courts}`,
+        progress: done ? null : (planned ? Math.min(1, (round - 1 + roundPart) / planned) : roundPart)
+    };
 }
 
 const americanoTv = new TvScreen({
     id: 'americanoFullscreenOverlay',
     ariaLabel: 'Americano on TV',
     rotateMs: AFS_ROTATE_MS,
-    pages: americanoTvPages,
-    header: () => {
-        const s = americanoDetailData?.session;
-        if (!s) return {};
-        const live = s.payload || {};
-        const done = s.status === 'completed';
-        const round = s.current_round || live.current_round || 1;
-        const format = live.play_format === 'mexicano' ? 'Mexicano' : 'Americano';
-        const courts = live.number_of_courts ? ` · ${live.number_of_courts} court${live.number_of_courts === 1 ? '' : 's'}` : '';
-        const players = (live.players || []).length;
-        const current = getAmericanoCurrentRound(live);
-        const fixtures = current?.fixtures || [];
-        const scored = fixtures.filter(f => f.team1_score != null).length;
-        const planned = Number(s.planned_rounds) || 0;
-        const roundPart = fixtures.length ? scored / fixtures.length : 0;
-        return {
-            title: s.session_name || 'Americano',
-            stage: done ? 'Final' : 'Live',
-            live: !done,
-            detail: done
-                ? `${format} · ${round} rounds · ${players} players`
-                : `Round ${round}${planned ? ` of ${planned}` : ''} · ${scored} of ${fixtures.length} courts in · ${format}${courts}`,
-            progress: done ? null : (planned ? Math.min(1, (round - 1 + roundPart) / planned) : roundPart)
-        };
-    },
+    pages: () => americanoTvPages(),
+    header: () => americanoTvHeader(americanoDetailData),
     onClose: () => {
         const modalEl = document.getElementById('americanoModal');
         if (!modalEl?.classList.contains('show') && typeof stopAmericanoPolling === 'function') stopAmericanoPolling();
@@ -789,11 +805,20 @@ function tournamentTvRoundTitle(match, totalRounds) {
     return bracketRoundLabel(match.round, totalRounds);
 }
 
-function tournamentTvBoard(tournament) {
-    const teams = allTournamentTeams[tournament.id] || [];
-    const matches = (allTournamentMatches[tournament.id] || []).slice()
+// Teams, matches and groups by tournament id. The dashboard's own by default.
+function tournamentTvStore() {
+    return {
+        teams: typeof allTournamentTeams !== 'undefined' ? allTournamentTeams : {},
+        matches: typeof allTournamentMatches !== 'undefined' ? allTournamentMatches : {},
+        groups: typeof allTournamentGroups !== 'undefined' ? allTournamentGroups : {}
+    };
+}
+
+function tournamentTvBoard(tournament, store = tournamentTvStore()) {
+    const teams = store.teams[tournament.id] || [];
+    const matches = (store.matches[tournament.id] || []).slice()
         .sort((a, b) => (a.round || 0) - (b.round || 0) || (a.match_number || 0) - (b.match_number || 0));
-    const groups = allTournamentGroups[tournament.id] || [];
+    const groups = store.groups[tournament.id] || [];
     const teamsById = {};
     teams.forEach(t => { teamsById[t.id] = t; });
     const isBye = m => m.is_completed && (!m.team1_id || !m.team2_id);
@@ -879,10 +904,18 @@ function tournamentTvBracketHtml(board) {
     return `<div class="tv-bracket" style="--cols:${Math.max(columns.length, 1)}">${columns.join('')}</div>`;
 }
 
-function tournamentTvPages() {
-    const tournament = allTournaments.find(t => t.id === tournamentDetailId);
+function tournamentTvCurrent() {
+    return typeof allTournaments !== 'undefined' ? allTournaments.find(t => t.id === tournamentDetailId) : null;
+}
+
+function tournamentTvPages(tournament = tournamentTvCurrent(), store = tournamentTvStore()) {
     if (!tournament) return [];
-    const board = tournamentTvBoard(tournament);
+    const pages = tournamentTvPageList(tournament, tournamentTvBoard(tournament, store));
+    pages.forEach(page => { page.header = () => tournamentTvHeader(tournament, store); });
+    return pages;
+}
+
+function tournamentTvPageList(tournament, board) {
     const pages = [];
     const idsOf = teams => teams.flatMap(t => tournamentTvPeople(t).map(p => p.id));
 
@@ -962,49 +995,50 @@ function tournamentTvPages() {
     return pages;
 }
 
+function tournamentTvHeader(tournament, store = tournamentTvStore()) {
+    if (!tournament) return {};
+    const board = tournamentTvBoard(tournament, store);
+    const played = board.playable.filter(m => m.is_completed).length;
+    const total = board.playable.length;
+    const stage = tournament.status === 'completed' || tournament.phase === 'completed' ? 'Completed'
+        : tournament.phase === 'group_stage' ? 'Groups'
+        : tournament.phase === 'knockout' ? 'Knockout' : 'Setup';
+    let detail;
+    if (stage === 'Groups') {
+        const left = board.playable.filter(m => !m.is_completed && (m.stage || 'knockout') === 'group').length;
+        detail = left ? `${left} group ${left === 1 ? 'match' : 'matches'} to play` : 'Groups done · knockout next';
+    } else if (stage === 'Knockout') {
+        const titles = [];
+        board.knockout.filter(m => !m.is_completed).forEach(m => {
+            const t = tournamentTvRoundTitle(m, board.totalRounds);
+            if (!titles.includes(t)) titles.push(t);
+        });
+        // Same wording as the app: "Semifinals, final and third place to play".
+        const spoken = titles.map((t, n) => (n === 0 ? t : t.toLowerCase()));
+        const list = spoken.length > 1 ? `${spoken.slice(0, -1).join(', ')} and ${spoken[spoken.length - 1]}` : spoken[0];
+        detail = titles.length ? `${list} to play` : 'Final played';
+    } else if (stage === 'Completed') {
+        const champion = getChampion(tournament, board.teams, board.matches);
+        detail = champion ? `Winners · ${tournamentSideName(champion)}` : 'Finished';
+    } else {
+        detail = 'Draw not made yet';
+    }
+    if (tournament.delay_note) detail += ` · ${tournament.delay_note}`;
+    return {
+        title: tournament.name,
+        stage,
+        live: tournament.status === 'active',
+        detail: total ? `${detail} · ${played} of ${total} played` : detail,
+        progress: total && stage !== 'Completed' ? played / total : null
+    };
+}
+
 const tournamentTv = new TvScreen({
     id: 'tournamentFullscreenOverlay',
     ariaLabel: 'Tournament on TV',
     rotateMs: TOURNAMENT_FS_ROTATE_MS,
-    pages: tournamentTvPages,
-    header: () => {
-        const tournament = allTournaments.find(t => t.id === tournamentDetailId);
-        if (!tournament) return {};
-        const board = tournamentTvBoard(tournament);
-        const played = board.playable.filter(m => m.is_completed).length;
-        const total = board.playable.length;
-        const stage = tournament.status === 'completed' || tournament.phase === 'completed' ? 'Completed'
-            : tournament.phase === 'group_stage' ? 'Groups'
-            : tournament.phase === 'knockout' ? 'Knockout' : 'Setup';
-        let detail;
-        if (stage === 'Groups') {
-            const left = board.playable.filter(m => !m.is_completed && (m.stage || 'knockout') === 'group').length;
-            detail = left ? `${left} group ${left === 1 ? 'match' : 'matches'} to play` : 'Groups done · knockout next';
-        } else if (stage === 'Knockout') {
-            const titles = [];
-            board.knockout.filter(m => !m.is_completed).forEach(m => {
-                const t = tournamentTvRoundTitle(m, board.totalRounds);
-                if (!titles.includes(t)) titles.push(t);
-            });
-            // Same wording as the app: "Semifinals, final and third place to play".
-            const spoken = titles.map((t, n) => (n === 0 ? t : t.toLowerCase()));
-            const list = spoken.length > 1 ? `${spoken.slice(0, -1).join(', ')} and ${spoken[spoken.length - 1]}` : spoken[0];
-            detail = titles.length ? `${list} to play` : 'Final played';
-        } else if (stage === 'Completed') {
-            const champion = getChampion(tournament, board.teams, board.matches);
-            detail = champion ? `Winners · ${tournamentSideName(champion)}` : 'Finished';
-        } else {
-            detail = 'Draw not made yet';
-        }
-        if (tournament.delay_note) detail += ` · ${tournament.delay_note}`;
-        return {
-            title: tournament.name,
-            stage,
-            live: tournament.status === 'active',
-            detail: total ? `${detail} · ${played} of ${total} played` : detail,
-            progress: total && stage !== 'Completed' ? played / total : null
-        };
-    },
+    pages: () => tournamentTvPages(),
+    header: () => tournamentTvHeader(tournamentTvCurrent()),
     onClose: () => {
         if (!document.getElementById('bracketModal')?.classList.contains('show')) {
             if (typeof stopTournamentPolling === 'function') stopTournamentPolling();
@@ -1247,20 +1281,42 @@ function boxLeagueTvPages() {
         const group = clubName && league.name.startsWith(clubName + ' ') ? league.name.slice(clubName.length + 1) : league.name;
         const withTeams = boxes.filter(b => b.teams.length);
         withTeams.forEach((entry, i) => {
-            pages.push({
+            const page = {
                 key: entry.box.id,
                 group,
                 label: entry.box.name || `Box ${i + 1}`,
                 now: entry.box.name || `Box ${i + 1}`,
+                ms: BOX_LEAGUE_TV_ROTATE_MS,
                 league,
                 entry,
                 ids: entry.teams.flatMap(t => boxTvPeople(t).map(p => p.id)),
                 html: () => boxTvPageHtml(entry, i, withTeams.length, Number(league.teams_to_move_per_box) || 0)
-            });
+            };
+            page.header = () => boxLeagueTvHeader(page);
+            pages.push(page);
         });
     });
     if (!pages.length) return [{ key: 'none', label: '', now: '', ids: [], html: () => '<div class="tv-empty">No active box leagues at your club right now.</div>' }];
     return pages;
+}
+
+function boxLeagueTvHeader(page) {
+    const club = window.currentUserClubData?.club_name;
+    if (!page?.league) return { title: club ? `${club} box leagues` : 'Box leagues', stage: 'Box league', detail: '' };
+    const { league, entry } = page;
+    const n = entry.teams.length;
+    const required = n * (n - 1) / 2;
+    const played = entry.matches.filter(m => m.is_completed).length;
+    const ends = league.end_date ? new Date(league.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+    const moves = Number(league.teams_to_move_per_box) || 0;
+    const side = entry.teams.every(t => !t.player2_name) ? (moves === 1 ? 'player' : 'players') : (moves === 1 ? 'pair' : 'pairs');
+    return {
+        title: league.name,
+        stage: page.now,
+        live: false,
+        detail: [`${played} of ${required} played`, ends && `ends ${ends}`, moves && `${moves} ${side} up and down`].filter(Boolean).join(' · '),
+        progress: required ? played / required : null
+    };
 }
 
 const boxLeagueTv = new TvScreen({
@@ -1268,25 +1324,7 @@ const boxLeagueTv = new TvScreen({
     ariaLabel: 'Box leagues on TV',
     rotateMs: BOX_LEAGUE_TV_ROTATE_MS,
     pages: boxLeagueTvPages,
-    header: () => {
-        const page = boxLeagueTv.pages[boxLeagueTv.index];
-        const club = window.currentUserClubData?.club_name;
-        if (!page?.league) return { title: club ? `${club} box leagues` : 'Box leagues', stage: 'Box league', detail: '' };
-        const { league, entry } = page;
-        const n = entry.teams.length;
-        const required = n * (n - 1) / 2;
-        const played = entry.matches.filter(m => m.is_completed).length;
-        const ends = league.end_date ? new Date(league.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
-        const moves = Number(league.teams_to_move_per_box) || 0;
-        const side = entry.teams.every(t => !t.player2_name) ? (moves === 1 ? 'player' : 'players') : (moves === 1 ? 'pair' : 'pairs');
-        return {
-            title: league.name,
-            stage: page.label,
-            live: false,
-            detail: [`${played} of ${required} played`, ends && `ends ${ends}`, moves && `${moves} ${side} up and down`].filter(Boolean).join(' · '),
-            progress: required ? played / required : null
-        };
-    },
+    header: () => boxLeagueTvHeader(boxLeagueTv.pages[boxLeagueTv.index]),
     onClose: () => {
         clearInterval(boxLeagueTvTimer);
         boxLeagueTvTimer = null;
@@ -1312,4 +1350,178 @@ async function openBoxLeagueFullscreen() {
 
 function closeBoxLeagueFullscreen() {
     boxLeagueTv.close();
+}
+
+// ── Club TV: every screen in one playlist ─────────────────────
+//
+// A source loads its own data for the player's home club and returns pages,
+// each carrying its own header. The club TV plays the sources in
+// CLUB_TV_PLAYLIST order, skips any with nothing on, then starts again.
+// To add a screen: write a source below and add its key to the playlist.
+
+const CLUB_TV_ROTATE_MS = 8000;
+const CLUB_TV_REFRESH_MS = 30000;
+const CLUB_TV_RESULTS_HOURS = 12; // finished Americanos and tournaments stay on for this long
+
+const CLUB_TV_PLAYLIST = ['boxLeagues', 'americanos', 'tournaments', 'rankings'];
+
+let clubTvAmericanos = [];
+let clubTvTournaments = [];
+let clubTvTournamentStore = { teams: {}, matches: {}, groups: {} };
+let clubTvRankings = [];
+
+async function clubTvClubId() {
+    return typeof resolveAmericanoClubId === 'function' ? resolveAmericanoClubId() : null;
+}
+
+function clubTvSince(hours) {
+    return new Date(Date.now() - hours * 3600 * 1000).toISOString();
+}
+
+// Prefixes a page's label with the event name, so the countdown reads well.
+function clubTvNamed(pages, name) {
+    return pages.map(page => ({ ...page, label: name ? `${name} · ${page.label}` : page.label }));
+}
+
+const CLUB_TV_SOURCES = {
+    boxLeagues: {
+        title: 'Box leagues',
+        load: boxLeagueTvLoad,
+        pages: () => boxLeagueTvPages().filter(page => page.league)
+            .map(page => ({ ...page, label: `${page.group} · ${page.label}` }))
+    },
+
+    // Live sessions, and ones that finished in the last few hours.
+    americanos: {
+        title: 'Americano',
+        async load() {
+            const client = tvSupabase();
+            const clubId = await clubTvClubId();
+            if (!client || !clubId) { clubTvAmericanos = []; return; }
+            const { data: sessions, error } = await client.from('americano_sessions')
+                .select('share_token, status, play_at, updated_at')
+                .eq('club_id', clubId)
+                .in('status', ['live', 'completed'])
+                .gte('updated_at', clubTvSince(CLUB_TV_RESULTS_HOURS));
+            if (error) throw error;
+            const ordered = (sessions || []).filter(s => s.share_token)
+                .sort((a, b) => (a.status === 'live' ? 0 : 1) - (b.status === 'live' ? 0 : 1) || String(a.play_at).localeCompare(String(b.play_at)));
+            const loaded = await Promise.all(ordered.map(s => client.rpc('get_americano_by_token', { token: s.share_token })
+                .then(({ data }) => data).catch(() => null)));
+            clubTvAmericanos = loaded.filter(d => d?.session);
+        },
+        pages: () => clubTvAmericanos.flatMap(data => clubTvNamed(americanoTvPages(data), data.session.session_name))
+    },
+
+    // Tournaments in play, and ones that finished in the last few hours.
+    tournaments: {
+        title: 'Tournaments',
+        async load() {
+            const client = tvSupabase();
+            const clubId = await clubTvClubId();
+            if (!client || !clubId) { clubTvTournaments = []; return; }
+            const { data: rows, error } = await client.from('bracket_tournaments').select('*')
+                .eq('club_id', clubId).eq('is_private', false).in('status', ['active', 'completed'])
+                .order('start_date', { ascending: true });
+            if (error) throw error;
+            const since = clubTvSince(CLUB_TV_RESULTS_HOURS);
+            const tournaments = (rows || []).filter(t => t.status === 'active' || String(t.updated_at) >= since);
+            const ids = tournaments.map(t => t.id);
+            const store = { teams: {}, matches: {}, groups: {} };
+            if (ids.length) {
+                const [{ data: teams }, { data: matches }, { data: groups }] = await Promise.all([
+                    client.from('bracket_tournament_teams').select('*').in('tournament_id', ids),
+                    client.from('bracket_tournament_matches').select('*').in('tournament_id', ids),
+                    client.from('bracket_tournament_groups').select('*').in('tournament_id', ids)
+                ]);
+                const index = (list, key) => (list || []).forEach(row => { (store[key][row.tournament_id] = store[key][row.tournament_id] || []).push(row); });
+                index(teams, 'teams');
+                index(matches, 'matches');
+                index(groups, 'groups');
+                Object.values(store.groups).forEach(list => list.sort((a, b) => (a.group_index || 0) - (b.group_index || 0)));
+            }
+            clubTvTournaments = tournaments;
+            clubTvTournamentStore = store;
+        },
+        pages: () => clubTvTournaments.flatMap(t => clubTvNamed(tournamentTvPages(t, clubTvTournamentStore), t.name))
+    },
+
+    // The podium and the top 40.
+    rankings: {
+        title: 'Rankings',
+        async load() {
+            const client = tvSupabase();
+            const clubId = await clubTvClubId();
+            if (!client || !clubId) { clubTvRankings = []; return; }
+            const cutoff = new Date();
+            cutoff.setMonth(cutoff.getMonth() - 4);
+            const { data, error } = await client.from('player_search_view')
+                .select('id, display_name, current_rating, avatar_url, last_activity_at')
+                .eq('club_id', clubId).gte('last_activity_at', cutoff.toISOString())
+                .order('current_rating', { ascending: false }).limit(FS_MAX_PLAYERS);
+            if (error) throw error;
+            clubTvRankings = (data || [])
+                .map(row => ({ id: row.id, display_name: row.display_name, avatar_url: row.avatar_url, rating_0_10: Number(row.current_rating) }))
+                .filter(p => p.id && p.rating_0_10 > 0);
+        },
+        pages: () => (clubTvRankings.length ? rankingsTvPages(clubTvRankings, 3) : [])
+    }
+};
+
+let clubTvLoaded = false;
+let clubTvTimer = null;
+
+async function clubTvLoad() {
+    await Promise.all(CLUB_TV_PLAYLIST.map(key => CLUB_TV_SOURCES[key]?.load()
+        .catch(err => console.warn('Club TV could not load', key, err))));
+    clubTvLoaded = true;
+}
+
+function clubTvPages() {
+    if (!clubTvLoaded) return [{ key: 'loading', label: '', now: '', ids: [], html: () => '<div class="tv-empty">Loading what’s on at your club…</div>' }];
+    const pages = CLUB_TV_PLAYLIST.flatMap(key => {
+        const source = CLUB_TV_SOURCES[key];
+        if (!source) return [];
+        let list = [];
+        try { list = source.pages(); } catch (err) { console.warn('Club TV page error', key, err); }
+        return list.map(page => ({ ...page, key: `${key}:${page.key}`, group: source.title, nowLabel: source.title }));
+    });
+    if (pages.length) return pages;
+    const reason = window.currentUserClubData && window.currentUserClubData.club_name !== 'No Club Assigned'
+        ? 'Nothing on at your club right now.'
+        : 'Choose your club under Profile in the PadelPals app to show what’s on.';
+    return [{ key: 'none', label: '', now: '', ids: [], html: () => `<div class="tv-empty">${reason}</div>` }];
+}
+
+const clubTv = new TvScreen({
+    id: 'clubTvOverlay',
+    ariaLabel: 'Club TV',
+    rotateMs: CLUB_TV_ROTATE_MS,
+    compactRail: true,
+    pages: clubTvPages,
+    header: () => {
+        const club = window.currentUserClubData?.club_name;
+        return { title: club && club !== 'No Club Assigned' ? club : 'Club TV', stage: 'Club TV', detail: clubTvLoaded ? '' : 'Loading' };
+    },
+    onClose: () => {
+        clearInterval(clubTvTimer);
+        clubTvTimer = null;
+    }
+});
+
+async function openClubTv() {
+    clubTvLoaded = false;
+    clubTv.open();
+    await clubTvLoad();
+    clubTv.goTo(0);
+    clearInterval(clubTvTimer);
+    clubTvTimer = setInterval(async () => {
+        if (document.hidden || !clubTv.isOpen) return;
+        await clubTvLoad();
+        clubTv.refresh();
+    }, CLUB_TV_REFRESH_MS);
+}
+
+function closeClubTv() {
+    clubTv.close();
 }

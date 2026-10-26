@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="images/Icon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="css/tv-display.css?v=20261026a" rel="stylesheet">
+    <link href="css/tv-display.css?v=20261026b" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Load Supabase JS and config loader first -->
@@ -1104,13 +1104,13 @@
             text-align: center;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
-        #dashboardContent > h1.mb-4 {
+        #dashboardContent h1.dash-welcome {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         @media (max-width: 576px) {
-            #dashboardContent > h1.mb-4 { font-size: 1.25rem; }
+            #dashboardContent h1.dash-welcome { font-size: 1.25rem; }
         }
 
     </style>
@@ -1154,7 +1154,12 @@
         </div>
         
         <div id="dashboardContent" style="display: none;">
-            <h1 class="mb-4">Welcome, <span id="userName">User</span>!</h1>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <h1 class="mb-0 dash-welcome" style="min-width:0;">Welcome, <span id="userName">User</span>!</h1>
+                <button type="button" class="btn btn-warning fw-bold" onclick="openClubTv()" title="Show your club's leagues, Americanos, tournaments and rankings on a TV, one after another">
+                    <i class="fas fa-tv me-2"></i>Club TV
+                </button>
+            </div>
             
             <!-- Tab Navigation -->
             <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
@@ -1782,6 +1787,9 @@
         let supabaseClient;
         let debugInfoElement;
         let redirectAttempted = false; // Flag to prevent infinite loops
+        if (new URLSearchParams(location.search).get('tv') === 'club') {
+            try { sessionStorage.setItem('pp_open_club_tv', '1'); } catch (_) {}
+        }
         let authRedirectTime = parseInt(localStorage.getItem('authRedirectTime') || '0');
         const currentTime = Date.now();
         
@@ -5187,6 +5195,12 @@ document.fonts.ready.then(function () {
             // Show dashboard content
             document.getElementById('loading').style.display = 'none';
             document.getElementById('dashboardContent').style.display = 'block';
+
+            // dashboard.html?tv=club opens the club TV, even after a trip through sign-in.
+            if (sessionStorage.getItem('pp_open_club_tv') === '1' && typeof openClubTv === 'function') {
+                sessionStorage.removeItem('pp_open_club_tv');
+                openClubTv();
+            }
         }
         
         // Initialize the profile tab with user data
@@ -8887,6 +8901,6 @@ document.fonts.ready.then(function () {
             }
         }
     </script>
-    <script src="js/tv-display.js?v=20261026a"></script>
+    <script src="js/tv-display.js?v=20261026b"></script>
 </body>
 </html>

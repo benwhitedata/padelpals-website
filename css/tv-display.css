@@ -858,3 +858,11 @@ html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
     .tv-page, .tv-page.tv-in .tv-rise, .tv-page.tv-in .tv-pop { animation: none; transition: none; }
     .tv-stage.tv-live::before { animation: none; }
 }
+
+/* Club TV runs every screen, so the rail shows sections, not each page. */
+.tv-compact-rail .tv-seg-label { display: none; }
+.tv-compact-rail .tv-seg-group-segs { gap: 0.3rem; }
+.tv-compact-rail .tv-seg-group-name { font-size: 1.35rem; }
+.tv-compact-rail .tv-seg-group { min-width: max-content; }
+.tv-compact-rail .tv-seg-group-name { overflow: visible; }
+.tv-compact-rail .tv-countdown { max-width: 34rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
