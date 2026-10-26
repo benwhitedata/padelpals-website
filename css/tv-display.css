@@ -588,6 +588,140 @@ html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
 .tv-tie-side.tv-lose .tv-tie-name { color: rgba(255, 255, 255, 0.55); }
 .tv-tie-side.tv-tbd .tv-tie-name { color: rgba(255, 255, 255, 0.4); font-style: italic; }
 
+/* ── Box league division ──────────────────────────────────── */
+.tv-box {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 2.6rem;
+}
+.tv-box-table {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto repeat(var(--rows, 4), minmax(0, 9.5rem));
+    align-content: center;
+    row-gap: 0.8rem;
+}
+.tv-box-head, .tv-box-row {
+    display: grid;
+    grid-template-columns: 3.6rem auto minmax(0, 1fr) 3rem 3rem 5.4rem 6.4rem;
+    align-items: center;
+    column-gap: 1.2rem;
+    padding: 0 1.4rem 0 1rem;
+}
+.tv-box-head {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tv-dim);
+}
+.tv-box-head > :nth-child(n+4), .tv-box-row > :nth-child(n+4) { text-align: center; }
+.tv-box-row {
+    height: 100%;
+    border-radius: 1.4rem;
+    background: var(--tv-card);
+    font-size: 2.2rem;
+    font-weight: 700;
+    position: relative;
+}
+.tv-box-row .tv-av { --av: 5.6rem; }
+.tv-box-row .tv-rank { display: flex; align-items: center; justify-content: center; gap: 0.3rem; width: auto; }
+.tv-box-row .tv-rank i { font-size: 1.8rem; }
+.tv-box-row.tv-up { box-shadow: inset 0.5rem 0 0 var(--tv-primary); }
+.tv-box-row.tv-up .tv-rank i { color: var(--tv-primary); }
+.tv-box-row.tv-down { box-shadow: inset 0.5rem 0 0 rgba(255, 99, 88, 0.85); }
+.tv-box-row.tv-down .tv-rank i { color: rgba(255, 120, 110, 0.95); }
+.tv-box-row.tv-top-1 { background: linear-gradient(90deg, rgba(255, 210, 74, 0.24), rgba(255, 255, 255, 0.08)); }
+.tv-box-row.tv-top-1 .tv-rank { color: var(--tv-gold); }
+.tv-box-names { min-width: 0; font-size: 2.3rem; line-height: 1.15; }
+.tv-box-names div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-box-row .tv-num { color: rgba(255, 255, 255, 0.85); }
+.tv-box-row .tv-pill { font-size: 2.4rem; justify-self: center; }
+
+.tv-box-side {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.8rem 2rem;
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.06);
+}
+.tv-side-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.2rem;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--tv-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.tv-side-title span { font-size: 1.5rem; font-weight: 700; color: var(--tv-dim); letter-spacing: 0.04em; text-transform: none; }
+.tv-fixtures {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    gap: calc(var(--fx, 1) * 0.9rem);
+}
+.tv-fx-more {
+    flex-shrink: 0;
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--tv-dim);
+}
+.tv-fixture {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    padding: calc(var(--fx, 1) * 0.8rem) 1.2rem;
+    border-radius: 1.2rem;
+    background: var(--tv-card);
+}
+.tv-fx-sides { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--fx, 1) * 0.4rem); }
+.tv-fx-side { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+.tv-fx-side .tv-av { --av: calc(var(--fx, 1) * 3.2rem); }
+.tv-fx-name {
+    flex: 1;
+    min-width: 0;
+    font-size: calc(var(--fx, 1) * 1.9rem);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tv-fx-sets {
+    flex-shrink: 0;
+    font-size: calc(var(--fx, 1) * 2rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.55);
+}
+.tv-fx-side.tv-win .tv-fx-name, .tv-fx-side.tv-win .tv-fx-sets { color: var(--tv-primary); }
+.tv-fx-side.tv-lose .tv-fx-name { color: rgba(255, 255, 255, 0.6); }
+.tv-fx-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5em 0.9em;
+    border-radius: 999px;
+    font-size: calc(var(--fx, 1) * 1.5rem);
+    font-weight: 700;
+    color: var(--tv-dim);
+    background: rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+.tv-fx-chip.tv-fx-booked { color: var(--tv-primary); background: rgba(var(--tv-primary-rgb), 0.16); }
+
 /* ── Champions ────────────────────────────────────────────── */
 .tv-champion {
     flex: 1;
@@ -620,6 +754,20 @@ html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
 }
 .tv-segments { flex: 1; display: flex; gap: 0.8rem; min-width: 0; }
 .tv-seg { flex: 1; min-width: 0; }
+.tv-seg-group { min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.tv-seg-group + .tv-seg-group { padding-left: 1.2rem; border-left: 0.15rem solid var(--tv-line); }
+.tv-seg-group-segs { display: flex; gap: 0.5rem; }
+.tv-seg-group-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tv-seg-group.tv-current .tv-seg-group-name { color: var(--tv-primary); }
 .tv-seg-bar {
     height: 0.7rem;
     border-radius: 1rem;

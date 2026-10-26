@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="images/Icon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="css/tv-display.css?v=20261025a" rel="stylesheet">
+    <link href="css/tv-display.css?v=20261026a" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Load Supabase JS and config loader first -->
@@ -1468,9 +1468,14 @@
                                 <div id="statusFilter" class="mb-0">
                                     <!-- Status filter will be populated here -->
                                 </div>
-                                <button id="printLeagueBtn" class="btn btn-primary">
-                                    <i class="fas fa-print me-1"></i> Print League Tables
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-light" onclick="openBoxLeagueFullscreen()" title="Show on a club TV">
+                                        <i class="fas fa-tv me-1"></i> Show on TV
+                                    </button>
+                                    <button id="printLeagueBtn" class="btn btn-primary">
+                                        <i class="fas fa-print me-1"></i> Print League Tables
+                                    </button>
+                                </div>
                             </div>
 
                             <div id="leagueSelector" class="mb-4">
@@ -8882,6 +8887,6 @@ document.fonts.ready.then(function () {
             }
         }
     </script>
-    <script src="js/tv-display.js?v=20261025a"></script>
+    <script src="js/tv-display.js?v=20261026a"></script>
 </body>
 </html>

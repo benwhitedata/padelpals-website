@@ -138,7 +138,7 @@ function tvPairAvatars(people, extraClass) {
 
 // Shrinks long names a little rather than cutting them off.
 function tvFitText(root) {
-    root.querySelectorAll('.tv-name, .tv-team-names div, .tv-tie-name, .tv-podium-name, .tv-champion-name').forEach(el => {
+    root.querySelectorAll('.tv-name, .tv-team-names div, .tv-tie-name, .tv-podium-name, .tv-champion-name, .tv-box-names div, .tv-fx-name').forEach(el => {
         el.style.fontSize = '';
         let size = parseFloat(getComputedStyle(el).fontSize);
         const floor = size * 0.7;
@@ -452,16 +452,34 @@ class TvScreen {
         if (next) tvPreload(next.ids || []);
     }
 
+    // Pages with a `group` (a league, say) sit together under its name.
     renderRail() {
         const el = this.el;
-        const sig = this.pages.map(p => p.label).join('|') + '#' + this.index;
+        const sig = this.pages.map(p => `${p.group || ''}/${p.label}`).join('|') + '#' + this.index;
         if (sig === this.lastRail) return;
         this.lastRail = sig;
-        el.querySelector('.tv-segments').innerHTML = this.pages.length < 2 ? '' : this.pages.map((p, i) => `
+        const seg = (p, i) => `
             <div class="tv-seg${i < this.index ? ' tv-done' : ''}${i === this.index ? ' tv-current' : ''}">
                 <div class="tv-seg-bar"><div class="tv-seg-fill"></div></div>
                 <div class="tv-seg-label">${tvEsc(p.label)}</div>
-            </div>`).join('');
+            </div>`;
+        let html = '';
+        if (this.pages.length >= 2) {
+            const grouped = this.pages.some(p => p.group);
+            let i = 0;
+            while (i < this.pages.length) {
+                const group = this.pages[i].group;
+                let j = i;
+                while (j < this.pages.length && this.pages[j].group === group) j++;
+                const segs = this.pages.slice(i, j).map((p, n) => seg(p, i + n)).join('');
+                html += grouped
+                    ? `<div class="tv-seg-group${this.index >= i && this.index < j ? ' tv-current' : ''}" style="flex:${j - i}">
+                        <div class="tv-seg-group-name">${tvEsc(group || '')}</div><div class="tv-seg-group-segs">${segs}</div></div>`
+                    : segs;
+                i = j;
+            }
+        }
+        el.querySelector('.tv-segments').innerHTML = html;
         this.updateCountdown(0);
     }
 
@@ -479,7 +497,9 @@ class TvScreen {
         if (fill) fill.style.transform = `scaleX(${pct})`;
         const next = this.pages[(this.index + 1) % this.pages.length];
         const secs = Math.max(1, Math.ceil((this.rotateMs - elapsed) / 1000));
-        out.textContent = `${next.label} in ${secs}s`;
+        // Moving on to another league names the league, not its first division.
+        const nextName = next.group && next.group !== this.pages[this.index].group ? next.group : next.label;
+        out.textContent = `${nextName} in ${secs}s`;
     }
 
     startRotate() {
@@ -1006,4 +1026,290 @@ function closeTournamentFullscreen() {
 // Called by refreshOpenTournament on every poll.
 function renderTournamentFullscreen() {
     tournamentTv.refresh();
+}
+
+// ── Box league ────────────────────────────────────────────────
+
+const BOX_LEAGUE_TV_ROTATE_MS = 10000;
+const BOX_LEAGUE_TV_REFRESH_MS = 60000;
+
+// Active leagues at the player's home club: [{ league, boxes: [{ box, teams, matches }] }]
+let boxLeagueTvData = { leagues: [], loaded: false, noClub: false };
+let boxLeagueTvTimer = null;
+
+async function boxLeagueTvLoad() {
+    const client = tvSupabase();
+    const clubId = typeof resolveAmericanoClubId === 'function' ? await resolveAmericanoClubId() : null;
+    if (!client || !clubId) {
+        boxLeagueTvData = { leagues: [], loaded: true, noClub: !clubId };
+        return;
+    }
+    const { data: leagues, error } = await client.from('box_leagues').select('*')
+        .eq('club_id', clubId).eq('status', 'active').order('created_at', { ascending: true });
+    if (error) throw error;
+    const leagueIds = (leagues || []).map(l => l.id);
+    if (!leagueIds.length) {
+        boxLeagueTvData = { leagues: [], loaded: true, noClub: false };
+        return;
+    }
+    const { data: boxes } = await client.from('box_league_boxes').select('*').in('league_id', leagueIds);
+    const boxIds = (boxes || []).map(b => b.id);
+    const [{ data: teams }, { data: matches }] = boxIds.length
+        ? await Promise.all([
+            client.from('box_league_teams').select('*').in('box_id', boxIds),
+            client.from('box_league_matches').select('*').in('box_id', boxIds)
+        ])
+        : [{ data: [] }, { data: [] }];
+    boxLeagueTvData = {
+        loaded: true,
+        noClub: false,
+        leagues: leagues.map(league => ({
+            league,
+            boxes: (boxes || []).filter(b => b.league_id === league.id)
+                .sort((a, b) => (a.position || 0) - (b.position || 0))
+                .map(box => ({
+                    box,
+                    teams: (teams || []).filter(t => t.box_id === box.id),
+                    matches: (matches || []).filter(m => m.box_id === box.id)
+                }))
+        }))
+    };
+}
+
+// Same table points as the app (BoxLeaguePoints): 2–0 is 5–1, 2–1 is 4–2, a walkover 4–0.
+function boxTvSetsWon(a, b) {
+    let s1 = 0, s2 = 0;
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+        if (s1 === 2 || s2 === 2) break;
+        if (a[i] > b[i]) s1++; else if (b[i] > a[i]) s2++;
+    }
+    return [s1, s2];
+}
+
+function boxTvAward(m) {
+    if (!m.is_completed) return null;
+    const s1 = m.team1_score || 0, s2 = m.team2_score || 0;
+    if (m.is_walkover) return s1 > s2 ? [4, 0] : s2 > s1 ? [0, 4] : [0, 0];
+    const a = m.team1_set_scores, b = m.team2_set_scores;
+    if (!Array.isArray(a) || !Array.isArray(b) || !a.length || !b.length) {
+        return s1 > s2 ? [4, 1] : s2 > s1 ? [1, 4] : null;
+    }
+    const key = boxTvSetsWon(a, b).join('-');
+    return { '2-0': [5, 1], '2-1': [4, 2], '1-2': [2, 4], '0-2': [1, 5] }[key] || null;
+}
+
+function boxTvWinner(m) {
+    if (!m.is_completed) return null;
+    return (m.team1_score || 0) > (m.team2_score || 0) ? m.team1_id : m.team2_id;
+}
+
+function boxTvStandings(teams, matches) {
+    const done = matches.filter(m => m.is_completed);
+    const rows = teams.map(team => {
+        const row = { team, points: 0, played: 0, won: 0, setsWon: 0, setsLost: 0, games: 0 };
+        done.forEach(m => {
+            const side = m.team1_id === team.id ? 0 : m.team2_id === team.id ? 1 : -1;
+            if (side < 0) return;
+            const award = boxTvAward(m);
+            if (award) row.points += award[side];
+            row.played += 1;
+            if (boxTvWinner(m) === team.id) row.won += 1;
+            const a = m.team1_set_scores, b = m.team2_set_scores;
+            if (Array.isArray(a) && Array.isArray(b)) {
+                const sets = boxTvSetsWon(a, b);
+                row.setsWon += sets[side];
+                row.setsLost += sets[1 - side];
+                row.games += (side === 0 ? a : b).reduce((s, n) => s + (Number(n) || 0), 0);
+            }
+        });
+        return row;
+    });
+    const name = r => `${r.team.player1_name || ''} ${r.team.player2_name || ''}`;
+    return rows.sort((x, y) => {
+        if (x.points !== y.points) return y.points - x.points;
+        const tied = rows.filter(r => r.points === x.points);
+        if (tied.length === 2) {
+            const h2h = done.find(m => (m.team1_id === x.team.id && m.team2_id === y.team.id) || (m.team1_id === y.team.id && m.team2_id === x.team.id));
+            const w = h2h && boxTvWinner(h2h);
+            if (w) return w === x.team.id ? -1 : 1;
+        }
+        const sd = (y.setsWon - y.setsLost) - (x.setsWon - x.setsLost);
+        if (sd) return sd;
+        if (x.games !== y.games) return y.games - x.games;
+        return name(x).localeCompare(name(y));
+    });
+}
+
+function boxTvPeople(team) {
+    if (!team) return [];
+    const people = [{ name: (team.player1_name || '').trim() || 'Player', id: team.player1_id || null }];
+    if ((team.player2_name || '').trim()) people.push({ name: team.player2_name.trim(), id: team.player2_id || null });
+    return people;
+}
+
+function boxTvShortName(team) {
+    const first = n => (n || '').trim().split(/\s+/)[0] || '';
+    if (!team) return 'TBD';
+    return team.player2_name ? `${first(team.player1_name)} & ${first(team.player2_name)}` : (team.player1_name || 'Player');
+}
+
+// "Mon 26 Oct · 6.45pm"
+function boxTvWhen(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const day = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    let h = d.getHours();
+    const m = d.getMinutes();
+    const ampm = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    return `${day} · ${h}${m ? '.' + String(m).padStart(2, '0') : ''}${ampm}`;
+}
+
+function boxTvPageHtml(entry, boxIndex, boxCount, moves) {
+    const { teams, matches } = entry;
+    const rows = boxTvStandings(teams, matches);
+    const up = boxIndex > 0 ? moves : 0;
+    const down = boxIndex < boxCount - 1 ? moves : 0;
+    const singles = teams.length > 0 && teams.every(t => !t.player2_name);
+    const table = rows.map((r, i) => {
+        const zone = i < up ? ' tv-up' : (i >= rows.length - down ? ' tv-down' : '');
+        const lead = i === 0 && r.played > 0 ? ' tv-top-1' : '';
+        const arrow = zone === ' tv-up' ? '<i class="fas fa-caret-up"></i>' : zone === ' tv-down' ? '<i class="fas fa-caret-down"></i>' : '';
+        return `<div class="tv-box-row tv-rise${zone}${lead}" style="--i:${i}">
+            <div class="tv-rank">${i + 1}${arrow}</div>
+            ${tvPairAvatars(boxTvPeople(r.team), lead ? 'tv-ring-1' : '')}
+            <div class="tv-box-names">${boxTvPeople(r.team).map(p => `<div>${tvEsc(p.name)}</div>`).join('')}</div>
+            <div class="tv-num">${r.played}</div>
+            <div class="tv-num">${r.won}</div>
+            <div class="tv-num">${r.setsWon}–${r.setsLost}</div>
+            <div class="tv-pill">${r.points}</div>
+        </div>`;
+    }).join('');
+
+    // Every pairing in the box: booked first, then results, then still to play.
+    const pairings = [];
+    for (let a = 0; a < teams.length; a++) {
+        for (let b = a + 1; b < teams.length; b++) {
+            const t1 = teams[a], t2 = teams[b];
+            const m = matches.find(x => (x.team1_id === t1.id && x.team2_id === t2.id) || (x.team1_id === t2.id && x.team2_id === t1.id));
+            pairings.push(m ? { m, t1: teams.find(t => t.id === m.team1_id), t2: teams.find(t => t.id === m.team2_id) } : { m: null, t1, t2 });
+        }
+    }
+    const rank = p => (p.m?.is_completed ? 1 : p.m?.scheduled_date ? 0 : 2);
+    pairings.sort((x, y) => rank(x) - rank(y)
+        || (rank(x) === 0 ? String(x.m.scheduled_date).localeCompare(String(y.m.scheduled_date)) : 0)
+        || (rank(x) === 1 ? String(y.m.completed_date || '').localeCompare(String(x.m.completed_date || '')) : 0));
+    // Six fit on a TV; a box of five has ten pairings, so the rest become a count.
+    const shownPairs = pairings.slice(0, 6);
+    const hidden = pairings.length - shownPairs.length;
+    const fixtures = shownPairs.map(({ m, t1, t2 }, i) => {
+        const w = m ? boxTvWinner(m) : null;
+        const side = (team, sets) => `<div class="tv-fx-side${w ? (w === team.id ? ' tv-win' : ' tv-lose') : ''}">
+            ${tvPairAvatars(boxTvPeople(team))}
+            <div class="tv-fx-name">${tvEsc(boxTvShortName(team))}</div>
+            ${sets != null ? `<div class="tv-fx-sets">${tvEsc(sets)}</div>` : ''}
+        </div>`;
+        let status = '';
+        let s1 = null, s2 = null;
+        if (m?.is_completed) {
+            if (m.is_walkover) { s1 = w === t1.id ? 'W/O' : ''; s2 = w === t2.id ? 'W/O' : ''; }
+            else if (Array.isArray(m.team1_set_scores) && Array.isArray(m.team2_set_scores)) { s1 = m.team1_set_scores.join(' '); s2 = m.team2_set_scores.join(' '); }
+            else { s1 = String(m.team1_score ?? ''); s2 = String(m.team2_score ?? ''); }
+        } else if (m?.scheduled_date) {
+            status = `<div class="tv-fx-chip tv-fx-booked"><i class="fas fa-calendar-check"></i>${tvEsc(boxTvWhen(m.scheduled_date))}</div>`;
+        } else {
+            status = '<div class="tv-fx-chip">To play</div>';
+        }
+        return `<div class="tv-fixture tv-rise${m?.is_completed ? ' tv-fx-done' : ''}" style="--i:${rows.length + i}">
+            <div class="tv-fx-sides">${side(t1, s1)}${side(t2, s2)}</div>${status}</div>`;
+    }).join('');
+    const played = matches.filter(m => m.is_completed).length;
+    const scale = shownPairs.length > 4 ? 0.68 : 1;
+    return `<div class="tv-box">
+        <div class="tv-box-table" style="--rows:${Math.max(rows.length, 1)}">
+            <div class="tv-box-head"><div>#</div><div></div><div>${singles ? 'Player' : 'Pair'}</div><div>P</div><div>W</div><div>Sets</div><div>Pts</div></div>
+            ${table || '<div class="tv-empty">No pairs yet</div>'}
+        </div>
+        <div class="tv-box-side" style="--fx:${scale}">
+            <div class="tv-side-title">Matches<span>${played} of ${pairings.length} played</span></div>
+            <div class="tv-fixtures">${fixtures}</div>
+            ${hidden ? `<div class="tv-fx-more">+${hidden} more ${hidden === 1 ? 'match' : 'matches'} to play</div>` : ''}
+        </div>
+    </div>`;
+}
+
+function boxLeagueTvPages() {
+    if (!boxLeagueTvData.loaded) return [{ key: 'loading', label: '', now: '', ids: [], html: () => '<div class="tv-empty">Loading leagues…</div>' }];
+    if (boxLeagueTvData.noClub) return [{ key: 'noclub', label: '', now: '', ids: [], html: () => '<div class="tv-empty">Choose your club under Profile in the PadelPals app to show its box leagues.</div>' }];
+    const clubName = window.currentUserClubData?.club_name || '';
+    const pages = [];
+    boxLeagueTvData.leagues.forEach(({ league, boxes }) => {
+        const group = clubName && league.name.startsWith(clubName + ' ') ? league.name.slice(clubName.length + 1) : league.name;
+        const withTeams = boxes.filter(b => b.teams.length);
+        withTeams.forEach((entry, i) => {
+            pages.push({
+                key: entry.box.id,
+                group,
+                label: entry.box.name || `Box ${i + 1}`,
+                now: entry.box.name || `Box ${i + 1}`,
+                league,
+                entry,
+                ids: entry.teams.flatMap(t => boxTvPeople(t).map(p => p.id)),
+                html: () => boxTvPageHtml(entry, i, withTeams.length, Number(league.teams_to_move_per_box) || 0)
+            });
+        });
+    });
+    if (!pages.length) return [{ key: 'none', label: '', now: '', ids: [], html: () => '<div class="tv-empty">No active box leagues at your club right now.</div>' }];
+    return pages;
+}
+
+const boxLeagueTv = new TvScreen({
+    id: 'boxLeagueFullscreenOverlay',
+    ariaLabel: 'Box leagues on TV',
+    rotateMs: BOX_LEAGUE_TV_ROTATE_MS,
+    pages: boxLeagueTvPages,
+    header: () => {
+        const page = boxLeagueTv.pages[boxLeagueTv.index];
+        const club = window.currentUserClubData?.club_name;
+        if (!page?.league) return { title: club ? `${club} box leagues` : 'Box leagues', stage: 'Box league', detail: '' };
+        const { league, entry } = page;
+        const n = entry.teams.length;
+        const required = n * (n - 1) / 2;
+        const played = entry.matches.filter(m => m.is_completed).length;
+        const ends = league.end_date ? new Date(league.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+        const moves = Number(league.teams_to_move_per_box) || 0;
+        const side = entry.teams.every(t => !t.player2_name) ? (moves === 1 ? 'player' : 'players') : (moves === 1 ? 'pair' : 'pairs');
+        return {
+            title: league.name,
+            stage: page.label,
+            live: false,
+            detail: [`${played} of ${required} played`, ends && `ends ${ends}`, moves && `${moves} ${side} up and down`].filter(Boolean).join(' · '),
+            progress: required ? played / required : null
+        };
+    },
+    onClose: () => {
+        clearInterval(boxLeagueTvTimer);
+        boxLeagueTvTimer = null;
+    }
+});
+
+async function openBoxLeagueFullscreen() {
+    boxLeagueTvData = { leagues: [], loaded: false, noClub: false };
+    boxLeagueTv.open();
+    try {
+        await boxLeagueTvLoad();
+    } catch (err) {
+        console.error('boxLeagueTvLoad', err);
+        boxLeagueTvData = { leagues: [], loaded: true, noClub: false };
+    }
+    boxLeagueTv.goTo(0);
+    clearInterval(boxLeagueTvTimer);
+    boxLeagueTvTimer = setInterval(async () => {
+        if (document.hidden || !boxLeagueTv.isOpen) return;
+        try { await boxLeagueTvLoad(); boxLeagueTv.refresh(); } catch (err) { console.warn('boxLeagueTvLoad', err); }
+    }, BOX_LEAGUE_TV_REFRESH_MS);
+}
+
+function closeBoxLeagueFullscreen() {
+    boxLeagueTv.close();
 }
