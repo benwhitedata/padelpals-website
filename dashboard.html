@@ -3626,8 +3626,15 @@
         }
 
         
+        // Each league or box pick bumps these. A reply that comes back after a
+        // newer pick is dropped, so a slow league can't overwrite the one on screen.
+        let boxLeagueLoadSeq = 0;
+        let boxDetailsLoadSeq = 0;
+
         // Load boxes for a specific league
         async function loadBoxesForLeague(leagueId) {
+            const seq = ++boxLeagueLoadSeq;
+            boxDetailsLoadSeq++;
             try {
                 console.log('Loading boxes for league ID:', leagueId);
                 
@@ -3647,6 +3654,8 @@
                     .from('box_league_boxes')
                     .select('*')
                     .eq('league_id', leagueId);
+                
+                if (seq !== boxLeagueLoadSeq) return;
                 
                 if (boxesError) {
                     throw boxesError;
@@ -3687,6 +3696,7 @@
                 await loadBoxDetails(boxes[0].id);
                 
             } catch (error) {
+                if (seq !== boxLeagueLoadSeq) return;
                 console.error('Error loading boxes for league:', error);
                 document.getElementById('boxSelector').innerHTML = `
                     <div class="alert alert-danger">
@@ -3731,6 +3741,7 @@
 
         // Load details for a specific box
         async function loadBoxDetails(boxId) {
+            const seq = ++boxDetailsLoadSeq;
             try {
                 console.log('Loading box details for box ID:', boxId);
                 
@@ -3754,6 +3765,8 @@
                     .from('box_league_matches')
                     .select('*')
                     .eq('box_id', boxId);
+                
+                if (seq !== boxDetailsLoadSeq) return;
                 
                 if (matchesError) {
                     console.error('Error fetching matches:', matchesError);
@@ -3790,6 +3803,7 @@
                 createMatchResults(teams, matches);
                 
             } catch (error) {
+                if (seq !== boxDetailsLoadSeq) return;
                 console.error('Error loading box details:', error);
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
