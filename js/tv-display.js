@@ -208,14 +208,14 @@ function tvCourtsHtml(cards) {
 }
 
 // side: { people: [{name,id}], score, sets?, state: 'win'|'lose'|'' }
-function tvCourtCard(index, title, chip, chipLive, done, sides) {
+function tvCourtCard(index, title, chip, chipLive, done, sides, extraClass) {
     const team = side => `<div class="tv-team ${side.state ? 'tv-' + side.state : ''}">
         ${tvPairAvatars(side.people)}
         <div class="tv-team-names">${side.people.map(p => `<div>${tvEsc(p.name)}</div>`).join('')}</div>
         ${side.sets ? `<span class="tv-sets">${tvEsc(side.sets)}</span>` : ''}
         <div class="tv-team-score${side.score == null ? ' tv-unplayed' : ''}">${side.score == null ? '–' : tvEsc(side.score)}</div>
     </div>`;
-    return `<div class="tv-court tv-rise${done ? ' tv-court-done' : ''}" style="--i:${index * 2}">
+    return `<div class="tv-court tv-rise${done ? ' tv-court-done' : ''}${extraClass ? ' ' + extraClass : ''}" style="--i:${index * 2}">
         <div class="tv-court-head"><span>${tvEsc(title)}</span>${chip ? `<span class="tv-chip${chipLive ? ' tv-chip-live' : ''}">${tvEsc(chip)}</span>` : ''}</div>
         ${team(sides[0])}
         <div class="tv-vs">VS</div>
@@ -799,10 +799,24 @@ function tournamentTvShortName(team) {
     return team.player2_name ? `${first(team.player1_name)} & ${first(team.player2_name)}` : (team.player1_name || 'TBD');
 }
 
-function tournamentTvRoundTitle(match, totalRounds) {
+function tvOrdinal(n) {
+    const tail = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
+    return `${n}${tail}`;
+}
+
+function tournamentTvRoundTitle(match, board) {
     if (match.knockout_role === 'third_place') return 'Third place';
     if (match.knockout_role === 'placement') return 'Placing match';
-    return bracketRoundLabel(match.round, totalRounds);
+    if (match.knockout_role === 'plate') {
+        if (board.platePlayoffIds.has(match.id)) return `${tvOrdinal(board.mainSize + 3)} place`;
+        return `Plate ${bracketRoundLabel(match.round, board.plateRounds).toLowerCase()}`;
+    }
+    return bracketRoundLabel(match.round, board.totalRounds);
+}
+
+// The plate is its own path: silver, not the club colour.
+function tournamentTvCardClass(match) {
+    return match.knockout_role === 'plate' ? 'tv-plate' : '';
 }
 
 // Teams, matches and groups by tournament id. The dashboard's own by default.
@@ -824,9 +838,19 @@ function tournamentTvBoard(tournament, store = tournamentTvStore()) {
     const isBye = m => m.is_completed && (!m.team1_id || !m.team2_id);
     const playable = matches.filter(m => m.team1_id && m.team2_id && !isBye(m));
     const knockout = matches.filter(m => (m.stage || 'knockout') !== 'group');
-    const mainKnockout = knockout.filter(m => m.knockout_role !== 'third_place' && m.knockout_role !== 'placement');
+    // Championship: the standard knockout. Plate: a second knockout for the pairs who missed it.
+    // A plate match fed by plate semi-final losers is the playoff for the place after the plate.
+    const mainKnockout = knockout.filter(m => !m.knockout_role || m.knockout_role === 'standard');
+    const fedByLosers = new Set(knockout.map(m => m.loser_next_match_id).filter(Boolean));
+    const platePlayoffIds = new Set(knockout.filter(m => m.knockout_role === 'plate' && fedByLosers.has(m.id)).map(m => m.id));
+    const plate = knockout.filter(m => m.knockout_role === 'plate' && !platePlayoffIds.has(m.id));
+    const platePlayoff = knockout.filter(m => platePlayoffIds.has(m.id));
     const totalRounds = new Set(mainKnockout.map(m => m.round)).size;
-    return { teams, matches, groups, teamsById, playable, knockout, mainKnockout, totalRounds };
+    const plateRounds = new Set(plate.map(m => m.round)).size;
+    const firstRound = Math.min(...mainKnockout.map(m => m.round));
+    const mainSize = Number(tournament.knockout_size)
+        || mainKnockout.filter(m => m.round === firstRound).flatMap(m => [m.team1_id, m.team2_id]).filter(Boolean).length || 2;
+    return { teams, matches, groups, teamsById, playable, knockout, mainKnockout, totalRounds, plate, platePlayoff, platePlayoffIds, plateRounds, mainSize };
 }
 
 function tournamentTvMatchSides(match, teamsById) {
@@ -877,19 +901,25 @@ function tournamentTvGroupHtml(board, group, index, through) {
 }
 
 // At most three rounds fit across a TV: from the earliest round still being
-// played, or the last three once it is over. Byes are left out.
-function tournamentTvBracketHtml(board) {
-    const allRounds = [...new Set(board.mainKnockout.map(m => m.round))].sort((a, b) => a - b);
+// played, or the last three once it is over. Byes are left out. `path` is
+// 'championship' or 'plate'; each gets a banner saying which it is.
+function tournamentTvBracketHtml(board, path = 'championship') {
+    const isPlate = path === 'plate';
+    const list = isPlate ? board.plate : board.mainKnockout;
+    const extras = isPlate
+        ? board.platePlayoff
+        : board.knockout.filter(m => m.knockout_role === 'third_place' || m.knockout_role === 'placement');
+    const label = r => (isPlate ? `Plate ${bracketRoundLabel(r, board.plateRounds).toLowerCase()}` : bracketRoundLabel(r, board.totalRounds));
+    const allRounds = [...new Set(list.map(m => m.round))].sort((a, b) => a - b);
     const isBye = m => m.is_completed && (!m.team1_id || !m.team2_id);
-    const open = board.mainKnockout.filter(m => !m.is_completed && m.team1_id && m.team2_id).map(m => m.round);
+    const open = list.filter(m => !m.is_completed && m.team1_id && m.team2_id).map(m => m.round);
     const lastStart = Math.max(0, allRounds.length - 3);
     const start = open.length ? Math.min(allRounds.indexOf(Math.min(...open)), lastStart) : lastStart;
     const rounds = allRounds.slice(start, start + 3);
-    const shown = r => board.mainKnockout.filter(m => m.round === r && !isBye(m));
-    const extras = board.knockout.filter(m => m.knockout_role === 'third_place' || m.knockout_role === 'placement');
-    const nextId = (board.mainKnockout.find(m => !m.is_completed && m.team1_id && m.team2_id) || {}).id;
+    const shown = r => list.filter(m => m.round === r && !isBye(m));
+    const nextId = (list.find(m => !m.is_completed && m.team1_id && m.team2_id) || {}).id;
     const largest = Math.max(1, ...rounds.map(r => shown(r).length));
-    const tieScale = largest >= 8 ? 0.62 : largest >= 4 ? 0.95 : 1.25;
+    const tieScale = largest >= 8 ? 0.6 : largest >= 4 ? 0.9 : 1.2;
     let i = 0;
     const tie = match => {
         const sides = tournamentTvMatchSides(match, board.teamsById);
@@ -903,17 +933,18 @@ function tournamentTvBracketHtml(board) {
         };
         return `<div class="tv-tie tv-rise${match.id === nextId ? ' tv-tie-next' : ''}" style="--i:${i++};--tie-s:${tieScale}">${side(sides[0])}${side(sides[1])}</div>`;
     };
-    const columns = rounds.map(r => `<div class="tv-round"><div class="tv-round-title">${tvEsc(bracketRoundLabel(r, allRounds.length))}</div>
+    const columns = rounds.map(r => `<div class="tv-round"><div class="tv-round-title">${tvEsc(label(r))}</div>
             <div class="tv-round-matches">${shown(r).map(tie).join('')}</div></div>`);
     if (extras.length && rounds.includes(allRounds[allRounds.length - 1])) {
-        columns.push(`<div class="tv-round"><div class="tv-round-title">${tvEsc(tournamentTvRoundTitle(extras[0], allRounds.length))}</div>
+        columns.push(`<div class="tv-round"><div class="tv-round-title">${tvEsc(tournamentTvRoundTitle(extras[0], board))}</div>
             <div class="tv-round-matches">${extras.map(tie).join('')}</div></div>`);
     }
-    return `<div class="tv-bracket" style="--cols:${Math.max(columns.length, 1)}">${columns.join('')}</div>`;
-}
-
-function tournamentTvCurrent() {
-    return typeof allTournaments !== 'undefined' ? allTournaments.find(t => t.id === tournamentDetailId) : null;
+    const hasPlate = board.plate.length > 0;
+    const banner = isPlate
+        ? `<div class="tv-path tv-rise"><i class="fas fa-medal"></i><span class="tv-path-name">Plate</span><span class="tv-path-note">For the pairs who missed the championship · the winners finish ${tvEsc(tvOrdinal(board.mainSize + 1))}</span></div>`
+        : (hasPlate ? `<div class="tv-path tv-rise"><i class="fas fa-trophy"></i><span class="tv-path-name">Championship</span><span class="tv-path-note">The winners take the title</span></div>` : '');
+    return `<div class="tv-bracket-wrap${isPlate ? ' tv-plate' : ''}">${banner}
+        <div class="tv-bracket" style="--cols:${Math.max(columns.length, 1)}">${columns.join('')}</div></div>`;
 }
 
 function tournamentTvPages(tournament = tournamentTvCurrent(), store = tournamentTvStore()) {
@@ -936,6 +967,8 @@ function tournamentTvPageList(tournament, board) {
         const final = board.mainKnockout.find(m => m.is_completed && m.winner_team_id === champion.id && m.round === Math.max(...board.mainKnockout.map(x => x.round)));
         const runnerUpId = final ? (final.team1_id === champion.id ? final.team2_id : final.team1_id) : null;
         const runnerUp = runnerUpId ? board.teamsById[runnerUpId] : null;
+        const plateFinal = board.plate.find(m => !m.next_match_id && m.is_completed && m.winner_team_id);
+        const plateWinner = plateFinal ? board.teamsById[plateFinal.winner_team_id] : null;
         pages.push({
             key: 'champion', label: 'Champions', now: 'Champions', ids: idsOf([champion]),
             html: () => `<div class="tv-champion">
@@ -943,6 +976,7 @@ function tournamentTvPageList(tournament, board) {
                 <div class="tv-pop" style="--i:1">${tvPairAvatars(tournamentTvPeople(champion), 'tv-ring-1')}</div>
                 <div class="tv-champion-name tv-rise" style="--i:4">${tvEsc(tournamentSideName(champion))}</div>
                 ${runnerUp ? `<div class="tv-champion-sub tv-rise" style="--i:6">Runners-up · ${tvEsc(tournamentSideName(runnerUp))}</div>` : ''}
+                ${plateWinner ? `<div class="tv-champion-plate tv-rise" style="--i:8"><i class="fas fa-medal"></i>Plate winners · ${tvEsc(tournamentSideName(plateWinner))}</div>` : ''}
             </div>`
         });
     }
@@ -954,13 +988,13 @@ function tournamentTvPageList(tournament, board) {
     if (tournament.status === 'active' && upNext.length) {
         const title = m => ((m.stage || 'knockout') === 'group'
             ? ((board.groups.find(g => g.id === m.group_id) || {}).name || 'Group')
-            : tournamentTvRoundTitle(m, board.totalRounds));
+            : tournamentTvRoundTitle(m, board));
         pages.push({
             key: 'next', label: 'On court', now: 'On court now',
             ids: upNext.flatMap(m => [m.team1_id, m.team2_id]).map(id => board.teamsById[id]).filter(Boolean).flatMap(t => tournamentTvPeople(t).map(p => p.id)),
             html: () => tvCourtsHtml(upNext.map((m, i) => {
                 const sides = tournamentTvMatchSides(m, board.teamsById);
-                return tvCourtCard(i, title(m), i < (Number(tournament.courts_in_use) || upNext.length) ? 'Now' : 'Next', i < (Number(tournament.courts_in_use) || upNext.length), false, sides);
+                return tvCourtCard(i, title(m), i < (Number(tournament.courts_in_use) || upNext.length) ? 'Now' : 'Next', i < (Number(tournament.courts_in_use) || upNext.length), false, sides, tournamentTvCardClass(m));
             }))
         });
     }
@@ -972,11 +1006,11 @@ function tournamentTvPageList(tournament, board) {
     if (tournament.status === 'active' && results.length) {
         const title = m => ((m.stage || 'knockout') === 'group'
             ? ((board.groups.find(g => g.id === m.group_id) || {}).name || 'Group')
-            : tournamentTvRoundTitle(m, board.totalRounds));
+            : tournamentTvRoundTitle(m, board));
         pages.push({
             key: 'results', label: 'Latest results', now: 'Latest results',
             ids: results.flatMap(m => [m.team1_id, m.team2_id]).map(id => board.teamsById[id]).filter(Boolean).flatMap(t => tournamentTvPeople(t).map(p => p.id)),
-            html: () => tvCourtsHtml(results.map((m, i) => tvCourtCard(i, title(m), 'Final', false, true, tournamentTvMatchSides(m, board.teamsById))))
+            html: () => tvCourtsHtml(results.map((m, i) => tvCourtCard(i, title(m), 'Final', false, true, tournamentTvMatchSides(m, board.teamsById), tournamentTvCardClass(m))))
         });
     }
 
@@ -994,11 +1028,15 @@ function tournamentTvPageList(tournament, board) {
     }
 
     if (board.mainKnockout.length && (!isGroupStage || tournament.status === 'completed')) {
-        pages.push({ key: 'bracket', label: 'Knockout', now: 'Knockout', ids: idsOf(board.teams), html: () => tournamentTvBracketHtml(board) });
+        const hasPlate = board.plate.length > 0;
+        pages.push({ key: 'bracket', label: hasPlate ? 'Championship' : 'Knockout', now: hasPlate ? 'Championship' : 'Knockout', ids: idsOf(board.teams), html: () => tournamentTvBracketHtml(board, 'championship') });
+        if (hasPlate) {
+            pages.push({ key: 'plate', label: 'Plate', now: 'Plate', ids: idsOf(board.teams), html: () => tournamentTvBracketHtml(board, 'plate') });
+        }
     }
 
     if (!pages.length) {
-        pages.push({ key: 'results', label: 'Results', now: 'Results', ids: idsOf(board.teams), html: () => tvCourtsHtml(board.playable.slice(-6).map((m, i) => tvCourtCard(i, tournamentTvRoundTitle(m, board.totalRounds), m.is_completed ? 'Final' : '', false, m.is_completed, tournamentTvMatchSides(m, board.teamsById)))) });
+        pages.push({ key: 'results', label: 'Results', now: 'Results', ids: idsOf(board.teams), html: () => tvCourtsHtml(board.playable.slice(-6).map((m, i) => tvCourtCard(i, tournamentTvRoundTitle(m, board), m.is_completed ? 'Final' : '', false, m.is_completed, tournamentTvMatchSides(m, board.teamsById), tournamentTvCardClass(m)))) });
     }
     return pages;
 }
@@ -1018,7 +1056,7 @@ function tournamentTvHeader(tournament, store = tournamentTvStore()) {
     } else if (stage === 'Knockout') {
         const titles = [];
         board.knockout.filter(m => !m.is_completed).forEach(m => {
-            const t = tournamentTvRoundTitle(m, board.totalRounds);
+            const t = tournamentTvRoundTitle(m, board);
             if (!titles.includes(t)) titles.push(t);
         });
         // Same wording as the app: "Semifinals, final and third place to play".

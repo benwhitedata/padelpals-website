@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="images/Icon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="css/tv-display.css?v=20261026b" rel="stylesheet">
+    <link href="css/tv-display.css?v=20261029b" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Load Supabase JS and config loader first -->
@@ -2460,7 +2460,8 @@
             if (!matches.length || !teams.length) return null;
             const knockout = matches.filter(m => (m.stage || 'knockout') !== 'group'
                 && m.knockout_role !== 'third_place'
-                && m.knockout_role !== 'placement');
+                && m.knockout_role !== 'placement'
+                && m.knockout_role !== 'plate');
             const pool = knockout.length ? knockout : matches;
             const maxRound = Math.max(...pool.map(m => m.round));
             const final = pool.find(m => m.round === maxRound && m.is_completed && m.winner_team_id);
@@ -8915,6 +8916,6 @@ document.fonts.ready.then(function () {
             }
         }
     </script>
-    <script src="js/tv-display.js?v=20261029a"></script>
+    <script src="js/tv-display.js?v=20261029b"></script>
 </body>
 </html>
