@@ -835,9 +835,17 @@ function tournamentTvMatchSides(match, teamsById) {
     const done = match.is_completed;
     const state = id => (!done || !match.winner_team_id ? '' : match.winner_team_id === id ? 'win' : 'lose');
     const sets = list => (done && Array.isArray(list) && list.length > 1 ? list.join(' ') : '');
+    // A one-set match (a fast four, say) reads better as its games, 4–2, than as 1–0.
+    const oneSet = done && Array.isArray(match.team1_set_scores) && Array.isArray(match.team2_set_scores)
+        && match.team1_set_scores.length === 1 && match.team2_set_scores.length === 1;
+    const score = (teamId, total, games) => {
+        if (!done) return null;
+        if (match.is_walkover) return match.winner_team_id === teamId ? 'W/O' : '';
+        return oneSet ? games[0] : total;
+    };
     return [
-        { team: t1, people: tournamentTvPeople(t1), score: done ? (match.is_walkover ? (match.winner_team_id === match.team1_id ? 'W/O' : '') : match.team1_score) : null, sets: sets(match.team1_set_scores), state: state(match.team1_id) },
-        { team: t2, people: tournamentTvPeople(t2), score: done ? (match.is_walkover ? (match.winner_team_id === match.team2_id ? 'W/O' : '') : match.team2_score) : null, sets: sets(match.team2_set_scores), state: state(match.team2_id) }
+        { team: t1, people: tournamentTvPeople(t1), score: score(match.team1_id, match.team1_score, match.team1_set_scores), sets: sets(match.team1_set_scores), state: state(match.team1_id) },
+        { team: t2, people: tournamentTvPeople(t2), score: score(match.team2_id, match.team2_score, match.team2_set_scores), sets: sets(match.team2_set_scores), state: state(match.team2_id) }
     ];
 }
 
