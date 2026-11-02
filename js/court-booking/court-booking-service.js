@@ -27,7 +27,11 @@
     court_unavailable: 'That court is already booked or held at that time.',
     court_required: 'Assign a court to this lesson before players can join.',
     window_closed: 'That play time is closed.',
-    already_confirmed: 'That box league match is already confirmed.'
+    already_confirmed: 'That box league match is already confirmed.',
+    managed_externally: 'This booking comes from ClubSpark. Change it in ClubSpark, then sync.',
+    sync_bad_range: 'Choose a date range of up to a month.',
+    sync_bad_file: 'That file could not be read as a ClubSpark bookings export.',
+    sync_stale_file: 'A newer ClubSpark export has already been synced. Export again and upload the new file.'
   };
 
   function CourtBookingError(code, message) {
@@ -315,6 +319,25 @@
       if (!ids || !ids.length) return Promise.resolve([]);
       return request('clubs', {
         query: 'id=in.(' + ids.join(',') + ')&select=id,club_name,primary_color,secondary_color,logo_url'
+      }).then(function (rows) {
+        return Array.isArray(rows) ? rows : [];
+      });
+    },
+    syncClubSpark: function (opts) {
+      return rpc('sync_clubspark_bookings', {
+        p_club_id: opts.clubId,
+        p_rows: opts.rows,
+        p_range_from: opts.rangeFrom,
+        p_range_to: opts.rangeTo,
+        p_file_name: opts.fileName || null,
+        p_exported_at: opts.exportedAt || null,
+        p_apply: !!opts.apply,
+        p_allow_mass_cancel: !!opts.allowMassCancel
+      });
+    },
+    listSyncRuns: function (clubId) {
+      return request('clubspark_sync_runs', {
+        query: 'club_id=eq.' + encodeURIComponent(clubId) + '&select=created_at,file_name,exported_at,range_from,range_to,added,updated,cancelled,unchanged,skipped&order=created_at.desc&limit=5'
       }).then(function (rows) {
         return Array.isArray(rows) ? rows : [];
       });
