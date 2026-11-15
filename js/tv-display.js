@@ -1772,10 +1772,21 @@ async function performanceNight(client, session) {
     // Pre-match rating: the row just before this match's own row in each player's history.
     const playerIds = [...new Set(counted.flatMap(r => [...registered(r.sides[0]), ...registered(r.sides[1])]))];
     const history = {};
+    // Paged like the app: the server returns at most 1,000 rows, and a cut-off
+    // history gives the wrong rating before a match, or none.
+    const PAGE = 1000;
     for (let i = 0; i < playerIds.length; i += 40) {
-        const { data: rows } = await client.from('ratings').select('id, date, rating_0_10, match_id')
-            .in('id', playerIds.slice(i, i + 40)).lte('date', end.toISOString());
-        (rows || []).forEach(row => {
+        const rows = [];
+        for (let from = 0; ; from += PAGE) {
+            const { data, error } = await client.from('ratings').select('id, date, rating_0_10, match_id')
+                .in('id', playerIds.slice(i, i + 40)).lte('date', end.toISOString())
+                .order('id', { ascending: true }).order('date', { ascending: false })
+                .range(from, from + PAGE - 1);
+            if (error) throw error;
+            rows.push(...(data || []));
+            if (!data || data.length < PAGE) break;
+        }
+        rows.forEach(row => {
             const key = lower(row.id);
             if (row.rating_0_10 == null) return;
             (history[key] = history[key] || []).push({ date: new Date(row.date), rating: Number(row.rating_0_10), matchId: lower(row.match_id) });
@@ -1941,6 +1952,7 @@ const CLUB_TV_SOURCES = {
     // The least likely winning pair from the club's latest social, for a week.
     performance: {
         title: 'Performance of the week',
+        rail: 'Social', // short, so it doesn't stretch the rail
         load: performanceLoad,
         pages: performancePages
     },
@@ -2045,7 +2057,7 @@ function clubTvPages() {
         if (!source) return [];
         let list = [];
         try { list = source.pages(); } catch (err) { console.warn('Club TV page error', key, err); }
-        return list.map(page => ({ ...page, key: `${key}:${page.key}`, group: source.title, nowLabel: source.title }));
+        return list.map(page => ({ ...page, key: `${key}:${page.key}`, group: source.rail || source.title, nowLabel: source.title }));
     });
     if (pages.length) return pages;
     const reason = window.currentUserClubData && window.currentUserClubData.club_name !== 'No Club Assigned'
