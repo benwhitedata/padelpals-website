@@ -1866,7 +1866,7 @@ function performancePickHtml(pick, index, joint) {
     return `<div class="tv-potw-pick tv-pop" style="--i:${index + 1}">
         <div class="tv-potw-faces">${tvPairAvatars(pick.winners, 'tv-ring-1')}</div>
         <div class="tv-potw-body">
-            <div class="tv-potw-names">${pick.winners.map(p => `<div>${tvEsc(p.name)}</div>`).join('')}</div>
+            <div class="tv-potw-names">${pick.winners.map((p, i) => `<div>${i ? '<span class="tv-potw-and">&amp;</span> ' : ''}${tvEsc(p.name)}</div>`).join('')}</div>
             <div class="tv-potw-figures">
                 <div class="tv-potw-score">${tvEsc(pick.score)}</div>
                 <div class="tv-potw-prob${lean}">${pick.percent}%<small>Win probability</small></div>
@@ -1892,7 +1892,6 @@ function performancePages() {
                 detail: day
             }),
             html: () => `<div class="tv-potw${joint ? ' tv-potw-joint' : ''}">
-                <div class="tv-potw-label tv-rise"><i class="fas fa-trophy"></i>${joint ? 'Least likely wins on the night' : 'Least likely win on the night'}</div>
                 <div class="tv-potw-picks">${night.picks.slice(0, 2).map((p, i) => performancePickHtml(p, i, joint)).join('')}</div>
                 ${night.unscored ? `<div class="tv-potw-foot tv-rise" style="--i:4">${night.unscored === 1 ? '1 fixture still has no score.' : `${night.unscored} fixtures still have no score.`} A late result can change this.</div>` : ''}
             </div>`

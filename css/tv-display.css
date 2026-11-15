@@ -1019,3 +1019,4 @@ html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
 .tv-potw-against .tv-av { --av: calc(var(--k) * 4rem); }
 .tv-potw-against-names { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tv-potw-foot { font-size: 1.6rem; font-weight: 600; color: var(--tv-dim); }
+.tv-potw-and { color: var(--tv-primary); }
