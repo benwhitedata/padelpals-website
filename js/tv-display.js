@@ -1239,40 +1239,65 @@ function boxTvWinner(m) {
     return (m.team1_score || 0) > (m.team2_score || 0) ? m.team1_id : m.team2_id;
 }
 
+// The app's box table order (BoxLeaguePoints.sorted): points; then, among pairs
+// level on points, points, set difference and game difference in the matches
+// between them; then set difference, then game difference; then name.
 function boxTvStandings(teams, matches) {
     const done = matches.filter(m => m.is_completed);
+    const sideOf = (m, id) => (m.team1_id === id ? 0 : m.team2_id === id ? 1 : -1);
+    const points = (id, list) => list.reduce((sum, m) => {
+        const side = sideOf(m, id);
+        const award = side < 0 ? null : boxTvAward(m);
+        return award ? sum + award[side] : sum;
+    }, 0);
+    const setDiff = (id, list) => list.reduce((sum, m) => {
+        const side = sideOf(m, id);
+        if (side < 0 || !Array.isArray(m.team1_set_scores) || !Array.isArray(m.team2_set_scores)) return sum;
+        const sets = boxTvSetsWon(m.team1_set_scores, m.team2_set_scores);
+        return sum + sets[side] - sets[1 - side];
+    }, 0);
+    const games = list => (Array.isArray(list) ? list.reduce((s, n) => s + (Number(n) || 0), 0) : 0);
+    const gameDiff = (id, list) => list.reduce((sum, m) => {
+        const side = sideOf(m, id);
+        if (side < 0) return sum;
+        const own = games(side === 0 ? m.team1_set_scores : m.team2_set_scores);
+        const other = games(side === 0 ? m.team2_set_scores : m.team1_set_scores);
+        return sum + own - other;
+    }, 0);
     const rows = teams.map(team => {
-        const row = { team, points: 0, played: 0, won: 0, setsWon: 0, setsLost: 0, games: 0 };
+        const row = { team, points: points(team.id, done), played: 0, won: 0, setsWon: 0, setsLost: 0 };
         done.forEach(m => {
-            const side = m.team1_id === team.id ? 0 : m.team2_id === team.id ? 1 : -1;
+            const side = sideOf(m, team.id);
             if (side < 0) return;
-            const award = boxTvAward(m);
-            if (award) row.points += award[side];
             row.played += 1;
             if (boxTvWinner(m) === team.id) row.won += 1;
-            const a = m.team1_set_scores, b = m.team2_set_scores;
-            if (Array.isArray(a) && Array.isArray(b)) {
-                const sets = boxTvSetsWon(a, b);
+            if (Array.isArray(m.team1_set_scores) && Array.isArray(m.team2_set_scores)) {
+                const sets = boxTvSetsWon(m.team1_set_scores, m.team2_set_scores);
                 row.setsWon += sets[side];
                 row.setsLost += sets[1 - side];
-                row.games += (side === 0 ? a : b).reduce((s, n) => s + (Number(n) || 0), 0);
             }
         });
         return row;
     });
-    const name = r => `${r.team.player1_name || ''} ${r.team.player2_name || ''}`;
+    rows.forEach(row => {
+        const level = new Set(rows.filter(r => r.points === row.points).map(r => r.team.id));
+        const among = done.filter(m => level.has(m.team1_id) && level.has(m.team2_id));
+        const t = row.team;
+        row.key = [
+            row.points,
+            points(t.id, among),
+            setDiff(t.id, among),
+            gameDiff(t.id, among),
+            setDiff(t.id, done),
+            gameDiff(t.id, done)
+        ];
+        row.name = t.player2_name ? `${t.player1_name || ''} & ${t.player2_name}` : (t.player1_name || '');
+    });
     return rows.sort((x, y) => {
-        if (x.points !== y.points) return y.points - x.points;
-        const tied = rows.filter(r => r.points === x.points);
-        if (tied.length === 2) {
-            const h2h = done.find(m => (m.team1_id === x.team.id && m.team2_id === y.team.id) || (m.team1_id === y.team.id && m.team2_id === x.team.id));
-            const w = h2h && boxTvWinner(h2h);
-            if (w) return w === x.team.id ? -1 : 1;
+        for (let i = 0; i < x.key.length; i++) {
+            if (x.key[i] !== y.key[i]) return y.key[i] - x.key[i];
         }
-        const sd = (y.setsWon - y.setsLost) - (x.setsWon - x.setsLost);
-        if (sd) return sd;
-        if (x.games !== y.games) return y.games - x.games;
-        return name(x).localeCompare(name(y));
+        return x.name < y.name ? -1 : x.name > y.name ? 1 : 0;
     });
 }
 
