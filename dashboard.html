@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="images/Icon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="css/tv-display.css?v=20261029b" rel="stylesheet">
+    <link href="css/tv-display.css?v=20261115a" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Load Supabase JS and config loader first -->
@@ -1790,6 +1790,9 @@
         if (new URLSearchParams(location.search).get('tv') === 'club') {
             try { sessionStorage.setItem('pp_open_club_tv', '1'); } catch (_) {}
         }
+        // ?theme=light (or dark) picks the TV screens' look; kept now so it survives a trip through sign-in.
+        { const t = new URLSearchParams(location.search).get('theme');
+          if (t === 'light' || t === 'dark') { try { localStorage.setItem('pp_tv_theme', t); } catch (_) {} } }
         let authRedirectTime = parseInt(localStorage.getItem('authRedirectTime') || '0');
         const currentTime = Date.now();
         
@@ -8922,6 +8925,6 @@ document.fonts.ready.then(function () {
             }
         }
     </script>
-    <script src="js/tv-display.js?v=20261029b"></script>
+    <script src="js/tv-display.js?v=20261115a"></script>
 </body>
 </html>

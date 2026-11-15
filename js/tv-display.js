@@ -82,6 +82,42 @@ function tvClub() {
     };
 }
 
+// ── Light or dark ─────────────────────────────────────────────
+// One choice for every TV screen, kept in localStorage. Dark is the default.
+// ?theme=light (or dark) in the page address sets it too.
+const TV_THEME_KEY = 'pp_tv_theme';
+
+function tvStoredTheme() {
+    try {
+        const asked = new URLSearchParams(location.search).get('theme');
+        if (asked === 'light' || asked === 'dark') {
+            try { localStorage.setItem(TV_THEME_KEY, asked); } catch (_) {}
+            return asked;
+        }
+    } catch (_) {}
+    try { return localStorage.getItem(TV_THEME_KEY) === 'light' ? 'light' : 'dark'; } catch (_) { return 'dark'; }
+}
+
+let tvTheme = tvStoredTheme();
+
+function tvSetTheme(theme) {
+    tvTheme = theme === 'light' ? 'light' : 'dark';
+    try { localStorage.setItem(TV_THEME_KEY, tvTheme); } catch (_) {}
+    document.querySelectorAll('.tv-screen').forEach(el => el.__tv && el.__tv.applyTheme());
+}
+
+// Light palette from the club colour: a barely-there tint for the background,
+// and the club colour darkened (towards black) until it reads at 4.5:1 on it.
+function tvLightPalette(club) {
+    const brand = tvHexToRgb(club.primary);
+    const bg = brand.map(c => 1 - (1 - c) * 0.06);
+    let text = brand;
+    for (let step = 1; tvContrast(text, bg) < TV_MIN_CONTRAST && step <= 20; step++) {
+        text = brand.map(c => c * (1 - step * 0.045));
+    }
+    return { bg: tvRgbToHex(bg), text: tvRgbToHex(text) };
+}
+
 function tvInitials(name) {
     const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return '?';
@@ -289,6 +325,7 @@ class TvScreen {
                 <button type="button" data-tv="pause" title="Pause or resume (space)"><i class="fas fa-pause"></i></button>
                 <button type="button" data-tv="next" title="Next (→)"><i class="fas fa-chevron-right"></i></button>
                 <span class="tv-gap"></span>
+                <button type="button" data-tv="theme"></button>
                 <button type="button" class="tv-exit" data-tv="exit" title="Exit (Esc)"><i class="fas fa-compress me-1"></i>Exit</button>
             </div>`;
         el.querySelector('.tv-controls').addEventListener('click', e => {
@@ -298,8 +335,10 @@ class TvScreen {
             if (action === 'prev') this.step(-1);
             else if (action === 'next') this.step(1);
             else if (action === 'pause') this.toggleRotate();
+            else if (action === 'theme') tvSetTheme(tvTheme === 'light' ? 'dark' : 'light');
             else if (action === 'exit') this.close();
         });
+        el.__tv = this;
         el.addEventListener('mousemove', this.onWake);
         document.body.appendChild(el);
         return el;
@@ -308,9 +347,20 @@ class TvScreen {
     applyTheme() {
         const club = tvClub();
         const el = this.el;
-        el.style.setProperty('--tv-primary', club.primary);
+        const light = tvTheme === 'light';
+        const pal = light ? tvLightPalette(club) : null;
+        el.classList.toggle('tv-light', light);
+        el.style.setProperty('--tv-primary', light ? pal.text : club.primary);
         el.style.setProperty('--tv-primary-rgb', club.primaryRgb);
-        el.style.setProperty('--tv-secondary', club.secondary);
+        el.style.setProperty('--tv-fill', club.primary);
+        el.style.setProperty('--tv-secondary', light ? pal.bg : club.secondary);
+        // Logos are made for dark backgrounds, so in light mode they keep the club's dark colour behind them.
+        el.style.setProperty('--tv-logo-bg', light ? club.secondary : '');
+        const toggle = el.querySelector('[data-tv="theme"]');
+        if (toggle) {
+            toggle.innerHTML = light ? '<i class="fas fa-moon me-1"></i>Dark' : '<i class="fas fa-sun me-1"></i>Light';
+            toggle.title = light ? 'Switch to the dark screen (T)' : 'Switch to the light screen (T)';
+        }
         const logo = el.querySelector('.tv-logo');
         if (club.logo) {
             logo.className = 'tv-logo';
@@ -327,6 +377,7 @@ class TvScreen {
 
     open() {
         const el = this.mount();
+        tvTheme = tvStoredTheme();
         this.applyTheme();
         this.index = 0;
         this.rotating = true;
@@ -372,6 +423,7 @@ class TvScreen {
         if (e.key === 'Escape') this.close();
         else if (e.key === 'ArrowRight') this.step(1);
         else if (e.key === 'ArrowLeft') this.step(-1);
+        else if (e.key === 't' || e.key === 'T') tvSetTheme(tvTheme === 'light' ? 'dark' : 'light');
         else if (e.key === ' ') { e.preventDefault(); this.toggleRotate(); }
     }
 
