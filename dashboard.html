@@ -2872,8 +2872,14 @@
         });
 
         function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        // Club colours go into style attributes and <style> blocks, so only a
+        // plain hex value is let through.
+        function safeCssColor(value, fallback) {
+            return /^#[0-9a-fA-F]{3,8}$/.test(String(value || '')) ? String(value) : fallback;
         }
 
         // Lazy-load tournaments when the tab is shown, and keep a live board polling.
@@ -3116,7 +3122,7 @@
                 const statusClass = `a-status-${s.status === 'open' ? 'open' : s.status}`;
                 const tokenAttr = escapeHtml(s.share_token || '');
                 return `
-                <div class="americano-card" onclick="openAmericanoModal('${tokenAttr}')">
+                <div class="americano-card" data-token="${tokenAttr}" onclick="openAmericanoModal(this.dataset.token)">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="a-name">${escapeHtml(s.session_name || 'Americano')}</div>
@@ -3195,7 +3201,7 @@
 
         function applyAmericanoModalBranding() {
             const clubData = window.currentUserClubData;
-            const primary = clubData?.primary_color || clubData?.primaryColor || '#FF6B35';
+            const primary = safeCssColor(clubData?.primary_color || clubData?.primaryColor, '#FF6B35');
             const header = document.querySelector('#americanoModal .americano-modal-header-accent');
             if (header) header.style.borderBottomColor = primary;
             document.querySelectorAll('#americanoModal .a-pts, #americanoModal .a-score').forEach(el => {
@@ -3237,7 +3243,7 @@
                 const total = signed + guests;
                 const target = s.target_players ? ` / ${s.target_players}` : '';
                 const shareUrl = AMERICANO_SHARE_BASE + encodeURIComponent(s.share_token || americanoDetailToken);
-                const deepLink = `padelpals://americano/${s.share_token || americanoDetailToken}`;
+                const deepLink = `padelpals://americano/${encodeURIComponent(s.share_token || americanoDetailToken)}`;
                 body.innerHTML = `
                     <div class="mb-3">
                         <div class="mb-2"><strong>Play at</strong><br>${escapeHtml(formatAmericanoDateTime(s.play_at))}</div>
@@ -3248,8 +3254,8 @@
                     <div class="p-3 rounded" style="background:rgba(255,255,255,0.06);">
                         <p class="mb-3">Join in the PadelPals app to sign up for this Americano.</p>
                         <div class="d-flex flex-wrap gap-2">
-                            <a class="btn btn-warning btn-sm" href="${deepLink}">Open in PadelPals</a>
-                            <button type="button" class="btn btn-outline-light btn-sm" onclick="copyAmericanoShareLink('${escapeHtml(shareUrl)}')">
+                            <a class="btn btn-warning btn-sm" href="${escapeHtml(deepLink)}">Open in PadelPals</a>
+                            <button type="button" class="btn btn-outline-light btn-sm" data-share-url="${escapeHtml(shareUrl)}" onclick="copyAmericanoShareLink(this.dataset.shareUrl)">
                                 <i class="fas fa-link me-1"></i>Copy share link
                             </button>
                         </div>
@@ -3589,9 +3595,9 @@
                 <select id="leagueSelect" class="form-select" aria-label="Select a league">
                     ${leagues.map(league => {
                         const statusBadge = league.status ? 
-                            `<span class="badge bg-${getStatusColor(league.status)}">${capitalizeFirstLetter(league.status)}</span>` : 
+                            `<span class="badge bg-${escapeHtml(getStatusColor(league.status))}">${escapeHtml(capitalizeFirstLetter(league.status))}</span>` : 
                             '';
-                        return `<option value="${league.id}">${league.name || 'Unnamed League'} ${statusBadge}</option>`;
+                        return `<option value="${escapeHtml(league.id)}">${escapeHtml(league.name || 'Unnamed League')} ${statusBadge}</option>`;
                     }).join('')}
 
                 </select>
@@ -3702,12 +3708,12 @@
                 document.getElementById('boxSelector').innerHTML = `
                     <div class="alert alert-danger">
                         <h4>Error Loading Boxes</h4>
-                        <p>${error.message}</p>
+                        <p>${escapeHtml(error.message)}</p>
                     </div>
                 `;
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
-                        Error loading boxes: ${error.message}
+                        Error loading boxes: ${escapeHtml(error.message)}
 
                     </div>
                 `;
@@ -3723,7 +3729,7 @@
             const selectHTML = `
                 <label for="boxSelect" class="form-label">Select Box:</label>
                 <select id="boxSelect" class="form-select" aria-label="Select a box">
-                    ${boxes.map(box => `<option value="${box.id}">${box.name || 'Unnamed Box'}</option>`).join('')}
+                    ${boxes.map(box => `<option value="${escapeHtml(box.id)}">${escapeHtml(box.name || 'Unnamed Box')}</option>`).join('')}
 
                 </select>
                 <small class="form-text text-muted mt-1">Select a box to view teams and matches</small>
@@ -3809,10 +3815,10 @@
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
                         <h4>Error loading box details</h4>
-                        <p>${error.message}</p>
+                        <p>${escapeHtml(error.message)}</p>
                         <details>
                             <summary>Technical Details</summary>
-                            <pre class="mt-2" style="font-size: 0.8rem; max-height: 150px; overflow: auto;">${error.stack || 'No stack trace available'}</pre>
+                            <pre class="mt-2" style="font-size: 0.8rem; max-height: 150px; overflow: auto;">${escapeHtml(error.stack || 'No stack trace available')}</pre>
                         </details>
                         <button class="btn btn-sm btn-outline-primary mt-3" onclick="window.location.reload()">Refresh Page</button>
                     </div>
@@ -3850,7 +3856,7 @@
                                     <th>Pts</th>
                                     ${sortedTeams.map(team => {
                                         try {
-                                            return `<th>${getInitials(team)}</th>`;
+                                            return `<th>${escapeHtml(getInitials(team))}</th>`;
                                         } catch (e) {
                                             console.error('Error in team header:', team, e);
                                             return '<th>??</th>';
@@ -3866,7 +3872,7 @@
                 // Create table rows
                 sortedTeams.forEach((team, index) => {
                     try {
-                        const playerNamesDisplay = getPlayerNames(team);
+                        const playerNamesDisplay = escapeHtml(getPlayerNames(team));
                         tableHTML += `
                             <tr>
                                 <td class="team-name">${index + 1}. ${playerNamesDisplay}</td>
@@ -3923,8 +3929,8 @@
                 document.getElementById('leagueTableContainer').innerHTML = `
                     <div class="alert alert-danger">
                         <h4>Error creating league table</h4>
-                        <p>${error.message}</p>
-                        <pre class="mt-2" style="font-size: 0.8rem; max-height: 100px; overflow: auto;">${error.stack}</pre>
+                        <p>${escapeHtml(error.message)}</p>
+                        <pre class="mt-2" style="font-size: 0.8rem; max-height: 100px; overflow: auto;">${escapeHtml(error.stack)}</pre>
                     </div>
                 `;
             }
@@ -3954,8 +3960,8 @@
                     const team2 = teams.find(t => t.id === match.team2_id);
                     
                     if (team1 && team2) {
-                        const team1Names = getPlayerNames(team1);
-                        const team2Names = getPlayerNames(team2);
+                        const team1Names = escapeHtml(getPlayerNames(team1));
+                        const team2Names = escapeHtml(getPlayerNames(team2));
                         
                         upcomingHTML += `
                             <div class="match-card" data-match-id="${match.id}">
@@ -4008,8 +4014,8 @@
                     const team2 = teams.find(t => t.id === match.team2_id);
                     
                     if (team1 && team2) {
-                        const team1Names = getPlayerNames(team1);
-                        const team2Names = getPlayerNames(team2);
+                        const team1Names = escapeHtml(getPlayerNames(team1));
+                        const team2Names = escapeHtml(getPlayerNames(team2));
                         const team1Score = match.team1_score;
                         const team2Score = match.team2_score;
                         const team1SetScores = match.team1_set_scores || [];
@@ -5564,7 +5570,7 @@ document.fonts.ready.then(function () {
             } catch (error) {
                 console.error('Error loading rating trend data:', error);
                 document.getElementById('ratingChart').parentElement.innerHTML = 
-                    `<div class="alert alert-danger">Error loading rating data: ${error.message}</div>`;
+                    `<div class="alert alert-danger">Error loading rating data: ${escapeHtml(error.message)}</div>`;
                 
                 // Reset stats
                 updateRatingStats([]);
@@ -6756,14 +6762,14 @@ document.fonts.ready.then(function () {
                 </div>
                 <div class="match-teams">
                     <div class="team-row ${team1Won ? 'winning-team' : ''}">
-                        <div class="team-players">${match.team1.players.join(' & ')}</div>
+                        <div class="team-players">${escapeHtml(match.team1.players.join(' & '))}</div>
                         <div class="team-score">
                             ${createSetScoresHtml(match.team1.setScores)}
                         </div>
                     </div>
                     <div class="set-divider"></div>
                     <div class="team-row ${team2Won ? 'winning-team' : ''}">
-                        <div class="team-players">${match.team2.players.join(' & ')}</div>
+                        <div class="team-players">${escapeHtml(match.team2.players.join(' & '))}</div>
                         <div class="team-score">
                             ${createSetScoresHtml(match.team2.setScores)}
                         </div>
@@ -6786,7 +6792,7 @@ document.fonts.ready.then(function () {
             }
             
             return setScores.map(score => `
-                <span class="set-score">${score}</span>
+                <span class="set-score">${escapeHtml(score)}</span>
             `).join('');
         }
         
@@ -7178,7 +7184,7 @@ document.fonts.ready.then(function () {
             } catch (error) {
                 console.error('Error updating match statistics:', error);
                 statsContainer.innerHTML = `
-                    <p class="text-center py-3">Error loading match statistics: ${error.message}</p>
+                    <p class="text-center py-3">Error loading match statistics: ${escapeHtml(error.message)}</p>
                 `;
             }
         }
@@ -7258,7 +7264,7 @@ document.fonts.ready.then(function () {
                     
                     // Get opponent name(s)
                     const opponentTeam = inTeam1 ? match.team2 : match.team1;
-                    const opponentNames = opponentTeam.players.join(' & ');
+                    const opponentNames = escapeHtml(opponentTeam.players.join(' & '));
                     
                     // Result text
                     const resultText = userWon ? "Won" : "Lost";
@@ -7288,7 +7294,7 @@ document.fonts.ready.then(function () {
             } catch (error) {
                 console.error('Error updating recent matches:', error);
                 recentMatchesContainer.innerHTML = `
-                    <p class="text-center py-3">Error loading recent matches: ${error.message}</p>
+                    <p class="text-center py-3">Error loading recent matches: ${escapeHtml(error.message)}</p>
                 `;
             }
         }
@@ -7746,9 +7752,9 @@ document.fonts.ready.then(function () {
                 const playtomicRating = (player.rating_0_10 * (7/10) - 1).toFixed(1);
                 
                 rankingsHTML += `
-                    <tr data-player-id="${player.id}" ${isFirstPlace ? 'class="first-place"' : ''}>
+                    <tr data-player-id="${escapeHtml(player.id)}" ${isFirstPlace ? 'class="first-place"' : ''}>
                         <td ${isMedal ? 'class="medal-cell"' : ''}>${rankDisplay}</td>
-                        <td class="player-name">${playerName}</td>
+                        <td class="player-name">${escapeHtml(playerName)}</td>
                         <td>${player.rating_0_10.toFixed(2)}</td>
                         <td>${playtomicRating}</td>
                         <td>${formattedDate}</td>
@@ -8821,8 +8827,8 @@ document.fonts.ready.then(function () {
             const genderFilter = document.getElementById('genderFilter');
             const gender      = genderFilter ? genderFilter.value : 'all';
             const clubData    = window.currentUserClubData;
-            const primary     = clubData?.primary_color || clubData?.primaryColor || '#FF6B35';
-            const clubLabel   = clubData?.club_name ? `${clubData.club_name} · ` : '';
+            const primary     = safeCssColor(clubData?.primary_color || clubData?.primaryColor, '#FF6B35');
+            const clubLabel   = clubData?.club_name ? `${escapeHtml(clubData.club_name)} · ` : '';
             const genderLabel = gender === 'all' ? 'All genders' : (gender === 'male' ? 'Men' : 'Women');
             const now         = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -8843,15 +8849,15 @@ document.fonts.ready.then(function () {
                 rowsHtml += `
                 <tr style="background:${rowBg};">
                     <td style="text-align:center;font-size:${rank<=3?'1.2rem':'0.95rem'};font-weight:700;color:#333;">${rankDisplay}</td>
-                    <td>${name}</td>
+                    <td>${escapeHtml(name)}</td>
                     <td style="font-weight:700;color:${primary};">${rating}</td>
                     <td style="color:#888;font-size:0.85rem;">${updated}</td>
                 </tr>`;
             });
 
-            const logoUrl  = clubData?.logo_url || '';
+            const logoUrl  = /^https:\/\//i.test(clubData?.logo_url || '') ? clubData.logo_url : '';
             const logoHtml = logoUrl
-                ? `<img src="${logoUrl}" alt="Club logo" style="height:52px;object-fit:contain;margin-right:14px;border-radius:6px;">`
+                ? `<img src="${escapeHtml(logoUrl)}" alt="Club logo" style="height:52px;object-fit:contain;margin-right:14px;border-radius:6px;">`
                 : '';
 
             const html = `<!DOCTYPE html>

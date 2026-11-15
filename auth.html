@@ -547,7 +547,8 @@
                 const messageElement = statusMessages.querySelector('.status-message');
                 if (messageElement) {
                     messageElement.className = `status-message ${type === 'error' ? 'error-message' : 'info-message'}`;
-                    messageElement.innerHTML = message; // Use innerHTML to support links
+                    // Plain text only: the message can come from the ?error= URL parameter.
+                    messageElement.textContent = message;
                     statusMessages.style.display = 'block';
                 }
             }
