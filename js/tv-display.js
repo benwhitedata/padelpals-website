@@ -169,7 +169,9 @@ function tvAvatar(name, userId, extraClass) {
 }
 
 function tvPairAvatars(people, extraClass) {
-    return `<span class="tv-pair">${people.map(p => tvAvatar(p.name, p.id, extraClass)).join('')}</span>`;
+    return `<span class="tv-pair">${people.map(p => (p.open
+        ? `<span class="tv-av tv-av-open ${extraClass || ''}">+</span>`
+        : tvAvatar(p.name, p.id, extraClass))).join('')}</span>`;
 }
 
 // Shrinks long names a little rather than cutting them off.
@@ -244,15 +246,17 @@ function tvCourtsHtml(cards) {
 }
 
 // side: { people: [{name,id}], score, sets?, state: 'win'|'lose'|'' }
-function tvCourtCard(index, title, chip, chipLive, done, sides, extraClass) {
+// note: an optional line under the heading, such as "Box league · Div 3".
+function tvCourtCard(index, title, chip, chipLive, done, sides, extraClass, note) {
     const team = side => `<div class="tv-team ${side.state ? 'tv-' + side.state : ''}">
         ${tvPairAvatars(side.people)}
-        <div class="tv-team-names">${side.people.map(p => `<div>${tvEsc(p.name)}</div>`).join('')}</div>
+        <div class="tv-team-names">${side.people.map(p => `<div${p.open ? ' class="tv-open-place"' : ''}>${tvEsc(p.name)}</div>`).join('')}</div>
         ${side.sets ? `<span class="tv-sets">${tvEsc(side.sets)}</span>` : ''}
         <div class="tv-team-score${side.score == null ? ' tv-unplayed' : ''}">${side.score == null ? '–' : tvEsc(side.score)}</div>
     </div>`;
     return `<div class="tv-court tv-rise${done ? ' tv-court-done' : ''}${extraClass ? ' ' + extraClass : ''}" style="--i:${index * 2}">
         <div class="tv-court-head"><span>${tvEsc(title)}</span>${chip ? `<span class="tv-chip${chipLive ? ' tv-chip-live' : ''}">${tvEsc(chip)}</span>` : ''}</div>
+        ${note ? `<div class="tv-court-note">${tvEsc(note)}</div>` : ''}
         ${team(sides[0])}
         <div class="tv-vs">VS</div>
         ${team(sides[1])}
@@ -1450,6 +1454,168 @@ function closeBoxLeagueFullscreen() {
     boxLeagueTv.close();
 }
 
+// ── On court ──────────────────────────────────────────────────
+//
+// Ordinary club matches and box league fixtures: what is on court right now,
+// and what starts within the next few hours, grouped by start time.
+
+const ON_COURT_AHEAD_HOURS = 3;
+const ON_COURT_DEFAULT_MINUTES = 90;
+
+let onCourtMatches = []; // { id, start, end, court, order, note, sides: [[people], [people]], done, scores }
+
+// "5.15pm"
+function tvTime(date) {
+    let h = date.getHours();
+    const m = date.getMinutes();
+    const ampm = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    return `${h}${m ? '.' + String(m).padStart(2, '0') : ''}${ampm}`;
+}
+
+// Names and ids side by side, padded with open places up to a pair.
+function onCourtSide(names, ids, size) {
+    const people = (names || []).map((name, i) => ({ name: name || 'Player', id: (ids || [])[i] || null }));
+    while (people.length < size) people.push({ name: 'Open place', id: null, open: true });
+    return people;
+}
+
+async function onCourtLoad() {
+    const client = tvSupabase();
+    const clubId = await clubTvClubId();
+    if (!client || !clubId) { onCourtMatches = []; return; }
+    const now = Date.now();
+    const from = new Date(now - 4 * 3600 * 1000).toISOString();
+    const to = new Date(now + ON_COURT_AHEAD_HOURS * 3600 * 1000).toISOString();
+
+    const [{ data: matches, error }, { data: courts }, { data: leagues }] = await Promise.all([
+        client.from('matches')
+            .select('id, date, duration, court_id, status, team1_players, team2_players, team1_player_ids, team2_player_ids, team1_set_scores, team2_set_scores, team1_sets_won, team2_sets_won')
+            .eq('club_id', clubId).in('status', ['PENDING', 'COMPLETED'])
+            .gte('date', from).lte('date', to),
+        client.from('club_courts').select('id, name, sort_order').eq('club_id', clubId),
+        client.from('box_leagues').select('id, name').eq('club_id', clubId).eq('status', 'active')
+    ]);
+    if (error) throw error;
+    const courtById = {};
+    (courts || []).forEach(c => { courtById[c.id] = c; });
+    const items = [];
+
+    (matches || []).forEach(m => {
+        const start = new Date(m.date);
+        const size = Math.max(2, (m.team1_players || []).length, (m.team2_players || []).length);
+        const court = courtById[m.court_id];
+        items.push({
+            id: m.id,
+            start,
+            end: new Date(start.getTime() + (Number(m.duration) || ON_COURT_DEFAULT_MINUTES) * 60000),
+            court: court?.name || '',
+            order: court?.sort_order ?? 99,
+            note: '',
+            sides: [onCourtSide(m.team1_players, m.team1_player_ids, size), onCourtSide(m.team2_players, m.team2_player_ids, size)],
+            done: m.status === 'COMPLETED',
+            scores: m.status === 'COMPLETED' ? [m.team1_sets_won, m.team2_sets_won] : null
+        });
+    });
+
+    // Box league fixtures booked in the same window.
+    const leagueIds = (leagues || []).map(l => l.id);
+    if (leagueIds.length) {
+        const { data: boxes } = await client.from('box_league_boxes').select('id, name, league_id').in('league_id', leagueIds);
+        const boxIds = (boxes || []).map(b => b.id);
+        const { data: fixtures } = boxIds.length
+            ? await client.from('box_league_matches')
+                .select('id, box_id, team1_id, team2_id, scheduled_date, duration, court_booking_id, is_completed, team1_score, team2_score')
+                .in('box_id', boxIds).gte('scheduled_date', from).lte('scheduled_date', to)
+            : { data: [] };
+        if ((fixtures || []).length) {
+            const teamIds = [...new Set(fixtures.flatMap(f => [f.team1_id, f.team2_id]).filter(Boolean))];
+            const bookingIds = fixtures.map(f => f.court_booking_id).filter(Boolean);
+            const [{ data: teams }, { data: bookings }] = await Promise.all([
+                client.from('box_league_teams').select('id, player1_id, player1_name, player2_id, player2_name').in('id', teamIds),
+                // Members can only read their own bookings, so the court may be unknown.
+                bookingIds.length ? client.from('court_bookings').select('id, court_id').in('id', bookingIds) : Promise.resolve({ data: [] })
+            ]);
+            const teamById = {};
+            (teams || []).forEach(t => { teamById[t.id] = t; });
+            const courtByBooking = {};
+            (bookings || []).forEach(b => { courtByBooking[b.id] = courtById[b.court_id]; });
+            const boxById = {};
+            (boxes || []).forEach(b => { boxById[b.id] = b; });
+            const leagueById = {};
+            (leagues || []).forEach(l => { leagueById[l.id] = l; });
+            const clubName = window.currentUserClubData?.club_name || '';
+            fixtures.forEach(f => {
+                const start = new Date(f.scheduled_date);
+                const box = boxById[f.box_id];
+                const league = box ? leagueById[box.league_id] : null;
+                const leagueName = league ? (clubName && league.name.startsWith(clubName + ' ') ? league.name.slice(clubName.length + 1) : league.name) : 'Box league';
+                const court = courtByBooking[f.court_booking_id];
+                items.push({
+                    id: f.id,
+                    start,
+                    end: new Date(start.getTime() + (Number(f.duration) || ON_COURT_DEFAULT_MINUTES) * 60000),
+                    court: court?.name || '',
+                    order: court?.sort_order ?? 99,
+                    note: `Box league · ${leagueName}${box?.name ? ' · ' + box.name : ''}`,
+                    sides: [boxTvPeople(teamById[f.team1_id]), boxTvPeople(teamById[f.team2_id])],
+                    done: !!f.is_completed,
+                    scores: f.is_completed ? [f.team1_score, f.team2_score] : null
+                });
+            });
+        }
+    }
+    onCourtMatches = items;
+}
+
+function onCourtCards(list, live) {
+    return tvCourtsHtml(list.map((item, i) => {
+        const won = item.scores && item.scores[0] !== item.scores[1] ? (item.scores[0] > item.scores[1] ? 0 : 1) : -1;
+        const sides = item.sides.map((people, n) => ({
+            people,
+            score: item.scores ? item.scores[n] : null,
+            state: won < 0 ? '' : (won === n ? 'win' : 'lose')
+        }));
+        const chip = item.done ? 'Final' : (live ? `Until ${tvTime(item.end)}` : `${tvTime(item.start)}–${tvTime(item.end)}`);
+        return tvCourtCard(i, item.court || 'Court to be confirmed', chip, live && !item.done, item.done, sides, '', item.note);
+    }));
+}
+
+function onCourtPages() {
+    const now = new Date();
+    const limit = new Date(now.getTime() + ON_COURT_AHEAD_HOURS * 3600 * 1000);
+    const byCourt = (a, b) => a.order - b.order || String(a.court).localeCompare(String(b.court));
+    const live = onCourtMatches.filter(m => m.start <= now && m.end > now).sort(byCourt);
+    const upcoming = onCourtMatches.filter(m => m.start > now && m.start <= limit).sort((a, b) => a.start - b.start || byCourt(a, b));
+    const slots = [];
+    upcoming.forEach(m => {
+        const last = slots[slots.length - 1];
+        if (last && last.start.getTime() === m.start.getTime()) last.matches.push(m);
+        else slots.push({ start: m.start, matches: [m] });
+    });
+    const idsOf = list => list.flatMap(m => m.sides.flat().map(p => p.id));
+    const header = (stage, isLive, detail) => () => ({ title: 'On court', stage, live: isLive, detail });
+    const nextLine = slots.length ? `next start ${tvTime(slots[0].start)}` : `nothing else in the next ${ON_COURT_AHEAD_HOURS} hours`;
+    const pages = [];
+    if (live.length) {
+        pages.push({
+            key: 'now', label: 'Now', now: 'Playing now', ids: idsOf(live),
+            header: header('Now', true, `${live.length} ${live.length === 1 ? 'match' : 'matches'} on court · ${nextLine}`),
+            html: () => onCourtCards(live, true)
+        });
+    }
+    slots.forEach((slot, n) => {
+        const time = tvTime(slot.start);
+        const count = slot.matches.length;
+        pages.push({
+            key: 'at' + slot.start.getTime(), label: time, now: n === 0 ? `Up next · ${time}` : `Later · ${time}`, ids: idsOf(slot.matches),
+            header: header(n === 0 ? 'Up next' : 'Later', false, `${count} ${count === 1 ? 'match' : 'matches'} starting at ${time}`),
+            html: () => onCourtCards(slot.matches, false)
+        });
+    });
+    return pages;
+}
+
 // ── Club TV: every screen in one playlist ─────────────────────
 //
 // A source loads its own data for the player's home club and returns pages,
@@ -1461,7 +1627,7 @@ const CLUB_TV_ROTATE_MS = 8000;
 const CLUB_TV_REFRESH_MS = 30000;
 const CLUB_TV_RESULTS_HOURS = 12; // finished Americanos and tournaments stay on for this long
 
-const CLUB_TV_PLAYLIST = ['boxLeagues', 'americanos', 'tournaments', 'rankings'];
+const CLUB_TV_PLAYLIST = ['onCourt', 'boxLeagues', 'americanos', 'tournaments', 'rankings'];
 
 let clubTvAmericanos = [];
 let clubTvTournaments = [];
@@ -1482,6 +1648,13 @@ function clubTvNamed(pages, name) {
 }
 
 const CLUB_TV_SOURCES = {
+    // Matches being played now, then what starts in the next few hours, one page per start time.
+    onCourt: {
+        title: 'On court',
+        load: onCourtLoad,
+        pages: onCourtPages
+    },
+
     boxLeagues: {
         title: 'Box leagues',
         load: boxLeagueTvLoad,
