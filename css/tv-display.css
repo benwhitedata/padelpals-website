@@ -969,3 +969,53 @@ html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
     font-weight: 700;
     color: var(--tv-dim);
 }
+
+/* ── Performance of the week ─────────────────────────────── */
+.tv-potw {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2.4rem;
+    --k: 1;
+}
+.tv-potw.tv-potw-joint { --k: 0.72; }
+.tv-potw-label {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--tv-primary);
+}
+.tv-potw-label i { font-size: 3rem; color: var(--tv-gold); filter: drop-shadow(0 0.4rem 1rem rgba(255, 210, 74, 0.5)); }
+.tv-potw-picks { display: flex; flex-direction: column; gap: 2.4rem; width: 100%; max-width: 86rem; }
+.tv-potw-pick {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--k) * 4rem);
+    padding: calc(var(--k) * 2.6rem) calc(var(--k) * 3.4rem);
+    border-radius: 2.4rem;
+    background: linear-gradient(110deg, rgba(var(--tv-primary-rgb), 0.18), var(--tv-card) 60%);
+    box-shadow: inset 0 0 0 0.2rem rgba(var(--tv-primary-rgb), 0.35);
+}
+.tv-potw-faces .tv-av { --av: calc(var(--k) * 16rem); }
+.tv-potw-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--k) * 1.4rem); }
+.tv-potw-names { font-size: calc(var(--k) * 4.2rem); font-weight: 900; line-height: 1.05; }
+.tv-potw-names div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-potw-figures { display: flex; align-items: flex-end; gap: calc(var(--k) * 4rem); }
+.tv-potw-score { font-size: calc(var(--k) * 4.4rem); font-weight: 900; color: var(--tv-primary); letter-spacing: 0.02em; }
+.tv-potw-prob { display: flex; flex-direction: column; font-size: calc(var(--k) * 5.6rem); font-weight: 900; line-height: 1; }
+.tv-potw-prob small { margin-top: 0.4rem; font-size: calc(var(--k) * 1.5rem); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tv-dim); }
+.tv-potw-prob.tv-prob-low { color: #FF5A4F; }
+.tv-potw-prob.tv-prob-high { color: #34C759; }
+.tv-potw-line { font-size: calc(var(--k) * 2.2rem); font-weight: 600; color: var(--tv-dim); line-height: 1.3; }
+.tv-potw-against { display: flex; align-items: center; gap: 1.2rem; font-size: calc(var(--k) * 2rem); font-weight: 700; color: var(--tv-dim); }
+.tv-potw-against > span:first-child { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.75em; }
+.tv-potw-against .tv-av { --av: calc(var(--k) * 4rem); }
+.tv-potw-against-names { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-potw-foot { font-size: 1.6rem; font-weight: 600; color: var(--tv-dim); }

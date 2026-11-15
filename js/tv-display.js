@@ -1641,6 +1641,265 @@ function onCourtPages() {
     return pages;
 }
 
+// ── Performance of the week ───────────────────────────────────
+//
+// The app's "Performance of the night" (SocialPerformance.swift): on a published
+// club social, the winning pair with the lowest pre-match win probability.
+// It appears from London midnight after the night and stays for a week.
+// Same rules as the app for which results count and how the forecast works.
+
+const PERFORMANCE_SHOW_DAYS = 7;
+const WIN_PROBABILITY_SCALE = 1.4;
+
+let performanceNights = []; // [{ session, formatName, picks, unscored }]
+
+// Midnight in London on a 'YYYY-MM-DD' day, as a Date.
+function tvLondonMidnight(ymd, addDays = 0) {
+    const [y, m, d] = ymd.split('-').map(Number);
+    const utc = Date.UTC(y, m - 1, d + addDays);
+    const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: 'numeric', hourCycle: 'h23' }).format(new Date(utc)));
+    return new Date(utc - hour * 3600 * 1000);
+}
+
+function tvYmd(date) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(date);
+}
+
+function performanceFirstNames(names) {
+    const firsts = names.map(n => String(n || '').trim().split(/\s+/)[0]).filter(Boolean);
+    if (!firsts.length) return 'The pair';
+    if (firsts.length === 1) return firsts[0];
+    return `${firsts.slice(0, -1).join(', ')} and ${firsts[firsts.length - 1]}`;
+}
+
+// Winners' games first, e.g. "6–4, 6–3". Falls back to sets, "2–0".
+function performanceScore(winnerSets, loserSets, won, lost) {
+    const parts = [];
+    for (let i = 0; i < Math.max(winnerSets.length, loserSets.length); i++) {
+        const a = winnerSets[i] || 0, b = loserSets[i] || 0;
+        if (a || b) parts.push(`${a}–${b}`);
+    }
+    return parts.length ? parts.join(', ') : `${won}–${lost}`;
+}
+
+const TV_UUID_ANY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// One social night: every result that belongs to it, then the least likely win.
+async function performanceNight(client, session) {
+    const id = session.id;
+    const [{ data: assignments }, { data: availability }, { data: fixtures }] = await Promise.all([
+        client.from('session_assignments').select('user_id, match_id').eq('session_id', id),
+        client.from('session_availability').select('user_id').eq('session_id', id),
+        client.from('session_court_fixtures').select('team1_player1_id, team1_player2_id, team2_player1_id, team2_player2_id, box_league_match_id').eq('session_id', id)
+    ]);
+    const lower = v => String(v || '').trim().toLowerCase();
+    const people = new Set();
+    (assignments || []).forEach(a => a.user_id && people.add(lower(a.user_id)));
+    (availability || []).forEach(a => a.user_id && people.add(lower(a.user_id)));
+    (fixtures || []).forEach(f => ['team1_player1_id', 'team1_player2_id', 'team2_player1_id', 'team2_player2_id']
+        .forEach(k => f[k] && people.add(lower(f[k]))));
+    const linkedMatchIds = new Set((assignments || []).map(a => lower(a.match_id)).filter(Boolean));
+    const linkedBoxIds = new Set((fixtures || []).map(f => lower(f.box_league_match_id)).filter(Boolean));
+    const linked = new Set([...linkedMatchIds, ...linkedBoxIds]);
+    const start = tvLondonMidnight(session.play_date);
+    const end = new Date(start.getTime() + 30 * 3600 * 1000);
+
+    const matchCols = 'id, date, status, team1_players, team2_players, team1_player_ids, team2_player_ids, team1_set_scores, team2_set_scores, team1_sets_won, team2_sets_won';
+    const peopleList = [...people].filter(p => TV_UUID_ANY.test(p));
+    const [{ data: linkedMatches }, { data: dayMatches }, { data: linkedBoxes }, { data: teams }] = await Promise.all([
+        linkedMatchIds.size ? client.from('matches').select(matchCols).in('id', [...linkedMatchIds]) : Promise.resolve({ data: [] }),
+        client.from('matches').select(matchCols).eq('club_id', session.club_id).gte('date', start.toISOString()).lt('date', end.toISOString()),
+        linkedBoxIds.size ? client.from('box_league_matches').select('*').in('id', [...linkedBoxIds]) : Promise.resolve({ data: [] }),
+        peopleList.length
+            ? client.from('box_league_teams').select('id, player1_id, player1_name, player2_id, player2_name')
+                .or(`player1_id.in.(${peopleList.join(',')}),player2_id.in.(${peopleList.join(',')})`)
+            : Promise.resolve({ data: [] })
+    ]);
+    const teamIds = (teams || []).map(t => t.id);
+    const { data: windowBoxes } = teamIds.length
+        ? await client.from('box_league_matches').select('*')
+            .or(`team1_id.in.(${teamIds.join(',')}),team2_id.in.(${teamIds.join(',')})`)
+            .gte('scheduled_date', start.toISOString()).lt('scheduled_date', end.toISOString())
+        : { data: [] };
+    const boxes = {};
+    [...(linkedBoxes || []), ...(windowBoxes || [])].forEach(b => { boxes[lower(b.id)] = b; });
+    const teamById = {};
+    (teams || []).forEach(t => { teamById[lower(t.id)] = t; });
+    const missing = [...new Set(Object.values(boxes).flatMap(b => [lower(b.team1_id), lower(b.team2_id)]))].filter(t => t && !teamById[t]);
+    if (missing.length) {
+        const { data: extra } = await client.from('box_league_teams').select('id, player1_id, player1_name, player2_id, player2_name').in('id', missing);
+        (extra || []).forEach(t => { teamById[lower(t.id)] = t; });
+    }
+
+    // Everything as one shape: { id, completed, sides: [{ ids, names, sets, won }] }
+    const results = {};
+    [...(linkedMatches || []), ...(dayMatches || [])].forEach(m => {
+        results[lower(m.id)] = {
+            id: lower(m.id),
+            completed: m.status === 'COMPLETED',
+            sides: [1, 2].map(n => ({
+                ids: (m[`team${n}_player_ids`] || []).map(lower),
+                names: m[`team${n}_players`] || [],
+                sets: m[`team${n}_set_scores`] || [],
+                won: Number(m[`team${n}_sets_won`]) || 0
+            }))
+        };
+    });
+    Object.values(boxes).forEach(b => {
+        const key = lower(b.id);
+        const played = b.scheduled_date ? new Date(b.scheduled_date) : start;
+        if (!linked.has(key) && !(played >= start && played < end)) return;
+        if (results[key]) return;
+        const side = (teamId, sets, won) => {
+            const t = teamById[lower(teamId)] || {};
+            const ids = [t.player1_id, t.player2_id].filter(Boolean).map(lower);
+            return { ids, names: [t.player1_name, t.player2_name].filter(Boolean), sets: sets || [], won: Number(won) || 0 };
+        };
+        results[key] = {
+            id: key,
+            completed: !!b.is_completed,
+            sides: [side(b.team1_id, b.team1_set_scores, b.team1_score), side(b.team2_id, b.team2_set_scores, b.team2_score)]
+        };
+    });
+
+    const registered = side => side.ids.filter(i => TV_UUID_ANY.test(i));
+    const counted = Object.values(results).filter(r => {
+        if (linked.has(r.id)) return true;
+        if (!r.completed) return false;
+        return [...registered(r.sides[0]), ...registered(r.sides[1])].filter(i => people.has(i)).length >= 3;
+    });
+
+    // Pre-match rating: the row just before this match's own row in each player's history.
+    const playerIds = [...new Set(counted.flatMap(r => [...registered(r.sides[0]), ...registered(r.sides[1])]))];
+    const history = {};
+    for (let i = 0; i < playerIds.length; i += 40) {
+        const { data: rows } = await client.from('ratings').select('id, date, rating_0_10, match_id')
+            .in('id', playerIds.slice(i, i + 40)).lte('date', end.toISOString());
+        (rows || []).forEach(row => {
+            const key = lower(row.id);
+            if (row.rating_0_10 == null) return;
+            (history[key] = history[key] || []).push({ date: new Date(row.date), rating: Number(row.rating_0_10), matchId: lower(row.match_id) });
+        });
+    }
+    Object.values(history).forEach(list => list.sort((a, b) => b.date - a.date));
+    const preMatch = (playerId, matchId) => {
+        const list = history[playerId] || [];
+        const at = list.findIndex(e => e.matchId === matchId);
+        return at >= 0 && at + 1 < list.length ? list[at + 1].rating : null;
+    };
+
+    let unscored = 0;
+    const candidates = [];
+    counted.forEach(r => {
+        if (!r.completed) { unscored += 1; return; }
+        const [a, b] = r.sides;
+        if (a.won === b.won) return;
+        const ida = registered(a), idb = registered(b);
+        if (ida.length !== 2 || idb.length !== 2) return;
+        const ra = ida.map(p => preMatch(p, r.id)), rb = idb.map(p => preMatch(p, r.id));
+        if (ra.some(v => v == null) || rb.some(v => v == null)) return;
+        const p1 = 1 / (1 + Math.pow(10, -(((ra[0] + ra[1]) / 2) - ((rb[0] + rb[1]) / 2)) / WIN_PROBABILITY_SCALE));
+        if (!Number.isFinite(p1)) return;
+        const t1 = Math.min(100, Math.max(0, Math.round(p1 * 100)));
+        const winnerFirst = a.won > b.won;
+        candidates.push({ r, percent: winnerFirst ? t1 : 100 - t1, winners: winnerFirst ? a : b, losers: winnerFirst ? b : a });
+    });
+    if (!candidates.length) return { picks: [], unscored };
+    const best = Math.min(...candidates.map(c => c.percent));
+    const picks = candidates.filter(c => c.percent === best).sort((x, y) => (x.r.id < y.r.id ? -1 : 1)).map(c => {
+        // Social fixtures store the rating in the name, "Aziz (5.4)": the TV shows the name alone.
+        const clean = name => String(name || '').replace(/\s*\(\d+(\.\d+)?\)\s*$/, '').trim() || 'Player';
+        const people = side => side.names.map((name, i) => ({ name: clean(name), id: side.ids[i] || null }));
+        const names = performanceFirstNames(c.winners.names.map(clean));
+        const sets = `${c.winners.won}–${c.losers.won}`;
+        const n = c.percent;
+        const sentence = n <= 45
+            ? `${names} caused an upset, defying their ${n}% win probability to win ${sets}`
+            : n >= 55
+                ? `${names} won as expected with a ${n}% win probability, ${sets}`
+                : `${names} won ${sets} in a match that looked close on paper (${n}% win probability)`;
+        return {
+            percent: n,
+            winners: people(c.winners),
+            losers: people(c.losers),
+            score: performanceScore(c.winners.sets, c.losers.sets, c.winners.won, c.losers.won),
+            sentence
+        };
+    });
+    return { picks, unscored };
+}
+
+async function performanceLoad() {
+    const client = tvSupabase();
+    const clubId = await clubTvClubId();
+    if (!client || !clubId) { performanceNights = []; return; }
+    const now = new Date();
+    const since = tvYmd(new Date(now.getTime() - (PERFORMANCE_SHOW_DAYS + 2) * 24 * 3600 * 1000));
+    const [{ data: sessions, error }, { data: formats }] = await Promise.all([
+        client.from('club_sessions').select('id, club_id, format_id, play_date, status')
+            .eq('club_id', clubId).eq('status', 'published').gte('play_date', since)
+            .order('play_date', { ascending: false }),
+        client.from('session_formats').select('id, name').eq('club_id', clubId)
+    ]);
+    if (error) throw error;
+    const formatName = {};
+    (formats || []).forEach(f => { formatName[f.id] = f.name; });
+    // Revealed from the London midnight after the night, for a week, latest per format.
+    const shown = [];
+    const seen = new Set();
+    (sessions || []).forEach(s => {
+        const reveal = tvLondonMidnight(s.play_date, 1);
+        const until = new Date(reveal.getTime() + PERFORMANCE_SHOW_DAYS * 24 * 3600 * 1000);
+        if (now < reveal || now >= until || seen.has(s.format_id)) return;
+        seen.add(s.format_id);
+        shown.push(s);
+    });
+    const nights = await Promise.all(shown.map(async session => {
+        const night = await performanceNight(client, session);
+        return { session, formatName: formatName[session.format_id] || 'Club social', ...night };
+    }));
+    performanceNights = nights.filter(n => n.picks.length);
+}
+
+function performancePickHtml(pick, index, joint) {
+    const lean = pick.percent <= 45 ? ' tv-prob-low' : pick.percent >= 55 ? ' tv-prob-high' : '';
+    return `<div class="tv-potw-pick tv-pop" style="--i:${index + 1}">
+        <div class="tv-potw-faces">${tvPairAvatars(pick.winners, 'tv-ring-1')}</div>
+        <div class="tv-potw-body">
+            <div class="tv-potw-names">${pick.winners.map(p => `<div>${tvEsc(p.name)}</div>`).join('')}</div>
+            <div class="tv-potw-figures">
+                <div class="tv-potw-score">${tvEsc(pick.score)}</div>
+                <div class="tv-potw-prob${lean}">${pick.percent}%<small>Win probability</small></div>
+            </div>
+            ${joint ? '' : `<div class="tv-potw-line">${tvEsc(pick.sentence)}</div>`}
+            <div class="tv-potw-against"><span>Against</span>${tvPairAvatars(pick.losers)}<span class="tv-potw-against-names">${tvEsc(pick.losers.map(p => p.name).join(' & '))}</span></div>
+        </div>
+    </div>`;
+}
+
+function performancePages() {
+    return performanceNights.map(night => {
+        const joint = night.picks.length > 1;
+        const day = new Date(`${night.session.play_date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+        return {
+            key: night.session.id,
+            label: night.formatName,
+            now: joint ? 'Joint winners' : 'Winners',
+            ids: night.picks.flatMap(p => [...p.winners, ...p.losers].map(x => x.id)),
+            header: () => ({
+                title: 'Performance of the week',
+                stage: night.formatName,
+                detail: day
+            }),
+            html: () => `<div class="tv-potw${joint ? ' tv-potw-joint' : ''}">
+                <div class="tv-potw-label tv-rise"><i class="fas fa-trophy"></i>${joint ? 'Least likely wins on the night' : 'Least likely win on the night'}</div>
+                <div class="tv-potw-picks">${night.picks.slice(0, 2).map((p, i) => performancePickHtml(p, i, joint)).join('')}</div>
+                ${night.unscored ? `<div class="tv-potw-foot tv-rise" style="--i:4">${night.unscored === 1 ? '1 fixture still has no score.' : `${night.unscored} fixtures still have no score.`} A late result can change this.</div>` : ''}
+            </div>`
+        };
+    });
+}
+
 // ── Club TV: every screen in one playlist ─────────────────────
 //
 // A source loads its own data for the player's home club and returns pages,
@@ -1652,7 +1911,7 @@ const CLUB_TV_ROTATE_MS = 8000;
 const CLUB_TV_REFRESH_MS = 30000;
 const CLUB_TV_RESULTS_HOURS = 12; // finished Americanos and tournaments stay on for this long
 
-const CLUB_TV_PLAYLIST = ['onCourt', 'boxLeagues', 'americanos', 'tournaments', 'rankings'];
+const CLUB_TV_PLAYLIST = ['onCourt', 'performance', 'boxLeagues', 'americanos', 'tournaments', 'rankings'];
 
 let clubTvAmericanos = [];
 let clubTvTournaments = [];
@@ -1678,6 +1937,13 @@ const CLUB_TV_SOURCES = {
         title: 'On court',
         load: onCourtLoad,
         pages: onCourtPages
+    },
+
+    // The least likely winning pair from the club's latest social, for a week.
+    performance: {
+        title: 'Performance of the week',
+        load: performanceLoad,
+        pages: performancePages
     },
 
     boxLeagues: {
