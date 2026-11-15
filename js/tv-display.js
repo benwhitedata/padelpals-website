@@ -1872,19 +1872,19 @@ async function performanceLoad() {
     performanceNights = nights.filter(n => n.picks.length);
 }
 
-function performancePickHtml(pick, index, joint) {
+// One centred column: photos, names, score, then the sentence with the win
+// probability picked out in its colour. The percent appears once.
+function performancePickHtml(pick, index) {
     const lean = pick.percent <= 45 ? ' tv-prob-low' : pick.percent >= 55 ? ' tv-prob-high' : '';
+    const pct = `${pick.percent}%`;
+    const sentence = tvEsc(pick.sentence).replace(pct, `<strong class="tv-potw-pct${lean}">${pct}</strong>`);
+    const names = pick.winners.map(p => tvEsc(p.name)).join(' <span class="tv-potw-and">&amp;</span> ');
     return `<div class="tv-potw-pick tv-pop" style="--i:${index + 1}">
         <div class="tv-potw-faces">${tvPairAvatars(pick.winners, 'tv-ring-1')}</div>
-        <div class="tv-potw-body">
-            <div class="tv-potw-names">${pick.winners.map((p, i) => `<div>${i ? '<span class="tv-potw-and">&amp;</span> ' : ''}${tvEsc(p.name)}</div>`).join('')}</div>
-            <div class="tv-potw-figures">
-                <div class="tv-potw-score">${tvEsc(pick.score)}</div>
-                <div class="tv-potw-prob${lean}">${pick.percent}%<small>Win probability</small></div>
-            </div>
-            ${joint ? '' : `<div class="tv-potw-line">${tvEsc(pick.sentence)}</div>`}
-            <div class="tv-potw-against"><span>Against</span>${tvPairAvatars(pick.losers)}<span class="tv-potw-against-names">${tvEsc(pick.losers.map(p => p.name).join(' & '))}</span></div>
-        </div>
+        <div class="tv-potw-names">${names}</div>
+        <div class="tv-potw-score">${tvEsc(pick.score)}</div>
+        <div class="tv-potw-line">${sentence}</div>
+        <div class="tv-potw-against"><span class="tv-potw-against-label">Against</span>${tvPairAvatars(pick.losers)}<span class="tv-potw-against-names">${tvEsc(pick.losers.map(p => p.name).join(' & '))}</span></div>
     </div>`;
 }
 
@@ -1903,7 +1903,7 @@ function performancePages() {
                 detail: day
             }),
             html: () => `<div class="tv-potw${joint ? ' tv-potw-joint' : ''}">
-                <div class="tv-potw-picks">${night.picks.slice(0, 2).map((p, i) => performancePickHtml(p, i, joint)).join('')}</div>
+                <div class="tv-potw-picks">${night.picks.slice(0, 2).map((p, i) => performancePickHtml(p, i)).join('')}</div>
                 ${night.unscored ? `<div class="tv-potw-foot tv-rise" style="--i:4">${night.unscored === 1 ? '1 fixture still has no score.' : `${night.unscored} fixtures still have no score.`} A late result can change this.</div>` : ''}
             </div>`
         };
