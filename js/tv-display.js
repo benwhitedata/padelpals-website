@@ -1406,8 +1406,12 @@ function boxLeagueTvPages() {
     const pages = [];
     boxLeagueTvData.leagues.forEach(({ league, boxes }) => {
         const group = clubName && league.name.startsWith(clubName + ' ') ? league.name.slice(clubName.length + 1) : league.name;
+        // Keep every division for promotion/relegation arrows, but only put a
+        // page on the TV once someone has actually played in it.
         const withTeams = boxes.filter(b => b.teams.length);
-        withTeams.forEach((entry, i) => {
+        const withPlay = withTeams.filter(b => b.matches.some(m => m.is_completed));
+        withPlay.forEach(entry => {
+            const i = withTeams.indexOf(entry);
             const page = {
                 key: entry.box.id,
                 group,
@@ -1423,7 +1427,7 @@ function boxLeagueTvPages() {
             pages.push(page);
         });
     });
-    if (!pages.length) return [{ key: 'none', label: '', now: '', ids: [], html: () => '<div class="tv-empty">No active box leagues at your club right now.</div>' }];
+    if (!pages.length) return [{ key: 'none', label: '', now: '', ids: [], html: () => '<div class="tv-empty">No box league results yet at your club.</div>' }];
     return pages;
 }
 
@@ -1482,10 +1486,13 @@ function closeBoxLeagueFullscreen() {
 // ── On court ──────────────────────────────────────────────────
 //
 // Ordinary club matches and box league fixtures: what is on court right now,
-// and what starts within the next few hours, grouped by start time.
+// what starts within the next few hours (grouped by start time), and results
+// from the last few hours.
 
 const ON_COURT_AHEAD_HOURS = 3;
+const ON_COURT_RESULTS_HOURS = 4;
 const ON_COURT_DEFAULT_MINUTES = 90;
+const ON_COURT_RESULTS_PAGE_SIZE = 4;
 
 let onCourtMatches = []; // { id, start, end, court, order, note, sides: [[people], [people]], done, scores }
 
@@ -1510,7 +1517,7 @@ async function onCourtLoad() {
     const clubId = await clubTvClubId();
     if (!client || !clubId) { onCourtMatches = []; return; }
     const now = Date.now();
-    const from = new Date(now - 4 * 3600 * 1000).toISOString();
+    const from = new Date(now - ON_COURT_RESULTS_HOURS * 3600 * 1000).toISOString();
     const to = new Date(now + ON_COURT_AHEAD_HOURS * 3600 * 1000).toISOString();
 
     // Open matches store the kick-off on played_date; date is often when the
@@ -1629,9 +1636,14 @@ function onCourtCards(list, live) {
 function onCourtPages() {
     const now = new Date();
     const limit = new Date(now.getTime() + ON_COURT_AHEAD_HOURS * 3600 * 1000);
+    const since = new Date(now.getTime() - ON_COURT_RESULTS_HOURS * 3600 * 1000);
     const byCourt = (a, b) => a.order - b.order || String(a.court).localeCompare(String(b.court));
-    const live = onCourtMatches.filter(m => m.start <= now && m.end > now).sort(byCourt);
-    const upcoming = onCourtMatches.filter(m => m.start > now && m.start <= limit).sort((a, b) => a.start - b.start || byCourt(a, b));
+    // Finished matches leave the live board and sit on Results instead.
+    const live = onCourtMatches.filter(m => !m.done && m.start <= now && m.end > now).sort(byCourt);
+    const upcoming = onCourtMatches.filter(m => !m.done && m.start > now && m.start <= limit)
+        .sort((a, b) => a.start - b.start || byCourt(a, b));
+    const results = onCourtMatches.filter(m => m.done && m.end > since)
+        .sort((a, b) => b.start - a.start || byCourt(a, b));
     const slots = [];
     upcoming.forEach(m => {
         const last = slots[slots.length - 1];
@@ -1658,6 +1670,18 @@ function onCourtPages() {
             html: () => onCourtCards(slot.matches, false)
         });
     });
+    for (let start = 0; start < results.length; start += ON_COURT_RESULTS_PAGE_SIZE) {
+        const slice = results.slice(start, start + ON_COURT_RESULTS_PAGE_SIZE);
+        const many = results.length > ON_COURT_RESULTS_PAGE_SIZE;
+        pages.push({
+            key: 'results' + start,
+            label: many ? `Results ${start + 1}–${start + slice.length}` : 'Results',
+            now: many ? `Earlier results · ${start + 1}–${start + slice.length}` : 'Earlier results',
+            ids: idsOf(slice),
+            header: header('Results', false, `${results.length} ${results.length === 1 ? 'result' : 'results'} in the last ${ON_COURT_RESULTS_HOURS} hours`),
+            html: () => onCourtCards(slice, false)
+        });
+    }
     return pages;
 }
 
