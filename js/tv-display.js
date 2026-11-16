@@ -1509,7 +1509,8 @@ function closeBoxLeagueFullscreen() {
 const ON_COURT_AHEAD_HOURS = 3;
 const ON_COURT_RESULTS_HOURS = 4;
 const ON_COURT_DEFAULT_MINUTES = 90;
-const ON_COURT_RESULTS_PAGE_SIZE = 4;
+// Two cards side by side keeps names and set scores readable on a club TV.
+const ON_COURT_PAGE_SIZE = 2;
 
 let onCourtMatches = []; // { id, start, end, court, order, note, sides: [[people], [people]], done, scores }
 
@@ -1663,6 +1664,12 @@ function onCourtCards(list, live) {
     }));
 }
 
+function onCourtChunks(list) {
+    const chunks = [];
+    for (let i = 0; i < list.length; i += ON_COURT_PAGE_SIZE) chunks.push(list.slice(i, i + ON_COURT_PAGE_SIZE));
+    return chunks;
+}
+
 function onCourtPages() {
     const now = new Date();
     const limit = new Date(now.getTime() + ON_COURT_AHEAD_HOURS * 3600 * 1000);
@@ -1684,34 +1691,46 @@ function onCourtPages() {
     const header = (stage, isLive, detail) => () => ({ title: 'On court', stage, live: isLive, detail });
     const nextLine = slots.length ? `next start ${tvTime(slots[0].start)}` : `nothing else in the next ${ON_COURT_AHEAD_HOURS} hours`;
     const pages = [];
-    if (live.length) {
+    const liveChunks = onCourtChunks(live);
+    liveChunks.forEach((slice, n) => {
+        const many = liveChunks.length > 1;
         pages.push({
-            key: 'now', label: 'Now', now: 'Playing now', ids: idsOf(live),
+            key: 'now' + n,
+            label: many ? `Now ${n + 1}/${liveChunks.length}` : 'Now',
+            now: many ? `Playing now · ${n + 1} of ${liveChunks.length}` : 'Playing now',
+            ids: idsOf(slice),
             header: header('Now', true, `${live.length} ${live.length === 1 ? 'match' : 'matches'} on court · ${nextLine}`),
-            html: () => onCourtCards(live, true)
-        });
-    }
-    slots.forEach((slot, n) => {
-        const time = tvTime(slot.start);
-        const count = slot.matches.length;
-        pages.push({
-            key: 'at' + slot.start.getTime(), label: time, now: n === 0 ? `Up next · ${time}` : `Later · ${time}`, ids: idsOf(slot.matches),
-            header: header(n === 0 ? 'Up next' : 'Later', false, `${count} ${count === 1 ? 'match' : 'matches'} starting at ${time}`),
-            html: () => onCourtCards(slot.matches, false)
+            html: () => onCourtCards(slice, true)
         });
     });
-    for (let start = 0; start < results.length; start += ON_COURT_RESULTS_PAGE_SIZE) {
-        const slice = results.slice(start, start + ON_COURT_RESULTS_PAGE_SIZE);
-        const many = results.length > ON_COURT_RESULTS_PAGE_SIZE;
+    slots.forEach((slot, slotIndex) => {
+        const time = tvTime(slot.start);
+        const chunks = onCourtChunks(slot.matches);
+        chunks.forEach((slice, n) => {
+            const many = chunks.length > 1;
+            pages.push({
+                key: 'at' + slot.start.getTime() + '-' + n,
+                label: many ? `${time} · ${n + 1}/${chunks.length}` : time,
+                now: slotIndex === 0 && n === 0 ? `Up next · ${time}` : `Later · ${time}`,
+                ids: idsOf(slice),
+                header: header(slotIndex === 0 ? 'Up next' : 'Later', false,
+                    `${slot.matches.length} ${slot.matches.length === 1 ? 'match' : 'matches'} starting at ${time}`),
+                html: () => onCourtCards(slice, false)
+            });
+        });
+    });
+    const resultChunks = onCourtChunks(results);
+    resultChunks.forEach((slice, n) => {
+        const many = resultChunks.length > 1;
         pages.push({
-            key: 'results' + start,
-            label: many ? `Results ${start + 1}–${start + slice.length}` : 'Results',
-            now: many ? `Earlier results · ${start + 1}–${start + slice.length}` : 'Earlier results',
+            key: 'results' + n,
+            label: many ? `Results ${n + 1}/${resultChunks.length}` : 'Results',
+            now: many ? `Earlier results · ${n + 1} of ${resultChunks.length}` : 'Earlier results',
             ids: idsOf(slice),
             header: header('Results', false, `${results.length} ${results.length === 1 ? 'result' : 'results'} in the last ${ON_COURT_RESULTS_HOURS} hours`),
             html: () => onCourtCards(slice, false)
         });
-    }
+    });
     return pages;
 }
 
