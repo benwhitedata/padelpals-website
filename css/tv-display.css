@@ -431,9 +431,17 @@ html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
     flex-shrink: 0;
     font-size: calc(var(--s) * 5rem);
     font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
     min-width: 1.2em;
     text-align: right;
     color: rgba(var(--tv-ink-rgb), 0.5);
+}
+/* Games in each set ("6 4") — still the focal number, sized to fit a few sets. */
+.tv-team-score.tv-team-score-games {
+    font-size: calc(var(--s) * 3.4rem);
+    letter-spacing: 0.12em;
+    line-height: 1;
 }
 .tv-team.tv-win .tv-team-score { color: var(--tv-primary); }
 .tv-team.tv-lose .tv-team-names { color: rgba(var(--tv-ink-rgb), 0.7); }

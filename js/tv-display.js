@@ -245,14 +245,14 @@ function tvCourtsHtml(cards) {
     return `<div class="tv-courts" style="--cols:${cols};--s:${scale};${oneRow}${n === 1 ? 'max-width:70rem;width:100%;margin:0 auto;' : ''}">${cards.join('')}</div>`;
 }
 
-// side: { people: [{name,id}], score, sets?, state: 'win'|'lose'|'' }
+// side: { people: [{name,id}], score, sets?, scoreClass?, state: 'win'|'lose'|'' }
 // note: an optional line under the heading, such as "Box league · Div 3".
 function tvCourtCard(index, title, chip, chipLive, done, sides, extraClass, note) {
     const team = side => `<div class="tv-team ${side.state ? 'tv-' + side.state : ''}">
         ${tvPairAvatars(side.people)}
         <div class="tv-team-names">${side.people.map(p => `<div${p.open ? ' class="tv-open-place"' : ''}>${tvEsc(p.name)}</div>`).join('')}</div>
         ${side.sets ? `<span class="tv-sets">${tvEsc(side.sets)}</span>` : ''}
-        <div class="tv-team-score${side.score == null ? ' tv-unplayed' : ''}">${side.score == null ? '–' : tvEsc(side.score)}</div>
+        <div class="tv-team-score${side.score == null ? ' tv-unplayed' : ''}${side.scoreClass ? ' ' + side.scoreClass : ''}">${side.score == null ? '–' : tvEsc(side.score)}</div>
     </div>`;
     return `<div class="tv-court tv-rise${done ? ' tv-court-done' : ''}${extraClass ? ' ' + extraClass : ''}" style="--i:${index * 2}">
         <div class="tv-court-head"><span>${tvEsc(title)}</span>${chip ? `<span class="tv-chip${chipLive ? ' tv-chip-live' : ''}">${tvEsc(chip)}</span>` : ''}</div>
@@ -1555,7 +1555,8 @@ async function onCourtLoad() {
             note: '',
             sides: [onCourtSide(m.team1_players, m.team1_player_ids, size), onCourtSide(m.team2_players, m.team2_player_ids, size)],
             done: m.status === 'COMPLETED',
-            scores: m.status === 'COMPLETED' ? [m.team1_sets_won, m.team2_sets_won] : null
+            scores: m.status === 'COMPLETED' ? [m.team1_sets_won, m.team2_sets_won] : null,
+            setScores: m.status === 'COMPLETED' ? [m.team1_set_scores, m.team2_set_scores] : null
         });
     });
 
@@ -1566,7 +1567,7 @@ async function onCourtLoad() {
         const boxIds = (boxes || []).map(b => b.id);
         const { data: fixtures } = boxIds.length
             ? await client.from('box_league_matches')
-                .select('id, box_id, team1_id, team2_id, scheduled_date, duration, court_booking_id, is_completed, team1_score, team2_score')
+                .select('id, box_id, team1_id, team2_id, scheduled_date, duration, court_booking_id, is_completed, team1_score, team2_score, team1_set_scores, team2_set_scores')
                 .in('box_id', boxIds).gte('scheduled_date', from).lte('scheduled_date', to)
             : { data: [] };
         if ((fixtures || []).length) {
@@ -1612,7 +1613,8 @@ async function onCourtLoad() {
                     note: `Box league · ${leagueName}${box?.name ? ' · ' + box.name : ''}`,
                     sides: [boxTvPeople(teamById[f.team1_id]), boxTvPeople(teamById[f.team2_id])],
                     done: !!f.is_completed,
-                    scores: f.is_completed ? [f.team1_score, f.team2_score] : null
+                    scores: f.is_completed ? [f.team1_score, f.team2_score] : null,
+                    setScores: f.is_completed ? [f.team1_set_scores, f.team2_set_scores] : null
                 });
             });
         }
@@ -1620,12 +1622,23 @@ async function onCourtLoad() {
     onCourtMatches = items;
 }
 
+// Prefer the games in each set (6 4) over sets won (2 0) — that is what people read.
+function onCourtHasSetScores(item) {
+    const a = item.setScores?.[0], b = item.setScores?.[1];
+    return Array.isArray(a) && Array.isArray(b) && a.length && b.length
+        && a.some(n => n != null) && b.some(n => n != null);
+}
+
 function onCourtCards(list, live) {
     return tvCourtsHtml(list.map((item, i) => {
         const won = item.scores && item.scores[0] !== item.scores[1] ? (item.scores[0] > item.scores[1] ? 0 : 1) : -1;
+        const hasSets = onCourtHasSetScores(item);
         const sides = item.sides.map((people, n) => ({
             people,
-            score: item.scores ? item.scores[n] : null,
+            // Games per set as the big number when we have them; otherwise sets won.
+            score: hasSets ? item.setScores[n].join(' ')
+                : (item.scores != null ? item.scores[n] : null),
+            scoreClass: hasSets ? 'tv-team-score-games' : '',
             state: won < 0 ? '' : (won === n ? 'win' : 'lose')
         }));
         const chip = item.done ? 'Final' : (live ? `Until ${tvTime(item.end)}` : `${tvTime(item.start)}–${tvTime(item.end)}`);
