@@ -415,18 +415,29 @@ html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
 .tv-team {
     display: flex;
     align-items: center;
-    gap: calc(var(--s) * 1.4rem);
+    gap: calc(var(--s) * 1.1rem);
     min-width: 0;
 }
-.tv-team .tv-av { --av: calc(var(--s) * 6.4rem); }
+.tv-team .tv-av { --av: calc(var(--s) * 5.2rem); }
 .tv-team-names {
     flex: 1;
     min-width: 0;
-    font-size: calc(var(--s) * 2.4rem);
+    font-size: calc(var(--s) * 2rem);
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 1.2;
 }
-.tv-team-names div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-team-names div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tv-team-names .tv-rating {
+    margin-left: 0.35em;
+    font-size: 0.78em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: rgba(var(--tv-ink-rgb), 0.55);
+}
 .tv-team-score {
     flex-shrink: 0;
     font-size: calc(var(--s) * 5rem);

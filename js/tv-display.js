@@ -174,17 +174,34 @@ function tvPairAvatars(people, extraClass) {
         : tvAvatar(p.name, p.id, extraClass))).join('')}</span>`;
 }
 
-// Shrinks long names a little rather than cutting them off.
+// Shrinks long names until they fit, rather than relying on ellipsis.
 function tvFitText(root) {
     root.querySelectorAll('.tv-name, .tv-team-names div, .tv-tie-name, .tv-podium-name, .tv-champion-name, .tv-box-names div, .tv-fx-name').forEach(el => {
         el.style.fontSize = '';
         let size = parseFloat(getComputedStyle(el).fontSize);
-        const floor = size * 0.7;
+        const floor = Math.max(12, size * 0.52);
         while ((el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) && size > floor) {
-            size *= 0.94;
+            size *= 0.92;
             el.style.fontSize = `${size}px`;
         }
     });
+}
+
+// Open-match names often arrive as "First Last (4.8)" — keep the rating, but
+// render it as a lighter suffix so the name itself can shrink cleanly.
+function tvSplitRatedName(raw) {
+    const text = String(raw || '').trim();
+    const m = text.match(/^(.*?)(?:\s*\((\d+(?:\.\d+)?)\))\s*$/);
+    if (!m) return { name: text || 'Player', rating: null };
+    return { name: m[1].trim() || 'Player', rating: m[2] };
+}
+
+function tvPlayerNameHtml(person) {
+    if (person?.open) return `<div class="tv-open-place">${tvEsc(person.name || 'Open place')}</div>`;
+    const parts = person?.rating != null
+        ? { name: person.name || 'Player', rating: person.rating }
+        : tvSplitRatedName(person?.name);
+    return `<div>${tvEsc(parts.name)}${parts.rating != null ? `<span class="tv-rating">${tvEsc(parts.rating)}</span>` : ''}</div>`;
 }
 
 function tvPreload(ids) {
@@ -250,7 +267,7 @@ function tvCourtsHtml(cards) {
 function tvCourtCard(index, title, chip, chipLive, done, sides, extraClass, note) {
     const team = side => `<div class="tv-team ${side.state ? 'tv-' + side.state : ''}">
         ${tvPairAvatars(side.people)}
-        <div class="tv-team-names">${side.people.map(p => `<div${p.open ? ' class="tv-open-place"' : ''}>${tvEsc(p.name)}</div>`).join('')}</div>
+        <div class="tv-team-names">${side.people.map(tvPlayerNameHtml).join('')}</div>
         ${side.sets ? `<span class="tv-sets">${tvEsc(side.sets)}</span>` : ''}
         <div class="tv-team-score${side.score == null ? ' tv-unplayed' : ''}${side.scoreClass ? ' ' + side.scoreClass : ''}">${side.score == null ? '–' : tvEsc(side.score)}</div>
     </div>`;
