@@ -1918,6 +1918,8 @@ function performancePages() {
 // To add a screen: write a source below and add its key to the playlist.
 
 const CLUB_TV_ROTATE_MS = 8000;
+const CLUB_TV_LIVE_MS = 15000; // matches on court, live Americanos, active tournaments
+const CLUB_TV_PERFORMANCE_MS = 10000; // performance of the week always gets longer
 const CLUB_TV_REFRESH_MS = 30000;
 const CLUB_TV_RESULTS_HOURS = 12; // finished Americanos and tournaments stay on for this long
 
@@ -2050,6 +2052,17 @@ async function clubTvLoad() {
     clubTvLoaded = true;
 }
 
+// How long a Club TV page stays up. Live events and performance of the week
+// get more time; everything else uses CLUB_TV_ROTATE_MS.
+function clubTvPageMs(sourceKey, page) {
+    if (sourceKey === 'performance') return CLUB_TV_PERFORMANCE_MS;
+    try {
+        const head = typeof page.header === 'function' ? page.header() : null;
+        if (head?.live) return CLUB_TV_LIVE_MS;
+    } catch (_) {}
+    return null;
+}
+
 function clubTvPages() {
     if (!clubTvLoaded) return [{ key: 'loading', label: '', now: '', ids: [], html: () => '<div class="tv-empty">Loading what’s on at your club…</div>' }];
     const pages = CLUB_TV_PLAYLIST.flatMap(key => {
@@ -2057,7 +2070,10 @@ function clubTvPages() {
         if (!source) return [];
         let list = [];
         try { list = source.pages(); } catch (err) { console.warn('Club TV page error', key, err); }
-        return list.map(page => ({ ...page, key: `${key}:${page.key}`, group: source.rail || source.title, nowLabel: source.title }));
+        return list.map(page => {
+            const ms = clubTvPageMs(key, page);
+            return { ...page, key: `${key}:${page.key}`, group: source.rail || source.title, nowLabel: source.title, ...(ms ? { ms } : {}) };
+        });
     });
     if (pages.length) return pages;
     const reason = window.currentUserClubData && window.currentUserClubData.club_name !== 'No Club Assigned'
