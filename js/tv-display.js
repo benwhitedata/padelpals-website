@@ -1513,11 +1513,14 @@ async function onCourtLoad() {
     const from = new Date(now - 4 * 3600 * 1000).toISOString();
     const to = new Date(now + ON_COURT_AHEAD_HOURS * 3600 * 1000).toISOString();
 
+    // Open matches store the kick-off on played_date; date is often when the
+    // listing was created. Prefer played_date, and still catch older rows that
+    // only have date set.
     const [{ data: matches, error }, { data: courts }, { data: leagues }] = await Promise.all([
         client.from('matches')
-            .select('id, date, duration, court_id, status, team1_players, team2_players, team1_player_ids, team2_player_ids, team1_set_scores, team2_set_scores, team1_sets_won, team2_sets_won')
+            .select('id, date, played_date, duration, court_id, status, team1_players, team2_players, team1_player_ids, team2_player_ids, team1_set_scores, team2_set_scores, team1_sets_won, team2_sets_won')
             .eq('club_id', clubId).in('status', ['PENDING', 'COMPLETED'])
-            .gte('date', from).lte('date', to),
+            .or(`and(played_date.gte."${from}",played_date.lte."${to}"),and(played_date.is.null,date.gte."${from}",date.lte."${to}")`),
         client.from('club_courts').select('id, name, sort_order').eq('club_id', clubId),
         client.from('box_leagues').select('id, name').eq('club_id', clubId).eq('status', 'active')
     ]);
@@ -1527,7 +1530,7 @@ async function onCourtLoad() {
     const items = [];
 
     (matches || []).forEach(m => {
-        const start = new Date(m.date);
+        const start = new Date(m.played_date || m.date);
         const size = Math.max(2, (m.team1_players || []).length, (m.team2_players || []).length);
         const court = courtById[m.court_id];
         items.push({
