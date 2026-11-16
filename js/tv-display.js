@@ -1521,12 +1521,18 @@ async function onCourtLoad() {
             .select('id, date, played_date, duration, court_id, status, team1_players, team2_players, team1_player_ids, team2_player_ids, team1_set_scores, team2_set_scores, team1_sets_won, team2_sets_won')
             .eq('club_id', clubId).in('status', ['PENDING', 'COMPLETED'])
             .or(`and(played_date.gte."${from}",played_date.lte."${to}"),and(played_date.is.null,date.gte."${from}",date.lte."${to}")`),
-        client.from('club_courts').select('id, name, sort_order').eq('club_id', clubId),
+        client.from('club_courts').select('id, name, sort_order, sport').eq('club_id', clubId),
         client.from('box_leagues').select('id, name').eq('club_id', clubId).eq('status', 'active')
     ]);
     if (error) throw error;
     const courtById = {};
     (courts || []).forEach(c => { courtById[c.id] = c; });
+    // Same rule as club_court_id_for_index: padel courts by sort_order, 1-based index.
+    const padelCourts = (courts || [])
+        .filter(c => String(c.sport || 'padel').toLowerCase() !== 'tennis')
+        .slice()
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || String(a.name).localeCompare(String(b.name)));
+    const courtForIndex = index => padelCourts[Math.max(Number(index) || 1, 1) - 1] || null;
     const items = [];
 
     (matches || []).forEach(m => {
@@ -1559,15 +1565,26 @@ async function onCourtLoad() {
         if ((fixtures || []).length) {
             const teamIds = [...new Set(fixtures.flatMap(f => [f.team1_id, f.team2_id]).filter(Boolean))];
             const bookingIds = fixtures.map(f => f.court_booking_id).filter(Boolean);
-            const [{ data: teams }, { data: bookings }] = await Promise.all([
+            const fixtureIds = fixtures.map(f => f.id);
+            const [{ data: teams }, { data: bookings }, { data: sessionLinks }] = await Promise.all([
                 client.from('box_league_teams').select('id, player1_id, player1_name, player2_id, player2_name').in('id', teamIds),
                 // Members can only read their own bookings, so the court may be unknown.
-                bookingIds.length ? client.from('court_bookings').select('id, court_id').in('id', bookingIds) : Promise.resolve({ data: [] })
+                bookingIds.length ? client.from('court_bookings').select('id, court_id').in('id', bookingIds) : Promise.resolve({ data: [] }),
+                // Published social courts: readable to the club, and the usual path when
+                // court_booking_id is empty.
+                client.from('session_court_fixtures')
+                    .select('box_league_match_id, court_index')
+                    .in('box_league_match_id', fixtureIds)
             ]);
             const teamById = {};
             (teams || []).forEach(t => { teamById[t.id] = t; });
             const courtByBooking = {};
             (bookings || []).forEach(b => { courtByBooking[b.id] = courtById[b.court_id]; });
+            const courtByFixture = {};
+            (sessionLinks || []).forEach(link => {
+                if (!link.box_league_match_id) return;
+                courtByFixture[link.box_league_match_id] = courtForIndex(link.court_index);
+            });
             const boxById = {};
             (boxes || []).forEach(b => { boxById[b.id] = b; });
             const leagueById = {};
@@ -1578,7 +1595,7 @@ async function onCourtLoad() {
                 const box = boxById[f.box_id];
                 const league = box ? leagueById[box.league_id] : null;
                 const leagueName = league ? (clubName && league.name.startsWith(clubName + ' ') ? league.name.slice(clubName.length + 1) : league.name) : 'Box league';
-                const court = courtByBooking[f.court_booking_id];
+                const court = courtByBooking[f.court_booking_id] || courtByFixture[f.id];
                 items.push({
                     id: f.id,
                     start,
@@ -2003,7 +2020,12 @@ const CLUB_TV_SOURCES = {
                 .order('start_date', { ascending: true });
             if (error) throw error;
             const since = clubTvSince(CLUB_TV_RESULTS_HOURS);
-            const tournaments = (rows || []).filter(t => t.status === 'active' || String(t.updated_at) >= since);
+            // Club TV is a day board: over-a-period events stay off unless it is finals day.
+            const tournaments = (rows || []).filter(t => {
+                const recent = t.status === 'active' || String(t.updated_at) >= since;
+                if (!recent) return false;
+                return t.schedule_mode === 'on_the_day' || t.is_finals_day;
+            });
             const ids = tournaments.map(t => t.id);
             const store = { teams: {}, matches: {}, groups: {} };
             if (ids.length) {
