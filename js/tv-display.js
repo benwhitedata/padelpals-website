@@ -1797,11 +1797,16 @@ async function performanceNight(client, session) {
     const start = tvLondonMidnight(session.play_date);
     const end = new Date(start.getTime() + 30 * 3600 * 1000);
 
-    const matchCols = 'id, date, status, team1_players, team2_players, team1_player_ids, team2_player_ids, team1_set_scores, team2_set_scores, team1_sets_won, team2_sets_won';
+    const matchCols = 'id, date, played_date, status, team1_players, team2_players, team1_player_ids, team2_player_ids, team1_set_scores, team2_set_scores, team1_sets_won, team2_sets_won';
     const peopleList = [...people].filter(p => TV_UUID_ANY.test(p));
+    // Same window as the app's padel_matches_view.match_date (= played_date).
+    // Filtering on date (create/submit time) misses rematches after a lineup change.
+    const fromIso = start.toISOString();
+    const toIso = end.toISOString();
     const [{ data: linkedMatches }, { data: dayMatches }, { data: linkedBoxes }, { data: teams }] = await Promise.all([
         linkedMatchIds.size ? client.from('matches').select(matchCols).in('id', [...linkedMatchIds]) : Promise.resolve({ data: [] }),
-        client.from('matches').select(matchCols).eq('club_id', session.club_id).gte('date', start.toISOString()).lt('date', end.toISOString()),
+        client.from('matches').select(matchCols).eq('club_id', session.club_id)
+            .or(`and(played_date.gte."${fromIso}",played_date.lt."${toIso}"),and(played_date.is.null,date.gte."${fromIso}",date.lt."${toIso}")`),
         linkedBoxIds.size ? client.from('box_league_matches').select('*').in('id', [...linkedBoxIds]) : Promise.resolve({ data: [] }),
         peopleList.length
             ? client.from('box_league_teams').select('id, player1_id, player1_name, player2_id, player2_name')
