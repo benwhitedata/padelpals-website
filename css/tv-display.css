@@ -1041,17 +1041,4 @@ html.tv-open { font-size: min(calc(100vh / 67.5), calc(100vw / 120)); }
 .tv-potw-pct { font-weight: 900; color: rgb(var(--tv-ink-rgb)); }
 .tv-potw-pct.tv-prob-low { color: #FF5A4F; }
 .tv-potw-pct.tv-prob-high { color: #34C759; }
-.tv-potw-against {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    max-width: 100%;
-    font-size: calc(var(--k) * 1.8rem);
-    font-weight: 600;
-    color: var(--tv-dim);
-}
-.tv-potw-against-label { font-size: 0.8em; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
-.tv-potw-against .tv-av { --av: calc(var(--k) * 3.4rem); }
-.tv-potw-against-names { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tv-potw-foot { font-size: 1.6rem; font-weight: 600; color: var(--tv-dim); }

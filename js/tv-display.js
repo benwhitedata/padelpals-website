@@ -1982,7 +1982,6 @@ function performancePickHtml(pick, index) {
         <div class="tv-potw-names">${names}</div>
         <div class="tv-potw-score">${tvEsc(pick.score)}</div>
         <div class="tv-potw-line">${sentence}</div>
-        <div class="tv-potw-against"><span class="tv-potw-against-label">Against</span>${tvPairAvatars(pick.losers)}<span class="tv-potw-against-names">${tvEsc(pick.losers.map(p => p.name).join(' & '))}</span></div>
     </div>`;
 }
 
@@ -1994,7 +1993,7 @@ function performancePages() {
             key: night.session.id,
             label: night.formatName,
             now: joint ? 'Joint winners' : 'Winners',
-            ids: night.picks.flatMap(p => [...p.winners, ...p.losers].map(x => x.id)),
+            ids: night.picks.flatMap(p => p.winners.map(x => x.id)),
             header: () => ({
                 title: 'Performance of the week',
                 stage: night.formatName,
